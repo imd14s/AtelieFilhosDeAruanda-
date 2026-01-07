@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: "PlayFair";
+    src: url('/src/assets/fonts/PlayfairDisplay-Medium.ttf');
+}
+
+@font-face {
+    font-family: "Lato";
+    src: url('/src/assets/fonts/Lato-Regular.ttf');
+}
+
 :root {
     --azul-profundo: #0f2A44;
     --branco-off-white: #F7F7F4;
@@ -8,5 +18,5 @@
     --marron-terra: #5A3E2B;
 
     --main-font: 'Playfair Display', serif;
-    --secondary-font: Lato, Montserrat, sans-serif;
+    --secondary-font: 'Lato', sans-serif;
 }
