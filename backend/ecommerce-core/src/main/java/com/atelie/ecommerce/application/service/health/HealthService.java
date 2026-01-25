@@ -1,21 +1,19 @@
 package com.atelie.ecommerce.application.service.health;
 
 /**
- * Skeleton do HealthService.
+ * HealthService.
  *
  * Objetivo:
- * - Existir para permitir que a suíte de testes compile e rode.
- * - Não contém lógica final (DDT). A lógica será implementada depois.
+ * - Fornecer o status da aplicação para o Controller e monitoramento.
  */
 public class HealthService {
 
     /**
      * Retorna o status atual do serviço.
      *
-     * @return status do serviço.
+     * @return "OK"
      */
     public String getStatus() {
-        // Skeleton: retorno temporário para falha controlada via teste.
-        return "TODO";
+        return "OK";
     }
 }
