@@ -1,24 +1,47 @@
-# Logs
-logs
+# ========================
+# Java / Maven
+# ========================
+target/
+*.class
+*.jar
+*.war
+*.ear
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ========================
+# Spring Boot
+# ========================
+application-dev.yml
+application-prod.yml
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# ========================
+# Docker
+# ========================
+.env
+docker-data/
+**/docker-data/
+
+# ========================
+# IDEs
+# ========================
+.idea/
+.vscode/
+*.iml
+
+# ========================
+# Sistema
+# ========================
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# ========================
+# Node / Frontend (futuro)
+# ========================
+node_modules/
+
+# ========================
+# Segurança
+# ========================
+*.pem
+*.key
+*.crt

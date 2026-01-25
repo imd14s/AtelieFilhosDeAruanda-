@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: atelie-filhos-de-aruanda
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO

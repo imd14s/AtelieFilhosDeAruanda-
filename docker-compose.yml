@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  backend:
+    container_name: atelie-backend
+    build:
+      context: ./backend/ecommerce-core
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
