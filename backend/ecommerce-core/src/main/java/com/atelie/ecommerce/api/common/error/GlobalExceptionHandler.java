@@ -1,5 +1,7 @@
 package com.atelie.ecommerce.api.common.error;
 
+import com.atelie.ecommerce.api.common.exception.ConflictException;
+import com.atelie.ecommerce.api.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,18 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(err -> fields.put(err.getField(), err.getDefaultMessage()));
         ErrorResponse body = ErrorResponse.badRequest("Validation error", req.getRequestURI(), fields);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest req) {
+        ErrorResponse body = ErrorResponse.conflict(ex.getMessage(), req.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex, HttpServletRequest req) {
+        ErrorResponse body = ErrorResponse.unauthorized(ex.getMessage(), req.getRequestURI());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
