@@ -1,6 +1,7 @@
 package com.atelie.ecommerce.api.common.error;
 
 import com.atelie.ecommerce.api.common.exception.ConflictException;
+import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.api.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -10,8 +11,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
-
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,13 +22,6 @@ import java.util.Map;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    @ExceptionHandler(NotFoundException.class)
-public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex, HttpServletRequest req) {
-    ErrorResponse body = ErrorResponse.notFound(ex.getMessage(), req.getRequestURI());
-    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-}
-
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
@@ -49,6 +41,12 @@ public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex, HttpSe
     public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex, HttpServletRequest req) {
         ErrorResponse body = ErrorResponse.unauthorized(ex.getMessage(), req.getRequestURI());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFoundDomain(NotFoundException ex, HttpServletRequest req) {
+        ErrorResponse body = ErrorResponse.notFound(ex.getMessage(), req.getRequestURI());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
