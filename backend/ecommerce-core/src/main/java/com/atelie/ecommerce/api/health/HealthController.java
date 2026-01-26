@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthController {
 
-  @GetMapping(value = "/health", produces = MediaType.TEXT_PLAIN_VALUE)
-  public ResponseEntity<String> health() {
-    return ResponseEntity.ok("OK");
-  }
+    @GetMapping(value = "/health", produces = "text/plain;charset=UTF-8")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/plain;charset=UTF-8"))
+                .body("OK");
+    }
 }
