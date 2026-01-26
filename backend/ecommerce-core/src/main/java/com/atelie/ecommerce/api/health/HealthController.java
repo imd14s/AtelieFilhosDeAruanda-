@@ -2,15 +2,13 @@ package com.atelie.ecommerce.api.health;
 
 import com.atelie.ecommerce.application.service.health.HealthService;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * HealthController.
  *
- * Endpoint:
- * - GET /health
+ * Endpoint de healthcheck: GET /health
  */
 @RestController
 public class HealthController {
@@ -22,7 +20,7 @@ public class HealthController {
     }
 
     @GetMapping(value = "/health", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok(healthService.status());
+    public String health() {
+        return healthService.getStatus();
     }
 }
