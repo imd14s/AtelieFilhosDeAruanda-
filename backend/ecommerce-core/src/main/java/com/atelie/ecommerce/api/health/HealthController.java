@@ -1,20 +1,28 @@
 package com.atelie.ecommerce.api.health;
 
+import com.atelie.ecommerce.application.service.health.HealthService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Skeleton do HealthController.
+ * HealthController.
  *
- * Objetivo:
- * - Existir para permitir evolução DDT com falha controlada.
- * - A rota /health ainda NÃO será exposta aqui.
- *
- * Regra:
- * - Não implementar endpoint até fechar o lote de implementação.
+ * Endpoint:
+ * - GET /health
  */
 @RestController
 public class HealthController {
-    // Skeleton propositalmente vazio.
-    // Endpoint será adicionado na fase de implementação.
+
+    private final HealthService healthService;
+
+    public HealthController(HealthService healthService) {
+        this.healthService = healthService;
+    }
+
+    @GetMapping(value = "/health", produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok(healthService.status());
+    }
 }

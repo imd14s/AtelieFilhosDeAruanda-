@@ -1,10 +1,11 @@
 spring:
-  application:
-    name: atelie-filhos-de-aruanda
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
 
 server:
-  port: 8080
-
-logging:
-  level:
-    root: INFO
+  error:
+    whitelabel:
+      enabled: false

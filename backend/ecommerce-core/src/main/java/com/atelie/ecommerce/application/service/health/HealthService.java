@@ -1,19 +1,21 @@
 package com.atelie.ecommerce.application.service.health;
 
+import org.springframework.stereotype.Service;
+
 /**
  * HealthService.
  *
- * Objetivo:
- * - Fornecer o status da aplicação para o Controller e monitoramento.
+ * Responsável por fornecer o status de saúde do sistema.
  */
+@Service
 public class HealthService {
 
     /**
-     * Retorna o status atual do serviço.
+     * Retorna o status textual do sistema.
      *
-     * @return "OK"
+     * @return String com status (ex: "OK").
      */
-    public String getStatus() {
+    public String status() {
         return "OK";
     }
 }
