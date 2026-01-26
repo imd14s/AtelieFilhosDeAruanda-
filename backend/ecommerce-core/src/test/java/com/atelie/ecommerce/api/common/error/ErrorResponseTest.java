@@ -2,48 +2,46 @@ package com.atelie.ecommerce.api.common.error;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.OffsetDateTime;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * TESTES - Contrato do ErrorResponse
- *
- * Objetivo:
- * - Garantir que o DTO de erro contém campos mínimos esperados.
+ * ErrorResponseTest.
  */
 class ErrorResponseTest {
 
     @Test
     void shouldExposeAllFields() {
-        OffsetDateTime now = OffsetDateTime.now();
-
         ErrorResponse response = new ErrorResponse(
-                now,
-                400,
-                "AUTH_INVALID_REQUEST",
-                "Invalid request payload",
-                "/auth/register"
+                404,
+                "Not Found",
+                "Route not found",
+                "/x",
+                null
         );
 
+        assertEquals(404, response.getStatus());
+        assertEquals("Not Found", response.getError());
+        assertEquals("Route not found", response.getMessage());
+        assertEquals("/x", response.getPath());
         assertNotNull(response.getTimestamp());
-        assertEquals(now, response.getTimestamp());
-
-        assertEquals(400, response.getStatus());
-        assertEquals("AUTH_INVALID_REQUEST", response.getCode());
-        assertEquals("Invalid request payload", response.getMessage());
-        assertEquals("/auth/register", response.getPath());
     }
 
     @Test
     void shouldAllowNullFieldsInSkeletonPhase() {
-        ErrorResponse response = new ErrorResponse();
+        ErrorResponse response = ErrorResponse.badRequest("Validation error", "/x", null);
 
-        // Nesta fase, só garantimos que o objeto existe e getters não explodem.
-        assertDoesNotThrow(response::getTimestamp);
-        assertDoesNotThrow(response::getStatus);
-        assertDoesNotThrow(response::getCode);
-        assertDoesNotThrow(response::getMessage);
-        assertDoesNotThrow(response::getPath);
+        assertEquals(400, response.getStatus());
+        assertNotNull(response.getTimestamp());
+        assertNull(response.getFields());
+    }
+
+    @Test
+    void shouldAcceptFieldsMapWhenProvided() {
+        ErrorResponse response = ErrorResponse.badRequest("Validation error", "/x", Map.of("email", "must not be blank"));
+
+        assertEquals(400, response.getStatus());
+        assertEquals("must not be blank", response.getFields().get("email"));
     }
 }
