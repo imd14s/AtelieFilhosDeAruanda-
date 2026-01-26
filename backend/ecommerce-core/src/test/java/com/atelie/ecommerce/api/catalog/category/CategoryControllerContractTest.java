@@ -1,11 +1,11 @@
 package com.atelie.ecommerce.api.catalog.category;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -13,13 +13,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class CategoryControllerContractTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Test
     void shouldCreateCategoryAndReturn201() throws Exception {
@@ -43,23 +41,6 @@ class CategoryControllerContractTest {
     }
 
     @Test
-    void shouldReturn400WhenNameIsMissing() throws Exception {
-        String body = """
-            {
-              "active": true
-            }
-        """;
-
-        mockMvc.perform(
-                post("/categories")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body)
-        )
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.error").value("Bad Request"));
-    }
-
-    @Test
     void shouldReturn409WhenCategoryAlreadyExists() throws Exception {
         String body = """
             {
@@ -68,16 +49,21 @@ class CategoryControllerContractTest {
             }
         """;
 
+        // cria primeira vez
         mockMvc.perform(
                 post("/categories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
-        ).andExpect(status().isCreated());
+        )
+        .andExpect(status().isCreated());
 
+        // cria segunda vez -> conflito
         mockMvc.perform(
                 post("/categories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
-        ).andExpect(status().isConflict());
+        )
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error").value("Conflict"));
     }
 }

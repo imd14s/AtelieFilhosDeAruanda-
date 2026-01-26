@@ -1,8 +1,11 @@
 package com.atelie.ecommerce;
 
+import org.springframework.test.context.ActiveProfiles;
+
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+
 
 /**
  * TESTE 01 (DDT/TDD) - Smoke Test
@@ -15,6 +18,8 @@ import org.springframework.test.context.ActiveProfiles;
  */
 @SpringBootTest
 @ActiveProfiles("test")
+
+
 class EcommerceApplicationTests {
 
     @Test

@@ -7,6 +7,7 @@ import com.atelie.ecommerce.infrastructure.persistence.catalog.category.Category
 import com.atelie.ecommerce.infrastructure.persistence.catalog.category.entity.CategoryEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -34,5 +35,11 @@ public class CategoryService {
         repository.save(entity);
 
         return new CategoryResponse(entity.getId(), entity.getName(), entity.getActive());
+    }
+
+    public List<CategoryResponse> list() {
+        return repository.findAll().stream()
+                .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getActive()))
+                .toList();
     }
 }
