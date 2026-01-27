@@ -15,4 +15,7 @@ public interface InventoryRepository extends JpaRepository<InventoryMovementEnti
            "ELSE 0 END), 0) " +
            "FROM InventoryMovementEntity m WHERE m.product.id = :productId")
     Integer calculateCurrentStock(UUID productId);
+
+    @Query(value = "SELECT COUNT(*) FROM (SELECT product_id, SUM(CASE WHEN type = 'IN' THEN quantity WHEN type = 'OUT' THEN -quantity ELSE 0 END) as total FROM inventory_movements GROUP BY product_id HAVING total < :threshold) as low_stock", nativeQuery = true)
+    long countLowStockProducts(int threshold);
 }
