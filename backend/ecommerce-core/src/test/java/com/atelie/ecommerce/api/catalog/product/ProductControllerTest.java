@@ -1,30 +1,27 @@
 package com.atelie.ecommerce.api.catalog.product;
 
-import com.atelie.ecommerce.api.catalog.product.dto.CreateProductRequest;
 import com.atelie.ecommerce.api.catalog.product.dto.ProductResponse;
 import com.atelie.ecommerce.api.common.error.GlobalExceptionHandler;
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.application.service.catalog.product.ProductService;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
 @Import(GlobalExceptionHandler.class)
-@ActiveProfiles("test")
 class ProductControllerTest {
 
     @Autowired
@@ -34,20 +31,18 @@ class ProductControllerTest {
     private ProductService service;
 
     @Test
-    void shouldReturn201WhenCreateProductSuccessfully() throws Exception {
+    void shouldReturn201WhenValidPayload() throws Exception {
         UUID productId = UUID.randomUUID();
         UUID categoryId = UUID.randomUUID();
 
-        ProductResponse response = new ProductResponse(
+        when(service.create(any())).thenReturn(new ProductResponse(
                 productId,
                 "Vela 7 dias - Branca",
                 "Vela premium para firmeza e oração.",
                 new BigDecimal("29.90"),
                 categoryId,
                 true
-        );
-
-        when(service.create(ArgumentMatchers.any(CreateProductRequest.class))).thenReturn(response);
+        ));
 
         String body = """
             {
@@ -75,7 +70,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void shouldReturn400WhenValidationFails() throws Exception {
+    void shouldReturn400WhenRequiredFieldsMissing() throws Exception {
         String body = """
             {
               "name": "Produto sem preço"
@@ -96,8 +91,7 @@ class ProductControllerTest {
     void shouldReturn404WhenServiceThrowsNotFound() throws Exception {
         UUID categoryId = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
-        when(service.create(ArgumentMatchers.any(CreateProductRequest.class)))
-                .thenThrow(new NotFoundException("Category not found"));
+        when(service.create(any())).thenThrow(new NotFoundException("Category not found"));
 
         String body = """
             {
@@ -117,6 +111,7 @@ class ProductControllerTest {
         .andExpect(status().isNotFound())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.error").value("Not Found"))
-        .andExpect(jsonPath("$.message").value("Category not found"));
+        .andExpect(jsonPath("$.message").value("Category not found"))
+        .andExpect(jsonPath("$.path").value("/products"));
     }
 }
