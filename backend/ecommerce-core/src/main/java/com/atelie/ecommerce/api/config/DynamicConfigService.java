@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.api.config;
 
 import com.atelie.ecommerce.api.config.exception.MissingConfigException;
-import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigEntity;
-import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
+import com.atelie.ecommerce.domain.config.SystemConfig;
+import com.atelie.ecommerce.domain.config.SystemConfigGateway;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,23 +11,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * DynamicConfigService.
+ *
+ * Serviço de aplicação para carregar configurações dinâmicas do banco (via gateway)
+ * e disponibilizar acesso tipado (String/BigDecimal/long/boolean) com cache em memória.
+ */
 @Service
 public class DynamicConfigService {
 
-    private final SystemConfigRepository repository;
+    private final SystemConfigGateway gateway;
     private final Map<String, String> cache = new ConcurrentHashMap<>();
 
-    public DynamicConfigService(SystemConfigRepository repository) {
-        this.repository = repository;
+    public DynamicConfigService(SystemConfigGateway gateway) {
+        this.gateway = gateway;
     }
 
     @Transactional(readOnly = true)
     public void refresh() {
-        List<SystemConfigEntity> configs = repository.findAll();
+        List<SystemConfig> configs = gateway.findAll();
         cache.clear();
-        for (SystemConfigEntity c : configs) {
-            if (c.getConfigKey() != null) {
-                cache.put(c.getConfigKey(), c.getConfigValue());
+        for (SystemConfig c : configs) {
+            if (c.key() != null) {
+                cache.put(c.key(), c.value());
             }
         }
     }
