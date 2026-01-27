@@ -3,10 +3,10 @@ package com.atelie.ecommerce.application.service.catalog.product;
 import com.atelie.ecommerce.api.catalog.product.dto.LinkIntegrationRequest;
 import com.atelie.ecommerce.api.common.exception.ConflictException;
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.ProductIntegrationRepository;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.ProductRepository;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.entity.ProductEntity;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.entity.ProductIntegrationEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

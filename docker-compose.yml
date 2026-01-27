@@ -2,37 +2,43 @@ version: "3.9"
 
 services:
   backend:
-    image: atelie-backend
+    build: ./backend/ecommerce-core
     container_name: atelie-backend
-    build:
-      context: ./backend/ecommerce-core
-      dockerfile: Dockerfile
     ports:
-      - "8080:8080"
-    environment:
-      # Sobrescreve as configs do application.properties para rodar no Docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/ecommerce_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - "${APP_PORT}:8080"  # Pega do .env
     depends_on:
       - db
-    restart: unless-stopped
-    volumes:
-       - ./uploads:/app/uploads
+    environment:
+      # Passando as variáveis do .env para dentro do Java
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      # Correção do Flyway que fizemos antes
+      - SPRING_FLYWAY_VALIDATE_ON_MIGRATE=false
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+    networks:
+      - atelie-network
+    restart: always
 
   db:
     image: postgres:15-alpine
     container_name: atelie-db
-    ports:
-      - "5432:5432" # Expõe para você acessar via DBeaver/PgAdmin se quiser
     environment:
-      - POSTGRES_DB=ecommerce_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+    networks:
+      - atelie-network
+    restart: always
 
 volumes:
   postgres_data:
+
+networks:
+  atelie-network:
+    driver: bridge

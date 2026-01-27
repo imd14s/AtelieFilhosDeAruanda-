@@ -2,10 +2,13 @@ package com.atelie.ecommerce.api.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import lombok.Data;
 
-public record RegisterRequest(
-    @NotBlank String name,
-    @NotBlank @Email String email,
-    @NotBlank @Size(min = 6) String password
-) {}
+@Data
+public class RegisterRequest {
+    @NotBlank @Email
+    private String email;
+    @NotBlank
+    private String password;
+    private String name;
+}

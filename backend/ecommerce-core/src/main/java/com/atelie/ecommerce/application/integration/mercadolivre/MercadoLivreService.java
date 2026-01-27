@@ -5,8 +5,8 @@ import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
 import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
 import com.atelie.ecommerce.application.integration.MarketplaceIntegrationService;
 import com.atelie.ecommerce.domain.order.OrderSource;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.ProductIntegrationRepository;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.entity.ProductIntegrationEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

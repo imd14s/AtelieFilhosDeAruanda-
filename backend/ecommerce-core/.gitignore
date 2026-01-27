@@ -1,2 +1,6 @@
 .env
 uploads/
+
+# backups locais
+*.bak
+*.bak.*

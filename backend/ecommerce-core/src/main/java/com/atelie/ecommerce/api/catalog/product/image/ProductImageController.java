@@ -2,8 +2,8 @@ package com.atelie.ecommerce.api.catalog.product.image;
 
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.application.service.file.FileStorageService;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.ProductRepository;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.entity.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;

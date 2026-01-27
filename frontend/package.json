@@ -16,10 +16,13 @@
     "@wix/redirects": "^1.0.108",
     "@wix/sdk": "^1.21.2",
     "@wix/stores": "^1.0.624",
+    "axios": "^1.13.3",
+    "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.11.0"
+    "react-router-dom": "^7.13.0",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

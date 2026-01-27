@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.application.listener;
 
 import com.atelie.ecommerce.domain.inventory.event.InventoryChangedEvent;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.ProductIntegrationRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;

@@ -1,14 +1,11 @@
 package com.atelie.ecommerce.application.service.catalog.product;
 
-import com.atelie.ecommerce.api.catalog.product.dto.CreateProductRequest;
-import com.atelie.ecommerce.api.catalog.product.dto.ProductResponse;
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.category.CategoryRepository;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.category.entity.CategoryEntity;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.ProductRepository;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.entity.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
+import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import org.springframework.stereotype.Service;
-
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,27 +19,26 @@ public class ProductService {
         this.categoryRepository = categoryRepository;
     }
 
-    public ProductResponse create(CreateProductRequest request) {
-        CategoryEntity category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new NotFoundException("Category not found"));
+    public ProductEntity saveProduct(ProductEntity product, UUID categoryId) {
+        if (categoryId != null) {
+            CategoryEntity category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+            // Atribui o nome da categoria como String no produto
+            product.setCategory(category.getName());
+        }
+        return productRepository.save(product);
+    }
 
-        ProductEntity entity = new ProductEntity();
-        entity.setId(UUID.randomUUID());
-        entity.setName(request.getName());
-        entity.setDescription(request.getDescription());
-        entity.setPrice(request.getPrice());
-        entity.setCategory(category);
-        entity.setActive(request.getActive());
+    public List<ProductEntity> getAllActiveProducts() {
+        return productRepository.findAll().stream()
+                .filter(p -> p.getActive() != null && p.getActive())
+                .toList();
+    }
 
+    public void deleteProduct(UUID id) {
+        ProductEntity entity = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+        entity.setActive(false);
         productRepository.save(entity);
-
-        return new ProductResponse(
-                entity.getId(),
-                entity.getName(),
-                entity.getDescription(),
-                entity.getPrice(),
-                entity.getCategory().getId(),
-                entity.getActive()
-        );
     }
 }

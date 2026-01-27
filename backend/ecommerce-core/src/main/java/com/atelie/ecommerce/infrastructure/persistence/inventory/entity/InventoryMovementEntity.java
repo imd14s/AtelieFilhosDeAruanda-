@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.infrastructure.persistence.inventory.entity;
 
 import com.atelie.ecommerce.domain.inventory.MovementType;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.entity.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;

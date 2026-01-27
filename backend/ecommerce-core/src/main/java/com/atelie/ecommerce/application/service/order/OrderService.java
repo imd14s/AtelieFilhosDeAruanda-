@@ -1,69 +1,34 @@
 package com.atelie.ecommerce.application.service.order;
 
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
-import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
-import com.atelie.ecommerce.application.service.inventory.InventoryService;
-import com.atelie.ecommerce.domain.inventory.MovementType;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.ProductRepository;
-import com.atelie.ecommerce.infrastructure.persistence.catalog.product.entity.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
-import com.atelie.ecommerce.infrastructure.persistence.order.entity.OrderEntity;
-import com.atelie.ecommerce.infrastructure.persistence.order.entity.OrderItemEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
-
     private final OrderRepository orderRepository;
-    private final ProductRepository productRepository;
-    private final InventoryService inventoryService;
 
-    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, InventoryService inventoryService) {
+    public OrderService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
-        this.productRepository = productRepository;
-        this.inventoryService = inventoryService;
     }
 
-    @Transactional
-    public OrderEntity createOrder(CreateOrderRequest request) {
-        OrderEntity order = new OrderEntity(
-                request.source(),
-                request.externalId(),
-                request.customerName(),
-                BigDecimal.ZERO
-        );
-
-        BigDecimal totalAmount = BigDecimal.ZERO;
-
-        for (var itemReq : request.items()) {
-            ProductEntity product = productRepository.findById(itemReq.productId())
-                    .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
-
-            inventoryService.addMovement(
-                    product.getId(),
-                    MovementType.OUT,
-                    itemReq.quantity(),
-                    "Sale - " + request.source(),
-                    request.externalId()
-            );
-
-            OrderItemEntity orderItem = new OrderItemEntity(
-                    order,
-                    product,
-                    itemReq.quantity(),
-                    product.getPrice()
-            );
-            
-            order.addItem(orderItem);
-            
-            BigDecimal itemTotal = product.getPrice().multiply(new BigDecimal(itemReq.quantity()));
-            totalAmount = totalAmount.add(itemTotal);
-        }
-
-        order.setTotalAmount(totalAmount);
+    // Método que o Controller de Pedidos usa
+    public OrderEntity saveOrder(OrderEntity order) {
         return orderRepository.save(order);
+    }
+
+    // Método que o Webhook estava procurando
+    public OrderEntity createOrder(OrderEntity order) {
+        return orderRepository.save(order);
+    }
+
+    public List<OrderEntity> getAllOrders() {
+        return orderRepository.findAll();
+    }
+    
+    public Optional<OrderEntity> findById(Long id) {
+        return orderRepository.findById(id);
     }
 }
