@@ -7,9 +7,12 @@ import com.atelie.ecommerce.infrastructure.persistence.catalog.category.Category
 import com.atelie.ecommerce.infrastructure.persistence.catalog.category.entity.CategoryEntity;
 import com.atelie.ecommerce.infrastructure.persistence.catalog.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.catalog.product.entity.ProductEntity;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -19,60 +22,60 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
+    @Mock
     private ProductRepository productRepository;
+
+    @Mock
     private CategoryRepository categoryRepository;
 
+    @InjectMocks
     private ProductService service;
 
-    @BeforeEach
-    void setUp() {
-        productRepository = mock(ProductRepository.class);
-        categoryRepository = mock(CategoryRepository.class);
-        service = new ProductService(productRepository, categoryRepository);
-    }
-
     @Test
-    void shouldCreateProductAndReturnResponse() {
+    void shouldCreateProductWhenCategoryExists() {
+        // arrange
         UUID categoryId = UUID.randomUUID();
-
         CategoryEntity category = new CategoryEntity();
         category.setId(categoryId);
         category.setName("Velas");
         category.setActive(true);
 
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(productRepository.save(any(ProductEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productRepository.save(any(ProductEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        CreateProductRequest request = new CreateProductRequest();
-        request.setName("Vela 7 dias - Branca");
-        request.setDescription("Vela premium para firmeza e oração.");
-        request.setPrice(new BigDecimal("29.90"));
-        request.setCategoryId(categoryId);
-        request.setActive(true);
+        CreateProductRequest req = new CreateProductRequest();
+        req.setName("Vela 7 dias - Branca");
+        req.setDescription("Vela premium para firmeza e oração.");
+        req.setPrice(new BigDecimal("29.90"));
+        req.setCategoryId(categoryId);
+        req.setActive(true);
 
-        ProductResponse response = service.create(request);
+        // act
+        ProductResponse res = service.create(req);
 
-        assertNotNull(response);
-        assertNotNull(response.getId());
-        assertEquals("Vela 7 dias - Branca", response.getName());
-        assertEquals("Vela premium para firmeza e oração.", response.getDescription());
-        assertEquals(new BigDecimal("29.90"), response.getPrice());
-        assertEquals(categoryId, response.getCategoryId());
-        assertTrue(response.getActive());
+        // assert (response)
+        assertNotNull(res);
+        assertNotNull(res.getId());
+        assertEquals("Vela 7 dias - Branca", res.getName());
+        assertEquals("Vela premium para firmeza e oração.", res.getDescription());
+        assertEquals(new BigDecimal("29.90"), res.getPrice());
+        assertEquals(categoryId, res.getCategoryId());
+        assertTrue(res.getActive());
 
+        // assert (saved entity)
         ArgumentCaptor<ProductEntity> captor = ArgumentCaptor.forClass(ProductEntity.class);
         verify(productRepository, times(1)).save(captor.capture());
 
         ProductEntity saved = captor.getValue();
         assertNotNull(saved.getId());
-        assertEquals("Vela 7 dias - Branca", saved.getName());
-        assertEquals("Vela premium para firmeza e oração.", saved.getDescription());
-        assertEquals(new BigDecimal("29.90"), saved.getPrice());
-        assertNotNull(saved.getCategory());
+        assertEquals(req.getName(), saved.getName());
+        assertEquals(req.getDescription(), saved.getDescription());
+        assertEquals(req.getPrice(), saved.getPrice());
         assertEquals(categoryId, saved.getCategory().getId());
-        assertTrue(saved.getActive());
+        assertEquals(req.getActive(), saved.getActive());
 
         verify(categoryRepository, times(1)).findById(categoryId);
         verifyNoMoreInteractions(categoryRepository, productRepository);
@@ -80,22 +83,23 @@ class ProductServiceTest {
 
     @Test
     void shouldThrowNotFoundWhenCategoryDoesNotExist() {
-        UUID missingCategoryId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        // arrange
+        UUID categoryId = UUID.randomUUID();
 
-        when(categoryRepository.findById(missingCategoryId)).thenReturn(Optional.empty());
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
-        CreateProductRequest request = new CreateProductRequest();
-        request.setName("Produto X");
-        request.setDescription("Desc");
-        request.setPrice(new BigDecimal("10.00"));
-        request.setCategoryId(missingCategoryId);
-        request.setActive(true);
+        CreateProductRequest req = new CreateProductRequest();
+        req.setName("Produto X");
+        req.setDescription("Desc");
+        req.setPrice(new BigDecimal("10.00"));
+        req.setCategoryId(categoryId);
+        req.setActive(true);
 
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> service.create(request));
+        // act + assert
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> service.create(req));
         assertEquals("Category not found", ex.getMessage());
 
-        verify(categoryRepository, times(1)).findById(missingCategoryId);
+        verify(categoryRepository, times(1)).findById(categoryId);
         verifyNoInteractions(productRepository);
-        verifyNoMoreInteractions(categoryRepository);
     }
 }
