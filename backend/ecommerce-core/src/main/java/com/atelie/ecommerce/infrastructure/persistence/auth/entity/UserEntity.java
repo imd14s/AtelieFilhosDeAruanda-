@@ -1,43 +1,45 @@
 package com.atelie.ecommerce.infrastructure.persistence.auth.entity;
 
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 public class UserEntity {
 
-  @Id
-  @Column(name = "id", nullable = false, updatable = false)
-  private UUID id;
+    @Id
+    private UUID id;
 
-  @Column(name = "name", nullable = false, length = 120)
-  private String name;
+    @Column(nullable = false)
+    private String name;
 
-  @Column(name = "email", nullable = false, unique = true, length = 180)
-  private String email;
+    @Column(nullable = false, unique = true)
+    private String email;
 
-  @Column(name = "password", nullable = false, length = 255)
-  private String password;
+    @Column(nullable = false)
+    private String password;
 
-  @Column(name = "created_at", nullable = false)
-  private OffsetDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt; // <--- NOVO CAMPO
 
-  public UserEntity() {}
+    @PrePersist
+    protected void onCreate() {
+        if (id == null) id = UUID.randomUUID();
+        if (createdAt == null) createdAt = LocalDateTime.now(); // <--- PREENCHE AUTOMÁTICO
+    }
 
-  public UUID getId() { return id; }
-  public void setId(UUID id) { this.id = id; }
+    public UserEntity() {}
 
-  public String getName() { return name; }
-  public void setName(String name) { this.name = name; }
+    public UserEntity(String name, String email, String password) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+    }
 
-  public String getEmail() { return email; }
-  public void setEmail(String email) { this.email = email; }
-
-  public String getPassword() { return password; }
-  public void setPassword(String password) { this.password = password; }
-
-  public OffsetDateTime getCreatedAt() { return createdAt; }
-  public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public UUID getId() { return id; }
+    public String getName() { return name; }
+    public String getEmail() { return email; }
+    public String getPassword() { return password; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 }

@@ -1,21 +1,19 @@
 package com.atelie.ecommerce.api.auth;
 
+import com.atelie.ecommerce.api.auth.dto.LoginRequest;
+import com.atelie.ecommerce.api.auth.dto.LoginResponse;
+import com.atelie.ecommerce.api.auth.dto.RegisterRequest;
+import com.atelie.ecommerce.api.auth.dto.RegisterResponse;
 import com.atelie.ecommerce.application.service.auth.AuthService;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
-/**
- * AuthController.
- *
- * Endpoints:
- * - POST /auth/register
- * - POST /auth/login
- * - GET  /auth/google/url
- */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -25,27 +23,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, String> register(@RequestBody Map<String, String> body) {
-        String userId = authService.register(
-                body.get("name"),
-                body.get("email"),
-                body.get("password")
-        );
-        return Map.of("userId", userId);
+    public ResponseEntity<RegisterResponse> register(@RequestBody @Valid RegisterRequest request) {
+        return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody Map<String, String> body) {
-        String accessToken = authService.login(
-                body.get("email"),
-                body.get("password")
-        );
-        return Map.of("accessToken", accessToken);
-    }
-
-    @GetMapping("/google/url")
-    public Map<String, String> googleUrl() {
-        return Map.of("authUrl", authService.getGoogleAuthUrl());
+    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 }

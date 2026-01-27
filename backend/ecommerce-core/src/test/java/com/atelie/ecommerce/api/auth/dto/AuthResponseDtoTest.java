@@ -1,38 +1,30 @@
 package com.atelie.ecommerce.api.auth.dto;
 
 import org.junit.jupiter.api.Test;
+import java.util.UUID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-/**
- * TESTES - DTOs de resposta AUTH
- *
- * Objetivo:
- * - Garantir que os contratos de saída possuem dados válidos.
- */
 class AuthResponseDtoTest {
 
     @Test
-    void registerResponseShouldExposeUserId() {
-        RegisterResponse response = new RegisterResponse("user-123");
-
-        assertNotNull(response.getUserId());
-        assertEquals("user-123", response.getUserId());
+    void shouldCreateRegisterResponse() {
+        UUID id = UUID.randomUUID();
+        // O Record exige todos os argumentos: ID, Nome, Email
+        RegisterResponse response = new RegisterResponse(id, "Test User", "test@email.com");
+        
+        // Em Records, não usamos "getId()", usamos apenas "id()"
+        assertEquals(id, response.id());
+        assertEquals("Test User", response.name());
+        assertEquals("test@email.com", response.email());
     }
 
     @Test
-    void loginResponseShouldExposeAccessToken() {
-        LoginResponse response = new LoginResponse("token-abc");
-
-        assertNotNull(response.getAccessToken());
-        assertEquals("token-abc", response.getAccessToken());
-    }
-
-    @Test
-    void googleAuthUrlResponseShouldExposeAuthUrl() {
-        GoogleAuthUrlResponse response = new GoogleAuthUrlResponse("https://accounts.google.com");
-
-        assertNotNull(response.getAuthUrl());
-        assertTrue(response.getAuthUrl().startsWith("http"));
+    void shouldCreateLoginResponse() {
+        // O Record exige: Token, Nome, Email
+        LoginResponse response = new LoginResponse("token123", "Test User", "test@email.com");
+        
+        assertEquals("token123", response.token());
+        assertEquals("Test User", response.name());
+        assertEquals("test@email.com", response.email());
     }
 }

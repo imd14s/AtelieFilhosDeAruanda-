@@ -1,22 +1,9 @@
 package com.atelie.ecommerce.api.auth.dto;
 
-/**
- * DTO - RegisterResponse
- *
- * Contrato de saída do endpoint:
- * POST /auth/register
- */
-public class RegisterResponse {
+import java.util.UUID;
 
-    private String userId;
-
-    public RegisterResponse() {}
-
-    public RegisterResponse(String userId) {
-        this.userId = userId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-}
+public record RegisterResponse(
+    UUID id,
+    String name,
+    String email
+) {}
