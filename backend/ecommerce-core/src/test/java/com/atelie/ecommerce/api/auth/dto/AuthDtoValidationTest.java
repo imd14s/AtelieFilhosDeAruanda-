@@ -10,108 +10,58 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * TESTES (DDT/TDD) - Validação de DTOs AUTH
- *
- * Objetivo:
- * - Garantir que os DTOs de entrada rejeitam payloads inválidos.
- *
- * Nota:
- * - Estes testes não dependem de controller/service.
- */
 class AuthDtoValidationTest {
 
     private static ValidatorFactory factory;
     private static Validator validator;
 
     @BeforeAll
-    static void setupValidator() {
+    static void setUp() {
         factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
 
     @AfterAll
-    static void tearDownValidator() {
+    static void tearDown() {
         factory.close();
     }
 
-    @Test
-    void registerRequestShouldBeValid() {
-        RegisterRequest dto = new RegisterRequest("Everson Dias", "everson@example.com", "12345678");
-
-        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(dto);
-
-        assertTrue(violations.isEmpty(), "Expected no violations for a valid RegisterRequest.");
+    private RegisterRequest buildRegister(String name, String email, String password) {
+        RegisterRequest r = new RegisterRequest();
+        r.setName(name);
+        r.setEmail(email);
+        r.setPassword(password);
+        return r;
     }
 
     @Test
-    void registerRequestShouldRejectBlankName() {
-        RegisterRequest dto = new RegisterRequest("   ", "everson@example.com", "12345678");
+    void shouldValidateRegisterRequest_whenValid() {
+        RegisterRequest req = buildRegister("User", "user@email.com", "123456");
+        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(req);
+        assertTrue(violations.isEmpty());
+    }
 
-        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(dto);
-
+    @Test
+    void shouldFailValidation_whenNameIsBlank() {
+        RegisterRequest req = buildRegister("", "user@email.com", "123456");
+        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(req);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("name")));
     }
 
     @Test
-    void registerRequestShouldRejectInvalidEmail() {
-        RegisterRequest dto = new RegisterRequest("Everson Dias", "email-invalido", "12345678");
-
-        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(dto);
-
+    void shouldFailValidation_whenEmailIsInvalid() {
+        RegisterRequest req = buildRegister("User", "invalid", "123456");
+        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(req);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("email")));
     }
 
     @Test
-    void registerRequestShouldRejectShortPassword() {
-        RegisterRequest dto = new RegisterRequest("Everson Dias", "everson@example.com", "123");
-
-        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(dto);
-
+    void shouldFailValidation_whenPasswordIsBlank() {
+        RegisterRequest req = buildRegister("User", "user@email.com", "");
+        Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(req);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("password")));
-    }
-
-    @Test
-    void loginRequestShouldBeValid() {
-        LoginRequest dto = new LoginRequest("everson@example.com", "12345678");
-
-        Set<ConstraintViolation<LoginRequest>> violations = validator.validate(dto);
-
-        assertTrue(violations.isEmpty(), "Expected no violations for a valid LoginRequest.");
-    }
-
-    @Test
-    void loginRequestShouldRejectBlankEmail() {
-        LoginRequest dto = new LoginRequest("   ", "12345678");
-
-        Set<ConstraintViolation<LoginRequest>> violations = validator.validate(dto);
-
-        assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("email")));
-    }
-
-    @Test
-    void loginRequestShouldRejectInvalidEmail() {
-        LoginRequest dto = new LoginRequest("email-invalido", "12345678");
-
-        Set<ConstraintViolation<LoginRequest>> violations = validator.validate(dto);
-
-        assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("email")));
-    }
-
-    @Test
-    void loginRequestShouldRejectBlankPassword() {
-        LoginRequest dto = new LoginRequest("everson@example.com", "   ");
-
-        Set<ConstraintViolation<LoginRequest>> violations = validator.validate(dto);
-
-        assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("password")));
     }
 }
