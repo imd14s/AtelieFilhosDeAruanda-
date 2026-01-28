@@ -1,4 +1,5 @@
 package com.atelie.ecommerce.api.serviceengine;
+import java.util.HashMap;
 
 import com.atelie.ecommerce.domain.service.engine.ResolvedProvider;
 import com.atelie.ecommerce.domain.service.engine.ServiceContext;
@@ -32,9 +33,10 @@ public class ServiceOrchestrator {
             String environment
     ) {
 
+Map<String, Object> attributes = new HashMap<>(request);
         ResolvedProvider resolved = engine.resolve(
                 type,
-                new ServiceContext(request)
+                new ServiceContext("BR", java.math.BigDecimal.ZERO, attributes)
         );
 
         if (resolved == null || resolved.provider() == null) {
