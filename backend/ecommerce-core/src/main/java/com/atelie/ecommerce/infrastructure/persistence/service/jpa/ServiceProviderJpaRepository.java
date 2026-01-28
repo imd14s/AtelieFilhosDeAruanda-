@@ -8,6 +8,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ServiceProviderJpaRepository extends JpaRepository<ServiceProviderEntity, UUID> {
+
     List<ServiceProviderEntity> findByServiceType(String serviceType);
+
+    List<ServiceProviderEntity> findByServiceTypeAndEnabledOrderByPriorityAsc(String serviceType, boolean enabled);
+
     Optional<ServiceProviderEntity> findByCode(String code);
 }

@@ -1,14 +1,12 @@
 package com.atelie.ecommerce.domain.service.port;
 
-import com.atelie.ecommerce.domain.service.ServiceType;
 import com.atelie.ecommerce.domain.service.model.ServiceProvider;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
 
 import java.util.List;
+import java.util.Optional;
 
-/**
- * Porta para buscar providers (DB/Dashboard).
- */
-@FunctionalInterface
 public interface ServiceProviderGateway {
-    List<ServiceProvider> findByServiceType(ServiceType serviceType);
+    List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type);
+    Optional<ServiceProvider> findByCode(ServiceType type, String code);
 }

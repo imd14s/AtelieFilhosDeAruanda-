@@ -1,17 +1,14 @@
 package com.atelie.ecommerce.domain.service.model;
 
-/**
- * Provider habilitado no sistema, controlado por DB/Dashboard.
- *
- * Ex:
- *  code      = "J3"
- *  driverKey = "shipping.j3"
- *  enabled   = true
- *  priority  = 1
- */
+import java.util.UUID;
+
 public record ServiceProvider(
+        UUID id,
+        ServiceType serviceType,
         String code,
-        String driverKey,
+        String name,
         boolean enabled,
-        int priority
+        int priority,
+        String driverKey,
+        boolean healthEnabled
 ) {}
