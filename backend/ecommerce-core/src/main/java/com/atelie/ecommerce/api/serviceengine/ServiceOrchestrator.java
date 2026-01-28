@@ -1,5 +1,4 @@
 package com.atelie.ecommerce.api.serviceengine;
-import java.util.HashMap;
 
 import com.atelie.ecommerce.domain.service.engine.ResolvedProvider;
 import com.atelie.ecommerce.domain.service.engine.ServiceContext;
@@ -8,6 +7,8 @@ import com.atelie.ecommerce.domain.service.model.ServiceType;
 import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 @Component
@@ -33,21 +34,23 @@ public class ServiceOrchestrator {
             String environment
     ) {
 
-Map<String, Object> attributes = new HashMap<>(request);
-        ResolvedProvider resolved = engine.resolve(
-                type,
-                new ServiceContext("BR", java.math.BigDecimal.ZERO, attributes)
+        Map<String, Object> attributes = new HashMap<>(request);
+
+        ServiceContext ctx = new ServiceContext(
+                "BR",
+                BigDecimal.ZERO,
+                attributes
         );
 
+        ResolvedProvider resolved = engine.resolve(type, ctx);
+
         if (resolved == null || resolved.provider() == null) {
-            return new ServiceResult(false, null, Map.of(
-                    "error", "NO_PROVIDER_AVAILABLE"
-            ));
+            return new ServiceResult(false, null, Map.of("error", "NO_PROVIDER_AVAILABLE"));
         }
 
         var provider = resolved.provider();
 
-        var configJson = configGateway
+        String configJson = configGateway
                 .findConfigJson(provider.code(), environment)
                 .orElse("{}");
 
@@ -56,21 +59,12 @@ Map<String, Object> attributes = new HashMap<>(request);
                 .orElse(null);
 
         if (driver == null) {
-            return new ServiceResult(false, provider.code(), Map.of(
-                    "error", "DRIVER_NOT_FOUND"
-            ));
+            return new ServiceResult(false, provider.code(), Map.of("error", "DRIVER_NOT_FOUND"));
         }
 
-        Map<String, Object> config =
-                JsonUtils.toMap(configJson);
+        Map<String, Object> config = JsonUtils.toMap(configJson);
+        Map<String, Object> payload = driver.execute(request, config);
 
-        Map<String, Object> payload =
-                driver.execute(request, config);
-
-        return new ServiceResult(
-                true,
-                provider.code(),
-                payload
-        );
+        return new ServiceResult(true, provider.code(), payload);
     }
 }

@@ -1,5 +1,0 @@
-api:
-  security:
-    token:
-      secret: test_jwt_secret_only_for_tests
-      expiration: 86400000

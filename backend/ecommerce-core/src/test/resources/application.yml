@@ -1,3 +1,33 @@
 spring:
-  profiles:
-    active: test
+  application:
+    name: Atelie-Test-Core
+  
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: false
+
+api:
+  security:
+    token:
+      secret: 4d3f5g6h7j8k9l0m1n2o3p4q5r6s7t8u9v0w1x2y3z
+      expiration: 86400000
+
+mp:
+  access:
+    token: test_token
+  webhook:
+    secret: test_secret

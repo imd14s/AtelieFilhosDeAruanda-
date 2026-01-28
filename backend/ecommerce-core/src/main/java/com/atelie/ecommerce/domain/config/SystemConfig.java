@@ -1,12 +1,20 @@
 package com.atelie.ecommerce.domain.config;
 
-/**
- * SystemConfig.
- *
- * Representa uma configuração do sistema no domínio.
- *
- * @param key chave única da configuração
- * @param value valor da configuração
- */
-public record SystemConfig(String key, String value) {
+public class SystemConfig {
+
+    private final String key;
+    private final String value;
+
+    public SystemConfig(String key, String value) {
+        this.key = key;
+        this.value = value;
+    }
+
+    public String key() {
+        return key;
+    }
+
+    public String value() {
+        return value;
+    }
 }
