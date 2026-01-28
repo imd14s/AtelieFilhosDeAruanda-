@@ -1,52 +1,83 @@
 package com.atelie.ecommerce.api.serviceengine;
 
-import com.atelie.ecommerce.domain.service.ServiceType;
 import com.atelie.ecommerce.domain.service.model.ServiceProvider;
-import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
+import com.atelie.ecommerce.domain.service.model.ServiceRoutingRule;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
 import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
+import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
 import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ServiceEngineTest {
 
     @Test
-    void shouldSelectFirstEnabledProviderByPriority_andExecuteDriver() {
-        // gateways fakes
-        ServiceProviderGateway providerGateway = serviceType -> List.of(
-                new ServiceProvider("J3", "shipping.j3", true, 1),
-                new ServiceProvider("CORREIOS", "shipping.correios", true, 2)
-        );
+    void shouldReturnEmptyWhenNoProviders() {
+        ServiceProviderGateway providerGateway = new ServiceProviderGateway() {
+            @Override public List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type) { return List.of(); }
+            @Override public Optional<ServiceProvider> findByCode(ServiceType type, String code) { return Optional.empty(); }
+        };
 
-        ServiceProviderConfigGateway configGateway = (providerCode, env) ->
-                Optional.of("{\"rate\": 13.00, \"freeShippingMin\": 199.90}");
+        ServiceProviderConfigGateway configGateway = (providerCode, environment) -> Optional.empty();
 
-        ServiceRoutingRuleGateway routingRuleGateway = serviceType -> List.of(); // sem regras por enquanto
+        ServiceRoutingRuleGateway ruleGateway = new ServiceRoutingRuleGateway() {
+            @Override public List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type) { return List.of(); }
+        };
 
-        // driver registry fake
-        DriverRegistry registry = new DriverRegistry(List.of(new StubDriver()));
+        DriverRegistry driverRegistry = new DriverRegistry(List.of());
 
-        ServiceEngine engine = new ServiceEngine(providerGateway, configGateway, routingRuleGateway, registry);
+        ServiceEngine engine = new ServiceEngine(providerGateway, configGateway, ruleGateway, driverRegistry);
 
-        ServiceResult result = engine.execute(ServiceType.SHIPPING, Map.of("zip", "01001000"), "prod");
-
-        assertTrue(result.success());
-        assertEquals("J3", result.providerCode());
-        assertEquals("ok", result.payload().get("status"));
+        Optional<ServiceProvider> picked = engine.pickProvider(ServiceType.SHIPPING);
+        assertTrue(picked.isEmpty());
     }
 
-    static class StubDriver implements ServiceDriver {
-        @Override public String driverKey() { return "shipping.j3"; }
-        @Override public ServiceType serviceType() { return ServiceType.SHIPPING; }
+    @Test
+    void shouldPickFirstProviderByPriorityOrder() {
+        ServiceProvider p1 = new ServiceProvider(
+                UUID.randomUUID(),
+                ServiceType.SHIPPING,
+                "J3",
+                "J3 Transportadora",
+                true,
+                1,
+                "shipping.j3",
+                false
+        );
 
-        @Override
-        public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
-            return Map.of("status", "ok", "usedRate", config.get("rate"));
-        }
+        ServiceProvider p2 = new ServiceProvider(
+                UUID.randomUUID(),
+                ServiceType.SHIPPING,
+                "ML",
+                "Mercado Livre",
+                true,
+                2,
+                "shipping.ml",
+                false
+        );
+
+        ServiceProviderGateway providerGateway = new ServiceProviderGateway() {
+            @Override public List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type) { return List.of(p1, p2); }
+            @Override public Optional<ServiceProvider> findByCode(ServiceType type, String code) { return Optional.empty(); }
+        };
+
+        ServiceProviderConfigGateway configGateway = (providerCode, environment) -> Optional.empty();
+
+        ServiceRoutingRuleGateway ruleGateway = new ServiceRoutingRuleGateway() {
+            @Override public List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type) { return List.of(); }
+        };
+
+        DriverRegistry driverRegistry = new DriverRegistry(List.of());
+
+        ServiceEngine engine = new ServiceEngine(providerGateway, configGateway, ruleGateway, driverRegistry);
+
+        Optional<ServiceProvider> picked = engine.pickProvider(ServiceType.SHIPPING);
+        assertTrue(picked.isPresent());
+        assertEquals("J3", picked.get().code());
     }
 }
