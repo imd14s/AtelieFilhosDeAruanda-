@@ -1,4 +1,4 @@
-package com.atelie.ecommerce.infrastructure.persistence.provider;
+package com.atelie.ecommerce.infrastructure.persistence.service.model;
 
 import jakarta.persistence.*;
 import lombok.*;
