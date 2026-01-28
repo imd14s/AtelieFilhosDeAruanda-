@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ServiceRoutingRuleJpaRepository extends JpaRepository<ServiceRoutingRuleEntity, UUID> {
-    List<ServiceRoutingRuleEntity> findByServiceType(String serviceType);
+    List<ServiceRoutingRuleEntity> findByServiceTypeAndEnabledOrderByPriorityAsc(String serviceType, boolean enabled);
 }
