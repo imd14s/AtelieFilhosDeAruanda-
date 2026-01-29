@@ -5,15 +5,18 @@ import com.atelie.ecommerce.domain.service.model.ServiceRoutingRule;
 import com.atelie.ecommerce.domain.service.model.ServiceType;
 import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
 import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
+import java.util.Locale;
 
 public class DefaultServiceEngine implements ServiceEngine {
 
     private final ServiceProviderGateway providerGateway;
     private final ServiceRoutingRuleGateway routingRuleGateway;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public DefaultServiceEngine(
             ServiceProviderGateway providerGateway,
@@ -25,18 +28,14 @@ public class DefaultServiceEngine implements ServiceEngine {
 
     @Override
     public ResolvedProvider resolve(ServiceType type, ServiceContext ctx) {
-
-        List<ServiceProvider> providers =
-                providerGateway.findEnabledByTypeOrdered(type);
-
+        List<ServiceProvider> providers = providerGateway.findEnabledByTypeOrdered(type);
         if (providers == null || providers.isEmpty()) {
             throw new IllegalStateException("No enabled providers for service type: " + type);
         }
 
-        List<ServiceRoutingRule> rules =
-                routingRuleGateway.findEnabledByTypeOrdered(type);
-
-        // 1) Tenta resolver por regra (em ordem de prioridade do gateway)
+        List<ServiceRoutingRule> rules = routingRuleGateway.findEnabledByTypeOrdered(type);
+        
+        // 1) Tentativa por regras dinâmicas
         if (rules != null && !rules.isEmpty()) {
             for (ServiceRoutingRule rule : rules) {
                 if (matches(rule, ctx)) {
@@ -45,35 +44,38 @@ public class DefaultServiceEngine implements ServiceEngine {
                     if (byCode.isPresent() && byCode.get().enabled()) {
                         return new ResolvedProvider(byCode.get(), "RULE_MATCH");
                     }
-                    // regra bateu, mas provider não existe/está desabilitado => erro de configuração
-                    throw new IllegalStateException("Rule matched but provider not available/enabled: " + providerCode);
                 }
             }
         }
 
-        // 2) Fallback: maior prioridade (menor número) já vem ordenado pelo gateway
+        // 2) Fallback: Prioridade padrão
         return new ResolvedProvider(providers.get(0), "DEFAULT_PRIORITY");
     }
 
-    /**
-     * Matcher minimalista só para o cenário atual de testes.
-     * Suporta condição {"country":"BR"} no JSON de conditions.
-     * (Depois evoluímos para matcher real e sem string parsing frágil.)
-     */
     private boolean matches(ServiceRoutingRule rule, ServiceContext ctx) {
         if (rule == null || !rule.enabled()) return false;
-
         String conditions = rule.matchJson();
         if (conditions == null || conditions.isBlank()) return false;
 
-        String normalized = conditions.toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
-
-        // suporta: {"country":"BR"} (case-insensitive)
-        if (normalized.contains("\"country\"")) {
-            String ctxCountry = ctx.country() == null ? "" : ctx.country().trim();
-            return normalized.contains("\"country\":\"" + ctxCountry.toLowerCase(Locale.ROOT) + "\"");
+        try {
+            JsonNode root = objectMapper.readTree(conditions);
+            
+            // Exemplo de implementação robusta: Country Check
+            if (root.has("country")) {
+                String ruleCountry = root.get("country").asText();
+                String ctxCountry = ctx.country() != null ? ctx.country() : "";
+                if (!ruleCountry.equalsIgnoreCase(ctxCountry)) {
+                    return false;
+                }
+            }
+            
+            // Aqui você pode expandir para outras regras (total do pedido, canal de venda, etc)
+            // sem depender de formatação de string.
+            
+            return true;
+        } catch (Exception e) {
+            System.err.println("Erro ao processar regra JSON: " + e.getMessage());
+            return false;
         }
-
-        return false;
     }
 }

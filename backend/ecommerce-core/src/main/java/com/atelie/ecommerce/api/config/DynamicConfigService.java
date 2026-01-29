@@ -6,6 +6,7 @@ import com.atelie.ecommerce.domain.config.SystemConfig;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,14 +15,15 @@ public class DynamicConfigService {
 
     private final SystemConfigGateway gateway;
     private final Map<String, String> cache = new ConcurrentHashMap<>();
+    
+    // Controle de TTL (Time To Live)
+    private LocalDateTime lastUpdate = LocalDateTime.MIN;
+    private static final long CACHE_TTL_MINUTES = 5;
 
     public DynamicConfigService(SystemConfigGateway gateway) {
         this.gateway = gateway;
     }
 
-    /**
-     * Recarrega o cache inteiro a partir do gateway (DB).
-     */
     public void refresh() {
         cache.clear();
         for (SystemConfig c : gateway.findAll()) {
@@ -29,9 +31,18 @@ public class DynamicConfigService {
                 cache.put(c.key(), c.value());
             }
         }
+        lastUpdate = LocalDateTime.now();
+        System.out.println("DynamicConfigService: Cache atualizado. Total chaves: " + cache.size());
+    }
+
+    private void checkCacheExpiration() {
+        if (LocalDateTime.now().isAfter(lastUpdate.plusMinutes(CACHE_TTL_MINUTES))) {
+            refresh();
+        }
     }
 
     public String requireString(String key) {
+        checkCacheExpiration(); // Verifica se precisa recarregar antes de ler
         String value = cache.get(key);
         if (value == null) throw new MissingConfigException(key);
         return value;
@@ -62,6 +73,7 @@ public class DynamicConfigService {
     }
 
     public boolean containsKey(String key) {
+        checkCacheExpiration();
         return cache.containsKey(key);
     }
 }

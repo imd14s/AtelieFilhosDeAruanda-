@@ -11,12 +11,11 @@ import lombok.*;
 @Builder
 public class SystemConfigEntity {
     @Id
-    private String configKey; 
+    private String configKey;
+    
+    @Column(columnDefinition = "TEXT")
     private String configValue;
 
-    (name = "config_json", columnDefinition = "jsonb")
+    @Column(name = "config_json", columnDefinition = "jsonb")
     private String configJson;
-
-    public String getConfigJson() { return configJson; }
-    public void setConfigJson(String configJson) { this.configJson = configJson; }
 }

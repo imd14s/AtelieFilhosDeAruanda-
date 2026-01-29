@@ -9,7 +9,6 @@ import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
 
 @Service
@@ -28,18 +27,16 @@ public class ProductIntegrationService {
         ProductEntity product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
-        // Verifica duplicidade (Já existe este ID externo para este tipo?)
         if (integrationRepository.findByExternalIdAndIntegrationType(request.externalId(), request.integrationType()).isPresent()) {
-            throw new ConflictException("External ID " + request.externalId() + " is already linked to a product.");
+            throw new ConflictException("External ID " + request.externalId() + " already linked for type " + request.integrationType());
         }
 
         ProductIntegrationEntity link = new ProductIntegrationEntity(
                 product,
-                request.integrationType(),
+                request.integrationType().toUpperCase(), // Padroniza
                 request.externalId(),
                 request.skuExternal()
         );
-
         integrationRepository.save(link);
     }
 }

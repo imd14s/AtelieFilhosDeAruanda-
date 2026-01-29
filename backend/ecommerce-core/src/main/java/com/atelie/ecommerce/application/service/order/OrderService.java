@@ -15,13 +15,7 @@ public class OrderService {
         this.orderRepository = orderRepository;
     }
 
-    // Método que o Controller de Pedidos usa
     public OrderEntity saveOrder(OrderEntity order) {
-        return orderRepository.save(order);
-    }
-
-    // Método que o Webhook estava procurando
-    public OrderEntity createOrder(OrderEntity order) {
         return orderRepository.save(order);
     }
 

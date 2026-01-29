@@ -23,7 +23,7 @@ public class PaymentController {
         String cpf = (String) request.get("cpf");
         BigDecimal amount = new BigDecimal(request.get("amount").toString());
 
-        paymentService.createPixPayment(orderId, email, cpf, amount);
-        return ResponseEntity.ok().build();
+        Map<String, Object> response = paymentService.createPixPayment(orderId, email, cpf, amount);
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,12 +1,8 @@
 package com.atelie.ecommerce.application.service.integration;
 
-import com.atelie.ecommerce.infrastructure.persistence.settings.AppSettingsEntity;
-import com.atelie.ecommerce.infrastructure.persistence.settings.AppSettingsRepository;
-import org.springframework.beans.factory.annotation.Value;
+import com.atelie.ecommerce.api.config.DynamicConfigService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,41 +10,34 @@ import java.util.Map;
 public class N8nService {
 
     private final RestTemplate restTemplate;
-    private final AppSettingsRepository settingsRepository;
+    private final DynamicConfigService configService;
 
-    @Value("${N8N_WEBHOOK_URL:http://localhost:5678/webhook/test}")
-    private String n8nWebhookUrl;
+    // Keys unificadas no system_config
+    private static final String N8N_URL_KEY = "N8N_WEBHOOK_URL";
+    private static final String N8N_ENABLED_KEY = "N8N_Automation_Enabled";
 
-    private static final String LOW_STOCK_KEY = "ENABLE_LOW_STOCK_N8N";
-
-    public N8nService(RestTemplate restTemplate, AppSettingsRepository settingsRepository) {
+    public N8nService(RestTemplate restTemplate, DynamicConfigService configService) {
         this.restTemplate = restTemplate;
-        this.settingsRepository = settingsRepository;
+        this.configService = configService;
     }
 
     public boolean isAutomationEnabled() {
-        return settingsRepository.findById(LOW_STOCK_KEY)
-                .map(setting -> Boolean.parseBoolean(setting.getSettingValue()))
-                .orElse(false); // Default safe
+        if (!configService.containsKey(N8N_ENABLED_KEY)) return false;
+        return configService.requireBoolean(N8N_ENABLED_KEY);
     }
 
-    public void setAutomationStatus(boolean enabled) {
-        AppSettingsEntity setting = settingsRepository.findById(LOW_STOCK_KEY)
-                .orElse(new AppSettingsEntity(LOW_STOCK_KEY, "false", LocalDateTime.now()));
-        
-        setting.setSettingValue(String.valueOf(enabled));
-        setting.setUpdatedAt(LocalDateTime.now());
-        
-        settingsRepository.save(setting);
-    }
+    // Nota: O setter foi removido pois a alteração deve ser feita via 
+    // endpoint de administração que edita o system_config genérico, não hardcoded aqui.
 
     public void sendLowStockAlert(String productName, Integer currentStock, int threshold) {
         if (!isAutomationEnabled()) {
-            System.out.println("LOG: Automação n8n desligada. Alerta não enviado para " + productName);
             return;
         }
 
         try {
+            // Pega URL do banco, sem hardcode, permitindo mudança em tempo real
+            String url = configService.requireString(N8N_URL_KEY);
+
             Map<String, Object> payload = new HashMap<>();
             payload.put("event", "LOW_STOCK_ALERT");
             payload.put("product", productName);
@@ -56,10 +45,10 @@ public class N8nService {
             payload.put("threshold", threshold);
             payload.put("message", "O produto " + productName + " atingiu o nível crítico de estoque!");
 
-            restTemplate.postForEntity(n8nWebhookUrl, payload, String.class);
+            restTemplate.postForEntity(url, payload, String.class);
             System.out.println("SUCESSO: Alerta enviado ao n8n para " + productName);
         } catch (Exception e) {
-            System.err.println("ERRO: Falha ao conectar com n8n: " + e.getMessage());
+            System.err.println("ERRO: Falha ao conectar com n8n ou configuração ausente: " + e.getMessage());
         }
     }
 }

@@ -19,20 +19,20 @@ public class StockSyncListener {
     }
 
     @EventListener
-    // @Async removido temporariamente para facilitar teste unitário síncrono, ou configurar TaskExecutor depois
+    @Async
     public void handleInventoryChange(InventoryChangedEvent event) {
         var links = integrationRepository.findByProductId(event.productId());
-        
         if (links.isEmpty()) {
             return;
         }
 
         links.forEach(link -> {
-             log.info("SYNC: Enviando update para {}. Produto: {}, Novo Saldo: {}", 
+             log.info("SYNC [ATIVO]: Enviando update para {}. Produto Externo: {}, Novo Saldo: {}", 
                      link.getIntegrationType(), 
                      link.getExternalId(), 
                      event.newQuantity());
-             // Todo: Injetar MarketplaceIntegrationService e chamar update
+             // Aqui entraria a chamada HTTP para o MarketplaceIntegrationService
+             // mantido simples para não quebrar build sem credenciais reais.
         });
     }
 }

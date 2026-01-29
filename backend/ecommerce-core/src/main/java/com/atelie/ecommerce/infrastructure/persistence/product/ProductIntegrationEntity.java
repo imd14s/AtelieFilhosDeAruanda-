@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
 import java.time.LocalDateTime;
-import com.atelie.ecommerce.domain.order.OrderSource;
 
 @Entity
 @Table(name = "product_integrations")
@@ -21,17 +20,17 @@ public class ProductIntegrationEntity {
     @JoinColumn(name = "product_id")
     private ProductEntity product;
 
-    @Enumerated(EnumType.STRING)
-    private OrderSource integrationType;
+    // Mudança Crítica: String em vez de Enum para permitir novos marketplaces via banco
+    @Column(name = "integration_type", nullable = false)
+    private String integrationType; 
 
     private String externalId;
     private String platformName;
     private LocalDateTime lastSync;
 
-    // Construtor específico que o ProductIntegrationService está pedindo
-    public ProductIntegrationEntity(ProductEntity product, OrderSource integrationType, String externalId, String platformName) {
+    public ProductIntegrationEntity(ProductEntity product, String integrationType, String externalId, String platformName) {
         this.product = product;
-        this.integrationType = integrationType;
+        this.integrationType = integrationType; // Aceita qualquer string agora
         this.externalId = externalId;
         this.platformName = platformName;
         this.lastSync = LocalDateTime.now();
