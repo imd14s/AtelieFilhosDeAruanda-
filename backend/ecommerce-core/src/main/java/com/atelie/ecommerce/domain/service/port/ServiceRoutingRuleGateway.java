@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface ServiceRoutingRuleGateway {
     List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type);
+    
+    // Contrato para limpeza de cache
+    void refresh();
 }

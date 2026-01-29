@@ -27,8 +27,7 @@ public class JpaServiceRoutingRuleGateway implements ServiceRoutingRuleGateway {
     @Override
     public List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type) {
         if (LocalDateTime.now().isAfter(lastUpdate.plusMinutes(5))) {
-            cache.clear();
-            lastUpdate = LocalDateTime.now();
+            refresh();
         }
 
         return cache.computeIfAbsent(type.name(), k -> 
@@ -37,6 +36,13 @@ public class JpaServiceRoutingRuleGateway implements ServiceRoutingRuleGateway {
                 .map(this::toDomain)
                 .collect(Collectors.toList())
         );
+    }
+
+    @Override
+    public void refresh() {
+        cache.clear();
+        lastUpdate = LocalDateTime.now();
+        System.out.println("ServiceRoutingRuleGateway cache cleared.");
     }
 
     private ServiceRoutingRule toDomain(ServiceRoutingRuleEntity e) {

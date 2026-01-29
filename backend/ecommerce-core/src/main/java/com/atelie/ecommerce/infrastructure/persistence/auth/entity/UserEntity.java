@@ -19,27 +19,33 @@ public class UserEntity {
 
     @Column(nullable = false)
     private String password;
+    
+    @Column(nullable = false)
+    private String role; // USER, ADMIN
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt; // <--- NOVO CAMPO
+    private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         if (id == null) id = UUID.randomUUID();
-        if (createdAt == null) createdAt = LocalDateTime.now(); // <--- PREENCHE AUTOMÁTICO
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (role == null) role = "USER";
     }
 
     public UserEntity() {}
 
-    public UserEntity(String name, String email, String password) {
+    public UserEntity(String name, String email, String password, String role) {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
     public UUID getId() { return id; }
     public String getName() { return name; }
     public String getEmail() { return email; }
     public String getPassword() { return password; }
+    public String getRole() { return role; } // Getter essencial
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

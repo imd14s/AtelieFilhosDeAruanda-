@@ -6,21 +6,36 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class FileStorageService {
     private final Path root = Paths.get("./uploads");
+    // Lista de extensões seguras permitidas
+    private final List<String> ALLOWED_EXTENSIONS = List.of("jpg", "jpeg", "png", "webp", "gif");
 
     public FileStorageService() {
-        try { Files.createDirectories(root); } 
-        catch (IOException e) { throw new RuntimeException("Could not initialize folder for upload!"); }
+        try { 
+            Files.createDirectories(root);
+        } catch (IOException e) { 
+            throw new RuntimeException("Could not initialize folder for upload!");
+        }
     }
 
     public String save(MultipartFile file) {
         try {
-            String extension = getExtension(file.getOriginalFilename());
+            String originalFilename = file.getOriginalFilename();
+            String extension = getExtension(originalFilename);
+            
+            // Validação de Segurança
+            if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+                throw new SecurityException("Tipo de arquivo não permitido: " + extension);
+            }
+
+            // Sanitização do nome (impede Path Traversal e colisão)
             String filename = UUID.randomUUID().toString() + "." + extension;
+            
             Files.copy(file.getInputStream(), this.root.resolve(filename));
             return filename;
         } catch (Exception e) {

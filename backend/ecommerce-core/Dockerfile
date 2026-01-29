@@ -10,6 +10,12 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=builder /build/target/ecommerce-core-0.0.1-SNAPSHOT.jar app.jar
 
+# Garante que a pasta de uploads exista
+RUN mkdir -p /app/uploads
+
+# Declara volume para persistir imagens
+VOLUME /app/uploads
+
 # Expõe a porta
 EXPOSE 8080
 

@@ -17,7 +17,6 @@ public class JpaServiceProviderGateway implements ServiceProviderGateway {
 
     private final ServiceProviderJpaRepository repo;
     
-    // Cache Simples
     private final Map<String, List<ServiceProvider>> listCache = new ConcurrentHashMap<>();
     private final Map<String, ServiceProvider> codeCache = new ConcurrentHashMap<>();
     private LocalDateTime lastUpdate = LocalDateTime.MIN;
@@ -29,10 +28,16 @@ public class JpaServiceProviderGateway implements ServiceProviderGateway {
 
     private void checkCache() {
         if (LocalDateTime.now().isAfter(lastUpdate.plusMinutes(TTL_MINUTES))) {
-            listCache.clear();
-            codeCache.clear();
-            lastUpdate = LocalDateTime.now();
+            refresh();
         }
+    }
+
+    @Override
+    public void refresh() {
+        listCache.clear();
+        codeCache.clear();
+        lastUpdate = LocalDateTime.now();
+        System.out.println("ServiceProviderGateway cache cleared.");
     }
 
     @Override

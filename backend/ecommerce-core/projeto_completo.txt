@@ -12,6 +12,12 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=builder /build/target/ecommerce-core-0.0.1-SNAPSHOT.jar app.jar
 
+# Garante que a pasta de uploads exista
+RUN mkdir -p /app/uploads
+
+# Declara volume para persistir imagens
+VOLUME /app/uploads
+
 # Expõe a porta
 EXPOSE 8080
 
@@ -319,6 +325,14 @@ VALUES (
 ON CONFLICT (config_key) DO UPDATE
 SET config_json = EXCLUDED.config_json,
     updated_at = NOW();
+
+--- ARQUIVO: ./src/main/resources/db/migration/V17__seed_n8n_config.sql ---
+-- Configurações padrão para automação N8n (Evita crash na inicialização)
+INSERT INTO system_config (config_key, config_value)
+VALUES
+  ('N8N_WEBHOOK_URL', 'http://localhost:5678/webhook/test'),
+  ('N8N_Automation_Enabled', 'false') -- Desativado por padrão para segurança
+ON CONFLICT (config_key) DO NOTHING;
 
 --- ARQUIVO: ./src/main/resources/db/migration/V16__seed_feature_flags.sql ---
 -- Seed inicial de Feature Flags
@@ -835,21 +849,36 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class FileStorageService {
     private final Path root = Paths.get("./uploads");
+    // Lista de extensões seguras permitidas
+    private final List<String> ALLOWED_EXTENSIONS = List.of("jpg", "jpeg", "png", "webp", "gif");
 
     public FileStorageService() {
-        try { Files.createDirectories(root); } 
-        catch (IOException e) { throw new RuntimeException("Could not initialize folder for upload!"); }
+        try { 
+            Files.createDirectories(root);
+        } catch (IOException e) { 
+            throw new RuntimeException("Could not initialize folder for upload!");
+        }
     }
 
     public String save(MultipartFile file) {
         try {
-            String extension = getExtension(file.getOriginalFilename());
+            String originalFilename = file.getOriginalFilename();
+            String extension = getExtension(originalFilename);
+            
+            // Validação de Segurança
+            if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+                throw new SecurityException("Tipo de arquivo não permitido: " + extension);
+            }
+
+            // Sanitização do nome (impede Path Traversal e colisão)
             String filename = UUID.randomUUID().toString() + "." + extension;
+            
             Files.copy(file.getInputStream(), this.root.resolve(filename));
             return filename;
         } catch (Exception e) {
@@ -919,7 +948,7 @@ public class OrderService {
             ProductEntity product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
 
-            // Baixa atômica de estoque
+            // Reserva Estoque
             inventoryService.addMovement(
                     product.getId(),
                     MovementType.OUT,
@@ -948,17 +977,47 @@ public class OrderService {
         return orderRepository.save(order);
     }
     
-    // Aprovação chamada pelo Webhook
     @Transactional
     public void approveOrder(UUID orderId) {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
+        // Garante idempotência
         if (!OrderStatus.PAID.name().equals(order.getStatus())) {
             order.setStatus(OrderStatus.PAID.name());
             orderRepository.save(order);
             System.out.println("PEDIDO APROVADO: " + orderId);
         }
+    }
+
+    // --- NOVO: Cancelar Pedido e Devolver Estoque ---
+    @Transactional
+    public void cancelOrder(UUID orderId, String reason) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+
+        if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
+            return; // Já cancelado
+        }
+        
+        if (OrderStatus.SHIPPED.name().equals(order.getStatus())) {
+            throw new IllegalStateException("Não é possível cancelar pedido já enviado.");
+        }
+
+        // Estorno do estoque item a item
+        for (OrderItemEntity item : order.getItems()) {
+            inventoryService.addMovement(
+                item.getProduct().getId(),
+                MovementType.IN, // Devolução
+                item.getQuantity(),
+                "Cancel Order " + orderId + ": " + reason,
+                orderId.toString()
+            );
+        }
+
+        order.setStatus(OrderStatus.CANCELED.name());
+        orderRepository.save(order);
+        System.out.println("PEDIDO CANCELADO E ESTOQUE ESTORNADO: " + orderId);
     }
 
     public List<OrderEntity> getAllOrders() {
@@ -1234,28 +1293,34 @@ public class UserEntity {
 
     @Column(nullable = false)
     private String password;
+    
+    @Column(nullable = false)
+    private String role; // USER, ADMIN
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt; // <--- NOVO CAMPO
+    private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         if (id == null) id = UUID.randomUUID();
-        if (createdAt == null) createdAt = LocalDateTime.now(); // <--- PREENCHE AUTOMÁTICO
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (role == null) role = "USER";
     }
 
     public UserEntity() {}
 
-    public UserEntity(String name, String email, String password) {
+    public UserEntity(String name, String email, String password, String role) {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
     public UUID getId() { return id; }
     public String getName() { return name; }
     public String getEmail() { return email; }
     public String getPassword() { return password; }
+    public String getRole() { return role; } // Getter essencial
     public LocalDateTime getCreatedAt() { return createdAt; }
 }
 
@@ -1976,8 +2041,7 @@ public class JpaServiceRoutingRuleGateway implements ServiceRoutingRuleGateway {
     @Override
     public List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type) {
         if (LocalDateTime.now().isAfter(lastUpdate.plusMinutes(5))) {
-            cache.clear();
-            lastUpdate = LocalDateTime.now();
+            refresh();
         }
 
         return cache.computeIfAbsent(type.name(), k -> 
@@ -1986,6 +2050,13 @@ public class JpaServiceRoutingRuleGateway implements ServiceRoutingRuleGateway {
                 .map(this::toDomain)
                 .collect(Collectors.toList())
         );
+    }
+
+    @Override
+    public void refresh() {
+        cache.clear();
+        lastUpdate = LocalDateTime.now();
+        System.out.println("ServiceRoutingRuleGateway cache cleared.");
     }
 
     private ServiceRoutingRule toDomain(ServiceRoutingRuleEntity e) {
@@ -2119,7 +2190,6 @@ public class JpaServiceProviderGateway implements ServiceProviderGateway {
 
     private final ServiceProviderJpaRepository repo;
     
-    // Cache Simples
     private final Map<String, List<ServiceProvider>> listCache = new ConcurrentHashMap<>();
     private final Map<String, ServiceProvider> codeCache = new ConcurrentHashMap<>();
     private LocalDateTime lastUpdate = LocalDateTime.MIN;
@@ -2131,10 +2201,16 @@ public class JpaServiceProviderGateway implements ServiceProviderGateway {
 
     private void checkCache() {
         if (LocalDateTime.now().isAfter(lastUpdate.plusMinutes(TTL_MINUTES))) {
-            listCache.clear();
-            codeCache.clear();
-            lastUpdate = LocalDateTime.now();
+            refresh();
         }
+    }
+
+    @Override
+    public void refresh() {
+        listCache.clear();
+        codeCache.clear();
+        lastUpdate = LocalDateTime.now();
+        System.out.println("ServiceProviderGateway cache cleared.");
     }
 
     @Override
@@ -2313,6 +2389,7 @@ package com.atelie.ecommerce.infrastructure.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -2335,15 +2412,24 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Rotas Públicas Essenciais
+                // --- PÚBLICO (Vitrine e Infra) ---
                 .requestMatchers("/api/auth/**", "/api/webhooks/**").permitAll()
                 .requestMatchers("/api/shipping/quote").permitAll()
-                
-                // Observabilidade e Docs (Liberado para facilitar dev/dashboard - proteger em prod!)
                 .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll() // Imagens dos produtos
                 
-                // Admin e outros requerem auth
-                .requestMatchers("/api/admin/**").authenticated()
+                // Leitura de Catálogo (Vitrine) é pública
+                .requestMatchers(HttpMethod.GET, "/api/products/**", "/categories/**").permitAll()
+
+                // --- RESTRITO AO ADMIN (Gestão da Loja) ---
+                // Qualquer escrita em produtos, estoque, categorias ou acesso ao dashboard/admin
+                .requestMatchers("/api/admin/**", "/api/dashboard/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/products/**", "/categories/**", "/api/inventory/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/products/**", "/categories/**", "/api/inventory/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/categories/**").hasRole("ADMIN")
+                
+                // --- CLIENTE (Autenticado) ---
+                // Compras, Perfil, etc.
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -2449,13 +2535,14 @@ package com.atelie.ecommerce.infrastructure.security;
 
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -2471,7 +2558,17 @@ public class CustomUserDetailsService implements UserDetailsService {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        return new User(user.getEmail(), user.getPassword(), Collections.emptyList());
+        // CORREÇÃO: Converte a role do banco (ex: "ADMIN") para Authority ("ROLE_ADMIN")
+        String roleName = user.getRole() == null ? "USER" : user.getRole().toUpperCase();
+        if (!roleName.startsWith("ROLE_")) {
+            roleName = "ROLE_" + roleName;
+        }
+
+        return new User(
+            user.getEmail(), 
+            user.getPassword(), 
+            List.of(new SimpleGrantedAuthority(roleName))
+        );
     }
 }
 
@@ -2715,6 +2812,9 @@ import java.util.Optional;
 public interface ServiceProviderGateway {
     List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type);
     Optional<ServiceProvider> findByCode(ServiceType type, String code);
+    
+    // Contrato para limpeza de cache
+    void refresh();
 }
 
 --- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/port/ServiceRoutingRuleGateway.java ---
@@ -2727,6 +2827,9 @@ import java.util.List;
 
 public interface ServiceRoutingRuleGateway {
     List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type);
+    
+    // Contrato para limpeza de cache
+    void refresh();
 }
 
 --- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/port/ServiceProviderConfigGateway.java ---
@@ -3183,16 +3286,17 @@ public class ProductResponse {
 --- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/ProductController.java ---
 package com.atelie.ecommerce.api.catalog.product;
 
+import com.atelie.ecommerce.api.catalog.product.dto.CreateProductRequest;
 import com.atelie.ecommerce.application.service.catalog.product.ProductService;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/products") // Prefixo /api restaurado
+@RequestMapping("/api/products")
 public class ProductController {
 
     private final ProductService productService;
@@ -3202,8 +3306,17 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductEntity> createProduct(@RequestBody ProductEntity product, @RequestParam(required = false) UUID categoryId) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(product, categoryId));
+    public ResponseEntity<ProductEntity> createProduct(@Valid @RequestBody CreateProductRequest request) {
+        // Converte DTO para Entity
+        ProductEntity product = new ProductEntity();
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setActive(request.getActive());
+        
+        // Passa para o serviço que já trata a categoria
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(productService.saveProduct(product, request.getCategoryId()));
     }
 
     @GetMapping
@@ -3710,7 +3823,11 @@ public class ServiceOrchestrator {
         else if (request.containsKey("total")) value = toBigDecimal(request.get("total"));
 
         Map<String, Object> attributes = new HashMap<>(request);
-        ServiceContext ctx = new ServiceContext("BR", value, attributes);
+        
+        // Usa o país do request se existir, senão default BR
+        String country = (String) attributes.getOrDefault("country", "BR");
+        
+        ServiceContext ctx = new ServiceContext(country, value, attributes);
 
         ResolvedProvider resolved = engine.resolve(type, ctx);
 
@@ -3734,7 +3851,6 @@ public class ServiceOrchestrator {
         Map<String, Object> config = JsonUtils.toMap(configJson);
         Map<String, Object> payload = driver.execute(request, config);
         
-        // --- CORREÇÃO DE SEGURANÇA LÓGICA ---
         // Se o driver reportar erro no payload (ex: timeout, recusado), propagamos como falha.
         boolean driverSuccess = !Boolean.TRUE.equals(payload.get("error"));
 
@@ -4370,6 +4486,34 @@ public class DashboardController {
     }
 }
 
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/admin/AdminOrderController.java ---
+package com.atelie.ecommerce.api.admin;
+
+import com.atelie.ecommerce.application.service.order.OrderService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/admin/orders")
+public class AdminOrderController {
+
+    private final OrderService orderService;
+
+    public AdminOrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancel(@PathVariable UUID id, @RequestBody(required = false) Map<String, String> body) {
+        String reason = (body != null && body.containsKey("reason")) ? body.get("reason") : "Admin request";
+        orderService.cancelOrder(id, reason);
+        return ResponseEntity.ok().build();
+    }
+}
+
 --- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/admin/AdminFeatureFlagController.java ---
 package com.atelie.ecommerce.api.admin;
 
@@ -4454,6 +4598,7 @@ public class AdminConfigController {
 --- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/admin/AdminRuleController.java ---
 package com.atelie.ecommerce.api.admin;
 
+import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceRoutingRuleJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceRoutingRuleEntity;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -4472,11 +4617,13 @@ import java.util.UUID;
 public class AdminRuleController {
 
     private final ServiceRoutingRuleJpaRepository repository;
+    private final ServiceRoutingRuleGateway gateway; // Injeta para refresh
     private final ExpressionParser parser = new SpelExpressionParser();
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public AdminRuleController(ServiceRoutingRuleJpaRepository repository) {
+    public AdminRuleController(ServiceRoutingRuleJpaRepository repository, ServiceRoutingRuleGateway gateway) {
         this.repository = repository;
+        this.gateway = gateway;
     }
 
     @GetMapping
@@ -4489,35 +4636,35 @@ public class AdminRuleController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody ServiceRoutingRuleEntity entity) {
-        try {
-            validateSpel(entity.getMatchJson());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage());
-        }
+        try { validateSpel(entity.getMatchJson()); } 
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage()); }
 
         if (entity.getId() == null) entity.setId(UUID.randomUUID());
         entity.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(repository.save(entity));
+        
+        ServiceRoutingRuleEntity saved = repository.save(entity);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody ServiceRoutingRuleEntity entity) {
         if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-
-        try {
-            validateSpel(entity.getMatchJson());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage());
-        }
+        try { validateSpel(entity.getMatchJson()); } 
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage()); }
 
         entity.setId(id);
         entity.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(repository.save(entity));
+        
+        ServiceRoutingRuleEntity saved = repository.save(entity);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         repository.deleteById(id);
+        gateway.refresh(); // Limpa cache
         return ResponseEntity.noContent().build();
     }
 
@@ -4527,7 +4674,6 @@ public class AdminRuleController {
             JsonNode root = mapper.readTree(json);
             if (root.hasNonNull("expression")) {
                 String expr = root.get("expression").asText();
-                // Tenta fazer parse. Se a sintaxe for inválida, lança SpelParseException
                 parser.parseExpression(expr);
             }
         } catch (Exception e) {
@@ -4591,6 +4737,7 @@ public class AdminProviderConfigController {
 --- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/admin/AdminProviderController.java ---
 package com.atelie.ecommerce.api.admin;
 
+import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
 import org.springframework.http.ResponseEntity;
@@ -4605,9 +4752,11 @@ import java.util.UUID;
 public class AdminProviderController {
 
     private final ServiceProviderJpaRepository repository;
+    private final ServiceProviderGateway gateway; // Injeta o gateway para chamar o refresh
 
-    public AdminProviderController(ServiceProviderJpaRepository repository) {
+    public AdminProviderController(ServiceProviderJpaRepository repository, ServiceProviderGateway gateway) {
         this.repository = repository;
+        this.gateway = gateway;
     }
 
     @GetMapping
@@ -4620,15 +4769,30 @@ public class AdminProviderController {
         if (entity.getId() == null) entity.setId(UUID.randomUUID());
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(repository.save(entity));
+        
+        ServiceProviderEntity saved = repository.save(entity);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ServiceProviderEntity> update(@PathVariable UUID id, @RequestBody ServiceProviderEntity entity) {
-        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-        entity.setId(id);
-        entity.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(repository.save(entity));
+    public ResponseEntity<ServiceProviderEntity> update(@PathVariable UUID id, @RequestBody ServiceProviderEntity dto) {
+        return repository.findById(id)
+            .map(existing -> {
+                existing.setName(dto.getName());
+                existing.setServiceType(dto.getServiceType());
+                existing.setCode(dto.getCode());
+                existing.setPriority(dto.getPriority());
+                existing.setDriverKey(dto.getDriverKey());
+                existing.setHealthEnabled(dto.isHealthEnabled());
+                existing.setEnabled(dto.isEnabled());
+                existing.setUpdatedAt(LocalDateTime.now());
+                
+                ServiceProviderEntity saved = repository.save(existing);
+                gateway.refresh(); // Limpa cache
+                return ResponseEntity.ok(saved);
+            })
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/toggle")
@@ -4637,7 +4801,10 @@ public class AdminProviderController {
                 .map(provider -> {
                     provider.setEnabled(enabled);
                     provider.setUpdatedAt(LocalDateTime.now());
-                    return ResponseEntity.ok(repository.save(provider));
+                    
+                    ServiceProviderEntity saved = repository.save(provider);
+                    gateway.refresh(); // Limpa cache
+                    return ResponseEntity.ok(saved);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

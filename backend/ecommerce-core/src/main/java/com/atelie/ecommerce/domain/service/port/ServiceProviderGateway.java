@@ -9,4 +9,7 @@ import java.util.Optional;
 public interface ServiceProviderGateway {
     List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type);
     Optional<ServiceProvider> findByCode(ServiceType type, String code);
+    
+    // Contrato para limpeza de cache
+    void refresh();
 }

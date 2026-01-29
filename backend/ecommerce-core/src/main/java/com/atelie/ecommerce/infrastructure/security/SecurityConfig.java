@@ -2,6 +2,7 @@ package com.atelie.ecommerce.infrastructure.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,15 +25,24 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Rotas Públicas Essenciais
+                // --- PÚBLICO (Vitrine e Infra) ---
                 .requestMatchers("/api/auth/**", "/api/webhooks/**").permitAll()
                 .requestMatchers("/api/shipping/quote").permitAll()
-                
-                // Observabilidade e Docs (Liberado para facilitar dev/dashboard - proteger em prod!)
                 .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll() // Imagens dos produtos
                 
-                // Admin e outros requerem auth
-                .requestMatchers("/api/admin/**").authenticated()
+                // Leitura de Catálogo (Vitrine) é pública
+                .requestMatchers(HttpMethod.GET, "/api/products/**", "/categories/**").permitAll()
+
+                // --- RESTRITO AO ADMIN (Gestão da Loja) ---
+                // Qualquer escrita em produtos, estoque, categorias ou acesso ao dashboard/admin
+                .requestMatchers("/api/admin/**", "/api/dashboard/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/products/**", "/categories/**", "/api/inventory/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/products/**", "/categories/**", "/api/inventory/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/categories/**").hasRole("ADMIN")
+                
+                // --- CLIENTE (Autenticado) ---
+                // Compras, Perfil, etc.
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -52,7 +52,7 @@ public class OrderService {
             ProductEntity product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
 
-            // Baixa atômica de estoque
+            // Reserva Estoque
             inventoryService.addMovement(
                     product.getId(),
                     MovementType.OUT,
@@ -81,17 +81,47 @@ public class OrderService {
         return orderRepository.save(order);
     }
     
-    // Aprovação chamada pelo Webhook
     @Transactional
     public void approveOrder(UUID orderId) {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
+        // Garante idempotência
         if (!OrderStatus.PAID.name().equals(order.getStatus())) {
             order.setStatus(OrderStatus.PAID.name());
             orderRepository.save(order);
             System.out.println("PEDIDO APROVADO: " + orderId);
         }
+    }
+
+    // --- NOVO: Cancelar Pedido e Devolver Estoque ---
+    @Transactional
+    public void cancelOrder(UUID orderId, String reason) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+
+        if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
+            return; // Já cancelado
+        }
+        
+        if (OrderStatus.SHIPPED.name().equals(order.getStatus())) {
+            throw new IllegalStateException("Não é possível cancelar pedido já enviado.");
+        }
+
+        // Estorno do estoque item a item
+        for (OrderItemEntity item : order.getItems()) {
+            inventoryService.addMovement(
+                item.getProduct().getId(),
+                MovementType.IN, // Devolução
+                item.getQuantity(),
+                "Cancel Order " + orderId + ": " + reason,
+                orderId.toString()
+            );
+        }
+
+        order.setStatus(OrderStatus.CANCELED.name());
+        orderRepository.save(order);
+        System.out.println("PEDIDO CANCELADO E ESTOQUE ESTORNADO: " + orderId);
     }
 
     public List<OrderEntity> getAllOrders() {

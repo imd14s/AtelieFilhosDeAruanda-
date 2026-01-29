@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.api.admin;
 
+import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceRoutingRuleJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceRoutingRuleEntity;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,11 +19,13 @@ import java.util.UUID;
 public class AdminRuleController {
 
     private final ServiceRoutingRuleJpaRepository repository;
+    private final ServiceRoutingRuleGateway gateway; // Injeta para refresh
     private final ExpressionParser parser = new SpelExpressionParser();
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public AdminRuleController(ServiceRoutingRuleJpaRepository repository) {
+    public AdminRuleController(ServiceRoutingRuleJpaRepository repository, ServiceRoutingRuleGateway gateway) {
         this.repository = repository;
+        this.gateway = gateway;
     }
 
     @GetMapping
@@ -35,35 +38,35 @@ public class AdminRuleController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody ServiceRoutingRuleEntity entity) {
-        try {
-            validateSpel(entity.getMatchJson());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage());
-        }
+        try { validateSpel(entity.getMatchJson()); } 
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage()); }
 
         if (entity.getId() == null) entity.setId(UUID.randomUUID());
         entity.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(repository.save(entity));
+        
+        ServiceRoutingRuleEntity saved = repository.save(entity);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody ServiceRoutingRuleEntity entity) {
         if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-
-        try {
-            validateSpel(entity.getMatchJson());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage());
-        }
+        try { validateSpel(entity.getMatchJson()); } 
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage()); }
 
         entity.setId(id);
         entity.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(repository.save(entity));
+        
+        ServiceRoutingRuleEntity saved = repository.save(entity);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         repository.deleteById(id);
+        gateway.refresh(); // Limpa cache
         return ResponseEntity.noContent().build();
     }
 
@@ -73,7 +76,6 @@ public class AdminRuleController {
             JsonNode root = mapper.readTree(json);
             if (root.hasNonNull("expression")) {
                 String expr = root.get("expression").asText();
-                // Tenta fazer parse. Se a sintaxe for inválida, lança SpelParseException
                 parser.parseExpression(expr);
             }
         } catch (Exception e) {

@@ -1,15 +1,16 @@
 package com.atelie.ecommerce.api.catalog.product;
 
+import com.atelie.ecommerce.api.catalog.product.dto.CreateProductRequest;
 import com.atelie.ecommerce.application.service.catalog.product.ProductService;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/products") // Prefixo /api restaurado
+@RequestMapping("/api/products")
 public class ProductController {
 
     private final ProductService productService;
@@ -19,8 +20,17 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductEntity> createProduct(@RequestBody ProductEntity product, @RequestParam(required = false) UUID categoryId) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(product, categoryId));
+    public ResponseEntity<ProductEntity> createProduct(@Valid @RequestBody CreateProductRequest request) {
+        // Converte DTO para Entity
+        ProductEntity product = new ProductEntity();
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setActive(request.getActive());
+        
+        // Passa para o serviço que já trata a categoria
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(productService.saveProduct(product, request.getCategoryId()));
     }
 
     @GetMapping
