@@ -37,6 +37,10 @@ public class OrderEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    // --- CORREÇÃO DE CONCORRÊNCIA ---
+    @Version
+    private Long version;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<OrderItemEntity> items;
 }

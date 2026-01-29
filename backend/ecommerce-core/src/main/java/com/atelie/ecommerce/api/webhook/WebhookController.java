@@ -17,7 +17,6 @@ public class WebhookController {
 
     private final OrderService orderService;
     
-    // Token fixo para simplificar. Em produção, use DynamicConfigService.
     @Value("${WEBHOOK_SECRET:my-secret-webhook-key}")
     private String webhookSecret;
 
@@ -30,13 +29,15 @@ public class WebhookController {
             @RequestBody Map<String, Object> payload,
             @RequestParam(value = "token", required = false) String token) {
         
-        // --- SEGURANÇA: Validação de Token ---
         if (token == null || !token.equals(webhookSecret)) {
             log.warn("Tentativa de webhook não autorizado. IP suspeito.");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Webhook Token");
         }
 
-        log.info("Webhook Recebido e Validado: {}", payload);
+        // CORREÇÃO: Logar apenas metadados seguros, nunca o payload completo
+        Object extRef = payload.get("external_reference");
+        Object status = payload.get("status");
+        log.info("Webhook MP recebido. Ref: {}, Status: {}", extRef, status);
 
         String orderIdStr = null;
         if (payload.containsKey("external_reference")) {
@@ -45,17 +46,23 @@ public class WebhookController {
              orderIdStr = payload.get("order_id").toString();
         }
 
-        String status = (String) payload.getOrDefault("status", "unknown");
+        if (orderIdStr == null) return ResponseEntity.ok().build();
 
-        if (orderIdStr != null && "approved".equalsIgnoreCase(status)) {
-            try {
-                UUID orderId = UUID.fromString(orderIdStr);
+        try {
+            UUID orderId = UUID.fromString(orderIdStr);
+            String statusStr = (String) payload.getOrDefault("status", "unknown");
+
+            if ("approved".equalsIgnoreCase(statusStr)) {
                 orderService.approveOrder(orderId);
-                log.info("Pedido {} atualizado para PAID via Webhook.", orderId);
-            } catch (Exception e) {
-                log.error("Erro ao processar webhook para pedido " + orderIdStr, e);
-                return ResponseEntity.badRequest().build();
+            } 
+            else if ("rejected".equalsIgnoreCase(statusStr) || "cancelled".equalsIgnoreCase(statusStr)) {
+                orderService.cancelOrder(orderId, "Pagamento " + statusStr);
             }
+
+        } catch (Exception e) {
+            log.error("Erro processando webhook ref {}", orderIdStr, e);
+            // Retorna 200 para o MP parar de tentar (pois é erro interno nosso ou dados inválidos)
+            return ResponseEntity.ok().build();
         }
 
         return ResponseEntity.ok().build();

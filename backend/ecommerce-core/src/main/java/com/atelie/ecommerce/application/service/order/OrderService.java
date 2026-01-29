@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.application.service.order;
 
+import com.atelie.ecommerce.api.common.exception.ConflictException;
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
 import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
@@ -11,6 +12,7 @@ import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,12 +54,10 @@ public class OrderService {
             ProductEntity product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
 
-            // --- CORREÇÃO DE NEGÓCIO: Impede compra de produto arquivado/inativo ---
             if (Boolean.FALSE.equals(product.getActive())) {
-                throw new IllegalStateException("O produto '" + product.getName() + "' não está mais disponível para venda.");
+                throw new IllegalStateException("O produto '" + product.getName() + "' não está mais disponível.");
             }
 
-            // Reserva Estoque (Atômico)
             inventoryService.addMovement(
                     product.getId(),
                     MovementType.OUT,
@@ -88,46 +88,51 @@ public class OrderService {
     
     @Transactional
     public void approveOrder(UUID orderId) {
-        OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+        try {
+            OrderEntity order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
-            throw new IllegalStateException("Tentativa de aprovar pedido CANCELADO. Verifique o estoque manualmente.");
-        }
+            if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
+                throw new IllegalStateException("Pedido CANCELADO. Impossível aprovar.");
+            }
 
-        if (!OrderStatus.PAID.name().equals(order.getStatus())) {
-            order.setStatus(OrderStatus.PAID.name());
-            orderRepository.save(order);
-            System.out.println("PEDIDO APROVADO: " + orderId);
+            if (!OrderStatus.PAID.name().equals(order.getStatus())) {
+                order.setStatus(OrderStatus.PAID.name());
+                orderRepository.save(order); // @Version será checado aqui
+                System.out.println("PEDIDO APROVADO: " + orderId);
+            }
+        } catch (OptimisticLockingFailureException e) {
+            throw new ConflictException("O pedido foi modificado por outro processo. Tente novamente.");
         }
     }
 
     @Transactional
     public void cancelOrder(UUID orderId, String reason) {
-        OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+        try {
+            OrderEntity order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
-            return;
-        }
-        
-        if (OrderStatus.SHIPPED.name().equals(order.getStatus())) {
-            throw new IllegalStateException("Não é possível cancelar pedido já enviado.");
-        }
+            if (OrderStatus.CANCELED.name().equals(order.getStatus())) return;
+            if (OrderStatus.SHIPPED.name().equals(order.getStatus())) {
+                throw new IllegalStateException("Impossível cancelar pedido enviado.");
+            }
 
-        for (OrderItemEntity item : order.getItems()) {
-            inventoryService.addMovement(
-                item.getProduct().getId(),
-                MovementType.IN,
-                item.getQuantity(),
-                "Cancel Order " + orderId + ": " + reason,
-                orderId.toString()
-            );
-        }
+            for (OrderItemEntity item : order.getItems()) {
+                inventoryService.addMovement(
+                    item.getProduct().getId(),
+                    MovementType.IN,
+                    item.getQuantity(),
+                    "Cancel Order " + orderId + ": " + reason,
+                    orderId.toString()
+                );
+            }
 
-        order.setStatus(OrderStatus.CANCELED.name());
-        orderRepository.save(order);
-        System.out.println("PEDIDO CANCELADO E ESTOQUE ESTORNADO: " + orderId);
+            order.setStatus(OrderStatus.CANCELED.name());
+            orderRepository.save(order); // @Version será checado aqui
+            System.out.println("PEDIDO CANCELADO: " + orderId);
+        } catch (OptimisticLockingFailureException e) {
+            throw new ConflictException("Conflito de estado ao cancelar. Verifique o status atual.");
+        }
     }
 
     public List<OrderEntity> getAllOrders() {
