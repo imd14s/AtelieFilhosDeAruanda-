@@ -8,7 +8,7 @@ RUN mvn clean package -DskipTests
 # Etapa de Execução (Imagem Final Leve)
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=builder /build/target/*.jar app.jar
+COPY --from=builder /build/target/ecommerce-core-0.0.1-SNAPSHOT.jar app.jar
 
 # Expõe a porta
 EXPOSE 8080

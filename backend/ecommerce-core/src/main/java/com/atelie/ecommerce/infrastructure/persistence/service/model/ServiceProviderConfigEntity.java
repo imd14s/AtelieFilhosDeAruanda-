@@ -24,7 +24,7 @@ public class ServiceProviderConfigEntity {
     @Column(name = "secrets_ref", length = 200)
     private String secretsRef;
 
-    @Column(name = "config_json", nullable = false, columnDefinition = "CLOB")
+    @Column(name = "config_json", nullable = false, columnDefinition = "jsonb")
     private String configJson;
 
     @Column(name = "version", nullable = false)

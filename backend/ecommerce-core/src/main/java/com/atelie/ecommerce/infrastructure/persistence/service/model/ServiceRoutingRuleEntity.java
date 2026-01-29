@@ -27,10 +27,10 @@ public class ServiceRoutingRuleEntity {
     @Column(name = "priority", nullable = false)
     private int priority;
 
-    @Column(name = "match_json", nullable = false, columnDefinition = "CLOB")
+    @Column(name = "match_json", nullable = false, columnDefinition = "jsonb")
     private String matchJson;
 
-    @Column(name = "behavior_json", columnDefinition = "CLOB")
+    @Column(name = "behavior_json", columnDefinition = "jsonb")
     private String behaviorJson;
 
     @Column(name = "updated_at", nullable = false)

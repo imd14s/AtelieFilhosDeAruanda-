@@ -19,7 +19,8 @@ public class ProductEntity {
     private String description;
     private BigDecimal price;
     private Integer stockQuantity;
-    private String category; 
+    @Column(name="category_id", nullable=false)
+    private UUID categoryId; 
     private String imageUrl; // Campo que faltava para o ProductImageController
     private Boolean active;
     private Boolean alertEnabled;

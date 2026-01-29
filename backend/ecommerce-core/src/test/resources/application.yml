@@ -1,33 +1,27 @@
 spring:
+  profiles:
+    active: test
+
+    spring:
   application:
-    name: Atelie-Test-Core
-  
+    name: ecommerce-core
+
+  # BASELINE neutro: defina via ENV em prod/dev.
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
-  
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ecommerce}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:postgres}
+
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
 
   flyway:
-    enabled: false
+    enabled: true
+    locations: classpath:db/migration
 
-api:
-  security:
-    token:
-      secret: 4d3f5g6h7j8k9l0m1n2o3p4q5r6s7t8u9v0w1x2y3z
-      expiration: 86400000
-
-mp:
-  access:
-    token: test_token
-  webhook:
-    secret: test_secret
+server:
+  port: ${PORT:8080}

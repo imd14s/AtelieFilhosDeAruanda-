@@ -1,6 +1,5 @@
 package com.atelie.ecommerce.application.service.inventory;
 
-import com.atelie.ecommerce.application.service.inventory.InventoryService;
 import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.domain.inventory.event.InventoryChangedEvent;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
@@ -31,32 +30,40 @@ public class InventoryService {
 
     @Transactional(readOnly = true)
     public Integer getStock(UUID productId) {
-        if (!productRepository.existsById(productId)) {
-            throw new NotFoundException("Product not found");
-        }
-        return inventoryRepository.calculateCurrentStock(productId);
+        // Leitura rápida direto da tabela de produtos (snapshot atual)
+        return productRepository.findById(productId)
+                .map(ProductEntity::getStockQuantity)
+                .orElseThrow(() -> new NotFoundException("Product not found"));
     }
 
     @Transactional
     public void addMovement(UUID productId, MovementType type, Integer quantity, String reason, String refId) {
-        ProductEntity product = productRepository.findById(productId)
+        // 1. LOCK: Garante que ninguém mais mexa nesse produto nesta transação
+        ProductEntity product = productRepository.findByIdWithLock(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
-        Integer currentStock = inventoryRepository.calculateCurrentStock(productId);
+        Integer currentStock = product.getStockQuantity();
+        if (currentStock == null) currentStock = 0;
 
+        // 2. Validação de Regra de Negócio
         if (type == MovementType.OUT) {
             if (currentStock < quantity) {
                 throw new IllegalArgumentException("Insufficient stock. Current: " + currentStock + ", Required: " + quantity);
             }
         }
 
+        // 3. Log de Auditoria (Histórico)
         InventoryMovementEntity movement = new InventoryMovementEntity(
                 product, type, quantity, reason, refId
         );
         inventoryRepository.save(movement);
         
-        // Calcula novo saldo e dispara evento
+        // 4. Atualização do Saldo (Snapshot Rápido)
         int newBalance = (type == MovementType.IN) ? currentStock + quantity : currentStock - quantity;
+        product.setStockQuantity(newBalance);
+        productRepository.save(product);
+
+        // 5. Dispara evento para integrações/notificações
         eventPublisher.publishEvent(new InventoryChangedEvent(productId, newBalance));
     }
 }

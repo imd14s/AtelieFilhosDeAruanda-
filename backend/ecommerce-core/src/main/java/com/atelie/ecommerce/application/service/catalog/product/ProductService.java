@@ -24,7 +24,7 @@ public class ProductService {
             CategoryEntity category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
             // Atribui o nome da categoria como String no produto
-            product.setCategory(category.getName());
+            product.setCategoryId(category.getId());
         }
         return productRepository.save(product);
     }

@@ -4,6 +4,7 @@ import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @Service
@@ -28,7 +29,7 @@ public class OrderService {
         return orderRepository.findAll();
     }
     
-    public Optional<OrderEntity> findById(Long id) {
+    public Optional<OrderEntity> findById(UUID id) {
         return orderRepository.findById(id);
     }
 }

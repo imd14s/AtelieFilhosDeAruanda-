@@ -5,13 +5,11 @@ import com.atelie.ecommerce.domain.service.engine.ServiceContext;
 import com.atelie.ecommerce.domain.service.engine.ServiceEngine;
 import com.atelie.ecommerce.domain.service.model.ServiceType;
 import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
 public class ServiceOrchestrator {
 
     private final ServiceEngine engine;

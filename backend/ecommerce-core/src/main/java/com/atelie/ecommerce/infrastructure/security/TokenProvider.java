@@ -9,20 +9,23 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 @Component
 public class TokenProvider {
 
-    // Na vida real, isso viria do application.properties. 
-    // Para simplificar o setup agora, vou gerar uma chave fixa forte aqui.
-    private static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
-    
-    private final Key key = Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(SECRET));
+    @Value("${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}")
+    private String secret;
+
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(secret));
+    }
 
     public String generateToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();

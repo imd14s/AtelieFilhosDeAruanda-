@@ -1,5 +1,5 @@
 -- Habilita a extensão para gerar UUIDs (Apenas se for Postgres, ignora erro no H2)
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE users (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

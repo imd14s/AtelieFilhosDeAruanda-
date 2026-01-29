@@ -1,7 +1,6 @@
 package com.atelie.ecommerce;
 
 import com.atelie.ecommerce.infrastructure.security.SecurityConfig;
-import com.atelie.ecommerce.infrastructure.security.TestSecurityConfig;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
@@ -13,7 +12,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @WebMvcTest
-@Import(TestSecurityConfig.class)
+@Import(TestMocksConfig.class)
 public @interface ControllerTest {
     @AliasFor(annotation = WebMvcTest.class, attribute = "controllers")
     Class<?>[] controllers() default {};
