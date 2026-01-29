@@ -1,5 +1,0 @@
-CREATE TABLE categories (
-  id UUID PRIMARY KEY,
-  name VARCHAR(120) NOT NULL UNIQUE,
-  active BOOLEAN NOT NULL
-);
