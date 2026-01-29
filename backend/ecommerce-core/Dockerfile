@@ -19,5 +19,5 @@ VOLUME /app/uploads
 # Expõe a porta
 EXPOSE 8080
 
-# Comando de entrada
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Comando de entrada com Timezone UTC explícito
+ENTRYPOINT ["java", "-Duser.timezone=UTC", "-jar", "app.jar"]

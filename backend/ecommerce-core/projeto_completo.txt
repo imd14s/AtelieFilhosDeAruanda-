@@ -548,7 +548,6 @@ spring:
   application:
     name: ecommerce-core
 
-  # BASELINE neutro: defina via ENV em prod/dev.
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ecommerce}
     username: ${DB_USER:postgres}
@@ -565,8 +564,10 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+# CORREÇÃO: Permite que o Spring entenda que está atrás de um proxy (https)
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: native
 
 --- ARQUIVO: ./src/main/java/com/atelie/ecommerce/EcommerceApplication.java ---
 package com.atelie.ecommerce;
@@ -930,6 +931,7 @@ public class FileStorageService {
 --- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/service/order/OrderService.java ---
 package com.atelie.ecommerce.application.service.order;
 
+import com.atelie.ecommerce.api.common.exception.ConflictException;
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
 import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
@@ -941,6 +943,7 @@ import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -982,12 +985,10 @@ public class OrderService {
             ProductEntity product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
 
-            // --- CORREÇÃO DE NEGÓCIO: Impede compra de produto arquivado/inativo ---
             if (Boolean.FALSE.equals(product.getActive())) {
-                throw new IllegalStateException("O produto '" + product.getName() + "' não está mais disponível para venda.");
+                throw new IllegalStateException("O produto '" + product.getName() + "' não está mais disponível.");
             }
 
-            // Reserva Estoque (Atômico)
             inventoryService.addMovement(
                     product.getId(),
                     MovementType.OUT,
@@ -1018,46 +1019,51 @@ public class OrderService {
     
     @Transactional
     public void approveOrder(UUID orderId) {
-        OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+        try {
+            OrderEntity order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
-            throw new IllegalStateException("Tentativa de aprovar pedido CANCELADO. Verifique o estoque manualmente.");
-        }
+            if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
+                throw new IllegalStateException("Pedido CANCELADO. Impossível aprovar.");
+            }
 
-        if (!OrderStatus.PAID.name().equals(order.getStatus())) {
-            order.setStatus(OrderStatus.PAID.name());
-            orderRepository.save(order);
-            System.out.println("PEDIDO APROVADO: " + orderId);
+            if (!OrderStatus.PAID.name().equals(order.getStatus())) {
+                order.setStatus(OrderStatus.PAID.name());
+                orderRepository.save(order); // @Version será checado aqui
+                System.out.println("PEDIDO APROVADO: " + orderId);
+            }
+        } catch (OptimisticLockingFailureException e) {
+            throw new ConflictException("O pedido foi modificado por outro processo. Tente novamente.");
         }
     }
 
     @Transactional
     public void cancelOrder(UUID orderId, String reason) {
-        OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+        try {
+            OrderEntity order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
-            return;
-        }
-        
-        if (OrderStatus.SHIPPED.name().equals(order.getStatus())) {
-            throw new IllegalStateException("Não é possível cancelar pedido já enviado.");
-        }
+            if (OrderStatus.CANCELED.name().equals(order.getStatus())) return;
+            if (OrderStatus.SHIPPED.name().equals(order.getStatus())) {
+                throw new IllegalStateException("Impossível cancelar pedido enviado.");
+            }
 
-        for (OrderItemEntity item : order.getItems()) {
-            inventoryService.addMovement(
-                item.getProduct().getId(),
-                MovementType.IN,
-                item.getQuantity(),
-                "Cancel Order " + orderId + ": " + reason,
-                orderId.toString()
-            );
-        }
+            for (OrderItemEntity item : order.getItems()) {
+                inventoryService.addMovement(
+                    item.getProduct().getId(),
+                    MovementType.IN,
+                    item.getQuantity(),
+                    "Cancel Order " + orderId + ": " + reason,
+                    orderId.toString()
+                );
+            }
 
-        order.setStatus(OrderStatus.CANCELED.name());
-        orderRepository.save(order);
-        System.out.println("PEDIDO CANCELADO E ESTOQUE ESTORNADO: " + orderId);
+            order.setStatus(OrderStatus.CANCELED.name());
+            orderRepository.save(order); // @Version será checado aqui
+            System.out.println("PEDIDO CANCELADO: " + orderId);
+        } catch (OptimisticLockingFailureException e) {
+            throw new ConflictException("Conflito de estado ao cancelar. Verifique o status atual.");
+        }
     }
 
     public List<OrderEntity> getAllOrders() {
@@ -1835,6 +1841,10 @@ public class OrderEntity {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    // --- CORREÇÃO DE CONCORRÊNCIA ---
+    @Version
+    private Long version;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<OrderItemEntity> items;
@@ -3563,11 +3573,14 @@ public class WebhookController {
             @RequestParam(value = "token", required = false) String token) {
         
         if (token == null || !token.equals(webhookSecret)) {
-            log.warn("Tentativa de webhook não autorizado.");
+            log.warn("Tentativa de webhook não autorizado. IP suspeito.");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Webhook Token");
         }
 
-        log.info("Webhook Payload: {}", payload);
+        // CORREÇÃO: Logar apenas metadados seguros, nunca o payload completo
+        Object extRef = payload.get("external_reference");
+        Object status = payload.get("status");
+        log.info("Webhook MP recebido. Ref: {}, Status: {}", extRef, status);
 
         String orderIdStr = null;
         if (payload.containsKey("external_reference")) {
@@ -3578,24 +3591,20 @@ public class WebhookController {
 
         if (orderIdStr == null) return ResponseEntity.ok().build();
 
-        String status = (String) payload.getOrDefault("status", "unknown");
-
         try {
             UUID orderId = UUID.fromString(orderIdStr);
+            String statusStr = (String) payload.getOrDefault("status", "unknown");
 
-            if ("approved".equalsIgnoreCase(status)) {
+            if ("approved".equalsIgnoreCase(statusStr)) {
                 orderService.approveOrder(orderId);
-                log.info("Pedido {} PAGO.", orderId);
             } 
-            // CORREÇÃO: Trata rejeição/cancelamento para liberar estoque
-            else if ("rejected".equalsIgnoreCase(status) || "cancelled".equalsIgnoreCase(status)) {
-                orderService.cancelOrder(orderId, "Pagamento rejeitado/cancelado via Webhook: " + status);
-                log.info("Pedido {} CANCELADO (Estoque liberado).", orderId);
+            else if ("rejected".equalsIgnoreCase(statusStr) || "cancelled".equalsIgnoreCase(statusStr)) {
+                orderService.cancelOrder(orderId, "Pagamento " + statusStr);
             }
 
         } catch (Exception e) {
-            log.error("Erro ao processar webhook para pedido " + orderIdStr, e);
-            // Retorna OK para não travar o sender do webhook, mas loga erro
+            log.error("Erro processando webhook ref {}", orderIdStr, e);
+            // Retorna 200 para o MP parar de tentar (pois é erro interno nosso ou dados inválidos)
             return ResponseEntity.ok().build();
         }
 
