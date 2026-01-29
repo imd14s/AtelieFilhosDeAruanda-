@@ -25,7 +25,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductEntity> createProduct(@Valid @RequestBody CreateProductRequest request) {
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
         ProductEntity product = new ProductEntity();
         product.setName(request.getName());
         product.setDescription(request.getDescription());
@@ -33,8 +33,8 @@ public class ProductController {
         product.setActive(request.getActive());
         product.setId(null);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(productService.saveProduct(product, request.getCategoryId()));
+        ProductEntity saved = productService.saveProduct(product, request.getCategoryId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
     }
 
     @GetMapping
@@ -45,11 +45,10 @@ public class ProductController {
     }
 
     private ProductResponse toResponse(ProductEntity entity) {
-        // CORREÇÃO: Gera a URL completa dinamicamente baseado no request atual
         String fullImageUrl = null;
         if (entity.getImageUrl() != null && !entity.getImageUrl().isBlank()) {
             if (entity.getImageUrl().startsWith("http")) {
-                fullImageUrl = entity.getImageUrl(); // Legado
+                fullImageUrl = entity.getImageUrl();
             } else {
                 fullImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                         .path("/uploads/")
@@ -66,10 +65,7 @@ public class ProductController {
                 entity.getCategoryId(),
                 entity.getActive()
         );
-        // Assumindo que ProductResponse tem setter ou construtor para imagem (ajustar DTO se necessário)
-        // Como o DTO ProductResponse é simples, em produção adicionaríamos o campo 'imageUrl'.
-        // Para este script manter compatibilidade, injetamos no payload se possível ou mantemos simples.
-        
+        response.setImageUrl(fullImageUrl);
         return response;
     }
 }

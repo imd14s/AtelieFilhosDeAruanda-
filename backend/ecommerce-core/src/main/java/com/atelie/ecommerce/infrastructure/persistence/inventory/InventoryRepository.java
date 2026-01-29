@@ -11,12 +11,19 @@ import java.util.UUID;
 @Repository
 public interface InventoryRepository extends JpaRepository<InventoryMovementEntity, UUID> {
 
-    // --- CORREÇÃO DE PERFORMANCE ---
-    // Consulta direta na tabela de produtos (rápida) ao invés de somar histórico (lenta)
-    @Query("SELECT COUNT(p) FROM ProductEntity p WHERE p.stockQuantity < :threshold AND p.active = true AND p.alertEnabled = true")
+    // --- CRITICAL FIX: Query Variant Table instead of Product Table ---
+    // Counts variants with low stock, considering only active products that have alerts enabled.
+    @Query("""
+        SELECT COUNT(v) 
+        FROM ProductVariantEntity v 
+        JOIN v.product p 
+        WHERE v.stockQuantity < :threshold 
+          AND v.active = true 
+          AND p.active = true 
+          AND p.alertEnabled = true
+    """)
     long countLowStockProducts(@Param("threshold") int threshold);
 
-    // Mantido apenas para auditoria se necessário, mas não para operação diária
     @Query("SELECT COALESCE(SUM(CASE WHEN m.type = 'IN' THEN m.quantity WHEN m.type = 'OUT' THEN -m.quantity ELSE 0 END), 0) FROM InventoryMovementEntity m WHERE m.product.id = :productId")
     Integer auditCalculatedStock(@Param("productId") UUID productId);
 }

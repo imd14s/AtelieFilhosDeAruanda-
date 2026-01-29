@@ -23,8 +23,8 @@ public class WebhookController {
     private final OrderService orderService;
     private final OrderRepository orderRepository;
     private final InvoiceService invoiceService;
-    
-    @Value("${WEBHOOK_SECRET:my-secret-webhook-key}")
+
+    @Value("${WEBHOOK_SECRET}")
     private String webhookSecret;
 
     public WebhookController(OrderService orderService, OrderRepository orderRepository, InvoiceService invoiceService) {
@@ -36,9 +36,23 @@ public class WebhookController {
     @PostMapping("/mercadopago")
     public ResponseEntity<?> handleMercadoPago(
             @RequestBody Map<String, Object> payload,
-            @RequestParam(value = "token", required = false) String token) {
+            @RequestHeader(value = "X-Webhook-Token", required = false) String token) {
         
-        if (token == null || !token.equals(webhookSecret)) {
+        // CORREÇÃO DE SEGURANÇA: Validação via Header, não via URL
+        if (webhookSecret == null || webhookSecret.isBlank()) {
+            log.error("WEBHOOK_SECRET não configurada.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Webhook not configured");
+        }
+
+        if (token == null) {
+            log.warn("Tentativa de acesso ao Webhook sem token.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Webhook Token");
+        }
+
+        byte[] a = token.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] b = webhookSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (!java.security.MessageDigest.isEqual(a, b)) {
+            log.warn("Tentativa de acesso ao Webhook com token inválido.");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Webhook Token");
         }
 
@@ -59,7 +73,7 @@ public class WebhookController {
                 validatePaymentAmount(orderId, payload);
                 orderService.approveOrder(orderId);
                 
-                // --- NOVO: Emite nota fiscal automaticamente ---
+                // Emite nota fiscal automaticamente
                 invoiceService.emitInvoiceForOrder(orderId);
                 log.info("Processo de NFe iniciado para pedido {}", orderId);
             } 
@@ -81,7 +95,7 @@ public class WebhookController {
             BigDecimal paidAmount = new BigDecimal(payload.get("transaction_amount").toString());
             OrderEntity order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
-            
+
             if (paidAmount.compareTo(order.getTotalAmount()) < 0) {
                 throw new SecurityException("Valor pago menor que o total");
             }

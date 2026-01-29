@@ -2,7 +2,6 @@ package com.atelie.ecommerce.api.admin;
 
 import com.atelie.ecommerce.infrastructure.persistence.feature.FeatureFlagEntity;
 import com.atelie.ecommerce.infrastructure.persistence.feature.FeatureFlagRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

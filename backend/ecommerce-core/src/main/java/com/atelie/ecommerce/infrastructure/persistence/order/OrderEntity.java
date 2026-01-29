@@ -41,6 +41,6 @@ public class OrderEntity {
     @Version
     private Long version;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItemEntity> items;
 }

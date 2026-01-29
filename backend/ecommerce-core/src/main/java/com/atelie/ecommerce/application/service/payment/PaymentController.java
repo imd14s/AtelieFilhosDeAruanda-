@@ -1,10 +1,10 @@
 package com.atelie.ecommerce.application.service.payment;
 
+import com.atelie.ecommerce.api.payment.dto.PaymentResponse;
+import com.atelie.ecommerce.application.service.payment.dto.CreatePixPaymentRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.math.BigDecimal;
-import java.util.UUID;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -17,13 +17,13 @@ public class PaymentController {
     }
 
     @PostMapping("/pix")
-    public ResponseEntity<?> createPayment(@RequestBody Map<String, Object> request) {
-        UUID orderId = UUID.fromString(request.get("orderId").toString());
-        String email = (String) request.get("email");
-        String cpf = (String) request.get("cpf");
-        BigDecimal amount = new BigDecimal(request.get("amount").toString());
-
-        Map<String, Object> response = paymentService.createPixPayment(orderId, email, cpf, amount);
+    public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePixPaymentRequest req) {
+        PaymentResponse response = paymentService.createPixPayment(
+                req.orderId(),
+                req.email(),
+                req.cpf(),
+                req.amount()
+        );
         return ResponseEntity.ok(response);
     }
 }

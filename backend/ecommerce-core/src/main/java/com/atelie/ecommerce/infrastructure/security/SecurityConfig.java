@@ -21,8 +21,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
 
-    // Lê a variável de ambiente ou usa "*" como padrão (apenas para dev)
-    @Value("${CORS_ALLOWED_ORIGINS:*}")
+    // Default mais seguro: permite apenas localhost em vez de *
+    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000}")
     private List<String> allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
@@ -44,6 +44,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/categories/**").permitAll()
 
                 .requestMatchers("/api/admin/**", "/api/dashboard/**").hasRole("ADMIN")
+                
                 .requestMatchers(HttpMethod.POST, "/api/products/**", "/categories/**", "/api/inventory/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/products/**", "/categories/**", "/api/inventory/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/categories/**").hasRole("ADMIN")
@@ -59,7 +60,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Configuração Dinâmica baseada na Variável de Ambiente
+        // Aplica a configuração lida do .env
         configuration.setAllowedOriginPatterns(allowedOrigins);
         
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

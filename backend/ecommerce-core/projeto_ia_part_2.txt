@@ -1,0 +1,1323 @@
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/service/order/OrderService.java ---
+package com.atelie.ecommerce.application.service.order;
+
+import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
+import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
+import com.atelie.ecommerce.application.service.inventory.InventoryService;
+import com.atelie.ecommerce.domain.inventory.MovementType;
+import com.atelie.ecommerce.domain.order.OrderStatus;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemEntity;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
+    private final ProductVariantRepository variantRepository;
+    private final InventoryService inventoryService;
+
+    public OrderService(OrderRepository orderRepository,
+                        ProductRepository productRepository,
+                        ProductVariantRepository variantRepository,
+                        InventoryService inventoryService) {
+        this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
+        this.variantRepository = variantRepository;
+        this.inventoryService = inventoryService;
+    }
+
+    @Transactional
+    public OrderEntity createOrder(CreateOrderRequest request) {
+        OrderEntity order = new OrderEntity();
+        order.setId(UUID.randomUUID());
+        order.setSource(request.source());
+        order.setExternalId(request.externalId() != null ? request.externalId() : order.getId().toString());
+        order.setCustomerName(request.customerName());
+        order.setStatus(OrderStatus.PENDING.name());
+        order.setCreatedAt(Instant.now());
+        
+        List<OrderItemEntity> items = new ArrayList<>();
+        BigDecimal totalOrder = BigDecimal.ZERO;
+
+        for (CreateOrderItemRequest itemReq : request.items()) {
+            ProductEntity product = productRepository.findById(itemReq.productId())
+                    .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
+
+            if (Boolean.FALSE.equals(product.getActive())) {
+                throw new IllegalStateException("O produto '" + product.getName() + "' não está mais disponível.");
+            }
+
+            // --- CORREÇÃO DA LÓGICA DE VARIANTE ---
+            UUID targetVariantId = itemReq.variantId();
+            ProductVariantEntity variant;
+
+            if (targetVariantId != null) {
+                // Captura o ID em variável final para usar na lambda
+                final UUID lookupId = targetVariantId;
+                variant = variantRepository.findById(targetVariantId)
+                    .orElseThrow(() -> new NotFoundException("Variante não encontrada: " + lookupId));
+            } else {
+                // Fallback: Tenta achar a variante default criada na migração
+                var variants = variantRepository.findByProductId(product.getId());
+                if (!variants.isEmpty()) {
+                    variant = variants.get(0); // Pega a primeira/default
+                    targetVariantId = variant.getId(); // Atualiza o ID alvo
+                } else {
+                    throw new IllegalStateException("Produto sem variantes cadastradas. Impossível baixar estoque.");
+                }
+            }
+
+            // Baixa estoque na VARIANTE correta
+            inventoryService.addMovement(
+                    targetVariantId,
+                    MovementType.OUT,
+                    itemReq.quantity(),
+                    "Sale Order " + order.getId(),
+                    order.getId().toString()
+            );
+
+            // Preço: Usa o da variante se existir, senão usa do produto pai
+            BigDecimal finalPrice = (variant.getPrice() != null) ? variant.getPrice() : product.getPrice();
+            BigDecimal itemTotal = finalPrice.multiply(new BigDecimal(itemReq.quantity()));
+            totalOrder = totalOrder.add(itemTotal);
+
+            OrderItemEntity itemEntity = new OrderItemEntity();
+            itemEntity.setId(UUID.randomUUID());
+            itemEntity.setOrder(order);
+            itemEntity.setProduct(product);
+            itemEntity.setVariant(variant);
+            itemEntity.setQuantity(itemReq.quantity());
+            itemEntity.setUnitPrice(finalPrice);
+            itemEntity.setTotalPrice(itemTotal);
+            
+            items.add(itemEntity);
+        }
+
+        order.setTotalAmount(totalOrder);
+        order.setItems(items);
+        return orderRepository.save(order);
+    }
+    
+    @Transactional
+    public void approveOrder(UUID orderId) {
+        OrderEntity order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+        
+        if (!OrderStatus.PENDING.name().equals(order.getStatus())) {
+             throw new IllegalStateException("Pedido não está pendente");
+        }
+        order.setStatus(OrderStatus.PAID.name());
+        orderRepository.save(order);
+    }
+    
+    @Transactional
+    public void cancelOrder(UUID orderId, String reason) {
+        OrderEntity order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+            
+        // Se já foi pago ou enviado, lógica de estorno seria necessária (simplificado aqui)
+        if (OrderStatus.CANCELED.name().equals(order.getStatus())) return;
+
+        // Estorno de estoque
+        for (OrderItemEntity item : order.getItems()) {
+             UUID variantId = item.getVariant() != null ? item.getVariant().getId() : null;
+             if (variantId != null) {
+                 inventoryService.addMovement(variantId, MovementType.IN, item.getQuantity(), "Order Cancelled: " + reason, orderId.toString());
+             }
+        }
+
+        order.setStatus(OrderStatus.CANCELED.name());
+        orderRepository.save(order);
+    }
+
+    public Page<OrderEntity> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/service/payment/PaymentController.java ---
+package com.atelie.ecommerce.application.service.payment;
+
+import com.atelie.ecommerce.api.payment.dto.PaymentResponse;
+import com.atelie.ecommerce.application.service.payment.dto.CreatePixPaymentRequest;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/payments")
+public class PaymentController {
+
+    private final PaymentService paymentService;
+
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+
+    @PostMapping("/pix")
+    public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePixPaymentRequest req) {
+        PaymentResponse response = paymentService.createPixPayment(
+                req.orderId(),
+                req.email(),
+                req.cpf(),
+                req.amount()
+        );
+        return ResponseEntity.ok(response);
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/service/payment/PaymentService.java ---
+package com.atelie.ecommerce.application.service.payment;
+
+import com.atelie.ecommerce.api.payment.dto.PaymentResponse;
+import com.atelie.ecommerce.api.serviceengine.ServiceOrchestrator;
+import com.atelie.ecommerce.api.serviceengine.ServiceResult;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+@Service
+public class PaymentService {
+
+    private final ServiceOrchestrator orchestrator;
+
+    @Value("${spring.profiles.active:prod}")
+    private String activeProfile;
+
+    public PaymentService(ServiceOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
+    }
+
+    public PaymentResponse createPixPayment(UUID orderId, String email, String cpf, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Valor do pagamento deve ser maior que zero");
+        }
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("orderId", orderId.toString());
+        request.put("email", email);
+        request.put("cpf", cpf);
+        request.put("amount", amount);
+        request.put("method", "PIX");
+
+        ServiceResult result = orchestrator.execute(ServiceType.PAYMENT, request, activeProfile);
+
+        if (!result.success()) {
+            throw new RuntimeException("Falha no pagamento: " + result.payload().getOrDefault("error", "Erro desconhecido"));
+        }
+
+        Map<String, Object> payload = result.payload();
+        
+        return new PaymentResponse(
+            (String) payload.getOrDefault("status", "UNKNOWN"),
+            (String) payload.getOrDefault("provider", "UNKNOWN"),
+            amount,
+            Boolean.TRUE.equals(payload.get("sandbox")),
+            payload
+        );
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/service/payment/dto/CreatePixPaymentRequest.java ---
+package com.atelie.ecommerce.application.service.payment.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+public record CreatePixPaymentRequest(
+        @NotNull UUID orderId,
+        @NotBlank @Email String email,
+        @NotBlank String cpf,
+        @NotNull @Positive BigDecimal amount
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/service/ai/AiContentService.java ---
+package com.atelie.ecommerce.application.service.ai;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
+import java.util.Map;
+import java.util.HashMap;
+
+@Slf4j
+@Service
+public class AiContentService {
+
+    private final DynamicConfigService configService;
+    private final RestTemplate restTemplate;
+
+    public AiContentService(DynamicConfigService configService, RestTemplate restTemplate) {
+        this.configService = configService;
+        this.restTemplate = restTemplate;
+    }
+
+    public String generateDescription(String productName, String context) {
+        // 1. Busca configurações definidas pelo Admin no Dashboard
+        if (!configService.containsKey("AI_ENABLED") || !configService.requireBoolean("AI_ENABLED")) {
+            return "Descrição automática (IA Desativada): " + productName;
+        }
+
+        String apiUrl = configService.getString("AI_API_URL"); // Ex: https://api.openai.com/v1/chat/completions
+        String apiKey = configService.getString("AI_API_KEY");
+        String model = configService.getString("AI_MODEL");    // Ex: gpt-4o-mini
+        
+        // O Prompt é editável no Dashboard. Ex: "Crie uma descrição mística para o produto {product} com detalhes: {context}"
+        String promptTemplate = configService.getString("AI_PROMPT_TEMPLATE_DESC");
+        
+        if (apiUrl == null || apiKey == null) {
+            log.error("IA habilitada mas sem credenciais no banco.");
+            return "Erro de Configuração de IA";
+        }
+
+        // 2. Monta o Prompt Real
+        String finalPrompt = promptTemplate
+                .replace("{product}", productName)
+                .replace("{context}", context != null ? context : "");
+
+        try {
+            // 3. Chamada Genérica (Exemplo formato OpenAI/Standard)
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
+
+            Map<String, Object> message = Map.of("role", "user", "content", finalPrompt);
+            Map<String, Object> body = Map.of(
+                "model", model,
+                "messages", new Object[]{ message },
+                "temperature", 0.7
+            );
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            Map response = restTemplate.postForObject(apiUrl, entity, Map.class);
+            
+            // Extração simplificada (pode precisar de ajuste dependendo do provider escolhido no dashboard)
+            // Assumindo estrutura padrão de resposta JSON
+            return extractContent(response);
+
+        } catch (Exception e) {
+            log.error("Erro ao chamar IA", e);
+            return "Erro na geração: " + e.getMessage();
+        }
+    }
+
+    public String removeImageBackground(String imageUrl) {
+        if (!configService.containsKey("AI_BG_REMOVER_Enabled") || !configService.requireBoolean("AI_BG_REMOVER_Enabled")) {
+            return imageUrl;
+        }
+        // Lógica similar: Ler URL do serviço de remove.bg ou similar do banco
+        return imageUrl; // Placeholder para brevidade
+    }
+
+    private String extractContent(Map response) {
+        try {
+            // Tenta navegar no JSON padrão: choices[0].message.content
+            java.util.List choices = (java.util.List) response.get("choices");
+            Map first = (Map) choices.get(0);
+            Map msg = (Map) first.get("message");
+            return (String) msg.get("content");
+        } catch (Exception e) {
+            return "Conteúdo gerado, mas erro no parse.";
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/service/integration/MultichannelSyncListener.java ---
+package com.atelie.ecommerce.application.service.integration;
+
+import com.atelie.ecommerce.domain.catalog.product.event.ProductSavedEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+@Slf4j
+@Component
+public class MultichannelSyncListener {
+
+    // Listener preparado para o futuro Motor de Integração via Dashboard.
+    // Atualmente opera em modo "Silent" para não bloquear o fluxo principal.
+    
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onProductSaved(ProductSavedEvent event) {
+        log.debug("Evento de sync recebido para produto: {}. Aguardando configuração de canais no Dashboard.", event.productId());
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/service/integration/N8nService.java ---
+package com.atelie.ecommerce.application.service.integration;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@Service
+public class N8nService {
+
+    private final RestTemplate restTemplate;
+    private final DynamicConfigService configService;
+
+    private static final String N8N_URL_KEY = "N8N_WEBHOOK_URL";
+    private static final String N8N_ENABLED_KEY = "N8N_Automation_Enabled";
+
+    public N8nService(RestTemplate restTemplate, DynamicConfigService configService) {
+        this.restTemplate = restTemplate;
+        this.configService = configService;
+    }
+
+    public boolean isAutomationEnabled() {
+        if (!configService.containsKey(N8N_ENABLED_KEY)) return false;
+        return configService.requireBoolean(N8N_ENABLED_KEY);
+    }
+
+    public void sendLowStockAlert(String productName, Integer currentStock, int threshold) {
+        if (!isAutomationEnabled()) return;
+
+        try {
+            String url = configService.requireString(N8N_URL_KEY);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("event", "LOW_STOCK_ALERT");
+            payload.put("product", productName);
+            payload.put("stock", currentStock);
+            payload.put("threshold", threshold);
+            payload.put("message", "Produto " + productName + " crítico!");
+
+            restTemplate.postForEntity(url, payload, String.class);
+            log.info("N8N Alert Sent: Product={} Stock={}", productName, currentStock);
+        } catch (Exception e) {
+            log.error("Failed to send N8N alert", e);
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/listener/StockSyncListener.java ---
+package com.atelie.ecommerce.application.listener;
+
+import com.atelie.ecommerce.domain.inventory.event.InventoryChangedEvent;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+@Component
+public class StockSyncListener {
+
+    private static final Logger log = LoggerFactory.getLogger(StockSyncListener.class);
+    private final ProductIntegrationRepository integrationRepository;
+
+    public StockSyncListener(ProductIntegrationRepository integrationRepository) {
+        this.integrationRepository = integrationRepository;
+    }
+
+    // CORREÇÃO: TransactionalEventListener garante que só executamos se o banco confirmou a transação.
+    // O @Async garante que não travamos a thread original após o commit.
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleInventoryChange(InventoryChangedEvent event) {
+        var links = integrationRepository.findByProductId(event.productId());
+        if (links.isEmpty()) {
+            return;
+        }
+
+        links.forEach(link -> {
+             log.info("SYNC [CONFIRMADO]: Enviando update para {}. Produto: {}, Novo Saldo: {}", 
+                     link.getIntegrationType(), 
+                     link.getExternalId(), 
+                     event.newQuantity());
+             // Lógica de envio HTTP
+        });
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/listener/MultichannelSyncListener.java ---
+package com.atelie.ecommerce.application.listener;
+
+import com.atelie.ecommerce.domain.catalog.event.ProductSavedEvent;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+@Slf4j
+@Component
+public class MultichannelSyncListener {
+
+    private final ProductRepository productRepository;
+
+    public MultichannelSyncListener(ProductRepository productRepository) {
+        this.productRepository = productRepository;
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onProductSaved(ProductSavedEvent event) {
+        productRepository.findById(event.productId()).ifPresent(product -> {
+            log.info("MULTICHANNEL: Detectada alteração no produto '{}' (Novo: {}). Iniciando sincronia...", 
+                    product.getName(), event.isNew());
+
+            // Lógica Simulada de Sincronia
+            // 1. Verificar se o produto tem flag "sincronizar_automaticamente"
+            // 2. Buscar integrações ativas (Mercado Livre, Shopee)
+            // 3. Chamar APIs externas
+            
+            if (event.isNew()) {
+                log.info("MULTICHANNEL: Criando anúncio no Mercado Livre para SKU: {}", product.getId());
+                // mercadoLivreService.createListing(product);
+            } else {
+                log.info("MULTICHANNEL: Atualizando preço/estoque na Shopee e TikTok.");
+            }
+        });
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/integration/MarketplaceIntegrationService.java ---
+package com.atelie.ecommerce.application.integration;
+
+
+
+import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
+
+public interface MarketplaceIntegrationService {
+    /**
+     * Recebe um ID de notificação/recurso externo, busca os detalhes na loja
+     * e converte para nosso formato de pedido interno.
+     */
+    CreateOrderRequest fetchAndConvertOrder(String resourceId);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/application/integration/mercadolivre/MercadoLivreService.java ---
+package com.atelie.ecommerce.application.integration.mercadolivre;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
+import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
+import com.atelie.ecommerce.application.integration.MarketplaceIntegrationService;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+
+@Slf4j
+@Service
+public class MercadoLivreService implements MarketplaceIntegrationService {
+
+    private final ProductIntegrationRepository integrationRepository;
+    private final DynamicConfigService configService;
+    private final RestTemplate restTemplate;
+
+    public MercadoLivreService(ProductIntegrationRepository integrationRepository,
+                               DynamicConfigService configService,
+                               RestTemplate restTemplate) {
+        this.integrationRepository = integrationRepository;
+        this.configService = configService;
+        this.restTemplate = restTemplate;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CreateOrderRequest fetchAndConvertOrder(String resourceId) {
+        // 1. Verificações de Configuração (Guard Clauses)
+        if (!configService.containsKey("ML_ENABLED") || !configService.requireBoolean("ML_ENABLED")) {
+            throw new IllegalStateException("Integração Mercado Livre desativada.");
+        }
+
+        String token = configService.requireString("ML_ACCESS_TOKEN");
+        log.info("Iniciando processamento do pedido ML: {}", resourceId);
+
+        // 2. Chamada HTTP à API do Mercado Livre
+        // URL: https://api.mercadolibre.com/orders/{orderId}
+        String url = "https://api.mercadolibre.com/orders/" + resourceId;
+        JsonNode orderJson;
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(token);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, JsonNode.class
+            );
+            orderJson = response.getBody();
+        } catch (Exception e) {
+            log.error("Erro ao comunicar com API Mercado Livre para pedido {}", resourceId, e);
+            throw new RuntimeException("Falha na comunicação com Mercado Livre", e);
+        }
+
+        if (orderJson == null) {
+            throw new RuntimeException("Resposta vazia do Mercado Livre para pedido " + resourceId);
+        }
+
+        // 3. Extração dos dados do Item
+        // O Mercado Livre retorna lista de itens. Vamos pegar o primeiro.
+        JsonNode orderItems = orderJson.path("order_items");
+        if (orderItems.isEmpty()) {
+            throw new IllegalStateException("Pedido ML sem itens: " + resourceId);
+        }
+
+        JsonNode firstItem = orderItems.get(0);
+        String mlItemId = firstItem.path("item").path("id").asText();
+        int quantity = firstItem.path("quantity").asInt(1); // Default 1 se não vier
+
+        log.debug("Item identificado no pedido {}: {} (Qtd: {})", resourceId, mlItemId, quantity);
+
+        // 4. Busca Integração no Banco Local
+        var integrationOpt = integrationRepository.findByExternalIdAndIntegrationType(mlItemId, "MERCADO_LIVRE");
+
+        if (integrationOpt.isEmpty()) {
+            log.warn("Produto não integrado. Item ML: {}", mlItemId);
+            throw new IllegalArgumentException("Produto não encontrado para integração: " + mlItemId);
+        }
+
+        var integration = integrationOpt.get();
+
+        // 5. Extração dos dados do Cliente
+        String customerName = "Desconhecido";
+        if (orderJson.has("buyer")) {
+            customerName = orderJson.path("buyer").path("nickname").asText("Desconhecido");
+        }
+
+        // 6. Construção do DTO de Item (CreateOrderItemRequest)
+        // Record: (UUID productId, UUID variantId, Integer quantity)
+        CreateOrderItemRequest itemRequest = new CreateOrderItemRequest(
+                integration.getProduct().getId(),
+                null, // variantId null (Produto simples, sem variação mapeada neste momento)
+                quantity
+        );
+
+        // 7. Retorno do DTO Principal (CreateOrderRequest)
+        // Record: (String customerName, String externalId, String source, List<CreateOrderItemRequest> items)
+        return new CreateOrderRequest(
+                customerName,
+                resourceId,         // ID do Pedido
+                "MERCADO_LIVRE",    // Source
+                List.of(itemRequest)
+        );
+    }
+}
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/auth/UserRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.auth;
+
+import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+    Optional<UserEntity> findByEmail(String email);
+    boolean existsByEmail(String email);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/auth/entity/UserEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.auth.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users")
+public class UserEntity {
+
+    @Id
+    private UUID id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+    
+    @Column(nullable = false)
+    private String role; // USER, ADMIN
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (id == null) id = UUID.randomUUID();
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (role == null) role = "USER";
+    }
+
+    public UserEntity() {}
+
+    public UserEntity(String name, String email, String password, String role) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
+    public UUID getId() { return id; }
+    public String getName() { return name; }
+    public String getEmail() { return email; }
+    public String getPassword() { return password; }
+    public String getRole() { return role; } // Getter essencial
+    public LocalDateTime getCreatedAt() { return createdAt; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/service/model/ServiceRoutingRuleEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.service.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "service_routing_rules")
+public class ServiceRoutingRuleEntity {
+
+    @Id
+    private UUID id;
+
+    @Column(name = "service_type", nullable = false, length = 40)
+    private String serviceType;
+
+    @Column(name = "provider_code", nullable = false, length = 80)
+    private String providerCode;
+
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled;
+
+    @Column(name = "priority", nullable = false)
+    private int priority;
+
+    @Column(name = "match_json", nullable = false, columnDefinition = "jsonb")
+    private String matchJson;
+
+    @Column(name = "behavior_json", columnDefinition = "jsonb")
+    private String behaviorJson;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+
+    public String getServiceType() { return serviceType; }
+    public void setServiceType(String serviceType) { this.serviceType = serviceType; }
+
+    public String getProviderCode() { return providerCode; }
+    public void setProviderCode(String providerCode) { this.providerCode = providerCode; }
+
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
+    public int getPriority() { return priority; }
+    public void setPriority(int priority) { this.priority = priority; }
+
+    public String getMatchJson() { return matchJson; }
+    public void setMatchJson(String matchJson) { this.matchJson = matchJson; }
+
+    public String getBehaviorJson() { return behaviorJson; }
+    public void setBehaviorJson(String behaviorJson) { this.behaviorJson = behaviorJson; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/service/model/ServiceProviderConfigEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.service.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "service_provider_configs")
+public class ServiceProviderConfigEntity {
+
+    @Id
+    private UUID id;
+
+    @Column(name = "provider_id")
+    private UUID providerId; // opcional (DB pode usar provider_id). Nosso teste usa providerCode.
+
+    @Column(name = "environment", nullable = false, length = 20)
+    private String environment;
+
+    @Column(name = "secrets_ref", length = 200)
+    private String secretsRef;
+
+    @Column(name = "config_json", nullable = false, columnDefinition = "jsonb")
+    private String configJson;
+
+    @Column(name = "version", nullable = false)
+    private int version;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // Campo auxiliar (não existe no schema original) -> não mapear.
+    @jakarta.persistence.Transient
+    private String providerCode;
+
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+
+    public UUID getProviderId() { return providerId; }
+    public void setProviderId(UUID providerId) { this.providerId = providerId; }
+
+    public String getEnvironment() { return environment; }
+    public void setEnvironment(String environment) { this.environment = environment; }
+
+    public String getSecretsRef() { return secretsRef; }
+    public void setSecretsRef(String secretsRef) { this.secretsRef = secretsRef; }
+
+    public String getConfigJson() { return configJson; }
+    public void setConfigJson(String configJson) { this.configJson = configJson; }
+
+    public int getVersion() { return version; }
+    public void setVersion(int version) { this.version = version; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getProviderCode() { return providerCode; }
+    public void setProviderCode(String providerCode) { this.providerCode = providerCode; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/service/model/ServiceProviderEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.service.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "service_providers",
+       uniqueConstraints = @UniqueConstraint(name = "ux_service_providers_type_code", columnNames = {"service_type", "code"}))
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ServiceProviderEntity {
+
+    @Id
+    private UUID id;
+
+    @Column(name = "service_type", nullable = false, length = 40)
+    private String serviceType;
+
+    @Column(name = "code", nullable = false, length = 80)
+    private String code;
+
+    @Column(name = "name", nullable = false, length = 160)
+    private String name;
+
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled;
+
+    @Column(name = "priority", nullable = false)
+    private int priority;
+
+    @Column(name = "driver_key", nullable = false, length = 160)
+    private String driverKey;
+
+    @Column(name = "health_enabled", nullable = false)
+    private boolean healthEnabled;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/service/jpa/ServiceProviderJpaRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.service.jpa;
+
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface ServiceProviderJpaRepository extends JpaRepository<ServiceProviderEntity, UUID> {
+
+    List<ServiceProviderEntity> findByServiceType(String serviceType);
+
+    List<ServiceProviderEntity> findByServiceTypeAndEnabledOrderByPriorityAsc(String serviceType, boolean enabled);
+
+    Optional<ServiceProviderEntity> findByCode(String code);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/service/jpa/ServiceRoutingRuleJpaRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.service.jpa;
+
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceRoutingRuleEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface ServiceRoutingRuleJpaRepository extends JpaRepository<ServiceRoutingRuleEntity, UUID> {
+    List<ServiceRoutingRuleEntity> findByServiceTypeAndEnabledOrderByPriorityAsc(String serviceType, boolean enabled);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/service/jpa/ServiceProviderConfigJpaRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.service.jpa;
+
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderConfigEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface ServiceProviderConfigJpaRepository extends JpaRepository<ServiceProviderConfigEntity, UUID> {
+    Optional<ServiceProviderConfigEntity> findTopByProviderIdAndEnvironmentOrderByVersionDesc(UUID providerId, String environment);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/inventory/InventoryRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.inventory;
+
+import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.UUID;
+
+@Repository
+public interface InventoryRepository extends JpaRepository<InventoryMovementEntity, UUID> {
+
+    // --- CRITICAL FIX: Query Variant Table instead of Product Table ---
+    // Counts variants with low stock, considering only active products that have alerts enabled.
+    @Query("""
+        SELECT COUNT(v) 
+        FROM ProductVariantEntity v 
+        JOIN v.product p 
+        WHERE v.stockQuantity < :threshold 
+          AND v.active = true 
+          AND p.active = true 
+          AND p.alertEnabled = true
+    """)
+    long countLowStockProducts(@Param("threshold") int threshold);
+
+    @Query("SELECT COALESCE(SUM(CASE WHEN m.type = 'IN' THEN m.quantity WHEN m.type = 'OUT' THEN -m.quantity ELSE 0 END), 0) FROM InventoryMovementEntity m WHERE m.product.id = :productId")
+    Integer auditCalculatedStock(@Param("productId") UUID productId);
+}
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/inventory/entity/InventoryMovementEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.inventory.entity;
+
+import com.atelie.ecommerce.domain.inventory.MovementType;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "inventory_movements")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class InventoryMovementEntity {
+
+    @Id
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private ProductEntity product;
+
+    @Column(name = "variant_id")
+    private UUID variantId; // Nova coluna
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MovementType type;
+
+    @Column(nullable = false)
+    private Integer quantity;
+
+    private String reason;
+
+    @Column(name = "reference_id")
+    private String referenceId;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (id == null) id = UUID.randomUUID();
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/config/SystemConfigRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.config;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface SystemConfigRepository extends JpaRepository<SystemConfigEntity, String> {
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/config/JpaSystemConfigGateway.java ---
+package com.atelie.ecommerce.infrastructure.persistence.config;
+
+import com.atelie.ecommerce.domain.config.SystemConfig;
+import com.atelie.ecommerce.domain.config.SystemConfigGateway;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+/**
+ * JpaSystemConfigGateway.
+ *
+ * Adapter de infraestrutura que lê configs via JPA e expõe para o domínio
+ * através do SystemConfigGateway.
+ */
+@Repository
+public class JpaSystemConfigGateway implements SystemConfigGateway {
+
+    private final SystemConfigRepository repository;
+
+    public JpaSystemConfigGateway(SystemConfigRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public List<SystemConfig> findAll() {
+        return repository.findAll().stream()
+                .filter(e -> e.getConfigKey() != null)
+                .map(e -> new SystemConfig(e.getConfigKey(), e.getConfigValue()))
+                .toList();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/config/SystemConfigEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.config;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name="system_config")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class SystemConfigEntity {
+    @Id
+    private String configKey;
+    
+    @Column(columnDefinition = "TEXT")
+    private String configValue;
+
+    @Column(name = "config_json", columnDefinition = "jsonb")
+    private String configJson;
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/category/CategoryEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.category;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import java.util.UUID;
+
+@Entity
+@Table(name = "categories")
+@Data
+public class CategoryEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+    private String name;
+    private Boolean active;
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/category/CategoryRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.category;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.UUID;
+
+@Repository
+public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> {
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/order/OrderRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.order;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@Repository
+public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
+    
+    // Suporte a paginação
+    Page<OrderEntity> findAll(Pageable pageable);
+
+    @Query("SELECT SUM(o.totalAmount) FROM OrderEntity o WHERE o.status = 'PAID'")
+    BigDecimal totalSalesPaid();
+
+    @Query("SELECT COUNT(o) FROM OrderEntity o WHERE o.status = 'PENDING'")
+    long countPendingOrders();
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/order/OrderEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.order;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(name = "orders")
+@Data
+public class OrderEntity {
+
+    @Id
+    @Column(name = "id", nullable = false)
+    private UUID id;
+
+    @Column(name = "source", nullable = false)
+    private String source;
+
+    @Column(name = "external_id", nullable = false)
+    private String externalId;
+
+    @Column(name = "customer_name")
+    private String customerName;
+
+    @Column(name = "customer_email")
+    private String customerEmail;
+
+    @Column(name = "total_amount", nullable = false)
+    private BigDecimal totalAmount;
+
+    @Column(name = "status", nullable = false)
+    private String status;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    // --- CORREÇÃO DE CONCORRÊNCIA ---
+    @Version
+    private Long version;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderItemEntity> items;
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/order/OrderItemEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.order;
+
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@Entity
+@Table(name = "order_items")
+@Data
+public class OrderItemEntity {
+
+    @Id
+    private UUID id;
+
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "order_id", nullable = false)
+    private OrderEntity order;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private ProductEntity product;
+
+    // --- CORREÇÃO CRÍTICA: Mapeamento da Variante ---
+    @ManyToOne
+    @JoinColumn(name = "variant_id", nullable = true) // Nullable para suportar legado
+    private ProductVariantEntity variant;
+
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(name = "unit_price", nullable = false)
+    private BigDecimal unitPrice;
+
+    @Column(name = "total_price", nullable = false)
+    private BigDecimal totalPrice;
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/product/ProductIntegrationRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.product;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.UUID;
+import java.util.Optional;
+import java.util.List;
+
+@Repository
+public interface ProductIntegrationRepository extends JpaRepository<ProductIntegrationEntity, UUID> {
+    // Busca flexível por String
+    Optional<ProductIntegrationEntity> findByExternalIdAndIntegrationType(String externalId, String integrationType);
+    List<ProductIntegrationEntity> findByProductId(UUID productId);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/product/ProductEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.product;
+
+import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "products")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(nullable = false, length = 160)
+    private String name;
+
+    @Column(nullable = false, length = 2000)
+    private String description;
+
+    @Column(nullable = false)
+    private BigDecimal price;
+
+    @Column(nullable = false)
+    private Boolean active;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Builder.Default // CORREÇÃO: Garante que o Builder use o valor 0 se não for informado
+    @Column(name = "stock_quantity", nullable = false)
+    private Integer stockQuantity = 0;
+
+    @Builder.Default // CORREÇÃO: Garante que o Builder use false se não for informado
+    @Column(name = "alert_enabled")
+    private Boolean alertEnabled = false;
+
+    @Column(columnDefinition = "jsonb")
+    private String attributes; // JSON attributes
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnore
+    private CategoryEntity category;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (stockQuantity == null) stockQuantity = 0;
+        if (active == null) active = true;
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (updatedAt == null) updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+    
+    // Helper para o Controller
+    public UUID getCategoryId() {
+        return category != null ? category.getId() : null;
+    }
+}

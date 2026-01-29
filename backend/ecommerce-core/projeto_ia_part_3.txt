@@ -1,0 +1,1410 @@
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/product/ProductVariantRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.product;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface ProductVariantRepository extends JpaRepository<ProductVariantEntity, UUID> {
+    
+    List<ProductVariantEntity> findByProductId(UUID productId);
+    boolean existsBySku(String sku);
+
+    // Decremento Atômico no Nível da VARIANTE
+    @Modifying
+    @Query("UPDATE ProductVariantEntity v SET v.stockQuantity = v.stockQuantity - :quantity WHERE v.id = :id AND v.stockQuantity >= :quantity")
+    int decrementStock(@Param("id") UUID id, @Param("quantity") int quantity);
+
+    // Incremento Atômico
+    @Modifying
+    @Query("UPDATE ProductVariantEntity v SET v.stockQuantity = v.stockQuantity + :quantity WHERE v.id = :id")
+    void incrementStock(@Param("id") UUID id, @Param("quantity") int quantity);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/product/ProductVariantEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.product;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "product_variants")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductVariantEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnore
+    private ProductEntity product;
+
+    @Column(nullable = false, unique = true)
+    private String sku;
+
+    private String gtin; // EAN-13
+
+    private BigDecimal price; // Override de preço
+
+    @Column(name = "stock_quantity", nullable = false)
+    private Integer stockQuantity;
+
+    @Column(name = "attributes_json", columnDefinition = "jsonb")
+    private String attributesJson;
+
+    @Column(nullable = false)
+    private Boolean active;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.stockQuantity == null) this.stockQuantity = 0;
+        if (this.active == null) this.active = true;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/product/ProductIntegrationEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.product;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.util.UUID;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "product_integrations")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductIntegrationEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private ProductEntity product;
+
+    @Column(name = "integration_type", nullable = false)
+    private String integrationType;
+
+    @Column(name = "external_id")
+    private String externalId;
+
+    @Column(name = "sku_external")
+    private String skuExternal; // Campo adicionado corretamente
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    // Construtor utilitário corrigido
+    public ProductIntegrationEntity(ProductEntity product, String integrationType, String externalId, String skuExternal) {
+        this.product = product;
+        this.integrationType = integrationType;
+        this.externalId = externalId;
+        this.skuExternal = skuExternal;
+        this.createdAt = LocalDateTime.now();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/product/ProductRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.product;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import java.util.UUID;
+import java.util.List;
+
+@Repository
+public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
+    
+    Page<ProductEntity> findByActiveTrue(Pageable pageable);
+
+    @Query("SELECT p FROM ProductEntity p WHERE p.stockQuantity <= 5 AND p.alertEnabled = true")
+    List<ProductEntity> findCriticalStock();
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/feature/FeatureFlagRepository.java ---
+package com.atelie.ecommerce.infrastructure.persistence.feature;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface FeatureFlagRepository extends JpaRepository<FeatureFlagEntity, UUID> {
+    Optional<FeatureFlagEntity> findByFlagKey(String flagKey);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/persistence/feature/FeatureFlagEntity.java ---
+package com.atelie.ecommerce.infrastructure.persistence.feature;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "feature_flags")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class FeatureFlagEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(name = "flag_key", nullable = false, unique = true)
+    private String flagKey;
+
+    @Column(nullable = false)
+    private boolean enabled;
+
+    @Column(name = "value_json", columnDefinition = "text")
+    private String valueJson;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        this.updatedAt = LocalDateTime.now();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/service/JpaServiceRoutingRuleGateway.java ---
+package com.atelie.ecommerce.infrastructure.service;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.domain.service.model.ServiceRoutingRule;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceRoutingRuleJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceRoutingRuleEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+@Component
+public class JpaServiceRoutingRuleGateway implements ServiceRoutingRuleGateway {
+
+    private static final Logger log = LoggerFactory.getLogger(JpaServiceRoutingRuleGateway.class);
+
+    private final ServiceRoutingRuleJpaRepository repo;
+    private final DynamicConfigService dynamicConfigService;
+    private final Clock clock;
+
+    private final Map<String, List<ServiceRoutingRule>> cache = new ConcurrentHashMap<>();
+    private LocalDateTime lastUpdate = LocalDateTime.MIN;
+
+    public JpaServiceRoutingRuleGateway(ServiceRoutingRuleJpaRepository repo, DynamicConfigService dynamicConfigService, Clock clock) {
+        this.repo = repo;
+        this.dynamicConfigService = dynamicConfigService;
+        this.clock = clock;
+    }
+
+    private long ttlSeconds() {
+        return dynamicConfigService.getLong(DynamicConfigService.CACHE_TTL_SECONDS_KEY, 300);
+    }
+
+    private void checkCache() {
+        if (lastUpdate.equals(LocalDateTime.MIN)) return;
+        if (LocalDateTime.now(clock).isAfter(lastUpdate.plusSeconds(ttlSeconds()))) {
+            refresh();
+        }
+    }
+
+    @Override
+    public List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type) {
+        checkCache();
+
+        return cache.computeIfAbsent(type.name(), k ->
+                repo.findByServiceTypeAndEnabledOrderByPriorityAsc(k, true)
+                        .stream()
+                        .map(this::toDomain)
+                        .collect(Collectors.toList())
+        );
+    }
+
+    @Override
+    public void refresh() {
+        cache.clear();
+        lastUpdate = LocalDateTime.now(clock);
+        log.info("ServiceRoutingRuleGateway cache cleared.");
+    }
+
+    private ServiceRoutingRule toDomain(ServiceRoutingRuleEntity e) {
+        return new ServiceRoutingRule(
+                e.getId(),
+                ServiceType.valueOf(e.getServiceType()),
+                e.getProviderCode(),
+                e.isEnabled(),
+                e.getPriority(),
+                e.getMatchJson(),
+                e.getBehaviorJson()
+        );
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/service/ServiceEngineConfig.java ---
+package com.atelie.ecommerce.infrastructure.service;
+
+import com.atelie.ecommerce.api.serviceengine.DriverRegistry;
+import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
+import com.atelie.ecommerce.api.serviceengine.ServiceOrchestrator;
+import com.atelie.ecommerce.domain.provider.RuleMatcher;
+import com.atelie.ecommerce.domain.service.engine.DefaultServiceEngine;
+import com.atelie.ecommerce.domain.service.engine.ServiceEngine;
+import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
+import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
+import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
+
+@Configuration
+public class ServiceEngineConfig {
+
+    @Bean
+    public RuleMatcher ruleMatcher() {
+        return new RuleMatcher();
+    }
+
+    @Bean
+    public DriverRegistry driverRegistry(List<ServiceDriver> drivers) {
+        return new DriverRegistry(drivers);
+    }
+
+    @Bean
+    public ServiceEngine domainServiceEngine(
+            ServiceProviderGateway providerGateway,
+            ServiceRoutingRuleGateway routingRuleGateway,
+            RuleMatcher ruleMatcher
+    ) {
+        return new DefaultServiceEngine(providerGateway, routingRuleGateway, ruleMatcher);
+    }
+
+    @Bean
+    public ServiceOrchestrator serviceOrchestrator(
+            ServiceEngine engine,
+            ServiceProviderConfigGateway configGateway,
+            DriverRegistry driverRegistry
+    ) {
+        return new ServiceOrchestrator(engine, configGateway, driverRegistry);
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/service/JpaServiceProviderConfigGateway.java ---
+package com.atelie.ecommerce.infrastructure.service;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderConfigJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Component
+public class JpaServiceProviderConfigGateway implements ServiceProviderConfigGateway {
+
+    private static final Logger log = LoggerFactory.getLogger(JpaServiceProviderConfigGateway.class);
+
+    private final ServiceProviderJpaRepository providerRepo;
+    private final ServiceProviderConfigJpaRepository configRepo;
+    private final DynamicConfigService dynamicConfigService;
+    private final Clock clock;
+
+    private final Map<String, String> cache = new ConcurrentHashMap<>();
+    private LocalDateTime lastUpdate = LocalDateTime.MIN;
+
+    public JpaServiceProviderConfigGateway(
+            ServiceProviderJpaRepository providerRepo,
+            ServiceProviderConfigJpaRepository configRepo,
+            DynamicConfigService dynamicConfigService,
+            Clock clock
+    ) {
+        this.providerRepo = providerRepo;
+        this.configRepo = configRepo;
+        this.dynamicConfigService = dynamicConfigService;
+        this.clock = clock;
+    }
+
+    private long ttlSeconds() {
+        return dynamicConfigService.getLong(DynamicConfigService.CACHE_TTL_SECONDS_KEY, 300);
+    }
+
+    private void checkCache() {
+        if (lastUpdate.equals(LocalDateTime.MIN)) return;
+        if (LocalDateTime.now(clock).isAfter(lastUpdate.plusSeconds(ttlSeconds()))) {
+            refresh();
+        }
+    }
+
+    @Override
+    public Optional<String> findConfigJson(String providerCode, String environment) {
+        checkCache();
+
+        String key = providerCode + ":" + environment;
+        if (cache.containsKey(key)) return Optional.of(cache.get(key));
+
+        UUID providerId = providerRepo.findByCode(providerCode).map(p -> p.getId()).orElse(null);
+        if (providerId == null) return Optional.empty();
+
+        Optional<String> json = configRepo
+                .findTopByProviderIdAndEnvironmentOrderByVersionDesc(providerId, environment)
+                .map(c -> c.getConfigJson());
+
+        json.ifPresent(j -> cache.put(key, j));
+        if (lastUpdate.equals(LocalDateTime.MIN)) lastUpdate = LocalDateTime.now(clock);
+        return json;
+    }
+
+    @Override
+    public void refresh() {
+        cache.clear();
+        lastUpdate = LocalDateTime.now(clock);
+        log.info("ServiceProviderConfig cache cleared.");
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/service/JpaServiceProviderGateway.java ---
+package com.atelie.ecommerce.infrastructure.service;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.domain.service.model.ServiceProvider;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+@Component
+public class JpaServiceProviderGateway implements ServiceProviderGateway {
+
+    private static final Logger log = LoggerFactory.getLogger(JpaServiceProviderGateway.class);
+
+    private final ServiceProviderJpaRepository repo;
+    private final DynamicConfigService dynamicConfigService;
+    private final Clock clock;
+
+    private final Map<String, List<ServiceProvider>> listCache = new ConcurrentHashMap<>();
+    private final Map<String, ServiceProvider> codeCache = new ConcurrentHashMap<>();
+    private LocalDateTime lastUpdate = LocalDateTime.MIN;
+
+    public JpaServiceProviderGateway(
+            ServiceProviderJpaRepository repo,
+            DynamicConfigService dynamicConfigService,
+            Clock clock
+    ) {
+        this.repo = repo;
+        this.dynamicConfigService = dynamicConfigService;
+        this.clock = clock;
+    }
+
+    private long ttlSeconds() {
+        return dynamicConfigService.getLong(DynamicConfigService.CACHE_TTL_SECONDS_KEY, 300);
+    }
+
+    private void checkCache() {
+        if (lastUpdate.equals(LocalDateTime.MIN)) return;
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (now.isAfter(lastUpdate.plusSeconds(ttlSeconds()))) {
+            refresh();
+        }
+    }
+
+    @Override
+    public void refresh() {
+        listCache.clear();
+        codeCache.clear();
+        lastUpdate = LocalDateTime.now(clock);
+        log.info("ServiceProviderGateway cache cleared.");
+    }
+
+    @Override
+    public Optional<ServiceProvider> findByCode(ServiceType type, String code) {
+        checkCache();
+
+        String key = type.name() + ":" + code;
+        if (codeCache.containsKey(key)) return Optional.of(codeCache.get(key));
+
+        var result = repo.findByCode(code)
+                .filter(e -> safeTypeEquals(type, e.getServiceType()))
+                .map(this::toDomain);
+
+        result.ifPresent(sp -> codeCache.put(key, sp));
+        if (lastUpdate.equals(LocalDateTime.MIN)) lastUpdate = LocalDateTime.now(clock);
+
+        return result;
+    }
+
+    @Override
+    public List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type) {
+        checkCache();
+
+        if (listCache.containsKey(type.name())) return listCache.get(type.name());
+
+        var result = repo.findByServiceTypeAndEnabledOrderByPriorityAsc(type.name(), true)
+                .stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+
+        listCache.put(type.name(), result);
+        if (lastUpdate.equals(LocalDateTime.MIN)) lastUpdate = LocalDateTime.now(clock);
+        return result;
+    }
+
+    private ServiceProvider toDomain(ServiceProviderEntity e) {
+        return new ServiceProvider(
+                e.getId(),
+                ServiceType.valueOf(e.getServiceType()),
+                e.getCode(),
+                e.getName(),
+                e.isEnabled(),
+                e.getPriority(),
+                e.getDriverKey(),
+                e.isHealthEnabled()
+        );
+    }
+
+    private boolean safeTypeEquals(ServiceType expected, String raw) {
+        try {
+            return expected == ServiceType.valueOf(raw);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/config/ClockConfig.java ---
+package com.atelie.ecommerce.infrastructure.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.time.Clock;
+
+@Configuration
+public class ClockConfig {
+
+    @Bean
+    public Clock systemClock() {
+        return Clock.systemUTC();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/config/OpenApiConfig.java ---
+package com.atelie.ecommerce.infrastructure.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiConfig {
+
+    @Bean
+    public OpenAPI ecommerceOpenAPI() {
+        return new OpenAPI()
+                .info(new Info().title("Ecommerce Core API")
+                .description("API 100% Mutável com Service Engine Dinâmico")
+                .version("v1.0"));
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/config/AsyncConfig.java ---
+package com.atelie.ecommerce.infrastructure.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
+
+@Configuration
+@EnableAsync // <--- Agora o @Async do listener funciona de verdade
+public class AsyncConfig {
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/http/RestTemplateConfig.java ---
+package com.atelie.ecommerce.infrastructure.http;
+
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+import java.time.Duration;
+
+@Configuration
+public class RestTemplateConfig {
+
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(5)) // 5s para conectar
+                .setReadTimeout(Duration.ofSeconds(10))   // 10s para receber dados
+                .build();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/security/PasswordConfig.java ---
+package com.atelie.ecommerce.infrastructure.security;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+public class PasswordConfig {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/security/AuthenticationConfig.java ---
+package com.atelie.ecommerce.infrastructure.security;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+public class AuthenticationConfig {
+
+    @Bean
+    public AuthenticationProvider authenticationProvider(
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder
+    ) {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        return authProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/security/SecurityConfig.java ---
+package com.atelie.ecommerce.infrastructure.security;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthFilter;
+
+    // Default mais seguro: permite apenas localhost em vez de *
+    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000}")
+    private List<String> allowedOrigins;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+        this.jwtAuthFilter = jwtAuthFilter;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**", "/api/webhooks/**").permitAll()
+                .requestMatchers("/api/shipping/quote").permitAll()
+                .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
+                
+                .requestMatchers(HttpMethod.GET, "/api/products/**", "/categories/**").permitAll()
+
+                .requestMatchers("/api/admin/**", "/api/dashboard/**").hasRole("ADMIN")
+                
+                .requestMatchers(HttpMethod.POST, "/api/products/**", "/categories/**", "/api/inventory/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/products/**", "/categories/**", "/api/inventory/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/categories/**").hasRole("ADMIN")
+                
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Aplica a configuração lida do .env
+        configuration.setAllowedOriginPatterns(allowedOrigins);
+        
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/security/TokenProvider.java ---
+package com.atelie.ecommerce.infrastructure.security;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import jakarta.annotation.PostConstruct;
+import java.security.Key;
+import java.util.Date;
+import java.util.function.Function;
+
+@Component
+public class TokenProvider {
+
+    // CORREÇÃO: Removemos o valor default inseguro. 
+    // A aplicação falhará ao iniciar se JWT_SECRET não estiver no .env ou application.yml
+    @Value("${JWT_SECRET}")
+    private String secret;
+
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        // Garante que a chave tenha tamanho seguro (HMAC-SHA256 requer min 32 bytes)
+        byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(secret);
+        this.key = Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String generateToken(Authentication authentication) {
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        return Jwts.builder()
+                .setSubject(userPrincipal.getUsername())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + 86400000)) // 24 horas
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String getUsernameFromToken(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    public boolean validateToken(String token, UserDetails userDetails) {
+        final String username = getUsernameFromToken(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    private <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        return claimsResolver.apply(claims);
+    }
+
+    private boolean isTokenExpired(String token) {
+        final Date expiration = getClaimFromToken(token, Claims::getExpiration);
+        return expiration.before(new Date());
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/security/CustomUserDetailsService.java ---
+package com.atelie.ecommerce.infrastructure.security;
+
+import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
+import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        // CORREÇÃO: Converte a role do banco (ex: "ADMIN") para Authority ("ROLE_ADMIN")
+        String roleName = user.getRole() == null ? "USER" : user.getRole().toUpperCase();
+        if (!roleName.startsWith("ROLE_")) {
+            roleName = "ROLE_" + roleName;
+        }
+
+        return new User(
+            user.getEmail(), 
+            user.getPassword(), 
+            List.of(new SimpleGrantedAuthority(roleName))
+        );
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/infrastructure/security/JwtAuthenticationFilter.java ---
+package com.atelie.ecommerce.infrastructure.security;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private final TokenProvider tokenProvider;
+    private final CustomUserDetailsService userDetailsService;
+
+    public JwtAuthenticationFilter(TokenProvider tokenProvider, CustomUserDetailsService userDetailsService) {
+        this.tokenProvider = tokenProvider;
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        
+        String header = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
+
+        // 1. Extrai o token do Header "Authorization: Bearer <token>"
+        if (header != null && header.startsWith("Bearer ")) {
+            token = header.substring(7);
+            try {
+                username = tokenProvider.getUsernameFromToken(token);
+            } catch (Exception e) {
+                logger.error("Could not extract username from token", e);
+            }
+        }
+
+        // 2. Se achou usuário e ele ainda não está autenticado no contexto
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if (tokenProvider.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                
+                // 3. Oficializa a autenticação
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+        chain.doFilter(request, response);
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/catalog/event/ProductSavedEvent.java ---
+package com.atelie.ecommerce.domain.catalog.event;
+
+import java.util.UUID;
+
+/**
+ * Evento de domínio emitido quando um produto é salvo/criado.
+ *
+ * Esse evento é usado para disparar integrações assíncronas (ex.: sync multicanal),
+ * sem acoplar o core a um provider específico.
+ */
+public record ProductSavedEvent(
+        UUID productId,
+        boolean isNew
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/engine/ServiceContext.java ---
+package com.atelie.ecommerce.domain.service.engine;
+
+import java.math.BigDecimal;
+import java.util.Map;
+
+public record ServiceContext(
+        String country,
+        BigDecimal orderTotal,
+        Map<String, Object> attributes
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/engine/ResolvedProvider.java ---
+package com.atelie.ecommerce.domain.service.engine;
+
+import com.atelie.ecommerce.domain.service.model.ServiceProvider;
+
+public record ResolvedProvider(
+        ServiceProvider provider,
+        String reason
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/engine/ServiceEngine.java ---
+package com.atelie.ecommerce.domain.service.engine;
+
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+
+/**
+ * Interface Core para Motores de Serviço.
+ * Define o contrato para resolução de provedores baseado em regras.
+ */
+public interface ServiceEngine {
+    
+    /**
+     * Resolve qual provedor deve processar a requisição baseada no contexto.
+     *
+     * @param type Tipo do serviço (ex: PAYMENT, SHIPPING)
+     * @param ctx Contexto da execução (dados variáveis)
+     * @return O provedor resolvido e a estratégia utilizada
+     */
+    ResolvedProvider resolve(ServiceType type, ServiceContext ctx);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/engine/DefaultServiceEngine.java ---
+package com.atelie.ecommerce.domain.service.engine;
+
+import com.atelie.ecommerce.domain.provider.RouteContext;
+import com.atelie.ecommerce.domain.provider.RuleMatch;
+import com.atelie.ecommerce.domain.provider.RuleMatcher;
+import com.atelie.ecommerce.domain.service.model.ServiceProvider;
+import com.atelie.ecommerce.domain.service.model.ServiceRoutingRule;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
+import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
+public class DefaultServiceEngine implements ServiceEngine {
+
+    private final ServiceProviderGateway providerGateway;
+    private final ServiceRoutingRuleGateway routingRuleGateway;
+    private final RuleMatcher ruleMatcher;
+
+    public DefaultServiceEngine(
+            ServiceProviderGateway providerGateway,
+            ServiceRoutingRuleGateway routingRuleGateway,
+            RuleMatcher ruleMatcher
+    ) {
+        this.providerGateway = providerGateway;
+        this.routingRuleGateway = routingRuleGateway;
+        this.ruleMatcher = ruleMatcher;
+    }
+
+    @Override
+    public ResolvedProvider resolve(ServiceType type, ServiceContext ctx) {
+        List<ServiceProvider> providers = providerGateway.findEnabledByTypeOrdered(type);
+        if (providers == null || providers.isEmpty()) {
+            throw new IllegalStateException("No enabled providers for service type: " + type);
+        }
+
+        List<ServiceRoutingRule> rules = routingRuleGateway.findEnabledByTypeOrdered(type);
+        RouteContext routeCtx = toRouteContext(ctx); // Adapter
+
+        if (rules != null && !rules.isEmpty()) {
+            for (ServiceRoutingRule rule : rules) {
+                RuleMatch match = ruleMatcher.matches(routeCtx, rule.matchJson());
+                if (match.matched()) {
+                    String providerCode = rule.providerCode();
+                    Optional<ServiceProvider> byCode = providerGateway.findByCode(type, providerCode);
+                    if (byCode.isPresent() && byCode.get().enabled()) {
+                        return new ResolvedProvider(byCode.get(), "RULE_MATCH: " + match.reason());
+                    }
+                }
+            }
+        }
+        return new ResolvedProvider(providers.get(0), "DEFAULT_PRIORITY");
+    }
+
+    private RouteContext toRouteContext(ServiceContext ctx) {
+        String cep = (String) ctx.attributes().getOrDefault("cep", "");
+        
+        // Mantém a lógica de fallback se ctx.orderTotal() vier zero (embora Orchestrator agora garanta)
+        BigDecimal total = ctx.orderTotal();
+        if ((total == null || total.compareTo(BigDecimal.ZERO) == 0) && ctx.attributes().containsKey("subtotal")) {
+             Object sub = ctx.attributes().get("subtotal");
+             if (sub instanceof BigDecimal) total = (BigDecimal) sub;
+        }
+
+        return new RouteContext(
+            ctx.country() != null ? ctx.country() : "BR",
+            cep,
+            total,
+            ctx.attributes() // <--- Passando o mapa completo!
+        );
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/model/ServiceProvider.java ---
+package com.atelie.ecommerce.domain.service.model;
+
+import java.util.UUID;
+
+public record ServiceProvider(
+        UUID id,
+        ServiceType serviceType,
+        String code,
+        String name,
+        boolean enabled,
+        int priority,
+        String driverKey,
+        boolean healthEnabled
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/model/ServiceRoutingRule.java ---
+package com.atelie.ecommerce.domain.service.model;
+
+import java.util.UUID;
+
+/**
+ * matchJson / behaviorJson serão interpretados pela engine.
+ * (ex.: "country=BR", "orderTotal>=200", etc)
+ */
+public record ServiceRoutingRule(
+        UUID id,
+        ServiceType serviceType,
+        String providerCode,
+        boolean enabled,
+        int priority,
+        String matchJson,
+        String behaviorJson
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/model/ServiceType.java ---
+package com.atelie.ecommerce.domain.service.model;
+
+public enum ServiceType {
+    SHIPPING,
+    PAYMENT,
+    NOTIFICATION, // Novo: Para SMS/Email via Webhook
+    GENERIC       // Novo: Para automações gerais
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/port/ServiceProviderGateway.java ---
+package com.atelie.ecommerce.domain.service.port;
+
+import com.atelie.ecommerce.domain.service.model.ServiceProvider;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ServiceProviderGateway {
+    List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type);
+    Optional<ServiceProvider> findByCode(ServiceType type, String code);
+    
+    // Contrato para limpeza de cache
+    void refresh();
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/port/ServiceRoutingRuleGateway.java ---
+package com.atelie.ecommerce.domain.service.port;
+
+import com.atelie.ecommerce.domain.service.model.ServiceRoutingRule;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+
+import java.util.List;
+
+public interface ServiceRoutingRuleGateway {
+    List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type);
+    
+    // Contrato para limpeza de cache
+    void refresh();
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/service/port/ServiceProviderConfigGateway.java ---
+package com.atelie.ecommerce.domain.service.port;
+
+import java.util.Optional;
+
+public interface ServiceProviderConfigGateway {
+    Optional<String> findConfigJson(String providerCode, String environment);
+    
+    // Novo contrato para invalidar cache
+    void refresh();
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/inventory/MovementType.java ---
+package com.atelie.ecommerce.domain.inventory;
+
+public enum MovementType {
+    IN,      // Entrada (compra, devolução, ajuste)
+    OUT,     // Saída (venda, perda, ajuste)
+    RESERVED // Reservado (carrinho, aguardando pgto)
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/inventory/event/InventoryChangedEvent.java ---
+package com.atelie.ecommerce.domain.inventory.event;
+
+import java.util.UUID;
+
+public record InventoryChangedEvent(
+    UUID productId,
+    Integer newQuantity
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/config/SystemConfigKey.java ---
+package com.atelie.ecommerce.domain.config;
+
+public enum SystemConfigKey {
+
+    // Cache / Infra
+    CACHE_TTL_SECONDS,
+
+    // Shipping
+    SHIPPING_J3_RATE,
+    SHIPPING_FREE_LIMIT,
+    SHIPPING_ENABLED,
+
+    // Order
+    ORDER_MIN_VALUE,
+    ORDER_MAX_INSTALLMENTS
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/config/SystemConfigGateway.java ---
+package com.atelie.ecommerce.domain.config;
+
+import java.util.List;
+
+public interface SystemConfigGateway {
+
+    List<SystemConfig> findAll();
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/config/SystemConfig.java ---
+package com.atelie.ecommerce.domain.config;
+
+public class SystemConfig {
+
+    private final String key;
+    private final String value;
+
+    public SystemConfig(String key, String value) {
+        this.key = key;
+        this.value = value;
+    }
+
+    public String key() {
+        return key;
+    }
+
+    public String value() {
+        return value;
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/order/OrderStatus.java ---
+package com.atelie.ecommerce.domain.order;
+
+public enum OrderStatus {
+    PENDING,
+    PAID,
+    SHIPPED,
+    CANCELED
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/provider/RouteContext.java ---
+package com.atelie.ecommerce.domain.provider;
+
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.Collections;
+
+public record RouteContext(
+        String country,
+        String cep,
+        BigDecimal cartTotal,
+        Map<String, Object> attributes // <--- O Pulo do Gato: Acesso total aos dados
+) {
+    public RouteContext {
+        if (attributes == null) attributes = Collections.emptyMap();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/provider/RuleMatcher.java ---
+package com.atelie.ecommerce.domain.provider;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.SimpleEvaluationContext; // Import Seguro
+import java.util.Iterator;
+
+public class RuleMatcher {
+
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final ExpressionParser parser = new SpelExpressionParser();
+
+    public RuleMatch matches(RouteContext ctx, String matchJson) {
+        try {
+            if (matchJson == null || matchJson.isBlank()) {
+                return new RuleMatch(false, "empty_rule");
+            }
+
+            JsonNode root = mapper.readTree(matchJson);
+
+            // 1. SpEL (Modo Seguro - Read Only)
+            if (root.hasNonNull("expression")) {
+                String expressionString = root.get("expression").asText();
+                
+                if (expressionString == null || expressionString.isBlank()) {
+                    return new RuleMatch(false, "empty_expression");
+                }
+                
+                // BLINDAGEM: SimpleEvaluationContext impede execução de métodos arbitrários
+                SimpleEvaluationContext context = SimpleEvaluationContext.forReadOnlyDataBinding()
+                        .withRootObject(ctx != null ? ctx : new Object()) // Define #ctx como raiz
+                        .build();
+                        
+                // Disponibiliza a variável #ctx explicitamente também
+                if (ctx != null) {
+                    context.setVariable("ctx", ctx);
+                }
+
+                Expression exp = parser.parseExpression(expressionString);
+                Boolean result = exp.getValue(context, Boolean.class);
+
+                if (Boolean.TRUE.equals(result)) return new RuleMatch(true, "spel_matched");
+                else return new RuleMatch(false, "spel_mismatch");
+            }
+
+            // 2. Legado (Retrocompatibilidade)
+            if (root.hasNonNull("country")) {
+                String c = root.get("country").asText();
+                if (ctx.country() == null || !c.equalsIgnoreCase(ctx.country())) {
+                    return new RuleMatch(false, "country_mismatch");
+                }
+            }
+            
+            if (root.hasNonNull("cep_prefix") && root.get("cep_prefix").isArray()) {
+                boolean prefixMatch = false;
+                String ctxCep = ctx.cep() != null ? ctx.cep().replaceAll("\\D+", "") : "";
+                Iterator<JsonNode> elements = root.get("cep_prefix").elements();
+                while (elements.hasNext()) {
+                    if (ctxCep.startsWith(elements.next().asText())) {
+                        prefixMatch = true;
+                        break;
+                    }
+                }
+                if (!prefixMatch) return new RuleMatch(false, "cep_prefix_mismatch");
+            }
+            
+            if (root.hasNonNull("min_total")) {
+                double min = root.get("min_total").asDouble();
+                if (ctx.cartTotal() == null || ctx.cartTotal().doubleValue() < min) {
+                    return new RuleMatch(false, "min_total_mismatch");
+                }
+            }
+
+            return new RuleMatch(true, "legacy_matched");
+
+        } catch (Exception e) {
+            System.err.println("Erro ao avaliar regra: " + e.getMessage());
+            return new RuleMatch(false, "invalid_match_json");
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/domain/provider/RuleMatch.java ---
+package com.atelie.ecommerce.domain.provider;
+
+public record RuleMatch(
+        boolean matched,
+        String reason
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/health/HealthController.java ---
+package com.atelie.ecommerce.api.health;
+
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HealthController {
+
+    @GetMapping(value = "/health", produces = "text/plain;charset=UTF-8")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/plain;charset=UTF-8"))
+                .body("OK");
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/category/CategoryController.java ---
+package com.atelie.ecommerce.api.catalog.category;
+
+import com.atelie.ecommerce.api.catalog.category.dto.CreateCategoryRequest;
+import com.atelie.ecommerce.api.catalog.category.dto.CategoryResponse;
+import com.atelie.ecommerce.application.service.catalog.category.CategoryService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/categories")
+public class CategoryController {
+
+    private final CategoryService service;
+
+    public CategoryController(CategoryService service) {
+        this.service = service;
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CategoryResponse create(@Valid @RequestBody CreateCategoryRequest request) {
+        return service.create(request);
+    }
+
+    @GetMapping
+    public List<CategoryResponse> list() {
+        return service.list();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/category/dto/CreateCategoryRequest.java ---
+package com.atelie.ecommerce.api.catalog.category.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public class CreateCategoryRequest {
+
+    @NotBlank(message = "name is required")
+    private String name;
+
+    @NotNull(message = "active is required")
+    private Boolean active;
+
+    public CreateCategoryRequest() {}
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public Boolean getActive() { return active; }
+    public void setActive(Boolean active) { this.active = active; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/category/dto/CategoryResponse.java ---
+package com.atelie.ecommerce.api.catalog.category.dto;
+
+import java.util.UUID;
+
+public class CategoryResponse {
+
+    private UUID id;
+    private String name;
+    private Boolean active;
+
+    public CategoryResponse(UUID id, String name, Boolean active) {
+        this.id = id;
+        this.name = name;
+        this.active = active;
+    }
+
+    public UUID getId() { return id; }
+    public String getName() { return name; }
+    public Boolean getActive() { return active; }
+}

@@ -1,0 +1,1347 @@
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/image/ProductImageController.java ---
+package com.atelie.ecommerce.api.catalog.product.image;
+
+import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.service.file.FileStorageService;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductImageController {
+
+    private final ProductRepository productRepository;
+    private final FileStorageService fileStorageService;
+
+    public ProductImageController(ProductRepository productRepository, FileStorageService fileStorageService) {
+        this.productRepository = productRepository;
+        this.fileStorageService = fileStorageService;
+    }
+
+    @PostMapping("/{id}/image")
+    public ResponseEntity<String> uploadImage(@PathVariable UUID id, @RequestParam("file") MultipartFile file) {
+        ProductEntity product = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Product not found"));
+
+        String filename = fileStorageService.save(file);
+        
+        // CORREÇÃO: Salva apenas o nome do arquivo no banco (ex: "uuid.jpg")
+        // Isso permite mudar o domínio da aplicação sem quebrar links antigos.
+        product.setImageUrl(filename);
+        productRepository.save(product);
+
+        // Retorna a URL completa apenas para quem fez o upload visualizar na hora
+        String fullUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/uploads/")
+                .path(filename)
+                .toUriString();
+
+        return ResponseEntity.ok(fullUri);
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/ProductIntegrationController.java ---
+package com.atelie.ecommerce.api.catalog.product;
+
+import com.atelie.ecommerce.api.catalog.product.dto.LinkIntegrationRequest;
+import com.atelie.ecommerce.application.service.catalog.product.ProductIntegrationService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductIntegrationController {
+
+    private final ProductIntegrationService integrationService;
+
+    public ProductIntegrationController(ProductIntegrationService integrationService) {
+        this.integrationService = integrationService;
+    }
+
+    @PostMapping("/{productId}/integrations")
+    public ResponseEntity<Void> linkProduct(
+            @PathVariable UUID productId,
+            @RequestBody @Valid LinkIntegrationRequest request) {
+        
+        integrationService.linkProduct(productId, request);
+        return ResponseEntity.ok().build();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/ProductAiController.java ---
+package com.atelie.ecommerce.api.catalog.product;
+
+import com.atelie.ecommerce.application.service.ai.AiContentService;
+import com.atelie.ecommerce.application.service.catalog.product.ProductService;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductAiController {
+
+    private final AiContentService aiService;
+    private final ProductService productService;
+    private final ProductRepository productRepository;
+
+    public ProductAiController(AiContentService aiService, 
+                               ProductService productService,
+                               ProductRepository productRepository) {
+        this.aiService = aiService;
+        this.productService = productService;
+        this.productRepository = productRepository;
+    }
+
+    @PostMapping("/{id}/ai/generate-description")
+    public ResponseEntity<Map<String, String>> generateDescription(@PathVariable UUID id) {
+        ProductEntity product = productService.findById(id);
+        
+        // Pega atributos técnicos do JSONB ou nome
+        String context = "Produto do Ateliê Filhos de Aruanda";
+        
+        String description = aiService.generateDescription(product.getName(), context);
+        
+        // Opcional: Já salva no produto ou só retorna para o Admin aprovar?
+        // Aqui retornamos para o Admin ver, editar e depois salvar via PUT.
+        return ResponseEntity.ok(Map.of("description", description));
+    }
+
+    @PostMapping("/{id}/ai/remove-background")
+    public ResponseEntity<Map<String, String>> removeBackground(@PathVariable UUID id) {
+        ProductEntity product = productService.findById(id);
+        
+        if (product.getImageUrl() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Produto não tem imagem"));
+        }
+
+        String newUrl = aiService.removeImageBackground(product.getImageUrl());
+        
+        // Atualiza automático
+        product.setImageUrl(newUrl);
+        productRepository.save(product); // Dispara evento de sync também!
+
+        return ResponseEntity.ok(Map.of("newImageUrl", newUrl));
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/ProductVariantController.java ---
+package com.atelie.ecommerce.api.catalog.product;
+
+import com.atelie.ecommerce.api.catalog.product.dto.CreateVariantRequest;
+import com.atelie.ecommerce.application.service.catalog.product.ProductVariantService;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductVariantController {
+
+    private final ProductVariantService service;
+
+    public ProductVariantController(ProductVariantService service) {
+        this.service = service;
+    }
+
+    @PostMapping("/{productId}/variants")
+    public ResponseEntity<ProductVariantEntity> create(
+            @PathVariable UUID productId,
+            @RequestBody @Valid CreateVariantRequest request) {
+        return ResponseEntity.ok(service.create(productId, request));
+    }
+
+    @GetMapping("/{productId}/variants")
+    public ResponseEntity<List<ProductVariantEntity>> list(@PathVariable UUID productId) {
+        return ResponseEntity.ok(service.listByProduct(productId));
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/dto/LinkIntegrationRequest.java ---
+package com.atelie.ecommerce.api.catalog.product.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record LinkIntegrationRequest(
+    @NotNull(message = "Integration type is required")
+    String integrationType, // Agora aceita "SHOPEE", "MAGALU", etc.
+    
+    @NotBlank(message = "External ID is required")
+    String externalId,
+    
+    String skuExternal
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/dto/CreateVariantRequest.java ---
+package com.atelie.ecommerce.api.catalog.product.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import java.math.BigDecimal;
+
+public record CreateVariantRequest(
+    @NotBlank(message = "SKU é obrigatório")
+    String sku,
+    
+    String gtin, // Opcional (gera automático se nulo)
+    
+    BigDecimal price, // Opcional
+    
+    @NotNull
+    @PositiveOrZero
+    Integer initialStock,
+    
+    String attributesJson // JSON String: '{"tamanho": "M"}'
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/dto/CreateProductRequest.java ---
+package com.atelie.ecommerce.api.catalog.product.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+public class CreateProductRequest {
+
+    @NotBlank(message = "name is required")
+    private String name;
+
+    @NotBlank(message = "description is required")
+    private String description;
+
+    @NotNull(message = "price is required")
+    private BigDecimal price;
+
+    @NotNull(message = "categoryId is required")
+    private UUID categoryId;
+
+    @NotNull(message = "active is required")
+    private Boolean active;
+
+    public CreateProductRequest() {}
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+
+    public UUID getCategoryId() { return categoryId; }
+    public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
+
+    public Boolean getActive() { return active; }
+    public void setActive(Boolean active) { this.active = active; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/dto/ProductResponse.java ---
+package com.atelie.ecommerce.api.catalog.product.dto;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+public class ProductResponse {
+
+    private UUID id;
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private UUID categoryId;
+    private Boolean active;
+    private String imageUrl; // Novo campo
+
+    public ProductResponse(UUID id, String name, String description, BigDecimal price, UUID categoryId, Boolean active) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.categoryId = categoryId;
+        this.active = active;
+    }
+
+    public UUID getId() { return id; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public BigDecimal getPrice() { return price; }
+    public UUID getCategoryId() { return categoryId; }
+    public Boolean getActive() { return active; }
+    
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/catalog/product/ProductController.java ---
+package com.atelie.ecommerce.api.catalog.product;
+
+import com.atelie.ecommerce.api.catalog.product.dto.CreateProductRequest;
+import com.atelie.ecommerce.api.catalog.product.dto.ProductResponse;
+import com.atelie.ecommerce.application.service.catalog.product.ProductService;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+
+    private final ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
+    @PostMapping
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
+        ProductEntity product = new ProductEntity();
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setActive(request.getActive());
+        product.setId(null);
+
+        ProductEntity saved = productService.saveProduct(product, request.getCategoryId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+    }
+
+    @GetMapping
+    public Page<ProductResponse> listAll(
+            @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+        return productService.getAllActiveProducts(pageable).map(this::toResponse);
+    }
+
+    private ProductResponse toResponse(ProductEntity entity) {
+        String fullImageUrl = null;
+        if (entity.getImageUrl() != null && !entity.getImageUrl().isBlank()) {
+            if (entity.getImageUrl().startsWith("http")) {
+                fullImageUrl = entity.getImageUrl();
+            } else {
+                fullImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/uploads/")
+                        .path(entity.getImageUrl())
+                        .toUriString();
+            }
+        }
+
+        var response = new ProductResponse(
+                entity.getId(),
+                entity.getName(),
+                entity.getDescription(),
+                entity.getPrice(),
+                entity.getCategoryId(),
+                entity.getActive()
+        );
+        response.setImageUrl(fullImageUrl);
+        return response;
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/auth/AuthController.java ---
+package com.atelie.ecommerce.api.auth;
+
+import com.atelie.ecommerce.api.auth.dto.*;
+import com.atelie.ecommerce.application.service.auth.AuthService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/auth") // Prefixo /api restaurado
+public class AuthController {
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest request) {
+        authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        String token = authService.login(request);
+        return ResponseEntity.ok(new LoginResponse(token));
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/auth/dto/GoogleAuthUrlResponse.java ---
+package com.atelie.ecommerce.api.auth.dto;
+
+/**
+ * DTO - GoogleAuthUrlResponse
+ *
+ * Contrato de saída do endpoint:
+ * GET /auth/google/url
+ */
+public class GoogleAuthUrlResponse {
+
+    private String authUrl;
+
+    public GoogleAuthUrlResponse() {}
+
+    public GoogleAuthUrlResponse(String authUrl) {
+        this.authUrl = authUrl;
+    }
+
+    public String getAuthUrl() {
+        return authUrl;
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/auth/dto/LoginRequest.java ---
+package com.atelie.ecommerce.api.auth.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class LoginRequest {
+    @NotBlank(message = "E-mail é obrigatório")
+    @Email(message = "E-mail inválido")
+    private String email;
+
+    @NotBlank(message = "Senha é obrigatória")
+    private String password;
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/auth/dto/LoginResponse.java ---
+package com.atelie.ecommerce.api.auth.dto;
+
+import lombok.*;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class LoginResponse {
+    private String token;
+    private String name;
+    private String email;
+
+    // Construtor preventivo: permite criar apenas com o token sem quebrar o Controller
+    public LoginResponse(String token) {
+        this.token = token;
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/auth/dto/RegisterResponse.java ---
+package com.atelie.ecommerce.api.auth.dto;
+
+import java.util.UUID;
+
+public record RegisterResponse(
+    UUID id,
+    String name,
+    String email
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/auth/dto/RegisterRequest.java ---
+package com.atelie.ecommerce.api.auth.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class RegisterRequest {
+
+    @NotBlank
+    private String name;
+
+    @NotBlank
+    @Email
+    private String email;
+
+    @NotBlank
+    private String password;
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/webhook/WebhookController.java ---
+package com.atelie.ecommerce.api.webhook;
+
+import com.atelie.ecommerce.application.service.order.OrderService;
+import com.atelie.ecommerce.application.service.fiscal.InvoiceService;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
+import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/webhooks")
+public class WebhookController {
+
+    private final OrderService orderService;
+    private final OrderRepository orderRepository;
+    private final InvoiceService invoiceService;
+
+    @Value("${WEBHOOK_SECRET}")
+    private String webhookSecret;
+
+    public WebhookController(OrderService orderService, OrderRepository orderRepository, InvoiceService invoiceService) {
+        this.orderService = orderService;
+        this.orderRepository = orderRepository;
+        this.invoiceService = invoiceService;
+    }
+
+    @PostMapping("/mercadopago")
+    public ResponseEntity<?> handleMercadoPago(
+            @RequestBody Map<String, Object> payload,
+            @RequestHeader(value = "X-Webhook-Token", required = false) String token) {
+        
+        // CORREÇÃO DE SEGURANÇA: Validação via Header, não via URL
+        if (webhookSecret == null || webhookSecret.isBlank()) {
+            log.error("WEBHOOK_SECRET não configurada.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Webhook not configured");
+        }
+
+        if (token == null) {
+            log.warn("Tentativa de acesso ao Webhook sem token.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Webhook Token");
+        }
+
+        byte[] a = token.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] b = webhookSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (!java.security.MessageDigest.isEqual(a, b)) {
+            log.warn("Tentativa de acesso ao Webhook com token inválido.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Webhook Token");
+        }
+
+        String orderIdStr = null;
+        if (payload.containsKey("external_reference")) {
+            orderIdStr = (String) payload.get("external_reference");
+        } else if (payload.containsKey("order_id")) {
+             orderIdStr = payload.get("order_id").toString();
+        }
+
+        if (orderIdStr == null) return ResponseEntity.ok().build();
+
+        try {
+            UUID orderId = UUID.fromString(orderIdStr);
+            String statusStr = (String) payload.getOrDefault("status", "unknown");
+
+            if ("approved".equalsIgnoreCase(statusStr)) {
+                validatePaymentAmount(orderId, payload);
+                orderService.approveOrder(orderId);
+                
+                // Emite nota fiscal automaticamente
+                invoiceService.emitInvoiceForOrder(orderId);
+                log.info("Processo de NFe iniciado para pedido {}", orderId);
+            } 
+            else if ("rejected".equalsIgnoreCase(statusStr) || "cancelled".equalsIgnoreCase(statusStr)) {
+                orderService.cancelOrder(orderId, "Pagamento " + statusStr);
+            }
+
+        } catch (Exception e) {
+            log.error("Erro processando webhook ref {}", orderIdStr, e);
+            if (e instanceof SecurityException) return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.ok().build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    private void validatePaymentAmount(UUID orderId, Map<String, Object> payload) {
+        if (payload.containsKey("transaction_amount")) {
+            BigDecimal paidAmount = new BigDecimal(payload.get("transaction_amount").toString());
+            OrderEntity order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+
+            if (paidAmount.compareTo(order.getTotalAmount()) < 0) {
+                throw new SecurityException("Valor pago menor que o total");
+            }
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/driver/webhook/PaymentWebhookDriver.java ---
+package com.atelie.ecommerce.api.serviceengine.driver.webhook;
+
+import com.atelie.ecommerce.api.serviceengine.driver.GenericWebhookDriver;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+@Component
+public class PaymentWebhookDriver extends GenericWebhookDriver {
+    public PaymentWebhookDriver(RestTemplate restTemplate) { super(restTemplate); }
+    
+    @Override public String driverKey() { return "universal.payment.webhook"; }
+    @Override public ServiceType serviceType() { return ServiceType.PAYMENT; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/driver/webhook/ShippingWebhookDriver.java ---
+package com.atelie.ecommerce.api.serviceengine.driver.webhook;
+
+import com.atelie.ecommerce.api.serviceengine.driver.GenericWebhookDriver;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+@Component
+public class ShippingWebhookDriver extends GenericWebhookDriver {
+    public ShippingWebhookDriver(RestTemplate restTemplate) { super(restTemplate); }
+    
+    @Override public String driverKey() { return "universal.shipping.webhook"; }
+    @Override public ServiceType serviceType() { return ServiceType.SHIPPING; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/driver/webhook/NotificationWebhookDriver.java ---
+package com.atelie.ecommerce.api.serviceengine.driver.webhook;
+
+import com.atelie.ecommerce.api.serviceengine.driver.GenericWebhookDriver;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+@Component
+public class NotificationWebhookDriver extends GenericWebhookDriver {
+    public NotificationWebhookDriver(RestTemplate restTemplate) { super(restTemplate); }
+    
+    @Override public String driverKey() { return "universal.notification.webhook"; }
+    @Override public ServiceType serviceType() { return ServiceType.NOTIFICATION; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/driver/shipping/J3ShippingDriver.java ---
+package com.atelie.ecommerce.api.serviceengine.driver.shipping;
+
+import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
+import com.atelie.ecommerce.api.serviceengine.util.DriverConfigReader;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+@Component
+public class J3ShippingDriver implements ServiceDriver {
+
+    @Override
+    public String driverKey() { return "shipping.j3"; }
+
+    @Override
+    public ServiceType serviceType() { return ServiceType.SHIPPING; }
+
+    @Override
+    public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
+        String cep = DriverConfigReader.requireNonBlank((String) request.get("cep"), "cep");
+        BigDecimal subtotal = DriverConfigReader.requireMoney(request.get("subtotal"), "subtotal");
+
+        // 100% vindo do config_json (dashboard/db). Sem defaults escondidos.
+        BigDecimal rate = DriverConfigReader.requireBigDecimal(config, "rate");
+        BigDecimal threshold = DriverConfigReader.requireBigDecimal(config, "free_threshold");
+        String prefixes = DriverConfigReader.optionalString(config, "cep_prefixes", "");
+
+        boolean eligible = true;
+        if (!prefixes.isBlank()) {
+            String cepDigits = cep.replaceAll("\\D+", "");
+            eligible = Arrays.stream(prefixes.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .anyMatch(cepDigits::startsWith);
+        }
+
+        boolean free = subtotal.compareTo(threshold) >= 0;
+        BigDecimal cost = (eligible && free) ? BigDecimal.ZERO : rate;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("provider", "J3");
+        response.put("cost", cost);
+        response.put("eligible", eligible);
+        response.put("free_shipping", free);
+        response.put("threshold", threshold);
+        return response;
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/driver/shipping/FlatRateShippingDriver.java ---
+package com.atelie.ecommerce.api.serviceengine.driver.shipping;
+
+import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
+import com.atelie.ecommerce.api.serviceengine.util.DriverConfigReader;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+
+@Component
+public class FlatRateShippingDriver implements ServiceDriver {
+
+    @Override
+    public String driverKey() { return "shipping.flat_rate"; }
+
+    @Override
+    public ServiceType serviceType() { return ServiceType.SHIPPING; }
+
+    @Override
+    public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
+        BigDecimal subtotal = DriverConfigReader.requireMoney(request.get("subtotal"), "subtotal");
+
+        // 100% vindo do config_json (dashboard/db). Sem defaults escondidos.
+        BigDecimal rate = DriverConfigReader.requireBigDecimal(config, "rate");
+        BigDecimal threshold = DriverConfigReader.requireBigDecimal(config, "free_threshold");
+
+        boolean free = subtotal.compareTo(threshold) >= 0;
+        BigDecimal cost = free ? BigDecimal.ZERO : rate;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("provider", "FLAT_RATE");
+        response.put("cost", cost);
+        response.put("eligible", true);
+        response.put("free_shipping", free);
+        response.put("threshold", threshold);
+        return response;
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/driver/GenericWebhookDriver.java ---
+package com.atelie.ecommerce.api.serviceengine.driver;
+
+import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
+
+// Classe base abstrata (não é mais @Component direto)
+public abstract class GenericWebhookDriver implements ServiceDriver {
+
+    private final RestTemplate restTemplate;
+
+    protected GenericWebhookDriver(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
+        String url = (String) config.get("url");
+        String authToken = (String) config.get("auth_token");
+        
+        if (url == null) throw new IllegalArgumentException("URL obrigatória na config do Webhook");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (authToken != null) headers.set("Authorization", "Bearer " + authToken);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+
+        try {
+            Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
+            Map<String, Object> result = new HashMap<>();
+            result.put("provider", "WEBHOOK_" + serviceType().name());
+            result.put("raw_response", response);
+            
+            // Mapeamento inteligente de resposta
+            if (response != null) {
+                if (response.containsKey("price")) result.put("cost", response.get("price"));
+                if (response.containsKey("cost")) result.put("cost", response.get("cost"));
+                if (response.containsKey("status")) result.put("status", response.get("status"));
+            }
+            return result;
+        } catch (Exception e) {
+            return Map.of("error", true, "message", e.getMessage());
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/driver/payment/MercadoPagoPaymentDriver.java ---
+package com.atelie.ecommerce.api.serviceengine.driver.payment;
+
+import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
+import com.atelie.ecommerce.api.serviceengine.util.DriverConfigReader;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+@Component
+public class MercadoPagoPaymentDriver implements ServiceDriver {
+
+    private final RestTemplate restTemplate;
+
+    public MercadoPagoPaymentDriver(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @Override
+    public String driverKey() { return "payment.mercadopago"; }
+
+    @Override
+    public ServiceType serviceType() { return ServiceType.PAYMENT; }
+
+    @Override
+    public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
+        // 1. Ler credenciais do JSON de Configuração (Vindo do Banco/Dashboard)
+        String accessToken = DriverConfigReader.requireNonBlank(
+            (String) config.get("access_token"), "access_token (Config MP)"
+        );
+        
+        // Permite configurar endpoint de notificação dinâmico no Dashboard
+        String notificationUrl = (String) config.get("notification_url"); 
+
+        // 2. Dados do Pedido
+        BigDecimal amount = (BigDecimal) request.get("amount");
+        String email = (String) request.get("email");
+        String externalRef = (String) request.get("orderId");
+
+        // 3. Montar Payload para API do Mercado Pago
+        Map<String, Object> mpRequest = new HashMap<>();
+        mpRequest.put("transaction_amount", amount);
+        mpRequest.put("description", "Pedido " + externalRef);
+        mpRequest.put("payment_method_id", "pix");
+        
+        Map<String, Object> payer = new HashMap<>();
+        payer.put("email", email);
+        mpRequest.put("payer", payer);
+
+        if (notificationUrl != null && !notificationUrl.isBlank()) {
+            mpRequest.put("notification_url", notificationUrl);
+        }
+
+        // 4. Chamada Real
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(accessToken);
+            headers.set("X-Idempotency-Key", UUID.randomUUID().toString());
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mpRequest, headers);
+            
+            // URL também pode vir da config se quiser suportar V1 ou V2
+            String apiUrl = "https://api.mercadopago.com/v1/payments";
+            
+            Map response = restTemplate.postForObject(apiUrl, entity, Map.class);
+            
+            // 5. Retorno Padronizado
+            Map<String, Object> result = new HashMap<>();
+            result.put("provider", "MERCADO_PAGO");
+            result.put("status", "pending"); // Pix começa pendente
+            
+            if (response != null) {
+                result.put("external_id", response.get("id"));
+                
+                // Pega o QR Code (Copia e Cola)
+                Map poi = (Map) response.get("point_of_interaction");
+                if (poi != null) {
+                    Map transData = (Map) poi.get("transaction_data");
+                    if (transData != null) {
+                        result.put("qr_code", transData.get("qr_code"));
+                        result.put("qr_code_base64", transData.get("qr_code_base64"));
+                    }
+                }
+            }
+            return result;
+
+        } catch (Exception e) {
+            return Map.of("error", true, "message", "Erro MP: " + e.getMessage());
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/JsonUtils.java ---
+package com.atelie.ecommerce.api.serviceengine;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Map;
+
+public class JsonUtils {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> toMap(String json) {
+        try {
+            return mapper.readValue(json, Map.class);
+        } catch (Exception e) {
+            return Map.of();
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/DriverRegistry.java ---
+package com.atelie.ecommerce.api.serviceengine;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Registry de drivers disponíveis no código.
+ * Dashboard escolhe qual driverKey usar via DB.
+ */
+public class DriverRegistry {
+
+    private final Map<String, ServiceDriver> driversByKey = new HashMap<>();
+
+    public DriverRegistry(List<ServiceDriver> drivers) {
+        for (ServiceDriver d : drivers) {
+            driversByKey.put(d.driverKey(), d);
+        }
+    }
+
+    public Optional<ServiceDriver> findByDriverKey(String driverKey) {
+        return Optional.ofNullable(driversByKey.get(driverKey));
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/util/DriverConfigReader.java ---
+package com.atelie.ecommerce.api.serviceengine.util;
+
+import java.math.BigDecimal;
+import java.util.Map;
+
+public final class DriverConfigReader {
+
+    private DriverConfigReader() {}
+
+    public static BigDecimal requireBigDecimal(Map<String, Object> config, String key) {
+        Object v = config.get(key);
+        if (v == null) {
+            throw new IllegalArgumentException("Config obrigatória ausente: '" + key + "'");
+        }
+        try {
+            return new BigDecimal(String.valueOf(v));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Config inválida para '" + key + "': valor='" + v + "'");
+        }
+    }
+
+    public static String optionalString(Map<String, Object> config, String key, String defaultValue) {
+        Object v = config.get(key);
+        if (v == null) return defaultValue;
+        String s = String.valueOf(v);
+        return s == null ? defaultValue : s;
+    }
+
+    public static String requireNonBlank(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Campo obrigatório ausente: '" + fieldName + "'");
+        }
+        return value;
+    }
+
+    public static BigDecimal requireMoney(Object value, String fieldName) {
+        if (value == null) {
+            throw new IllegalArgumentException("Campo obrigatório ausente: '" + fieldName + "'");
+        }
+        if (value instanceof BigDecimal bd) return bd;
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Campo inválido '" + fieldName + "': valor='" + value + "'");
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/ServiceOrchestrator.java ---
+package com.atelie.ecommerce.api.serviceengine;
+
+import com.atelie.ecommerce.domain.service.engine.ResolvedProvider;
+import com.atelie.ecommerce.domain.service.engine.ServiceContext;
+import com.atelie.ecommerce.domain.service.engine.ServiceEngine;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ServiceOrchestrator {
+
+    private final ServiceEngine engine;
+    private final ServiceProviderConfigGateway configGateway;
+    private final DriverRegistry driverRegistry;
+
+    public ServiceOrchestrator(
+            ServiceEngine engine,
+            ServiceProviderConfigGateway configGateway,
+            DriverRegistry driverRegistry
+    ) {
+        this.engine = engine;
+        this.configGateway = configGateway;
+        this.driverRegistry = driverRegistry;
+    }
+
+    public ServiceResult execute(
+            ServiceType type,
+            Map<String, Object> request,
+            String environment
+    ) {
+        BigDecimal value = BigDecimal.ZERO;
+        if (request.containsKey("amount")) value = toBigDecimal(request.get("amount"));
+        else if (request.containsKey("subtotal")) value = toBigDecimal(request.get("subtotal"));
+        else if (request.containsKey("total")) value = toBigDecimal(request.get("total"));
+
+        Map<String, Object> attributes = new HashMap<>(request);
+        
+        // Usa o país do request se existir, senão default BR
+        String country = (String) attributes.getOrDefault("country", "BR");
+        
+        ServiceContext ctx = new ServiceContext(country, value, attributes);
+
+        ResolvedProvider resolved = engine.resolve(type, ctx);
+
+        if (resolved == null || resolved.provider() == null) {
+            return new ServiceResult(false, null, Map.of("error", "NO_PROVIDER_AVAILABLE"));
+        }
+
+        var provider = resolved.provider();
+        String configJson = configGateway
+                .findConfigJson(provider.code(), environment)
+                .orElse("{}");
+        
+        var driver = driverRegistry
+                .findByDriverKey(provider.driverKey())
+                .orElse(null);
+        
+        if (driver == null) {
+            return new ServiceResult(false, provider.code(), Map.of("error", "DRIVER_NOT_FOUND"));
+        }
+
+        Map<String, Object> config = JsonUtils.toMap(configJson);
+        Map<String, Object> payload = driver.execute(request, config);
+        
+        // Se o driver reportar erro no payload (ex: timeout, recusado), propagamos como falha.
+        boolean driverSuccess = !Boolean.TRUE.equals(payload.get("error"));
+
+        return new ServiceResult(driverSuccess, provider.code(), payload);
+    }
+
+    private BigDecimal toBigDecimal(Object val) {
+        if (val == null) return BigDecimal.ZERO;
+        if (val instanceof BigDecimal) return (BigDecimal) val;
+        try { return new BigDecimal(val.toString()); } catch (Exception e) { return BigDecimal.ZERO; }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/ServiceResult.java ---
+package com.atelie.ecommerce.api.serviceengine;
+
+import java.util.Map;
+
+public record ServiceResult(
+        boolean success,
+        String providerCode,
+        Map<String, Object> payload
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/serviceengine/ServiceDriver.java ---
+package com.atelie.ecommerce.api.serviceengine;
+
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+
+import java.util.Map;
+
+/**
+ * Contrato de driver executável (implementação em código).
+ * O driver é selecionado via driverKey armazenada no banco.
+ */
+public interface ServiceDriver {
+
+    String driverKey();
+
+    ServiceType serviceType();
+
+    Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config);
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/inventory/dto/InventoryBalanceResponse.java ---
+package com.atelie.ecommerce.api.inventory.dto;
+
+import java.util.UUID;
+
+public record InventoryBalanceResponse(
+    UUID productId,
+    Integer currentStock
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/inventory/dto/InventoryAdjustmentRequest.java ---
+package com.atelie.ecommerce.api.inventory.dto;
+
+import com.atelie.ecommerce.domain.inventory.MovementType;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+public record InventoryAdjustmentRequest(
+    @NotNull(message = "Type is required (IN/OUT)")
+    MovementType type,
+    
+    @NotNull(message = "Quantity is required")
+    @Positive(message = "Quantity must be positive")
+    Integer quantity,
+    
+    String reason,
+    String referenceId
+) {}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/inventory/InventoryController.java ---
+package com.atelie.ecommerce.api.inventory;
+
+import com.atelie.ecommerce.api.inventory.dto.InventoryAdjustmentRequest;
+import com.atelie.ecommerce.api.inventory.dto.InventoryBalanceResponse;
+import com.atelie.ecommerce.application.service.inventory.InventoryService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/inventory")
+public class InventoryController {
+
+    private final InventoryService inventoryService;
+
+    public InventoryController(InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
+    }
+
+    @GetMapping("/{variantId}")
+    public ResponseEntity<InventoryBalanceResponse> getBalance(@PathVariable UUID variantId) {
+        // Correção: Chama o serviço usando o ID da Variante [cite: 281]
+        Integer stock = inventoryService.getStock(variantId);
+        return ResponseEntity.ok(new InventoryBalanceResponse(variantId, stock));
+    }
+
+    @PostMapping("/{variantId}")
+    public ResponseEntity<Void> adjustStock(
+            @PathVariable UUID variantId,
+            @RequestBody @Valid InventoryAdjustmentRequest request) {
+        
+        inventoryService.addMovement(
+                variantId, 
+                request.type(), 
+                request.quantity(), 
+                request.reason(), 
+                request.referenceId()
+        );
+        return ResponseEntity.ok().build();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/shipping/service/ShippingService.java ---
+package com.atelie.ecommerce.api.shipping.service;
+
+import com.atelie.ecommerce.api.serviceengine.ServiceOrchestrator;
+import com.atelie.ecommerce.api.serviceengine.ServiceResult;
+import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteResponse;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+public class ShippingService {
+
+    private final ServiceOrchestrator orchestrator;
+    @Value("${spring.profiles.active:prod}")
+    private String activeProfile;
+
+    public ShippingService(ServiceOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
+    }
+
+    public ShippingQuoteResponse quote(String rawCep, BigDecimal subtotal, String forcedProvider) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("cep", rawCep);
+        request.put("subtotal", subtotal);
+        if (forcedProvider != null) request.put("forced_provider", forcedProvider); // Suporte futuro
+
+        ServiceResult result = orchestrator.execute(ServiceType.SHIPPING, request, activeProfile);
+        
+        if (!result.success()) {
+            return new ShippingQuoteResponse("ERROR", false, false, BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+
+        Map<String, Object> payload = result.payload();
+        
+        // CORREÇÃO: Usa o providerCode do orquestrador ("LOGGI", "J3") como fonte da verdade.
+        // O fallback é o payload do driver.
+        String providerName = result.providerCode() != null ? result.providerCode() : (String) payload.getOrDefault("provider", "UNKNOWN");
+
+        return new ShippingQuoteResponse(
+            providerName,
+            (Boolean) payload.getOrDefault("eligible", false),
+            (Boolean) payload.getOrDefault("free_shipping", false),
+            toBigDecimal(payload.get("cost")),
+            toBigDecimal(payload.get("threshold"))
+        );
+    }
+
+    private BigDecimal toBigDecimal(Object val) {
+        if (val == null) return BigDecimal.ZERO;
+        if (val instanceof BigDecimal) return (BigDecimal) val;
+        try { return new BigDecimal(val.toString()); } catch (Exception e) { return BigDecimal.ZERO; }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/shipping/controller/ShippingController.java ---
+package com.atelie.ecommerce.api.shipping.controller;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteRequest;
+import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteResponse;
+import com.atelie.ecommerce.api.shipping.service.ShippingService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/shipping")
+public class ShippingController {
+
+    private final ShippingService shippingService;
+    private final DynamicConfigService dynamicConfigService;
+
+    public ShippingController(ShippingService shippingService, DynamicConfigService dynamicConfigService) {
+        this.shippingService = shippingService;
+        this.dynamicConfigService = dynamicConfigService;
+    }
+
+    @PostMapping("/quote")
+    public ResponseEntity<ShippingQuoteResponse> quote(@Valid @RequestBody ShippingQuoteRequest req) {
+        return ResponseEntity.ok(shippingService.quote(req.getCep(), req.getSubtotal(), req.getProvider()));
+    }
+
+    // Endpoint operacional: recarrega cache sem restart (pode depois proteger via auth/admin)
+    @PostMapping("/configs/refresh")
+    public ResponseEntity<Void> refreshConfigs() {
+        dynamicConfigService.refresh();
+        return ResponseEntity.noContent().build();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/shipping/dto/ShippingQuoteRequest.java ---
+package com.atelie.ecommerce.api.shipping.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
+
+public class ShippingQuoteRequest {
+
+    @NotBlank
+    private String cep;
+
+    @NotNull
+    private BigDecimal subtotal;
+
+    // opcional: força provedor ("J3" ou "FLAT_RATE"). Se null, usa SHIPPING_PROVIDER_MODE.
+    private String provider;
+
+    public String getCep() { return cep; }
+    public void setCep(String cep) { this.cep = cep; }
+
+    public BigDecimal getSubtotal() { return subtotal; }
+    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
+
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/shipping/dto/ShippingQuoteResponse.java ---
+package com.atelie.ecommerce.api.shipping.dto;
+
+import java.math.BigDecimal;
+
+public class ShippingQuoteResponse {
+
+    private String provider;
+    private boolean eligible;
+    private boolean freeShippingApplied;
+    private BigDecimal shippingCost;
+    private BigDecimal freeShippingThreshold;
+
+    public ShippingQuoteResponse() {}
+
+    public ShippingQuoteResponse(String provider, boolean eligible, boolean freeShippingApplied, BigDecimal shippingCost, BigDecimal freeShippingThreshold) {
+        this.provider = provider;
+        this.eligible = eligible;
+        this.freeShippingApplied = freeShippingApplied;
+        this.shippingCost = shippingCost;
+        this.freeShippingThreshold = freeShippingThreshold;
+    }
+
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
+
+    public boolean isEligible() { return eligible; }
+    public void setEligible(boolean eligible) { this.eligible = eligible; }
+
+    public boolean isFreeShippingApplied() { return freeShippingApplied; }
+    public void setFreeShippingApplied(boolean freeShippingApplied) { this.freeShippingApplied = freeShippingApplied; }
+
+    public BigDecimal getShippingCost() { return shippingCost; }
+    public void setShippingCost(BigDecimal shippingCost) { this.shippingCost = shippingCost; }
+
+    public BigDecimal getFreeShippingThreshold() { return freeShippingThreshold; }
+    public void setFreeShippingThreshold(BigDecimal freeShippingThreshold) { this.freeShippingThreshold = freeShippingThreshold; }
+}

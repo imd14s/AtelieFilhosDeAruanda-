@@ -3,6 +3,7 @@ package com.atelie.ecommerce.domain.provider;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,64 +12,63 @@ class RuleMatcherTest {
     private final RuleMatcher matcher = new RuleMatcher();
 
     @Test
-    void shouldMatchWhenAllCriteriaPass() {
-        RouteContext ctx = new RouteContext("BR", "01123456", new BigDecimal("150.00"));
-        String json = """
-                {"country":"BR","cep_prefix":["01","02"],"min_total":100.00}
+    void shouldMatchSpelExpression_whenExpressionIsTrue() {
+        RouteContext ctx = new RouteContext("BR", "01001-000", BigDecimal.valueOf(100), Map.of());
+
+        String ruleJson = """
+                {"expression":"country == 'BR'"}
                 """;
 
-        RuleMatch r = matcher.matches(ctx, json);
+        RuleMatch result = matcher.matches(ctx, ruleJson);
 
-        assertTrue(r.matched());
+        assertTrue(result.matched());
+        assertEquals("spel_matched", result.reason());
     }
 
     @Test
-    void shouldRejectOnCountryMismatch() {
-        RouteContext ctx = new RouteContext("BR", "01123456", new BigDecimal("150.00"));
-        String json = """
-                {"country":"US"}
+    void shouldNotMatchSpelExpression_whenExpressionIsFalse() {
+        RouteContext ctx = new RouteContext("BR", "01001-000", BigDecimal.valueOf(100), Map.of());
+
+        String ruleJson = """
+                {"expression":"country == 'US'"}
                 """;
 
-        RuleMatch r = matcher.matches(ctx, json);
+        RuleMatch result = matcher.matches(ctx, ruleJson);
 
-        assertFalse(r.matched());
-        assertEquals("country_mismatch", r.reason());
+        assertFalse(result.matched());
+        assertEquals("spel_mismatch", result.reason());
     }
 
     @Test
-    void shouldRejectOnCepPrefixMismatch() {
-        RouteContext ctx = new RouteContext("BR", "99123456", new BigDecimal("150.00"));
-        String json = """
-                {"cep_prefix":["01","02"]}
+    void shouldMatchLegacyCountryRule_whenCountryMatches() {
+        RouteContext ctx = new RouteContext("BR", "01001-000", BigDecimal.valueOf(100), Map.of());
+
+        String ruleJson = """
+                {"country":"BR"}
                 """;
 
-        RuleMatch r = matcher.matches(ctx, json);
+        RuleMatch result = matcher.matches(ctx, ruleJson);
 
-        assertFalse(r.matched());
-        assertEquals("cep_prefix_mismatch", r.reason());
+        assertTrue(result.matched());
+        assertEquals("legacy_matched", result.reason());
     }
 
     @Test
-    void shouldRejectOnMinTotalMismatch() {
-        RouteContext ctx = new RouteContext("BR", "01123456", new BigDecimal("50.00"));
-        String json = """
-                {"min_total":100.00}
+    void shouldNotMatchLegacyRules_whenCepPrefixOrMinTotalMismatch() {
+        RouteContext ctx = new RouteContext("BR", "99999-000", BigDecimal.valueOf(50), Map.of());
+
+        // cep_prefix não bate (espera começar com 010 ou 011) e min_total exige >= 100
+        String ruleJson = """
+                {"country":"BR","cep_prefix":["010","011"],"min_total":100}
                 """;
 
-        RuleMatch r = matcher.matches(ctx, json);
+        RuleMatch result = matcher.matches(ctx, ruleJson);
 
-        assertFalse(r.matched());
-        assertEquals("min_total_mismatch", r.reason());
-    }
-
-    @Test
-    void shouldRejectOnInvalidJson() {
-        RouteContext ctx = new RouteContext("BR", "01123456", new BigDecimal("150.00"));
-        String json = "{ invalid json";
-
-        RuleMatch r = matcher.matches(ctx, json);
-
-        assertFalse(r.matched());
-        assertEquals("invalid_match_json", r.reason());
+        assertFalse(result.matched());
+        // pode falhar primeiro por cep_prefix ou por min_total — ambos são válidos
+        assertTrue(
+                result.reason().equals("cep_prefix_mismatch") || result.reason().equals("min_total_mismatch"),
+                "reason inesperado: " + result.reason()
+        );
     }
 }

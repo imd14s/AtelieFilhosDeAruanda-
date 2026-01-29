@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.domain.service.engine;
 
+import com.atelie.ecommerce.domain.provider.RuleMatcher;
 import com.atelie.ecommerce.domain.service.model.ServiceProvider;
 import com.atelie.ecommerce.domain.service.model.ServiceRoutingRule;
 import com.atelie.ecommerce.domain.service.model.ServiceType;
@@ -14,6 +15,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class DefaultServiceEngineTest {
 
+    // Instância real do RuleMatcher (lógica pura, sem mock necessário)
+    private final RuleMatcher ruleMatcher = new RuleMatcher();
+
     @Test
     void shouldPickHighestPriorityEnabledProvider_whenNoRulesMatch() {
         // providers: J3 prio=10, CORREIOS prio=20 (menor = mais prioritário)
@@ -23,8 +27,8 @@ class DefaultServiceEngineTest {
         ServiceProviderGateway providerGateway = new InMemoryProviderGateway(List.of(j3, correios));
         ServiceRoutingRuleGateway ruleGateway = new InMemoryRuleGateway(List.of()); // sem regras
 
-        DefaultServiceEngine engine = new DefaultServiceEngine(providerGateway, ruleGateway);
-
+        // CORREÇÃO: Passando ruleMatcher (3º argumento)
+        DefaultServiceEngine engine = new DefaultServiceEngine(providerGateway, ruleGateway, ruleMatcher);
         ServiceContext ctx = new ServiceContext("BR", BigDecimal.valueOf(100), Map.of());
 
         ResolvedProvider resolved = engine.resolve(ServiceType.SHIPPING, ctx);
@@ -37,7 +41,7 @@ class DefaultServiceEngineTest {
     void shouldPickProviderByRuleMatch_whenRuleIsEnabledAndMatches() {
         ServiceProvider j3 = new ServiceProvider(UUID.randomUUID(), ServiceType.SHIPPING, "J3", "J3", true, 10, "shipping.j3", true);
         ServiceProvider correios = new ServiceProvider(UUID.randomUUID(), ServiceType.SHIPPING, "CORREIOS", "Correios", true, 20, "shipping.correios", true);
-
+        
         // regra manda usar CORREIOS quando country=BR
         ServiceRoutingRule rule = new ServiceRoutingRule(
                 UUID.randomUUID(),
@@ -52,8 +56,8 @@ class DefaultServiceEngineTest {
         ServiceProviderGateway providerGateway = new InMemoryProviderGateway(List.of(j3, correios));
         ServiceRoutingRuleGateway ruleGateway = new InMemoryRuleGateway(List.of(rule));
 
-        DefaultServiceEngine engine = new DefaultServiceEngine(providerGateway, ruleGateway);
-
+        // CORREÇÃO: Passando ruleMatcher (3º argumento)
+        DefaultServiceEngine engine = new DefaultServiceEngine(providerGateway, ruleGateway, ruleMatcher);
         ServiceContext ctx = new ServiceContext("BR", BigDecimal.valueOf(100), Map.of());
 
         ResolvedProvider resolved = engine.resolve(ServiceType.SHIPPING, ctx);
@@ -64,10 +68,12 @@ class DefaultServiceEngineTest {
 
     @Test
     void shouldThrow_whenNoEnabledProvidersExist() {
-        ServiceProviderGateway providerGateway = new InMemoryProviderGateway(List.of()); // nenhum provider
+        ServiceProviderGateway providerGateway = new InMemoryProviderGateway(List.of());
+        // nenhum provider
         ServiceRoutingRuleGateway ruleGateway = new InMemoryRuleGateway(List.of());
-
-        DefaultServiceEngine engine = new DefaultServiceEngine(providerGateway, ruleGateway);
+        
+        // CORREÇÃO: Passando ruleMatcher (3º argumento)
+        DefaultServiceEngine engine = new DefaultServiceEngine(providerGateway, ruleGateway, ruleMatcher);
 
         ServiceContext ctx = new ServiceContext("BR", BigDecimal.valueOf(100), Map.of());
 
@@ -79,6 +85,9 @@ class DefaultServiceEngineTest {
     static class InMemoryProviderGateway implements ServiceProviderGateway {
         private final List<ServiceProvider> data;
         InMemoryProviderGateway(List<ServiceProvider> data) { this.data = data; }
+
+        @Override
+        public void refresh() {}
 
         @Override
         public List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type) {
@@ -101,6 +110,9 @@ class DefaultServiceEngineTest {
     static class InMemoryRuleGateway implements ServiceRoutingRuleGateway {
         private final List<ServiceRoutingRule> data;
         InMemoryRuleGateway(List<ServiceRoutingRule> data) { this.data = data; }
+        
+        @Override
+        public void refresh() {}
 
         @Override
         public List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type) {

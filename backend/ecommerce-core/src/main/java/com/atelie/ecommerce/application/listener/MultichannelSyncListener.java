@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.application.listener;
 
+import com.atelie.ecommerce.application.integration.mercadolivre.MercadoLivreService;
 import com.atelie.ecommerce.domain.catalog.event.ProductSavedEvent;
-import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -14,28 +14,25 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class MultichannelSyncListener {
 
     private final ProductRepository productRepository;
+    private final MercadoLivreService mercadoLivreService;
 
-    public MultichannelSyncListener(ProductRepository productRepository) {
+    public MultichannelSyncListener(ProductRepository productRepository, 
+                                    MercadoLivreService mercadoLivreService) {
         this.productRepository = productRepository;
+        this.mercadoLivreService = mercadoLivreService;
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onProductSaved(ProductSavedEvent event) {
         productRepository.findById(event.productId()).ifPresent(product -> {
-            log.info("MULTICHANNEL: Detectada alteração no produto '{}' (Novo: {}). Iniciando sincronia...", 
-                    product.getName(), event.isNew());
-
-            // Lógica Simulada de Sincronia
-            // 1. Verificar se o produto tem flag "sincronizar_automaticamente"
-            // 2. Buscar integrações ativas (Mercado Livre, Shopee)
-            // 3. Chamar APIs externas
-            
+            // Lógica REAL de Sincronia
             if (event.isNew()) {
-                log.info("MULTICHANNEL: Criando anúncio no Mercado Livre para SKU: {}", product.getId());
-                // mercadoLivreService.createListing(product);
+                log.info("MULTICHANNEL: Tentando criar anúncio no Mercado Livre para: {}", product.getName());
+                // Chamada REAL (Controlada por flag no Dashboard dentro do Service)
+                mercadoLivreService.createListing(product);
             } else {
-                log.info("MULTICHANNEL: Atualizando preço/estoque na Shopee e TikTok.");
+                log.info("MULTICHANNEL: Produto atualizado (Sync de estoque/preço pendente em futura implementação).");
             }
         });
     }

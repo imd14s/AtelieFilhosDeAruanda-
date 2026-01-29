@@ -62,7 +62,9 @@ public class InventoryService {
         
         inventoryRepository.save(movement);
 
-        Integer newBalance = variantRepository.findById(variantId).get().getStockQuantity();
+        Integer newBalance = variantRepository.findById(variantId)
+                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException("Variant not found"))
+                .getStockQuantity();
         // Publica evento usando o ID do produto pai para listeners de vitrine, mas o saldo é da variante
         eventPublisher.publishEvent(new InventoryChangedEvent(variant.getProduct().getId(), newBalance));
     }

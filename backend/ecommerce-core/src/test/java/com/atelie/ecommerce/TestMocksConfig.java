@@ -1,8 +1,11 @@
 package com.atelie.ecommerce;
 
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
+import com.atelie.ecommerce.infrastructure.persistence.inventory.InventoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
+import com.atelie.ecommerce.application.service.integration.N8nService;
+import com.atelie.ecommerce.api.config.DynamicConfigService;
 import com.atelie.ecommerce.infrastructure.security.JwtAuthenticationFilter;
-import com.atelie.ecommerce.infrastructure.security.JwtService;
 import com.atelie.ecommerce.infrastructure.security.TokenProvider;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -19,8 +22,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class TestMocksConfig {
 
-    // --- SEGURANÇA (Obrigatorios para o Contexto subir) ---
-
     @Bean
     @Primary
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -29,43 +30,15 @@ public class TestMocksConfig {
         return http.build();
     }
 
-    @Bean
-    @Primary
-    public AuthenticationManager authenticationManager() {
-        return Mockito.mock(AuthenticationManager.class);
-    }
+    @Bean @Primary public AuthenticationManager authenticationManager() { return Mockito.mock(AuthenticationManager.class); }
+    // JwtService removido daqui pois a classe foi deletada
+    @Bean @Primary public PasswordEncoder passwordEncoder() { return Mockito.mock(PasswordEncoder.class); }
+    @Bean @Primary public TokenProvider tokenProvider() { return Mockito.mock(TokenProvider.class); }
+    @Bean @Primary public JwtAuthenticationFilter jwtAuthenticationFilter() { return Mockito.mock(JwtAuthenticationFilter.class); }
 
-    @Bean
-    @Primary
-    public JwtService jwtService() {
-        return Mockito.mock(JwtService.class);
-    }
-
-    @Bean
-    @Primary
-    public PasswordEncoder passwordEncoder() {
-        return Mockito.mock(PasswordEncoder.class);
-    }
-
-    @Bean
-    @Primary
-    public TokenProvider tokenProvider() {
-        return Mockito.mock(TokenProvider.class);
-    }
-
-    // AQUI ESTÁ O PULO DO GATO: Mockamos o filtro inteiro!
-    // Assim o Spring não tenta criar o real e não falha por falta de dependências.
-    @Bean
-    @Primary
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return Mockito.mock(JwtAuthenticationFilter.class);
-    }
-
-    // --- REPOSITÓRIOS GLOBAIS (Evita erro no Dashboard) ---
-    
-    @Bean
-    @Primary
-    public OrderRepository orderRepository() {
-        return Mockito.mock(OrderRepository.class);
-    }
+    @Bean @Primary public OrderRepository orderRepository() { return Mockito.mock(OrderRepository.class); }
+    @Bean @Primary public InventoryRepository inventoryRepository() { return Mockito.mock(InventoryRepository.class); }
+    @Bean @Primary public SystemConfigRepository systemConfigRepository() { return Mockito.mock(SystemConfigRepository.class); }
+    @Bean @Primary public N8nService n8nService() { return Mockito.mock(N8nService.class); }
+    @Bean @Primary public DynamicConfigService dynamicConfigService() { return Mockito.mock(DynamicConfigService.class); }
 }

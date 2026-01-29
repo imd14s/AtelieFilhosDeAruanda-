@@ -19,19 +19,20 @@ public class InventoryController {
         this.inventoryService = inventoryService;
     }
 
-    @GetMapping("/{productId}")
-    public ResponseEntity<InventoryBalanceResponse> getBalance(@PathVariable UUID productId) {
-        Integer stock = inventoryService.getStock(productId);
-        return ResponseEntity.ok(new InventoryBalanceResponse(productId, stock));
+    @GetMapping("/{variantId}")
+    public ResponseEntity<InventoryBalanceResponse> getBalance(@PathVariable UUID variantId) {
+        // Correção: Chama o serviço usando o ID da Variante [cite: 281]
+        Integer stock = inventoryService.getStock(variantId);
+        return ResponseEntity.ok(new InventoryBalanceResponse(variantId, stock));
     }
 
-    @PostMapping("/{productId}")
+    @PostMapping("/{variantId}")
     public ResponseEntity<Void> adjustStock(
-            @PathVariable UUID productId,
+            @PathVariable UUID variantId,
             @RequestBody @Valid InventoryAdjustmentRequest request) {
         
         inventoryService.addMovement(
-                productId, 
+                variantId, 
                 request.type(), 
                 request.quantity(), 
                 request.reason(), 

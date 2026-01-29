@@ -1,7 +1,6 @@
 package com.atelie.ecommerce.api.serviceengine.driver;
 
 import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
-import com.atelie.ecommerce.domain.service.model.ServiceType;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,6 +19,7 @@ public abstract class GenericWebhookDriver implements ServiceDriver {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
         String url = (String) config.get("url");
         String authToken = (String) config.get("auth_token");
@@ -33,7 +33,7 @@ public abstract class GenericWebhookDriver implements ServiceDriver {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
 
         try {
-            Map response = restTemplate.postForObject(url, entity, Map.class);
+            Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
             Map<String, Object> result = new HashMap<>();
             result.put("provider", "WEBHOOK_" + serviceType().name());
             result.put("raw_response", response);

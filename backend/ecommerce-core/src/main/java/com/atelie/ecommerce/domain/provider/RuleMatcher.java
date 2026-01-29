@@ -25,13 +25,19 @@ public class RuleMatcher {
             if (root.hasNonNull("expression")) {
                 String expressionString = root.get("expression").asText();
                 
+                if (expressionString == null || expressionString.isBlank()) {
+                    return new RuleMatch(false, "empty_expression");
+                }
+                
                 // BLINDAGEM: SimpleEvaluationContext impede execução de métodos arbitrários
                 SimpleEvaluationContext context = SimpleEvaluationContext.forReadOnlyDataBinding()
-                        .withRootObject(ctx) // Define #ctx como raiz
+                        .withRootObject(ctx != null ? ctx : new Object()) // Define #ctx como raiz
                         .build();
                         
                 // Disponibiliza a variável #ctx explicitamente também
-                context.setVariable("ctx", ctx);
+                if (ctx != null) {
+                    context.setVariable("ctx", ctx);
+                }
 
                 Expression exp = parser.parseExpression(expressionString);
                 Boolean result = exp.getValue(context, Boolean.class);

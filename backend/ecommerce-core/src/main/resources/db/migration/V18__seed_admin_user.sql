@@ -1,13 +1,14 @@
--- Senha padrão: 'admin123' (hash bcrypt gerado)
--- Garante que exista pelo menos um admin para acessar o Dashboard no primeiro deploy
+-- ATENÇÃO: Usuário Admin de Bootstrap.
+-- Nasce INATIVO (active=false). Deve ser ativado manualmente via Banco de Dados
+-- ou via procedure segura de reset de senha.
 INSERT INTO users (id, name, email, password, role, active, created_at)
 VALUES (
-  gen_random_uuid(), 
-  'Administrador', 
-  'admin@atelie.com', 
-  '$2a$10$X/hXjI.uJ.x.x.x.x.x.x.x.x.x.x.x.x.x.x', -- Hash placeholder, em prod usar hash real
-  'ADMIN', 
-  true, 
-  NOW()
+  gen_random_uuid(),
+  'Admin Bootstrap',
+  'admin@atelie.com',
+  'DISABLED_ACCOUNT_CHANGE_PASSWORD', -- Hash inválida intencionalmente
+  'ADMIN',
+  false, -- Segurança: Inativo por padrão
+  now()
 )
 ON CONFLICT (email) DO NOTHING;

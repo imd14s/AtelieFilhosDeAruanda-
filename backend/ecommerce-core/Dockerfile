@@ -1,23 +1,24 @@
-# Etapa de Build (Compilação)
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 WORKDIR /build
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Etapa de Execução (Imagem Final Leve)
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+
+# Cria grupo e usuário não-root
+RUN addgroup -S spring && adduser -S spring -G spring
+
+# Cria pasta de uploads e ajusta permissões
+RUN mkdir -p /app/uploads && chown -R spring:spring /app
+
 COPY --from=builder /build/target/ecommerce-core-0.0.1-SNAPSHOT.jar app.jar
 
-# Garante que a pasta de uploads exista
-RUN mkdir -p /app/uploads
+# Troca para o usuário seguro
+USER spring
 
-# Declara volume para persistir imagens
 VOLUME /app/uploads
-
-# Expõe a porta
 EXPOSE 8080
-
-# Comando de entrada com Timezone UTC explícito
 ENTRYPOINT ["java", "-Duser.timezone=UTC", "-jar", "app.jar"]

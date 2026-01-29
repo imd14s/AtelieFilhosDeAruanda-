@@ -1,11 +1,13 @@
 package com.atelie.ecommerce.api.serviceengine.driver.shipping;
 
 import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
+import com.atelie.ecommerce.api.serviceengine.util.DriverConfigReader;
 import com.atelie.ecommerce.domain.service.model.ServiceType;
 import org.springframework.stereotype.Component;
+
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class FlatRateShippingDriver implements ServiceDriver {
@@ -18,10 +20,11 @@ public class FlatRateShippingDriver implements ServiceDriver {
 
     @Override
     public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
-        BigDecimal subtotal = (BigDecimal) request.get("subtotal");
+        BigDecimal subtotal = DriverConfigReader.requireMoney(request.get("subtotal"), "subtotal");
 
-        BigDecimal rate = new BigDecimal(String.valueOf(config.getOrDefault("rate", "20.00")));
-        BigDecimal threshold = new BigDecimal(String.valueOf(config.getOrDefault("free_threshold", "500.00")));
+        // 100% vindo do config_json (dashboard/db). Sem defaults escondidos.
+        BigDecimal rate = DriverConfigReader.requireBigDecimal(config, "rate");
+        BigDecimal threshold = DriverConfigReader.requireBigDecimal(config, "free_threshold");
 
         boolean free = subtotal.compareTo(threshold) >= 0;
         BigDecimal cost = free ? BigDecimal.ZERO : rate;
@@ -29,10 +32,9 @@ public class FlatRateShippingDriver implements ServiceDriver {
         Map<String, Object> response = new HashMap<>();
         response.put("provider", "FLAT_RATE");
         response.put("cost", cost);
-        response.put("eligible", true); // Flat rate atende tudo
+        response.put("eligible", true);
         response.put("free_shipping", free);
         response.put("threshold", threshold);
-        
         return response;
     }
 }

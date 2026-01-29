@@ -20,19 +20,24 @@ public class ProductIntegrationEntity {
     @JoinColumn(name = "product_id")
     private ProductEntity product;
 
-    // Mudança Crítica: String em vez de Enum para permitir novos marketplaces via banco
     @Column(name = "integration_type", nullable = false)
-    private String integrationType; 
+    private String integrationType;
 
+    @Column(name = "external_id")
     private String externalId;
-    private String platformName;
-    private LocalDateTime lastSync;
 
-    public ProductIntegrationEntity(ProductEntity product, String integrationType, String externalId, String platformName) {
+    @Column(name = "sku_external")
+    private String skuExternal; // Campo adicionado corretamente
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    // Construtor utilitário corrigido
+    public ProductIntegrationEntity(ProductEntity product, String integrationType, String externalId, String skuExternal) {
         this.product = product;
-        this.integrationType = integrationType; // Aceita qualquer string agora
+        this.integrationType = integrationType;
         this.externalId = externalId;
-        this.platformName = platformName;
-        this.lastSync = LocalDateTime.now();
+        this.skuExternal = skuExternal;
+        this.createdAt = LocalDateTime.now();
     }
 }

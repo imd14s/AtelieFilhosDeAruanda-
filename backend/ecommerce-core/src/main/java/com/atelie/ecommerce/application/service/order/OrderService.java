@@ -1,6 +1,5 @@
 package com.atelie.ecommerce.application.service.order;
 
-import com.atelie.ecommerce.api.common.exception.ConflictException;
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
 import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
@@ -30,7 +29,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final ProductVariantRepository variantRepository; // Injetado
+    private final ProductVariantRepository variantRepository;
     private final InventoryService inventoryService;
 
     public OrderService(OrderRepository orderRepository,
@@ -64,19 +63,21 @@ public class OrderService {
                 throw new IllegalStateException("O produto '" + product.getName() + "' não está mais disponível.");
             }
 
-            // --- LÓGICA DE VARIANTE ---
+            // --- CORREÇÃO DA LÓGICA DE VARIANTE ---
             UUID targetVariantId = itemReq.variantId();
-            ProductVariantEntity variant = null;
+            ProductVariantEntity variant;
 
             if (targetVariantId != null) {
+                // Captura o ID em variável final para usar na lambda
+                final UUID lookupId = targetVariantId;
                 variant = variantRepository.findById(targetVariantId)
-                    .orElseThrow(() -> new NotFoundException("Variante não encontrada: " + targetVariantId));
+                    .orElseThrow(() -> new NotFoundException("Variante não encontrada: " + lookupId));
             } else {
                 // Fallback: Tenta achar a variante default criada na migração
                 var variants = variantRepository.findByProductId(product.getId());
                 if (!variants.isEmpty()) {
                     variant = variants.get(0); // Pega a primeira/default
-                    targetVariantId = variant.getId();
+                    targetVariantId = variant.getId(); // Atualiza o ID alvo
                 } else {
                     throw new IllegalStateException("Produto sem variantes cadastradas. Impossível baixar estoque.");
                 }
@@ -100,7 +101,7 @@ public class OrderService {
             itemEntity.setId(UUID.randomUUID());
             itemEntity.setOrder(order);
             itemEntity.setProduct(product);
-            itemEntity.setVariant(variant); // Salva o vínculo exato!
+            itemEntity.setVariant(variant);
             itemEntity.setQuantity(itemReq.quantity());
             itemEntity.setUnitPrice(finalPrice);
             itemEntity.setTotalPrice(itemTotal);
@@ -110,24 +111,39 @@ public class OrderService {
 
         order.setTotalAmount(totalOrder);
         order.setItems(items);
-
         return orderRepository.save(order);
     }
     
-    // ... (restante dos métodos approveOrder, cancelOrder, getAllOrders mantidos iguais) ...
-    // Apenas certifique-se de replicar o código original desses métodos aqui
-    // Para brevidade do script, assumimos que eles continuam lá.
-    
     @Transactional
     public void approveOrder(UUID orderId) {
-        // Lógica mantida...
-        // ...
+        OrderEntity order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+        
+        if (!OrderStatus.PENDING.name().equals(order.getStatus())) {
+             throw new IllegalStateException("Pedido não está pendente");
+        }
+        order.setStatus(OrderStatus.PAID.name());
+        orderRepository.save(order);
     }
     
     @Transactional
     public void cancelOrder(UUID orderId, String reason) {
-        // Lógica mantida...
-        // ...
+        OrderEntity order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+            
+        // Se já foi pago ou enviado, lógica de estorno seria necessária (simplificado aqui)
+        if (OrderStatus.CANCELED.name().equals(order.getStatus())) return;
+
+        // Estorno de estoque
+        for (OrderItemEntity item : order.getItems()) {
+             UUID variantId = item.getVariant() != null ? item.getVariant().getId() : null;
+             if (variantId != null) {
+                 inventoryService.addMovement(variantId, MovementType.IN, item.getQuantity(), "Order Cancelled: " + reason, orderId.toString());
+             }
+        }
+
+        order.setStatus(OrderStatus.CANCELED.name());
+        orderRepository.save(order);
     }
 
     public Page<OrderEntity> getAllOrders(Pageable pageable) {
