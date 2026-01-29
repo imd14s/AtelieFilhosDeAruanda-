@@ -2,8 +2,8 @@ package com.atelie.ecommerce.application.service.inventory;
 
 import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.domain.inventory.event.InventoryChangedEvent;
-import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
-import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
 import com.atelie.ecommerce.infrastructure.persistence.inventory.InventoryRepository;
 import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
@@ -17,50 +17,53 @@ import java.util.UUID;
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
-    private final ProductRepository productRepository;
+    private final ProductVariantRepository variantRepository; // Agora usa VariantRepo
     private final ApplicationEventPublisher eventPublisher;
 
     public InventoryService(InventoryRepository inventoryRepository, 
-                            ProductRepository productRepository,
+                            ProductVariantRepository variantRepository,
                             ApplicationEventPublisher eventPublisher) {
         this.inventoryRepository = inventoryRepository;
-        this.productRepository = productRepository;
+        this.variantRepository = variantRepository;
         this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
-    public Integer getStock(UUID productId) {
-        return productRepository.findById(productId)
-                .map(ProductEntity::getStockQuantity)
-                .orElseThrow(() -> new NotFoundException("Product not found"));
+    public Integer getStock(UUID variantId) {
+        return variantRepository.findById(variantId)
+                .map(ProductVariantEntity::getStockQuantity)
+                .orElseThrow(() -> new NotFoundException("Variant not found"));
     }
 
     @Transactional
-    public void addMovement(UUID productId, MovementType type, Integer quantity, String reason, String refId) {
-        // Validação básica de existência
-        ProductEntity product = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException("Product not found"));
+    public void addMovement(UUID variantId, MovementType type, Integer quantity, String reason, String refId) {
+        ProductVariantEntity variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new NotFoundException("Variant not found"));
 
-        // Lógica Blindada contra Race Condition
         if (type == MovementType.OUT) {
-            int rowsUpdated = productRepository.decrementStock(productId, quantity);
+            int rowsUpdated = variantRepository.decrementStock(variantId, quantity);
             if (rowsUpdated == 0) {
-                throw new IllegalArgumentException("Estoque insuficiente para realizar a saída.");
+                throw new IllegalArgumentException("Estoque insuficiente para a variante: " + variant.getSku());
             }
         } else if (type == MovementType.IN) {
-            productRepository.incrementStock(productId, quantity);
+            variantRepository.incrementStock(variantId, quantity);
         }
 
-        // Registra histórico
-        InventoryMovementEntity movement = new InventoryMovementEntity(
-                product, type, quantity, reason, refId
-        );
+        // Registra histórico (InventoryMovementEntity precisará ser atualizado para ter variant)
+        // Por compatibilidade com o código antigo, estamos setando o produto pai
+        InventoryMovementEntity movement = new InventoryMovementEntity();
+        movement.setId(UUID.randomUUID());
+        movement.setProduct(variant.getProduct());
+        movement.setVariantId(variant.getId()); // Campo novo
+        movement.setType(type);
+        movement.setQuantity(quantity);
+        movement.setReason(reason);
+        movement.setReferenceId(refId);
+        
         inventoryRepository.save(movement);
 
-        // Busca saldo atualizado para o evento (leitura pós-update)
-        // Nota: Em alta performance, poderíamos calcular no Java, mas a busca garante consistência.
-        Integer newBalance = productRepository.findById(productId).get().getStockQuantity();
-        
-        eventPublisher.publishEvent(new InventoryChangedEvent(productId, newBalance));
+        Integer newBalance = variantRepository.findById(variantId).get().getStockQuantity();
+        // Publica evento usando o ID do produto pai para listeners de vitrine, mas o saldo é da variante
+        eventPublisher.publishEvent(new InventoryChangedEvent(variant.getProduct().getId(), newBalance));
     }
 }

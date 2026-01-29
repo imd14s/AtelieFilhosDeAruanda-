@@ -3,11 +3,15 @@ package com.atelie.ecommerce.infrastructure.persistence.inventory.entity;
 import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "inventory_movements")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class InventoryMovementEntity {
 
     @Id
@@ -17,6 +21,9 @@ public class InventoryMovementEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private ProductEntity product;
 
+    @Column(name = "variant_id")
+    private UUID variantId; // Nova coluna
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MovementType type;
@@ -25,7 +32,7 @@ public class InventoryMovementEntity {
     private Integer quantity;
 
     private String reason;
-    
+
     @Column(name = "reference_id")
     private String referenceId;
 
@@ -37,24 +44,4 @@ public class InventoryMovementEntity {
         if (id == null) id = UUID.randomUUID();
         if (createdAt == null) createdAt = LocalDateTime.now();
     }
-
-    // Constructors
-    public InventoryMovementEntity() {}
-
-    public InventoryMovementEntity(ProductEntity product, MovementType type, Integer quantity, String reason, String referenceId) {
-        this.product = product;
-        this.type = type;
-        this.quantity = quantity;
-        this.reason = reason;
-        this.referenceId = referenceId;
-    }
-
-    // Getters
-    public UUID getId() { return id; }
-    public ProductEntity getProduct() { return product; }
-    public MovementType getType() { return type; }
-    public Integer getQuantity() { return quantity; }
-    public String getReason() { return reason; }
-    public String getReferenceId() { return referenceId; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 }
