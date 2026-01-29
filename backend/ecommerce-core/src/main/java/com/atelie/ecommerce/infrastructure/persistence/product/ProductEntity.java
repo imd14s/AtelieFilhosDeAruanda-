@@ -15,13 +15,23 @@ public class ProductEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
+
     private String name;
     private String description;
     private BigDecimal price;
+
+    /**
+     * @deprecated O estoque agora é gerenciado via ProductVariantEntity.
+     * Este campo permanece apenas para leitura de legado ou totalizadores.
+     * NÃO USE para controle de escrita.
+     */
+    @Deprecated
     private Integer stockQuantity;
+
     @Column(name="category_id", nullable=false)
-    private UUID categoryId; 
-    private String imageUrl; // Campo que faltava para o ProductImageController
+    private UUID categoryId;
+
+    private String imageUrl;
     private Boolean active;
     private Boolean alertEnabled;
     private Long viewCount;

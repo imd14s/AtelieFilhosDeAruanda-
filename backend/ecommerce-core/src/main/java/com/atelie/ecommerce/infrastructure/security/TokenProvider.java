@@ -17,14 +17,18 @@ import java.util.function.Function;
 @Component
 public class TokenProvider {
 
-    @Value("${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}")
+    // CORREÇÃO: Removemos o valor default inseguro. 
+    // A aplicação falhará ao iniciar se JWT_SECRET não estiver no .env ou application.yml
+    @Value("${JWT_SECRET}")
     private String secret;
 
     private Key key;
 
     @PostConstruct
     public void init() {
-        this.key = Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(secret));
+        // Garante que a chave tenha tamanho seguro (HMAC-SHA256 requer min 32 bytes)
+        byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(secret);
+        this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(Authentication authentication) {

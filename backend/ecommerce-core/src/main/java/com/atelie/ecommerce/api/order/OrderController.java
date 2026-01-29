@@ -33,7 +33,6 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(created));
     }
 
-    // CORREÇÃO: Paginação e DTO para evitar crash em produção
     @GetMapping
     public Page<OrderResponse> getAllOrders(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable

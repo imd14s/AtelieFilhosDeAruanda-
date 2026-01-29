@@ -9,7 +9,7 @@ import java.util.UUID;
 public record OrderResponse(
     UUID id,
     OrderStatus status,
-    String source, // Mudado de OrderSource para String
+    String source,
     String externalId,
     String customerName,
     BigDecimal totalAmount,
