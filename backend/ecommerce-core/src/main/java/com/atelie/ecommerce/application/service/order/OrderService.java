@@ -52,6 +52,11 @@ public class OrderService {
             ProductEntity product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
 
+            // --- CORREÇÃO DE NEGÓCIO: Impede compra de produto arquivado/inativo ---
+            if (Boolean.FALSE.equals(product.getActive())) {
+                throw new IllegalStateException("O produto '" + product.getName() + "' não está mais disponível para venda.");
+            }
+
             // Reserva Estoque (Atômico)
             inventoryService.addMovement(
                     product.getId(),
@@ -86,12 +91,10 @@ public class OrderService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        // BLINDAGEM: Se já estiver cancelado, não pode aprovar pois o estoque já foi devolvido.
         if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
             throw new IllegalStateException("Tentativa de aprovar pedido CANCELADO. Verifique o estoque manualmente.");
         }
 
-        // Garante idempotência (se já pago, ignora)
         if (!OrderStatus.PAID.name().equals(order.getStatus())) {
             order.setStatus(OrderStatus.PAID.name());
             orderRepository.save(order);
@@ -112,11 +115,10 @@ public class OrderService {
             throw new IllegalStateException("Não é possível cancelar pedido já enviado.");
         }
 
-        // Estorno do estoque
         for (OrderItemEntity item : order.getItems()) {
             inventoryService.addMovement(
                 item.getProduct().getId(),
-                MovementType.IN, // Devolução
+                MovementType.IN,
                 item.getQuantity(),
                 "Cancel Order " + orderId + ": " + reason,
                 orderId.toString()
