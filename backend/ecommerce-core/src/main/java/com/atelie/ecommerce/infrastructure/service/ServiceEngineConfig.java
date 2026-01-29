@@ -3,6 +3,7 @@ package com.atelie.ecommerce.infrastructure.service;
 import com.atelie.ecommerce.api.serviceengine.DriverRegistry;
 import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
 import com.atelie.ecommerce.api.serviceengine.ServiceOrchestrator;
+import com.atelie.ecommerce.domain.provider.RuleMatcher;
 import com.atelie.ecommerce.domain.service.engine.DefaultServiceEngine;
 import com.atelie.ecommerce.domain.service.engine.ServiceEngine;
 import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
@@ -17,6 +18,11 @@ import java.util.List;
 public class ServiceEngineConfig {
 
     @Bean
+    public RuleMatcher ruleMatcher() {
+        return new RuleMatcher();
+    }
+
+    @Bean
     public DriverRegistry driverRegistry(List<ServiceDriver> drivers) {
         return new DriverRegistry(drivers);
     }
@@ -24,9 +30,10 @@ public class ServiceEngineConfig {
     @Bean
     public ServiceEngine domainServiceEngine(
             ServiceProviderGateway providerGateway,
-            ServiceRoutingRuleGateway routingRuleGateway
+            ServiceRoutingRuleGateway routingRuleGateway,
+            RuleMatcher ruleMatcher
     ) {
-        return new DefaultServiceEngine(providerGateway, routingRuleGateway);
+        return new DefaultServiceEngine(providerGateway, routingRuleGateway, ruleMatcher);
     }
 
     @Bean

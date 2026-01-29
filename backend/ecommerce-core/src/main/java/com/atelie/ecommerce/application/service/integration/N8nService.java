@@ -1,18 +1,19 @@
 package com.atelie.ecommerce.application.service.integration;
 
 import com.atelie.ecommerce.api.config.DynamicConfigService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class N8nService {
 
     private final RestTemplate restTemplate;
     private final DynamicConfigService configService;
 
-    // Keys unificadas no system_config
     private static final String N8N_URL_KEY = "N8N_WEBHOOK_URL";
     private static final String N8N_ENABLED_KEY = "N8N_Automation_Enabled";
 
@@ -26,29 +27,22 @@ public class N8nService {
         return configService.requireBoolean(N8N_ENABLED_KEY);
     }
 
-    // Nota: O setter foi removido pois a alteração deve ser feita via 
-    // endpoint de administração que edita o system_config genérico, não hardcoded aqui.
-
     public void sendLowStockAlert(String productName, Integer currentStock, int threshold) {
-        if (!isAutomationEnabled()) {
-            return;
-        }
+        if (!isAutomationEnabled()) return;
 
         try {
-            // Pega URL do banco, sem hardcode, permitindo mudança em tempo real
             String url = configService.requireString(N8N_URL_KEY);
-
             Map<String, Object> payload = new HashMap<>();
             payload.put("event", "LOW_STOCK_ALERT");
             payload.put("product", productName);
             payload.put("stock", currentStock);
             payload.put("threshold", threshold);
-            payload.put("message", "O produto " + productName + " atingiu o nível crítico de estoque!");
+            payload.put("message", "Produto " + productName + " crítico!");
 
             restTemplate.postForEntity(url, payload, String.class);
-            System.out.println("SUCESSO: Alerta enviado ao n8n para " + productName);
+            log.info("N8N Alert Sent: Product={} Stock={}", productName, currentStock);
         } catch (Exception e) {
-            System.err.println("ERRO: Falha ao conectar com n8n ou configuração ausente: " + e.getMessage());
+            log.error("Failed to send N8N alert", e);
         }
     }
 }

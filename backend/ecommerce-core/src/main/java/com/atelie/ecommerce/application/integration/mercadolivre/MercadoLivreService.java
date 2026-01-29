@@ -4,10 +4,12 @@ import com.atelie.ecommerce.api.config.DynamicConfigService;
 import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
 import com.atelie.ecommerce.application.integration.MarketplaceIntegrationService;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class MercadoLivreService implements MarketplaceIntegrationService {
 
@@ -26,21 +28,14 @@ public class MercadoLivreService implements MarketplaceIntegrationService {
     @Override
     @Transactional(readOnly = true)
     public CreateOrderRequest fetchAndConvertOrder(String resourceId) {
-        // 1. Verifica se a integração está ativa no Banco
         if (!configService.containsKey("ML_ENABLED") || !configService.requireBoolean("ML_ENABLED")) {
-             throw new IllegalStateException("Integração Mercado Livre desativada no Dashboard.");
+             throw new IllegalStateException("Integração Mercado Livre desativada.");
         }
 
-        // 2. Busca Token (Segurança Mutável)
         String token = configService.requireString("ML_ACCESS_TOKEN");
-        
-        System.out.println("Consultando API ML com token: " + token.substring(0, 5) + "...");
+        log.info("Fetching ML Order: {} using Token suffix: ...{}", resourceId, token.length() > 5 ? token.substring(token.length()-5) : "xxx");
 
-        // 3. Lógica Real (Exemplo simplificado para HTTP)
-        // String url = "https://api.mercadolibre.com" + resourceId;
-        // ... chamada restTemplate ...
-
-        // Mock funcional para permitir fluxo sem quebrar
+        // Implementação real viria aqui
         return null; 
     }
 }

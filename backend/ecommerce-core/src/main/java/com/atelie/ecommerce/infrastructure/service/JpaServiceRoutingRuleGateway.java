@@ -7,13 +7,18 @@ import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceRoutin
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceRoutingRuleEntity;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Component
 public class JpaServiceRoutingRuleGateway implements ServiceRoutingRuleGateway {
 
     private final ServiceRoutingRuleJpaRepository repo;
+    private final Map<String, List<ServiceRoutingRule>> cache = new ConcurrentHashMap<>();
+    private LocalDateTime lastUpdate = LocalDateTime.MIN;
 
     public JpaServiceRoutingRuleGateway(ServiceRoutingRuleJpaRepository repo) {
         this.repo = repo;
@@ -21,21 +26,20 @@ public class JpaServiceRoutingRuleGateway implements ServiceRoutingRuleGateway {
 
     @Override
     public List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type) {
-        return repo.findByServiceTypeAndEnabledOrderByPriorityAsc(type.name(), true)
+        if (LocalDateTime.now().isAfter(lastUpdate.plusMinutes(5))) {
+            cache.clear();
+            lastUpdate = LocalDateTime.now();
+        }
+
+        return cache.computeIfAbsent(type.name(), k -> 
+            repo.findByServiceTypeAndEnabledOrderByPriorityAsc(k, true)
                 .stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())
+        );
     }
 
     private ServiceRoutingRule toDomain(ServiceRoutingRuleEntity e) {
-        return new ServiceRoutingRule(
-                e.getId(),
-                ServiceType.valueOf(e.getServiceType()),
-                e.getProviderCode(),
-                e.isEnabled(),
-                e.getPriority(),
-                e.getMatchJson(),
-                e.getBehaviorJson()
-        );
+        return new ServiceRoutingRule(e.getId(), ServiceType.valueOf(e.getServiceType()), e.getProviderCode(), e.isEnabled(), e.getPriority(), e.getMatchJson(), e.getBehaviorJson());
     }
 }

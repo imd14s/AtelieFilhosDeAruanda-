@@ -24,14 +24,15 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Rotas Públicas
-                .requestMatchers("/api/auth/**", "/health", "/api/webhooks/**").permitAll()
-                .requestMatchers("/api/shipping/quote").permitAll() 
+                // Rotas Públicas Essenciais
+                .requestMatchers("/api/auth/**", "/api/webhooks/**").permitAll()
+                .requestMatchers("/api/shipping/quote").permitAll()
                 
-                // Rotas de Admin (Protegidas) - Aqui exigimos apenas Token válido para simplificar o teste
-                // Idealmente: .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                // Observabilidade e Docs (Liberado para facilitar dev/dashboard - proteger em prod!)
+                .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                
+                // Admin e outros requerem auth
                 .requestMatchers("/api/admin/**").authenticated()
-
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

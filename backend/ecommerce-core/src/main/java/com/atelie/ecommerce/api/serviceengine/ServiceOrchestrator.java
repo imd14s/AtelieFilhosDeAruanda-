@@ -31,14 +31,13 @@ public class ServiceOrchestrator {
             Map<String, Object> request,
             String environment
     ) {
+        BigDecimal value = BigDecimal.ZERO;
+        if (request.containsKey("amount")) value = toBigDecimal(request.get("amount"));
+        else if (request.containsKey("subtotal")) value = toBigDecimal(request.get("subtotal"));
+        else if (request.containsKey("total")) value = toBigDecimal(request.get("total"));
 
         Map<String, Object> attributes = new HashMap<>(request);
-
-        ServiceContext ctx = new ServiceContext(
-                "BR",
-                BigDecimal.ZERO,
-                attributes
-        );
+        ServiceContext ctx = new ServiceContext("BR", value, attributes);
 
         ResolvedProvider resolved = engine.resolve(type, ctx);
 
@@ -47,22 +46,31 @@ public class ServiceOrchestrator {
         }
 
         var provider = resolved.provider();
-
         String configJson = configGateway
                 .findConfigJson(provider.code(), environment)
                 .orElse("{}");
-
+        
         var driver = driverRegistry
                 .findByDriverKey(provider.driverKey())
                 .orElse(null);
-
+        
         if (driver == null) {
             return new ServiceResult(false, provider.code(), Map.of("error", "DRIVER_NOT_FOUND"));
         }
 
         Map<String, Object> config = JsonUtils.toMap(configJson);
         Map<String, Object> payload = driver.execute(request, config);
+        
+        // --- CORREÇÃO DE SEGURANÇA LÓGICA ---
+        // Se o driver reportar erro no payload (ex: timeout, recusado), propagamos como falha.
+        boolean driverSuccess = !Boolean.TRUE.equals(payload.get("error"));
 
-        return new ServiceResult(true, provider.code(), payload);
+        return new ServiceResult(driverSuccess, provider.code(), payload);
+    }
+
+    private BigDecimal toBigDecimal(Object val) {
+        if (val == null) return BigDecimal.ZERO;
+        if (val instanceof BigDecimal) return (BigDecimal) val;
+        try { return new BigDecimal(val.toString()); } catch (Exception e) { return BigDecimal.ZERO; }
     }
 }

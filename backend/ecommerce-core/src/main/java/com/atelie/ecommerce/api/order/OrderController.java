@@ -1,7 +1,10 @@
 package com.atelie.ecommerce.api.order;
 
+import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
 import com.atelie.ecommerce.application.service.order.OrderService;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +21,9 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderEntity> createOrder(@RequestBody OrderEntity order) {
-        return ResponseEntity.ok(orderService.saveOrder(order));
+    public ResponseEntity<OrderEntity> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+        OrderEntity created = orderService.createOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping
