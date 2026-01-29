@@ -37,7 +37,11 @@ public class ServiceOrchestrator {
         else if (request.containsKey("total")) value = toBigDecimal(request.get("total"));
 
         Map<String, Object> attributes = new HashMap<>(request);
-        ServiceContext ctx = new ServiceContext("BR", value, attributes);
+        
+        // Usa o país do request se existir, senão default BR
+        String country = (String) attributes.getOrDefault("country", "BR");
+        
+        ServiceContext ctx = new ServiceContext(country, value, attributes);
 
         ResolvedProvider resolved = engine.resolve(type, ctx);
 
@@ -61,7 +65,6 @@ public class ServiceOrchestrator {
         Map<String, Object> config = JsonUtils.toMap(configJson);
         Map<String, Object> payload = driver.execute(request, config);
         
-        // --- CORREÇÃO DE SEGURANÇA LÓGICA ---
         // Se o driver reportar erro no payload (ex: timeout, recusado), propagamos como falha.
         boolean driverSuccess = !Boolean.TRUE.equals(payload.get("error"));
 

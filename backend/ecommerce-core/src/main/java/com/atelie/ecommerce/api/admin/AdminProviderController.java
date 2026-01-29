@@ -33,11 +33,22 @@ public class AdminProviderController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ServiceProviderEntity> update(@PathVariable UUID id, @RequestBody ServiceProviderEntity entity) {
-        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
-        entity.setId(id);
-        entity.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.ok(repository.save(entity));
+    public ResponseEntity<ServiceProviderEntity> update(@PathVariable UUID id, @RequestBody ServiceProviderEntity dto) {
+        return repository.findById(id)
+            .map(existing -> {
+                // Atualiza apenas campos editáveis, preservando ID e CreatedAt
+                existing.setName(dto.getName());
+                existing.setServiceType(dto.getServiceType());
+                existing.setCode(dto.getCode());
+                existing.setPriority(dto.getPriority());
+                existing.setDriverKey(dto.getDriverKey());
+                existing.setHealthEnabled(dto.isHealthEnabled());
+                existing.setEnabled(dto.isEnabled());
+                
+                existing.setUpdatedAt(LocalDateTime.now());
+                return ResponseEntity.ok(repository.save(existing));
+            })
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/toggle")

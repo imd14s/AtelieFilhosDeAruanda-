@@ -919,6 +919,7 @@ public class OrderService {
             ProductEntity product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
 
+            // Baixa atômica de estoque
             inventoryService.addMovement(
                     product.getId(),
                     MovementType.OUT,
@@ -947,7 +948,7 @@ public class OrderService {
         return orderRepository.save(order);
     }
     
-    // --- NOVO MÉTODO: Aprovar Pedido ---
+    // Aprovação chamada pelo Webhook
     @Transactional
     public void approveOrder(UUID orderId) {
         OrderEntity order = orderRepository.findById(orderId)
@@ -2056,7 +2057,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class JpaServiceProviderConfigGateway implements ServiceProviderConfigConfigGateway {
+public class JpaServiceProviderConfigGateway implements ServiceProviderConfigGateway {
 
     private final ServiceProviderJpaRepository providerRepo;
     private final ServiceProviderConfigJpaRepository configRepo;
@@ -3366,9 +3367,6 @@ public class WebhookController {
     public ResponseEntity<?> handleMercadoPago(@RequestBody Map<String, Object> payload) {
         log.info("Webhook Recebido: {}", payload);
 
-        // Lógica Genérica de Exemplo: Tenta extrair 'external_reference' ou 'order_id'
-        // Em produção, você validaria a assinatura HMAC ou IP.
-        
         String orderIdStr = null;
         if (payload.containsKey("external_reference")) {
             orderIdStr = (String) payload.get("external_reference");
@@ -3376,7 +3374,6 @@ public class WebhookController {
              orderIdStr = payload.get("order_id").toString();
         }
 
-        // Simulação de status 'approved'
         String status = (String) payload.getOrDefault("status", "unknown");
 
         if (orderIdStr != null && "approved".equalsIgnoreCase(status)) {
@@ -4584,7 +4581,7 @@ public class AdminProviderConfigController {
         
         ServiceProviderConfigEntity saved = repository.save(config);
         
-        // --- CORREÇÃO: Limpa o cache imediatamente ---
+        // --- LIMPEZA DE CACHE IMEDIATA ---
         gateway.refresh();
         
         return ResponseEntity.ok(saved);
