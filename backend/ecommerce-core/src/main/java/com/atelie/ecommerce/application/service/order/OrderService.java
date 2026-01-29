@@ -13,6 +13,8 @@ import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,7 +100,7 @@ public class OrderService {
 
             if (!OrderStatus.PAID.name().equals(order.getStatus())) {
                 order.setStatus(OrderStatus.PAID.name());
-                orderRepository.save(order); // @Version será checado aqui
+                orderRepository.save(order);
                 System.out.println("PEDIDO APROVADO: " + orderId);
             }
         } catch (OptimisticLockingFailureException e) {
@@ -128,14 +130,15 @@ public class OrderService {
             }
 
             order.setStatus(OrderStatus.CANCELED.name());
-            orderRepository.save(order); // @Version será checado aqui
+            orderRepository.save(order);
             System.out.println("PEDIDO CANCELADO: " + orderId);
         } catch (OptimisticLockingFailureException e) {
             throw new ConflictException("Conflito de estado ao cancelar. Verifique o status atual.");
         }
     }
 
-    public List<OrderEntity> getAllOrders() {
-        return orderRepository.findAll();
+    // CORREÇÃO: Método paginado
+    public Page<OrderEntity> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
 }

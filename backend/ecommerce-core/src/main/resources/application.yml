@@ -6,19 +6,27 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ecommerce}
     username: ${DB_USER:postgres}
     password: ${DB_PASS:postgres}
+    # TUNING PARA PRODUÇÃO
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      minimum-idle: 5
+      idle-timeout: 30000
+      connection-timeout: 20000
+      max-lifetime: 1800000
 
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false # Desligar em produção para performance
+    open-in-view: false   # Boas práticas: desativar OSIV para evitar conexões presas
 
   flyway:
     enabled: true
     locations: classpath:db/migration
 
-# CORREÇÃO: Permite que o Spring entenda que está atrás de um proxy (https)
+# Suporte a Proxy Reverso (Nginx/AWS LB/Https)
 server:
   port: ${PORT:8080}
   forward-headers-strategy: native

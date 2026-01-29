@@ -11,6 +11,7 @@ public class ProductResponse {
     private BigDecimal price;
     private UUID categoryId;
     private Boolean active;
+    private String imageUrl; // Novo campo
 
     public ProductResponse(UUID id, String name, String description, BigDecimal price, UUID categoryId, Boolean active) {
         this.id = id;
@@ -27,4 +28,7 @@ public class ProductResponse {
     public BigDecimal getPrice() { return price; }
     public UUID getCategoryId() { return categoryId; }
     public Boolean getActive() { return active; }
+    
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

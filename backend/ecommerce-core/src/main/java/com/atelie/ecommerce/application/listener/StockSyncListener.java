@@ -4,9 +4,10 @@ import com.atelie.ecommerce.domain.inventory.event.InventoryChangedEvent;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 public class StockSyncListener {
@@ -18,8 +19,10 @@ public class StockSyncListener {
         this.integrationRepository = integrationRepository;
     }
 
-    @EventListener
+    // CORREÇÃO: TransactionalEventListener garante que só executamos se o banco confirmou a transação.
+    // O @Async garante que não travamos a thread original após o commit.
     @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleInventoryChange(InventoryChangedEvent event) {
         var links = integrationRepository.findByProductId(event.productId());
         if (links.isEmpty()) {
@@ -27,12 +30,11 @@ public class StockSyncListener {
         }
 
         links.forEach(link -> {
-             log.info("SYNC [ATIVO]: Enviando update para {}. Produto Externo: {}, Novo Saldo: {}", 
+             log.info("SYNC [CONFIRMADO]: Enviando update para {}. Produto: {}, Novo Saldo: {}", 
                      link.getIntegrationType(), 
                      link.getExternalId(), 
                      event.newQuantity());
-             // Aqui entraria a chamada HTTP para o MarketplaceIntegrationService
-             // mantido simples para não quebrar build sem credenciais reais.
+             // Lógica de envio HTTP
         });
     }
 }

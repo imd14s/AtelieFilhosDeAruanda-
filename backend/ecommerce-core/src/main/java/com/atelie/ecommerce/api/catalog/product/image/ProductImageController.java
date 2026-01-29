@@ -30,14 +30,17 @@ public class ProductImageController {
 
         String filename = fileStorageService.save(file);
         
-        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+        // CORREÇÃO: Salva apenas o nome do arquivo no banco (ex: "uuid.jpg")
+        // Isso permite mudar o domínio da aplicação sem quebrar links antigos.
+        product.setImageUrl(filename);
+        productRepository.save(product);
+
+        // Retorna a URL completa apenas para quem fez o upload visualizar na hora
+        String fullUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/uploads/")
                 .path(filename)
                 .toUriString();
 
-        product.setImageUrl(fileDownloadUri);
-        productRepository.save(product);
-
-        return ResponseEntity.ok(fileDownloadUri);
+        return ResponseEntity.ok(fullUri);
     }
 }
