@@ -52,7 +52,7 @@ public class OrderService {
             ProductEntity product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + itemReq.productId()));
 
-            // Reserva Estoque
+            // Reserva Estoque (Atômico)
             inventoryService.addMovement(
                     product.getId(),
                     MovementType.OUT,
@@ -86,7 +86,12 @@ public class OrderService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        // Garante idempotência
+        // BLINDAGEM: Se já estiver cancelado, não pode aprovar pois o estoque já foi devolvido.
+        if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
+            throw new IllegalStateException("Tentativa de aprovar pedido CANCELADO. Verifique o estoque manualmente.");
+        }
+
+        // Garante idempotência (se já pago, ignora)
         if (!OrderStatus.PAID.name().equals(order.getStatus())) {
             order.setStatus(OrderStatus.PAID.name());
             orderRepository.save(order);
@@ -94,21 +99,20 @@ public class OrderService {
         }
     }
 
-    // --- NOVO: Cancelar Pedido e Devolver Estoque ---
     @Transactional
     public void cancelOrder(UUID orderId, String reason) {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
         if (OrderStatus.CANCELED.name().equals(order.getStatus())) {
-            return; // Já cancelado
+            return;
         }
         
         if (OrderStatus.SHIPPED.name().equals(order.getStatus())) {
             throw new IllegalStateException("Não é possível cancelar pedido já enviado.");
         }
 
-        // Estorno do estoque item a item
+        // Estorno do estoque
         for (OrderItemEntity item : order.getItems()) {
             inventoryService.addMovement(
                 item.getProduct().getId(),

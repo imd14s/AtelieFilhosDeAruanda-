@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.expression.spel.support.SimpleEvaluationContext; // Import Seguro
 import java.util.Iterator;
 
 public class RuleMatcher {
@@ -21,18 +21,26 @@ public class RuleMatcher {
 
             JsonNode root = mapper.readTree(matchJson);
 
-            // 1. SpEL (Moderno)
+            // 1. SpEL (Modo Seguro - Read Only)
             if (root.hasNonNull("expression")) {
                 String expressionString = root.get("expression").asText();
-                StandardEvaluationContext context = new StandardEvaluationContext();
+                
+                // BLINDAGEM: SimpleEvaluationContext impede execução de métodos arbitrários
+                SimpleEvaluationContext context = SimpleEvaluationContext.forReadOnlyDataBinding()
+                        .withRootObject(ctx) // Define #ctx como raiz
+                        .build();
+                        
+                // Disponibiliza a variável #ctx explicitamente também
                 context.setVariable("ctx", ctx);
+
                 Expression exp = parser.parseExpression(expressionString);
                 Boolean result = exp.getValue(context, Boolean.class);
+
                 if (Boolean.TRUE.equals(result)) return new RuleMatch(true, "spel_matched");
                 else return new RuleMatch(false, "spel_mismatch");
             }
 
-            // 2. Legado (Retrocompatibilidade e suporte aos Testes Atuais)
+            // 2. Legado (Retrocompatibilidade)
             if (root.hasNonNull("country")) {
                 String c = root.get("country").asText();
                 if (ctx.country() == null || !c.equalsIgnoreCase(ctx.country())) {
@@ -40,7 +48,6 @@ public class RuleMatcher {
                 }
             }
             
-            // Fix: Adicionado suporte a cep_prefix para passar no RuleMatcherTest
             if (root.hasNonNull("cep_prefix") && root.get("cep_prefix").isArray()) {
                 boolean prefixMatch = false;
                 String ctxCep = ctx.cep() != null ? ctx.cep().replaceAll("\\D+", "") : "";
