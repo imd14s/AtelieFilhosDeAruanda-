@@ -1,14 +1,14 @@
 services:
-  # 1. Banco de Dados (PostgreSQL)
+  # --- INFRAESTRUTURA (BANCO) ---
   db:
     image: postgres:16-alpine
     container_name: ecommerce_db
     environment:
-      POSTGRES_DB: ecommerce_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: local_dev_password
+      POSTGRES_DB: ${DB_NAME:-ecommerce_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-local_dev_password}
     ports:
-      - "5432:5432" # Expõe porta para você acessar via DBeaver/PgAdmin
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -17,32 +17,52 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. Aplicação Backend (Spring Boot)
-  app:
-    build: .
+  # --- BACKEND (API) ---
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ecommerce-api:latest
     container_name: ecommerce_api
     ports:
-      - "8080:8080" # API acessível em localhost:8080
+      - "${APP_PORT:-8080}:8080"
     environment:
-      # Conexão com o Banco (Note o host 'db')
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/ecommerce_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: local_dev_password
-      
-      # Configurações de Segurança e JWT (Valores de Dev)
-      JWT_SECRET: 5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437
-      JWT_EXPIRATION_MS: 86400000
-      
-      # Webhooks e Integrações (Vazios inicialmente)
-      WEBHOOK_SECRET: dev_secret
-      
-      # Permite o Frontend acessar (CORS)
-      CORS_ALLOWED_ORIGINS: "*" 
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-ecommerce_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-local_dev_password}
+      JWT_SECRET: ${JWT_SECRET}
+      # A LINHA QUE FALTAVA:
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET}
+      CORS_ALLOWED_ORIGINS: "*"
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - ./uploads:/app/uploads # Persiste uploads na sua máquina
+      - ./backend/uploads:/app/uploads
+
+  # --- FRONTEND (DASHBOARD ADMIN) ---
+  dashboard:
+    build:
+      context: ./dashboard-admin
+      dockerfile: Dockerfile
+    image: ecommerce-dashboard:latest
+    container_name: ecommerce_dashboard
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+  # --- FRONTEND (LOJA CLIENTE) ---
+  store:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: ecommerce-store:latest
+    container_name: ecommerce_store
+    ports:
+      - "3001:3000"
+    depends_on:
+      - api
 
 volumes:
   postgres_data:

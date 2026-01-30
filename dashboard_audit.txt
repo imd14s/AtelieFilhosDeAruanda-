@@ -1,0 +1,188 @@
+--- ESTRUTURA DO DASHBOARD ---
+dashboard-admin
+dashboard-admin/Dockerfile
+dashboard-admin/eslint.config.js
+dashboard-admin/.gitignore
+dashboard-admin/index.html
+dashboard-admin/package.json
+dashboard-admin/package-lock.json
+dashboard-admin/postcss.config.js
+dashboard-admin/public
+dashboard-admin/public/vite.svg
+dashboard-admin/README.md
+dashboard-admin/src
+dashboard-admin/src/api
+dashboard-admin/src/api/axios.ts
+dashboard-admin/src/App.tsx
+dashboard-admin/src/assets
+dashboard-admin/src/components
+dashboard-admin/src/components/layout
+dashboard-admin/src/components/layout/DashboardLayout.tsx
+dashboard-admin/src/components/ui
+dashboard-admin/src/context
+dashboard-admin/src/context/AuthContext.tsx
+dashboard-admin/src/hooks
+dashboard-admin/src/index.css
+dashboard-admin/src/main.tsx
+dashboard-admin/src/pages
+dashboard-admin/src/pages/auth
+dashboard-admin/src/pages/auth/LoginPage.tsx
+dashboard-admin/src/pages/dashboard
+dashboard-admin/src/types
+dashboard-admin/tailwind.config.js
+dashboard-admin/tsconfig.app.json
+dashboard-admin/tsconfig.json
+dashboard-admin/tsconfig.node.json
+dashboard-admin/vite.config.ts
+
+--- CONFIGURAÇÕES DE AMBIENTE ---
+
+=== FILE: dashboard-admin/vite.config.ts ===
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000, // Força porta 3000 para alinhar com CORS do backend
+  }
+})
+
+--- CÓDIGO FONTE CRÍTICO (AUTH & API) ---
+
+=== FILE: dashboard-admin/src/context/AuthContext.tsx ===
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { api } from '../api/axios';
+
+interface AuthContextType {
+  isAuthenticated: boolean;
+  login: (token: string) => void;
+  logout: () => void;
+  isLoading: boolean;
+}
+
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = (token: string) => {
+    localStorage.setItem('auth_token', token);
+    setIsAuthenticated(true);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('auth_token');
+    setIsAuthenticated(false);
+  };
+
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => useContext(AuthContext);
+
+=== FILE: dashboard-admin/src/api/axios.ts ===
+import axios from 'axios';
+
+export const api = axios.create({
+  baseURL: 'http://localhost:8081/api', // Aponta para o Backend Java
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor: Adiciona o Token JWT em toda requisição automaticamente
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor: Se der 401 (Unauthorized), desloga o usuário
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+=== FILE: dashboard-admin/src/pages/auth/LoginPage.tsx ===
+import { useForm } from 'react-hook-form';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../api/axios';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+
+export function LoginPage() {
+  const { register, handleSubmit } = useForm();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
+
+  const onSubmit = async (data: any) => {
+    try {
+      const res = await api.post('/auth/login', data);
+      login(res.data.token);
+      navigate('/');
+    } catch (err) {
+      setError('Credenciais inválidas');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Acesso Administrativo</h2>
+        
+        {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{error}</div>}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              {...register('email')}
+              type="email"
+              className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="admin@atelie.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Senha</label>
+            <input
+              {...register('password')}
+              type="password"
+              className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="••••••"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+          >
+            Entrar
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
