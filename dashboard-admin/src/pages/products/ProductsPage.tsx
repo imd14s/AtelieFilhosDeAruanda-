@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProductService } from '../../services/ProductService';
 import type { Product } from '../../types/dashboard';
 import { Package, Plus, Search, Edit, Trash2 } from 'lucide-react';
 
 export function ProductsPage() {
+  // Inicializa com array vazio para evitar erro no primeiro render
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadProducts();
@@ -16,33 +19,45 @@ export function ProductsPage() {
     try {
       setLoading(true);
       const data = await ProductService.getAll();
-      setProducts(data);
+      
+      // BLINDAGEM: Verifica se é realmente um array antes de setar
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        console.error('API retornou formato inválido (esperado array):', data);
+        setProducts([]); // Fallback para lista vazia
+      }
     } catch (error) {
       console.error('Erro ao carregar produtos', error);
+      setProducts([]); // Fallback em caso de erro de rede
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Garante que products é um array antes de filtrar
+  const safeProducts = Array.isArray(products) ? products : [];
+
+  const filteredProducts = safeProducts.filter(p => 
+    p.name ? p.name.toLowerCase().includes(searchTerm.toLowerCase()) : false
   );
 
   return (
     <div className="space-y-6">
-      {/* Header da Página */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Produtos</h1>
           <p className="text-gray-500">Gerencie o catálogo da loja</p>
         </div>
-        <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+        <button 
+          onClick={() => navigate('/products/new')}
+          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+        >
           <Plus size={20} />
           Novo Produto
         </button>
       </div>
 
-      {/* Barra de Busca e Filtros */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -56,7 +71,6 @@ export function ProductsPage() {
         </div>
       </div>
 
-      {/* Tabela de Produtos */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Carregando catálogo...</div>
@@ -93,13 +107,13 @@ export function ProductsPage() {
                       </div>
                     </td>
                     <td className="p-4 font-medium text-gray-700">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                      {product.price ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price) : 'R$ 0,00'}
                     </td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.stockQuantity < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                        (product.stockQuantity || 0) < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                       }`}>
-                        {product.stockQuantity} un
+                        {product.stockQuantity || 0} un
                       </span>
                     </td>
                     <td className="p-4">

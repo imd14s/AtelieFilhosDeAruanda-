@@ -3,15 +3,13 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardHome } from './pages/dashboard/Home';
-import { DashboardLayout } from './components/layout/DashboardLayout'; // Importando o Layout
+import { ProductsPage } from './pages/products/ProductsPage';
+import { ProductForm } from './pages/products/ProductForm'; // Import do Form
+import { DashboardLayout } from './components/layout/DashboardLayout';
 
-// Componente de proteção que envolve o Layout
 const PrivateRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  
   if (isLoading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;
-  
-  // Se logado, mostra o Layout (Sidebar) e o conteúdo filho (Outlet)
   return isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />;
 };
 
@@ -20,10 +18,10 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       
-      {/* Rotas Protegidas com Layout */}
       <Route element={<PrivateRoute />}>
         <Route path="/" element={<DashboardHome />} />
-        {/* Futuras rotas virão aqui: /products, /orders, etc */}
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/new" element={<ProductForm />} /> {/* Rota de Criação */}
       </Route>
     </Routes>
   );

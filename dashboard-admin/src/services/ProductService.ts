@@ -1,11 +1,25 @@
 import { api } from '../api/axios';
 import type { Product } from '../types/dashboard';
 
+export type CreateProductDTO = Omit<Product, 'id' | 'active'>;
+
 export const ProductService = {
   getAll: async (): Promise<Product[]> => {
-    // Busca todos os produtos (Backend deve suportar GET /products)
     const { data } = await api.get<Product[]>('/products');
     return data;
+  },
+
+  getById: async (id: string): Promise<Product> => {
+    const { data } = await api.get<Product>(`/products/${id}`);
+    return data;
+  },
+
+  create: async (product: CreateProductDTO) => {
+    return api.post('/products', product);
+  },
+
+  update: async (id: string, product: Partial<CreateProductDTO>) => {
+    return api.put(`/products/${id}`, product);
   },
 
   toggleActive: async (id: string) => {
