@@ -1,35 +1,40 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { DashboardLayout } from './components/layout/DashboardLayout';
 import { LoginPage } from './pages/auth/LoginPage';
+import { DashboardHome } from './pages/dashboard/Home';
+import { DashboardLayout } from './components/layout/DashboardLayout'; // Importando o Layout
 
-function ProtectedRoute({ children }: { children: JSX.Element }) {
+// Componente de proteção que envolve o Layout
+const PrivateRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div>Carregando...</div>;
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  
+  if (isLoading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;
+  
+  // Se logado, mostra o Layout (Sidebar) e o conteúdo filho (Outlet)
+  return isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      
+      {/* Rotas Protegidas com Layout */}
+      <Route element={<PrivateRoute />}>
+        <Route path="/" element={<DashboardHome />} />
+        {/* Futuras rotas virão aqui: /products, /orders, etc */}
+      </Route>
+    </Routes>
+  );
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          
-          <Route path="/" element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<h2 className="text-2xl font-bold">Resumo do Sistema (Em breve)</h2>} />
-            <Route path="orders" element={<h2>Pedidos</h2>} />
-            <Route path="products" element={<h2>Gestão de Produtos</h2>} />
-            <Route path="automations" element={<h2>Automações & IA</h2>} />
-            <Route path="configs" element={<h2>Configurações do Sistema</h2>} />
-          </Route>
-        </Routes>
+        <AppRoutes />
       </AuthProvider>
-    </BrowserRouter>
+    </Router>
   );
 }
