@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+// ARQUITETURA LIMPA: Lê a URL da API das variáveis de ambiente (Vite)
+// Se não estiver definida, usa localhost:8080 (padrão do backend atual)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
 export const api = axios.create({
-  baseURL: 'http://localhost:8081/api', // Aponta para o Backend Java
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },

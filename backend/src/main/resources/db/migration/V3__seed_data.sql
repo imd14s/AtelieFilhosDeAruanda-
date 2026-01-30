@@ -1,15 +1,6 @@
--- 1. Admin User (Senha: 123456)
-INSERT INTO users (id, name, email, password, role, active, created_at) VALUES (
-  gen_random_uuid(),
-  'Admin Master',
-  'admin@atelie.com',
-  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOcd7qa8qkrBm', -- Hash válida
-  'ADMIN',
-  true,
-  now()
-) ON CONFLICT (email) DO NOTHING;
+-- ATENÇÃO: Usuário Admin agora é gerenciado pelo AdminBootstrap.java via variáveis de ambiente.
 
--- 2. System Configs Básicas
+-- 1. System Configs Básicas
 INSERT INTO system_config (config_key, config_value) VALUES
 ('CACHE_TTL_SECONDS', '300'),
 ('SHIPPING_PROVIDER_MODE', 'J3'),
@@ -28,7 +19,7 @@ INSERT INTO system_config (config_key, config_value) VALUES
 ('ML_SYNC_ENABLED', 'false')
 ON CONFLICT (config_key) DO NOTHING;
 
--- 3. Providers (Drivers)
+-- 2. Providers (Drivers)
 INSERT INTO service_providers (id, service_type, code, name, enabled, priority, driver_key, health_enabled) VALUES
 (gen_random_uuid(), 'SHIPPING', 'J3', 'J3 Transportadora', true, 10, 'shipping.j3', true),
 (gen_random_uuid(), 'SHIPPING', 'FLAT', 'Frete Fixo', true, 90, 'shipping.flat_rate', false),
@@ -38,7 +29,7 @@ INSERT INTO service_providers (id, service_type, code, name, enabled, priority, 
 (gen_random_uuid(), 'NOTIFICATION', 'WHATSAPP', 'WhatsApp', false, 10, 'universal.notification.webhook', false)
 ON CONFLICT (service_type, code) DO NOTHING;
 
--- 4. Provider Configs (JSONs)
+-- 3. Provider Configs (JSONs)
 -- J3
 INSERT INTO service_provider_configs (id, provider_id, environment, config_json)
 SELECT gen_random_uuid(), id, 'prod', '{ "rate": 14.50, "free_threshold": 299.00, "cep_prefixes": "010,011,012,200,220" }'
@@ -49,7 +40,7 @@ INSERT INTO service_provider_configs (id, provider_id, environment, config_json)
 SELECT gen_random_uuid(), id, 'prod', '{ "public_key": "APP_USR-...", "access_token": "APP_USR-...", "sandbox": false }'
 FROM service_providers WHERE code = 'MERCADO_PAGO' AND service_type = 'PAYMENT';
 
--- 5. Regras de Roteamento Padrão
+-- 4. Regras de Roteamento Padrão
 INSERT INTO service_routing_rules (id, service_type, enabled, priority, match_json, provider_code, behavior_json) VALUES 
 -- Regra 1: Frete Grátis J3 acima de 500
 (gen_random_uuid(), 'SHIPPING', true, 10, '{ "expression": "#ctx.cartTotal >= 500" }', 'J3', '{ "timeout_ms": 2000 }'),
@@ -58,7 +49,7 @@ INSERT INTO service_routing_rules (id, service_type, enabled, priority, match_js
 -- Regra 3: Default Pagamento MP
 (gen_random_uuid(), 'PAYMENT', true, 100, '{ "expression": "true" }', 'MERCADO_PAGO', NULL);
 
--- 6. Feature Flag inicial
+-- 5. Feature Flag inicial
 INSERT INTO feature_flags (id, flag_key, enabled, value_json, updated_at) VALUES 
 (gen_random_uuid(), 'MAINTENANCE_MODE', false, '{"reason": "Upgrade de sistema", "eta": "2h"}', NOW())
 ON CONFLICT (flag_key) DO NOTHING;
