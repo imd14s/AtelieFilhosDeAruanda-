@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.infrastructure.config.security;
 
+import com.atelie.ecommerce.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -7,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -19,26 +21,30 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
     private final Environment env;
+    private final JwtAuthenticationFilter jwtFilter;
 
-    public SecurityConfig(Environment env) {
+    public SecurityConfig(Environment env, JwtAuthenticationFilter jwtFilter) {
         this.env = env;
+        this.jwtFilter = jwtFilter;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // API stateless
             .csrf(AbstractHttpConfigurer::disable)
-
-            // CORS via ENV
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/files/view/**").permitAll()
                 .requestMatchers("/api/health").permitAll()
-                .anyRequest().permitAll()
-            );
+                .requestMatchers("/api/files/view/**").permitAll()
+
+                // 🔐 ADMIN ONLY
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // 🔐 resto exige login
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -47,19 +53,20 @@ public class SecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // ENV: CORS_ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5173"
-        // Ou "*" para liberar tudo em dev.
-        String raw = env.getProperty("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173").trim();
+        String appEnv = env.getProperty("APP_ENV", "dev");
+        String raw = env.getProperty("CORS_ALLOWED_ORIGINS", "").trim();
 
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 
-        if ("*".equals(raw)) {
-            // Com credenciais, "*" em allowedOrigins não é aceito.
-            // Para dev, liberamos tudo via pattern e desabilitamos credenciais.
+        if ("dev".equalsIgnoreCase(appEnv)) {
             config.setAllowCredentials(false);
             config.setAllowedOriginPatterns(List.of("*"));
         } else {
+            if (raw.isBlank() || "*".equals(raw)) {
+                throw new IllegalStateException("CORS_ALLOWED_ORIGINS must be explicitly defined in production");
+            }
+
             config.setAllowCredentials(true);
             List<String> origins = Arrays.stream(raw.split(","))
                 .map(String::trim)
