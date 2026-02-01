@@ -4,7 +4,7 @@ import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.domain.inventory.event.InventoryChangedEvent;
 import com.atelie.ecommerce.infrastructure.persistence.inventory.InventoryRepository;
 import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
-import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
 import org.junit.jupiter.api.Test;

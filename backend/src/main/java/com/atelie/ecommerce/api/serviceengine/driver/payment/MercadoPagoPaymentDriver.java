@@ -3,6 +3,7 @@ package com.atelie.ecommerce.api.serviceengine.driver.payment;
 import com.atelie.ecommerce.api.serviceengine.ServiceDriver;
 import com.atelie.ecommerce.api.serviceengine.util.DriverConfigReader;
 import com.atelie.ecommerce.domain.service.model.ServiceType;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,9 +19,11 @@ import java.util.UUID;
 public class MercadoPagoPaymentDriver implements ServiceDriver {
 
     private final RestTemplate restTemplate;
+    private final Environment env;
 
-    public MercadoPagoPaymentDriver(RestTemplate restTemplate) {
+    public MercadoPagoPaymentDriver(RestTemplate restTemplate, Environment env) {
         this.restTemplate = restTemplate;
+        this.env = env;
     }
 
     @Override
@@ -31,25 +34,22 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
 
     @Override
     public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
-        // 1. Ler credenciais do JSON de Configuração (Vindo do Banco/Dashboard)
         String accessToken = DriverConfigReader.requireNonBlank(
             (String) config.get("access_token"), "access_token (Config MP)"
         );
-        
-        // Permite configurar endpoint de notificação dinâmico no Dashboard
-        String notificationUrl = (String) config.get("notification_url"); 
 
-        // 2. Dados do Pedido
+        // (opcional) pode manter vindo do config JSON
+        String notificationUrl = (String) config.get("notification_url");
+
         BigDecimal amount = (BigDecimal) request.get("amount");
         String email = (String) request.get("email");
         String externalRef = (String) request.get("orderId");
 
-        // 3. Montar Payload para API do Mercado Pago
         Map<String, Object> mpRequest = new HashMap<>();
         mpRequest.put("transaction_amount", amount);
         mpRequest.put("description", "Pedido " + externalRef);
         mpRequest.put("payment_method_id", "pix");
-        
+
         Map<String, Object> payer = new HashMap<>();
         payer.put("email", email);
         mpRequest.put("payer", payer);
@@ -58,7 +58,6 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
             mpRequest.put("notification_url", notificationUrl);
         }
 
-        // 4. Chamada Real
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -66,21 +65,19 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
             headers.set("X-Idempotency-Key", UUID.randomUUID().toString());
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mpRequest, headers);
-            
-            // URL também pode vir da config se quiser suportar V1 ou V2
-            String apiUrl = "https://api.mercadopago.com/v1/payments";
-            
+
+            // ENV: MP_API_URL (default antigo)
+            String apiUrl = env.getProperty("MP_API_URL", "https://api.mercadopago.com/v1/payments").trim();
+
             Map response = restTemplate.postForObject(apiUrl, entity, Map.class);
-            
-            // 5. Retorno Padronizado
+
             Map<String, Object> result = new HashMap<>();
             result.put("provider", "MERCADO_PAGO");
-            result.put("status", "pending"); // Pix começa pendente
-            
+            result.put("status", "pending");
+
             if (response != null) {
                 result.put("external_id", response.get("id"));
-                
-                // Pega o QR Code (Copia e Cola)
+
                 Map poi = (Map) response.get("point_of_interaction");
                 if (poi != null) {
                     Map transData = (Map) poi.get("transaction_data");

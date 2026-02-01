@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import type { Control } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { ProductService } from '../../services/ProductService';
+import { FileService } from '../../services/FileService';
 import type { CreateProductDTO } from '../../services/ProductService';
 import { FeatureGateModal } from '../../components/ui/FeatureGateModal';
 import { 
@@ -10,26 +11,12 @@ import {
   Wand2, Layers, Trash2, Plus, Upload, X, Camera 
 } from 'lucide-react';
 
-// --- SEÇÃO DE VARIAÇÕES (Agora com Imagem e Atributos) ---
+// --- SEÇÃO DE VARIAÇÕES ---
 const VariantsSection = ({ control, register }: { control: Control<CreateProductDTO>, register: any }) => {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "variants"
   });
-
-  // Simples handler para "upload" de imagem da variação (apenas visualização local por enquanto)
-  const handleVariantImageUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Num cenário real, aqui faríamos upload para S3/Cloudinary
-      // Para o MVP, usamos URL local temporária
-      const url = URL.createObjectURL(file);
-      // Nota: O react-hook-form precisa de setValue para atualizar o campo 'variants[index].image'
-      // Como estamos num subcomponente isolado sem acesso ao setValue global, 
-      // deixaremos o input visual. A implementação ideal passaria setValue como prop.
-      console.log(`Imagem selecionada para variação ${index}:`, url);
-    }
-  };
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-6">
@@ -46,42 +33,34 @@ const VariantsSection = ({ control, register }: { control: Control<CreateProduct
       <div className="space-y-4">
         {fields.map((field, index) => (
           <div key={field.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 grid grid-cols-12 gap-4 items-start">
-            
-            {/* Imagem da Variação */}
             <div className="col-span-1 flex flex-col items-center justify-center">
+               {/* Upload de Variação (Visual por enquanto) */}
                <label className="w-12 h-12 rounded-lg bg-gray-200 border border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition overflow-hidden">
                   <Camera size={20} className="text-gray-500" />
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => handleVariantImageUpload(index, e)} />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => console.log('Variação visual selecionada')} />
                </label>
                <span className="text-[10px] text-gray-500 mt-1">Foto</span>
             </div>
-
-            {/* Campos de Dados */}
             <div className="col-span-3">
               <label className="text-xs text-gray-500 font-semibold">Nome/Cor</label>
-              <input {...register(`variants.${index}.name`)} className="w-full bg-white px-3 py-2 border rounded text-sm" placeholder="Ex: Azul Marinho" />
+              <input {...register(`variants.${index}.name`)} className="w-full bg-white px-3 py-2 border rounded text-sm" placeholder="Ex: Azul" />
             </div>
-
             <div className="col-span-3">
-               <label className="text-xs text-gray-500 font-semibold">Atributos/Composição</label>
-               <input {...register(`variants.${index}.attributes`)} className="w-full bg-white px-3 py-2 border rounded text-sm" placeholder="Ex: 100% Algodão" />
+               <label className="text-xs text-gray-500 font-semibold">Atributos</label>
+               <input {...register(`variants.${index}.attributes`)} className="w-full bg-white px-3 py-2 border rounded text-sm" placeholder="Ex: Algodão" />
             </div>
-            
             <div className="col-span-2">
               <label className="text-xs text-gray-500 font-semibold">SKU</label>
               <input {...register(`variants.${index}.sku`)} className="w-full bg-white px-3 py-2 border rounded text-sm" placeholder="COD-01" />
             </div>
-            
             <div className="col-span-1">
               <label className="text-xs text-gray-500 font-semibold">Preço</label>
               <input type="number" step="0.01" {...register(`variants.${index}.price`)} className="w-full bg-white px-3 py-2 border rounded text-sm" />
             </div>
-            
             <div className="col-span-1">
                <label className="text-xs text-gray-500 font-semibold">Qtd</label>
                <input type="number" {...register(`variants.${index}.stock`)} className="w-full bg-white px-3 py-2 border rounded text-sm" />
             </div>
-
             <div className="col-span-1 flex justify-end pt-6">
               <button type="button" onClick={() => remove(index)} className="text-gray-400 hover:text-red-500">
                 <Trash2 size={18} />
@@ -89,50 +68,79 @@ const VariantsSection = ({ control, register }: { control: Control<CreateProduct
             </div>
           </div>
         ))}
-        {fields.length === 0 && <p className="text-sm text-gray-400 italic text-center p-4">Nenhuma variação adicionada. O produto será considerado único.</p>}
+        {fields.length === 0 && <p className="text-sm text-gray-400 italic text-center p-4">Nenhuma variação adicionada.</p>}
       </div>
     </div>
   );
 };
 
+// --- FORMULÁRIO PRINCIPAL ---
 export function ProductForm() {
   const { register, control, handleSubmit, setValue, watch, formState: { errors } } = useForm<CreateProductDTO>({
-    defaultValues: {
-      variants: [],
-      images: []
-    }
+    defaultValues: { variants: [], images: [] }
   });
   
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Controle do Modal de Feature Gate
   const [gateOpen, setGateOpen] = useState(false);
   const [gateFeature, setGateFeature] = useState('');
-
-  // Imagens Locais
-  const [localImages, setLocalImages] = useState<string[]>([]);
+  
+  // States de Imagem
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'upload' | 'ai-edit'>('upload');
+  
+  // REF PARA O INPUT DE ARQUIVO (Correção do Bug)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const openGate = (feature: string) => {
-      setGateFeature(feature);
-      setGateOpen(true);
+  const openGate = (feature: string) => { setGateFeature(feature); setGateOpen(true); };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setPendingFiles([...pendingFiles, ...newFiles]);
+      setPreviewUrls([...previewUrls, ...newPreviews]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    const newFiles = pendingFiles.filter((_, i) => i !== index);
+    const newPreviews = previewUrls.filter((_, i) => i !== index);
+    setPendingFiles(newFiles);
+    setPreviewUrls(newPreviews);
+  };
+
+  // Trigger do clique (A mágica acontece aqui)
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const onSubmit = async (data: CreateProductDTO) => {
     try {
       setIsSubmitting(true);
+
+      // 1. Upload Real
+      const uploadedUrls: string[] = [];
+      if (pendingFiles.length > 0) {
+        const uploadPromises = pendingFiles.map(file => FileService.upload(file));
+        const results = await Promise.all(uploadPromises);
+        uploadedUrls.push(...results);
+      }
+
+      // 2. Salvar Produto
       const payload = {
         ...data,
         price: Number(data.price),
         stockQuantity: Number(data.stockQuantity),
-        images: localImages
+        images: uploadedUrls
       };
+
       await ProductService.create(payload);
       navigate('/products');
     } catch (error) {
       console.error(error);
-      alert('Erro ao salvar. Verifique se o Backend está rodando.');
+      alert('Erro ao conectar com o servidor. Verifique se o backend está rodando.');
     } finally {
       setIsSubmitting(false);
     }
@@ -140,15 +148,8 @@ export function ProductForm() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
-      
-      {/* Modal de Bloqueio de Funcionalidade */}
-      <FeatureGateModal 
-        isOpen={gateOpen} 
-        onClose={() => setGateOpen(false)} 
-        featureName={gateFeature} 
-      />
+      <FeatureGateModal isOpen={gateOpen} onClose={() => setGateOpen(false)} featureName={gateFeature} />
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/products')} className="p-2 hover:bg-gray-100 rounded-full transition">
@@ -172,119 +173,71 @@ export function ProductForm() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* COLUNA ESQUERDA: Dados Principais */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
-            
-            {/* Nome */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Produto</label>
-              <input
-                {...register('name', { required: 'Nome é obrigatório' })}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                placeholder="Ex: Imagem de São Jorge 30cm"
-              />
+              <input {...register('name', { required: 'Nome é obrigatório' })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Imagem de São Jorge 30cm" />
             </div>
-
-            {/* Descrição com Gate de IA */}
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
-                Descrição
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
               <div className="relative">
-                <textarea
-                  {...register('description')}
-                  rows={6}
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-                  placeholder="Descreva os detalhes do produto..."
-                />
-                <button 
-                  type="button"
-                  onClick={() => openGate('Geração de Texto (GPT-4o)')}
-                  className="absolute bottom-3 right-3 flex items-center gap-2 bg-gradient-to-r from-gray-700 to-gray-900 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:shadow-md transition"
-                >
-                  <Sparkles size={14} />
-                  Gerar com IA
+                <textarea {...register('description')} rows={6} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Descreva os detalhes do produto..." />
+                <button type="button" onClick={() => openGate('Geração de Texto (GPT-4o)')} className="absolute bottom-3 right-3 flex items-center gap-2 bg-gradient-to-r from-gray-700 to-gray-900 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:shadow-md transition">
+                  <Sparkles size={14} /> Gerar com IA
                 </button>
               </div>
             </div>
-
-            {/* Preço e Estoque Básico */}
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...register('price', { required: true })}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                />
+                <input type="number" step="0.01" {...register('price', { required: true })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Estoque Total</label>
-                <input
-                  type="number"
-                  {...register('stockQuantity', { required: true })}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                />
+                <input type="number" {...register('stockQuantity', { required: true })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
               </div>
             </div>
           </div>
-
-          {/* Seção de Variações V2 */}
           <VariantsSection control={control} register={register} />
         </div>
 
-        {/* COLUNA DIREITA: Imagens e IA Studio */}
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <ImageIcon size={20} className="text-indigo-600" />
               Mídia & IA Studio
             </h3>
-
-            {/* Abas */}
             <div className="flex border-b mb-4">
-              <button 
-                type="button"
-                onClick={() => setActiveTab('upload')}
-                className={`flex-1 pb-2 text-sm font-medium ${activeTab === 'upload' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500'}`}
-              >
-                Upload
-              </button>
-              <button 
-                type="button"
-                onClick={() => setActiveTab('ai-edit')}
-                className={`flex-1 pb-2 text-sm font-medium ${activeTab === 'ai-edit' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500'}`}
-              >
-                Edição IA
-              </button>
+              <button type="button" onClick={() => setActiveTab('upload')} className={`flex-1 pb-2 text-sm font-medium ${activeTab === 'upload' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500'}`}>Upload</button>
+              <button type="button" onClick={() => setActiveTab('ai-edit')} className={`flex-1 pb-2 text-sm font-medium ${activeTab === 'ai-edit' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500'}`}>Edição IA</button>
             </div>
 
-            {/* Tab: Upload */}
             {activeTab === 'upload' && (
               <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition">
+                {/* ÁREA DE CLIQUE CORRIGIDA */}
+                <div 
+                  onClick={triggerFileInput}
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition"
+                >
                   <Upload size={32} className="text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">Arraste fotos do produto</p>
-                  <input type="file" className="hidden" multiple onChange={(e) => {
-                      if (e.target.files) {
-                          const newImages = Array.from(e.target.files).map(file => URL.createObjectURL(file));
-                          setLocalImages([...localImages, ...newImages]);
-                      }
-                  }} />
+                  <p className="text-sm text-gray-600">Arraste fotos ou clique aqui</p>
+                  {/* INPUT OCULTO CONECTADO VIA REF */}
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    multiple 
+                    accept="image/*" 
+                    onChange={handleFileSelect} 
+                  />
                 </div>
                 
                 <div className="grid grid-cols-3 gap-2">
-                  {localImages.map((img, idx) => (
+                  {previewUrls.map((img, idx) => (
                     <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border">
                       <img src={img} alt="" className="w-full h-full object-cover" />
-                      <button 
-                        type="button" 
-                        onClick={() => setLocalImages(localImages.filter((_, i) => i !== idx))}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                      >
+                      <button type="button" onClick={(e) => { e.stopPropagation(); removeFile(idx); }} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition">
                         <X size={12} />
                       </button>
                     </div>
@@ -293,42 +246,19 @@ export function ProductForm() {
               </div>
             )}
 
-            {/* Tab: Edição IA (Com Gate) */}
             {activeTab === 'ai-edit' && (
               <div className="space-y-4">
                 <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                  <h4 className="text-sm font-bold text-purple-800 mb-2 flex items-center gap-2">
-                    <Wand2 size={16} /> Ferramentas Mágicas
-                  </h4>
-                  
+                  <h4 className="text-sm font-bold text-purple-800 mb-2 flex items-center gap-2"><Wand2 size={16} /> Ferramentas Mágicas</h4>
                   <div className="space-y-3">
-                    <button 
-                        type="button" 
-                        onClick={() => openGate('Remoção de Fundo (Background Removal)')}
-                        className="w-full bg-white border border-purple-200 text-purple-700 py-2 rounded text-sm hover:bg-purple-100 transition flex justify-between px-4"
-                    >
-                      Remover Fundo <span>✂️</span>
-                    </button>
-                    
+                    <button type="button" onClick={() => openGate('Remoção de Fundo')} className="w-full bg-white border border-purple-200 text-purple-700 py-2 rounded text-sm hover:bg-purple-100 transition flex justify-between px-4">Remover Fundo <span>✂️</span></button>
                     <div>
-                        <label className="text-xs text-purple-700 font-semibold mb-1 block">Juntar Fotos / Compor</label>
-                        <div className="relative">
-                            <textarea 
-                                placeholder="Descreva como quer unir as fotos..."
-                                className="w-full text-xs p-2 border border-purple-200 rounded mb-2 h-20"
-                            />
-                        </div>
-                        <button 
-                            type="button" 
-                            onClick={() => openGate('Composição de Imagens (Stable Diffusion)')}
-                            className="w-full bg-purple-600 text-white py-2 rounded text-sm hover:bg-purple-700 transition"
-                        >
-                            Gerar Composição (Merge)
-                        </button>
+                        <label className="text-xs text-purple-700 font-semibold mb-1 block">Juntar Fotos</label>
+                        <textarea placeholder="Prompt..." className="w-full text-xs p-2 border border-purple-200 rounded mb-2 h-20" />
+                        <button type="button" onClick={() => openGate('Stable Diffusion Merge')} className="w-full bg-purple-600 text-white py-2 rounded text-sm hover:bg-purple-700 transition">Gerar Composição</button>
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 text-center">Requer n8n conectado</p>
               </div>
             )}
           </div>

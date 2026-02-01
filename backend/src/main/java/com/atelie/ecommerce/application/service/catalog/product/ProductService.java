@@ -4,7 +4,7 @@ import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.domain.catalog.event.ProductSavedEvent;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
-import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity; // Import
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository; // Import

@@ -5,7 +5,7 @@ import com.atelie.ecommerce.api.common.exception.ConflictException;
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
-import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

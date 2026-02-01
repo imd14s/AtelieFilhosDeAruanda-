@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.infrastructure.persistence.product;
 
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
@@ -27,12 +28,11 @@ public class ProductIntegrationEntity {
     private String externalId;
 
     @Column(name = "sku_external")
-    private String skuExternal; // Campo adicionado corretamente
+    private String skuExternal;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Construtor utilitário corrigido
     public ProductIntegrationEntity(ProductEntity product, String integrationType, String externalId, String skuExternal) {
         this.product = product;
         this.integrationType = integrationType;

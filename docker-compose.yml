@@ -30,41 +30,27 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-ecommerce_db}
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-local_dev_password}
+
       JWT_SECRET: ${JWT_SECRET}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      # A LINHA QUE FALTAVA:
       WEBHOOK_SECRET: ${WEBHOOK_SECRET}
-      CORS_ALLOWED_ORIGINS: "*"
+
+      # CORS via ENV
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+
+      # Mercado Livre via ENV
+      ML_API_BASE_URL: ${ML_API_BASE_URL:-https://api.mercadolibre.com}
+      ML_CATEGORY_DEFAULT: ${ML_CATEGORY_DEFAULT:-MLB3530}
+
+      # Mercado Pago via ENV
+      MP_API_URL: ${MP_API_URL:-https://api.mercadopago.com/v1/payments}
+
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./backend/uploads:/app/uploads
-
-  # --- FRONTEND (DASHBOARD ADMIN) ---
-  dashboard:
-    build:
-      context: ./dashboard-admin
-      dockerfile: Dockerfile
-    image: ecommerce-dashboard:latest
-    container_name: ecommerce_dashboard
-    ports:
-      - "3000:80"
-    depends_on:
-      - api
-
-  # --- FRONTEND (LOJA CLIENTE) ---
-  store:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    image: ecommerce-store:latest
-    container_name: ecommerce_store
-    ports:
-      - "3001:3000"
-    depends_on:
-      - api
 
 volumes:
   postgres_data:

@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.infrastructure.persistence.product;
 
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,9 +28,9 @@ public class ProductVariantEntity {
     @Column(nullable = false, unique = true)
     private String sku;
 
-    private String gtin; // EAN-13
+    private String gtin;
 
-    private BigDecimal price; // Override de preço
+    private BigDecimal price;
 
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;

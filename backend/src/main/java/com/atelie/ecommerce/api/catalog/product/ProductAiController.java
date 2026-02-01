@@ -2,7 +2,7 @@ package com.atelie.ecommerce.api.catalog.product;
 
 import com.atelie.ecommerce.application.service.ai.AiContentService;
 import com.atelie.ecommerce.application.service.catalog.product.ProductService;
-import com.atelie.ecommerce.infrastructure.persistence.product.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

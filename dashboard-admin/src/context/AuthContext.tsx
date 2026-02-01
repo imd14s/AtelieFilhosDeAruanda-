@@ -15,11 +15,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    const validateToken = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Tenta bater num endpoint leve para ver se o token é válido e o back está vivo
+        // Se der erro de rede, cai no catch e desloga
+        await api.get('/health'); 
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Sessão inválida ou Backend offline:", error);
+        localStorage.removeItem('auth_token');
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    validateToken();
   }, []);
 
   const login = (token: string) => {
@@ -30,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('auth_token');
     setIsAuthenticated(false);
+    window.location.href = '/login';
   };
 
   return (

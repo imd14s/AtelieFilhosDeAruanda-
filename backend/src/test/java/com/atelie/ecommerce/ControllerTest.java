@@ -1,6 +1,6 @@
 package com.atelie.ecommerce;
 
-import com.atelie.ecommerce.infrastructure.security.SecurityConfig;
+import com.atelie.ecommerce.infrastructure.config.security.SecurityConfig;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;

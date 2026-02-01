@@ -1,5 +1,7 @@
 package com.atelie.ecommerce.infrastructure.persistence.product;
 
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
