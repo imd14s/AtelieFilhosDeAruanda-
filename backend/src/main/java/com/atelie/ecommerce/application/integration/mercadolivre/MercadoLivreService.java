@@ -18,8 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @Service
+@lombok.extern.slf4j.Slf4j
 public class MercadoLivreService implements MarketplaceIntegrationService {
 
     private final ProductIntegrationRepository integrationRepository;

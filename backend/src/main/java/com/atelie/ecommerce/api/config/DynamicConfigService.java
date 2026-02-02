@@ -1,21 +1,19 @@
 package com.atelie.ecommerce.api.config;
 
 import com.atelie.ecommerce.domain.common.event.EntityChangedEvent;
-import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigEntity;
 import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class DynamicConfigService {
-
+    
     public static final String CACHE_TTL_SECONDS_KEY = "CACHE_TTL_SECONDS";
+    
     private final SystemConfigRepository repository;
     private final Map<String, String> cache = new ConcurrentHashMap<>();
 
@@ -24,24 +22,45 @@ public class DynamicConfigService {
         refresh();
     }
 
-    @EventListener
-    public void handleEntityChanged(EntityChangedEvent event) {
-        log.info("Evento de mudança detectado: {}. Atualizando cache de configurações...", event.getEntityType());
-        refresh();
+    public void refresh() {
+        try {
+            var configs = repository.findAll();
+            cache.clear();
+            configs.forEach(c -> cache.put(c.getConfigKey(), c.getConfigValue()));
+            log.info("Cache de configurações atualizado: {} itens", cache.size());
+        } catch (Exception e) {
+            log.warn("Não foi possível carregar configurações iniciais (pode ser a primeira execução): {}", e.getMessage());
+        }
     }
 
-    public synchronized void refresh() {
-        cache.clear();
-        cache.putAll(repository.findAll().stream()
-                .collect(Collectors.toMap(SystemConfigEntity::getConfigKey, SystemConfigEntity::getConfigValue)));
+    @EventListener
+    public void onEntityChanged(EntityChangedEvent event) {
+        if ("SYSTEM_CONFIG".equals(event.getEntityType())) refresh();
     }
 
     public String getString(String key) { return cache.get(key); }
-    public String getString(String key, String defaultValue) { return cache.getOrDefault(key, defaultValue); }
-    public long getLong(String key, long defaultValue) {
+    
+    public String requireString(String key) {
+        String v = getString(key);
+        if (v == null) throw new IllegalStateException("Config ausente: " + key);
+        return v;
+    }
+    
+    public boolean requireBoolean(String key) {
+        return Boolean.parseBoolean(requireString(key));
+    }
+    
+    public boolean containsKey(String key) {
+        return cache.containsKey(key);
+    }
+
+    public long getLong(String key, int defaultValue) {
+        String val = getString(key);
+        if (val == null) return defaultValue;
         try {
-            String val = cache.get(key);
-            return val != null ? Long.parseLong(val) : defaultValue;
-        } catch (NumberFormatException e) { return defaultValue; }
+            return Long.parseLong(val);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 }

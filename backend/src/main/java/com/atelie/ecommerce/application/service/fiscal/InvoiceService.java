@@ -7,8 +7,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 import java.util.UUID;
 
-@Slf4j
 @Service
+@lombok.extern.slf4j.Slf4j
 public class InvoiceService {
 
     private final DynamicConfigService configService;

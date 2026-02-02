@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-@Slf4j
 @Component
+@lombok.extern.slf4j.Slf4j
 public class MultichannelSyncListener {
 
     private final ProductRepository productRepository;

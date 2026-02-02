@@ -16,8 +16,8 @@ import java.nio.file.Files;
 import java.util.Map;
 import java.util.UUID;
 
-@Slf4j
 @Service
+@lombok.extern.slf4j.Slf4j
 public class AiContentService {
 
     private final DynamicConfigService configService;

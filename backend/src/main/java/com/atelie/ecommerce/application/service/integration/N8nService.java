@@ -7,8 +7,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
 @Service
+@lombok.extern.slf4j.Slf4j
 public class N8nService {
 
     private final RestTemplate restTemplate;

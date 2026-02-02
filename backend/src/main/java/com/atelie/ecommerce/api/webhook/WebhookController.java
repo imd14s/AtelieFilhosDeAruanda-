@@ -15,9 +15,9 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/webhooks")
+@lombok.extern.slf4j.Slf4j
 public class WebhookController {
 
     private final OrderService orderService;
