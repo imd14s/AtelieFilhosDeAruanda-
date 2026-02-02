@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.infrastructure.persistence.service.model;
 
+import com.atelie.ecommerce.domain.service.model.ServiceType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,7 +20,8 @@ public class ServiceProviderEntity {
     private UUID id;
 
     @Column(name = "service_type", nullable = false, length = 40)
-    private String serviceType;
+    @Enumerated(EnumType.STRING)
+    private ServiceType serviceType;
 
     @Column(name = "code", nullable = false, length = 80)
     private String code;
@@ -44,4 +46,11 @@ public class ServiceProviderEntity {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // BLINDAGEM: Garante todos os padrões de getter possíveis
+    public boolean isEnabled() { return enabled; }
+    public boolean getEnabled() { return enabled; }
+    
+    public boolean isHealthEnabled() { return healthEnabled; }
+    public boolean getHealthEnabled() { return healthEnabled; }
 }

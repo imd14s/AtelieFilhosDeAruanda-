@@ -23,26 +23,35 @@ public class JpaServiceProviderGateway extends BaseCachingGateway implements Ser
     public List<ServiceProvider> findEnabledByTypeOrdered(ServiceType type) {
         checkCache();
         return (List<ServiceProvider>) genericCache.computeIfAbsent("LIST_" + type, 
-            k -> repository.findByServiceTypeAndEnabledOrderByPriorityAsc(type.name(), true)
-                    .stream().map(e -> new ServiceProvider(e.getId(), e.getServiceType(), e.getCode(), e.getName(), e.getEnabled(), e.getPriority(), e.getDriverKey(), e.getHealthEnabled()))
+            k -> repository.findByServiceTypeAndEnabledOrderByPriorityAsc(type, true)
+                    .stream().map(e -> new ServiceProvider(
+                        e.getId(), 
+                        e.getServiceType(), 
+                        e.getCode(), 
+                        e.getName(), 
+                        e.getEnabled(), 
+                        e.getPriority(), 
+                        e.getDriverKey(), 
+                        e.getHealthEnabled()
+                    ))
                     .toList());
     }
 
     @Override
     public java.util.Optional<ServiceProvider> findByCode(ServiceType type, String code) {
-        return repository.findByServiceTypeAndEnabledOrderByPriorityAsc(type.name(), true)
+        return repository.findByServiceTypeAndEnabledOrderByPriorityAsc(type, true)
                 .stream()
                 .filter(e -> e.getCode().equalsIgnoreCase(code))
                 .findFirst()
                 .map(e -> new ServiceProvider(
                     e.getId(), 
-                    ServiceType.valueOf(e.getServiceType()), 
+                    e.getServiceType(), // Correção: Passa Enum direto
                     e.getCode(), 
                     e.getName(), 
-                    e.isEnabled(), 
+                    e.getEnabled(), 
                     e.getPriority(), 
                     e.getDriverKey(), 
-                    e.isHealthEnabled()
+                    e.getHealthEnabled()
                 ));
     }
 }

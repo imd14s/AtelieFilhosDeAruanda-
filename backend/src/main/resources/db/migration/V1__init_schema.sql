@@ -1,5 +1,6 @@
 -- Extensão para UUIDs (Postgres)
 ${PGCRYPTO_EXTENSION}
+
 -- 1. Usuários e Autenticação
 CREATE TABLE users (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -30,12 +31,19 @@ CREATE TABLE products (
     image_url VARCHAR(255),
     attributes JSONB DEFAULT '{}',
     alert_enabled BOOLEAN DEFAULT FALSE,
-    stock_quantity INTEGER DEFAULT 0, -- Mantido para compatibilidade legado
+    stock_quantity INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 CREATE INDEX idx_products_attributes ON products USING GIN (attributes);
+
+CREATE TABLE product_images (
+    product_id UUID NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    CONSTRAINT fk_product_images_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_product_images_product_id ON product_images(product_id);
 
 CREATE TABLE product_variants (
     id UUID PRIMARY KEY,
@@ -67,7 +75,7 @@ CREATE TABLE product_integrations (
 CREATE TABLE inventory_movements (
     id UUID PRIMARY KEY,
     product_id UUID NOT NULL,
-    variant_id UUID NOT NULL, -- Coluna obrigatória para o novo modelo
+    variant_id UUID NOT NULL,
     type VARCHAR(10) NOT NULL,
     quantity INTEGER NOT NULL,
     reason VARCHAR(255),
@@ -88,7 +96,7 @@ CREATE TABLE orders (
     customer_name VARCHAR(255),
     customer_email VARCHAR(255),
     total_amount DECIMAL(19, 2) NOT NULL,
-    version BIGINT DEFAULT 0, -- Optimistic Locking (@Version)
+    version BIGINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_orders_status ON orders(status);
@@ -99,7 +107,7 @@ CREATE TABLE order_items (
     id UUID PRIMARY KEY,
     order_id UUID NOT NULL,
     product_id UUID NOT NULL,
-    variant_id UUID NOT NULL, -- Obrigatório agora
+    variant_id UUID NOT NULL,
     quantity INTEGER NOT NULL,
     unit_price DECIMAL(19, 2) NOT NULL,
     total_price DECIMAL(38, 2) NOT NULL DEFAULT 0,
@@ -120,20 +128,63 @@ CREATE TABLE invoices (
 );
 CREATE INDEX idx_invoices_order ON invoices(order_id);
 
--- V4: Media Assets (images/videos)
+-- 5. Media Assets
 CREATE TABLE IF NOT EXISTS media_assets (
   id BIGSERIAL PRIMARY KEY,
-  type VARCHAR(16) NOT NULL,                     -- IMAGE | VIDEO
-  storage_key VARCHAR(512) NOT NULL UNIQUE,      -- e.g. media/uuid.ext
+  type VARCHAR(16) NOT NULL,
+  storage_key VARCHAR(512) NOT NULL UNIQUE,
   original_filename VARCHAR(255),
   mime_type VARCHAR(128) NOT NULL,
   size_bytes BIGINT NOT NULL CHECK (size_bytes >= 0),
   checksum_sha256 VARCHAR(64),
-
   is_public BOOLEAN NOT NULL DEFAULT TRUE,
-
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
 CREATE INDEX IF NOT EXISTS idx_media_assets_type ON media_assets(type);
 CREATE INDEX IF NOT EXISTS idx_media_assets_public ON media_assets(is_public);
+
+-- 6. Tabela de Configuração do Sistema (Dynamic Config)
+CREATE TABLE IF NOT EXISTS system_config (
+    config_key VARCHAR(100) PRIMARY KEY,
+    config_value VARCHAR(255),
+    config_json JSONB
+);
+
+-- 7. Service Routing Rules e Providers (Logística e Integrações)
+CREATE TABLE service_routing_rules (
+    id UUID PRIMARY KEY,
+    service_type VARCHAR(40) NOT NULL,
+    provider_code VARCHAR(80) NOT NULL,
+    enabled BOOLEAN NOT NULL,
+    priority INT NOT NULL,
+    match_json JSONB NOT NULL,
+    behavior_json JSONB,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE service_providers (
+    id UUID PRIMARY KEY,
+    service_type VARCHAR(40) NOT NULL,
+    code VARCHAR(80) NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    enabled BOOLEAN NOT NULL,
+    priority INT NOT NULL,
+    driver_key VARCHAR(160) NOT NULL,
+    health_enabled BOOLEAN NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT ux_service_providers_type_code UNIQUE (service_type, code)
+);
+
+-- CORREÇÃO: version alterado de BIGINT para INTEGER para casar com Java (Integer)
+CREATE TABLE service_provider_configs (
+    id UUID PRIMARY KEY,
+    provider_id UUID NOT NULL,
+    environment VARCHAR(20) NOT NULL,
+    config_json JSONB NOT NULL,
+    secrets_ref VARCHAR(200),
+    version INTEGER NOT NULL, 
+    active BOOLEAN NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT fk_provider_config FOREIGN KEY (provider_id) REFERENCES service_providers(id)
+);

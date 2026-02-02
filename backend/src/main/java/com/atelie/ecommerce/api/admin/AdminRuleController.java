@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.api.admin;
 
+import com.atelie.ecommerce.domain.service.model.ServiceType; // IMPORT ADICIONADO
 import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceRoutingRuleJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceRoutingRuleEntity;
@@ -19,7 +20,7 @@ import java.util.UUID;
 public class AdminRuleController {
 
     private final ServiceRoutingRuleJpaRepository repository;
-    private final ServiceRoutingRuleGateway gateway; // Injeta para refresh
+    private final ServiceRoutingRuleGateway gateway;
     private final ExpressionParser parser = new SpelExpressionParser();
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -29,7 +30,8 @@ public class AdminRuleController {
     }
 
     @GetMapping
-    public List<ServiceRoutingRuleEntity> list(@RequestParam(required = false) String type) {
+    // CORREÇÃO: @RequestParam ServiceType type (Spring converte String->Enum auto)
+    public List<ServiceRoutingRuleEntity> list(@RequestParam(required = false) ServiceType type) {
         if (type != null) {
             return repository.findByServiceTypeAndEnabledOrderByPriorityAsc(type, true);
         }
@@ -45,7 +47,7 @@ public class AdminRuleController {
         entity.setUpdatedAt(LocalDateTime.now());
         
         ServiceRoutingRuleEntity saved = repository.save(entity);
-        gateway.refresh(); // Limpa cache
+        gateway.refresh();
         return ResponseEntity.ok(saved);
     }
 
@@ -59,14 +61,14 @@ public class AdminRuleController {
         entity.setUpdatedAt(LocalDateTime.now());
         
         ServiceRoutingRuleEntity saved = repository.save(entity);
-        gateway.refresh(); // Limpa cache
+        gateway.refresh();
         return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         repository.deleteById(id);
-        gateway.refresh(); // Limpa cache
+        gateway.refresh();
         return ResponseEntity.noContent().build();
     }
 

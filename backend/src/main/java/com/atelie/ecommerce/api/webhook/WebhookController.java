@@ -17,13 +17,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/webhooks")
-@lombok.extern.slf4j.Slf4j
+@Slf4j
 public class WebhookController {
 
     private final OrderService orderService;
     private final OrderRepository orderRepository;
     private final InvoiceService invoiceService;
 
+    // CORREÇÃO: Sem default value. Deve vir do ambiente obrigatoriamente.
     @Value("${WEBHOOK_SECRET}")
     private String webhookSecret;
 
@@ -38,10 +39,10 @@ public class WebhookController {
             @RequestBody Map<String, Object> payload,
             @RequestHeader(value = "X-Webhook-Token", required = false) String token) {
         
-        // CORREÇÃO DE SEGURANÇA: Validação via Header, não via URL
+        // Fail-safe: Se a injeção falhar silenciosamente (raro, mas possível), loga erro crítico.
         if (webhookSecret == null || webhookSecret.isBlank()) {
-            log.error("WEBHOOK_SECRET não configurada.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Webhook not configured");
+            log.error("VIOLAÇÃO DE CONTRATO: WEBHOOK_SECRET não foi injetada pelo ambiente.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Configuration Error");
         }
 
         if (token == null) {
@@ -56,6 +57,7 @@ public class WebhookController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid Webhook Token");
         }
 
+        // ... Lógica de processamento segue igual ...
         String orderIdStr = null;
         if (payload.containsKey("external_reference")) {
             orderIdStr = (String) payload.get("external_reference");
@@ -72,8 +74,6 @@ public class WebhookController {
             if ("approved".equalsIgnoreCase(statusStr)) {
                 validatePaymentAmount(orderId, payload);
                 orderService.approveOrder(orderId);
-                
-                // Emite nota fiscal automaticamente
                 invoiceService.emitInvoiceForOrder(orderId);
                 log.info("Processo de NFe iniciado para pedido {}", orderId);
             } 

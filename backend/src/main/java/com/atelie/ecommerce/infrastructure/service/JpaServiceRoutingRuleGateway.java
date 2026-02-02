@@ -23,8 +23,17 @@ public class JpaServiceRoutingRuleGateway extends BaseCachingGateway implements 
     public List<ServiceRoutingRule> findEnabledByTypeOrdered(ServiceType type) {
         checkCache();
         return (List<ServiceRoutingRule>) genericCache.computeIfAbsent("RULES_" + type,
-            k -> repository.findByServiceTypeAndEnabledOrderByPriorityAsc(type.name(), true)
-                    .stream().map(e -> new ServiceRoutingRule(e.getId(), e.getServiceType(), e.getEnabled(), e.getPriority(), e.getMatchJson(), e.getProviderCode(), e.getBehaviorJson()))
+            k -> repository.findByServiceTypeAndEnabledOrderByPriorityAsc(type, true)
+                    .stream()
+                    .map(e -> new ServiceRoutingRule(
+                        e.getId(), 
+                        e.getServiceType(), 
+                        e.getProviderCode(), // Correção: providerCode vem antes de enabled
+                        e.getEnabled(), 
+                        e.getPriority(), 
+                        e.getMatchJson(), 
+                        e.getBehaviorJson()
+                    ))
                     .toList());
     }
 }

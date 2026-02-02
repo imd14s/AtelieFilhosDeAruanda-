@@ -1,65 +1,56 @@
 services:
-  # 1. Banco de Dados
+  api:
+    build: ./backend
+    container_name: atelie_api
+    ports:
+      - "${SERVER_PORT}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_POOL_SIZE=${DB_POOL_SIZE}
+      
+      # Segurança & Tokens
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      
+      # Integrações
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+      
+      # CORREÇÃO: Credenciais do Admin (Lidas do .env)
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      
+    networks:
+      - ecommerce_default
+
   db:
     image: postgres:16-alpine
     container_name: atelie_db
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ecommerce_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  # 2. Backend API
-  api:
-    build:
-      context: ./backend
-    container_name: atelie_api
-    ports:
-      - "${APP_PORT}:8080"
-    environment:
-      # Injeta variáveis do .env no Spring Boot
-      DB_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./backend/uploads:/app/uploads
-
-  # # 3. Dashboard Admin
-  # dashboard:
-  #   build:
-  #     context: ./dashboard-admin
-  #     # Vite precisa dessas vars no BUILD time para "assar" no JS estático
-  #     args:
-  #       VITE_API_URL: ${VITE_API_URL}
-  #   container_name: atelie_dashboard
-  #   ports:
-  #     - "${DASHBOARD_PORT}:80"
-  #   depends_on:
-  #     - api
-
-  # # 4. Loja Frontend
-  # store:
-  #   build:
-  #     context: ./frontend
-  #     args:
-  #       VITE_WIX_CLIENT_ID: ${VITE_WIX_CLIENT_ID}
-  #   container_name: atelie_store
-  #   ports:
-  #     - "${STORE_PORT}:80"
+    networks:
+      - ecommerce_default
 
 volumes:
-  postgres_data:
+  ecommerce_postgres_data:
+
+networks:
+  ecommerce_default:
+    driver: bridge

@@ -1,29 +1,30 @@
 package com.atelie.ecommerce.api.catalog.product;
 
-// CORREÇÃO: Imports apontando para o pacote 'product', não 'auth'
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import com.atelie.ecommerce.application.service.catalog.product.ProductService; // Import Service
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.nio.file.*;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
 
     private final ProductRepository productRepository;
+    private final ProductService productService; // Injeção do Service
     private final Path fileStorageLocation;
 
-    public ProductController(ProductRepository productRepository) {
+    public ProductController(ProductRepository productRepository, ProductService productService) {
         this.productRepository = productRepository;
+        this.productService = productService;
+        
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
         try {
             Files.createDirectories(this.fileStorageLocation);
@@ -44,26 +45,38 @@ public class ProductController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // CORREÇÃO: Usa DTO e chama o Service
     @PostMapping
-    public ResponseEntity<ProductEntity> create(@RequestBody ProductEntity product) {
-        if (product.getId() == null) product.setId(UUID.randomUUID());
+    public ResponseEntity<ProductEntity> create(@RequestBody ProductCreateRequest request) {
+        if (request.categoryId() == null) {
+            return ResponseEntity.badRequest().build(); // Validação básica
+        }
+
+        // Mapeia DTO -> Entity
+        ProductEntity product = new ProductEntity();
+        product.setName(request.name());
+        product.setDescription(request.description());
+        product.setPrice(request.price());
+        product.setStockQuantity(request.stockQuantity());
+        product.setImages(request.images());
+        
+        // Datas e defaults são tratados pelo Service ou Entity
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
-        if (product.getActive() == null) product.setActive(true);
+        product.setActive(true);
+
+        // Delega para o Service (que resolve a Categoria e cria Variantes)
+        ProductEntity savedProduct = productService.saveProduct(product, request.categoryId());
         
-        return ResponseEntity.ok(productRepository.save(product));
+        return ResponseEntity.ok(savedProduct);
     }
     
-    // Endpoint auxiliar para processar upload e devolver URL
-    // O Frontend chama isso primeiro, recebe a URL e depois manda no JSON do create
     @PostMapping("/upload-image")
     public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
             String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            
-            // Retorna caminho relativo para ser acessado via Static Resources
             return ResponseEntity.ok("/uploads/" + fileName);
         } catch (IOException ex) {
             return ResponseEntity.internalServerError().body("Falha no upload");
@@ -72,6 +85,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductEntity> update(@PathVariable UUID id, @RequestBody ProductEntity productDetails) {
+        // TODO: Mover lógica de update para o Service futuramente para consistência
         return productRepository.findById(id)
             .map(existing -> {
                 existing.setName(productDetails.getName());

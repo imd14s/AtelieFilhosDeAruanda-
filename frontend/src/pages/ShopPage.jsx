@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { wixClient } from '../utils/wixClient';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../components/FilterSidebar';
-import { Loader2, SlidersHorizontal, LayoutGrid, X } from 'lucide-react';
+import { Loader2, SlidersHorizontal, LayoutGrid } from 'lucide-react';
 
 const ShopPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,52 +12,33 @@ const ShopPage = () => {
   
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [collections, setCollections] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // 1. Carregar Coleções do Wix
-  useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        if (wixClient.collections) {
-          const { items } = await wixClient.collections.queryCollections().find();
-          setCollections(items);
-        }
-      } catch (err) {
-        console.error("Erro ao carregar coleções:", err);
-      }
-    };
-    fetchCollections();
-  }, []);
-
-  // 2. Carregar Produtos com Filtro e Ordenação Corrigida
+  // Carregar Produtos
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        let query = wixClient.products.queryProducts();
+        // Busca simples usando nosso adaptador (API Java)
+        const { items } = await wixClient.products.query().find();
+        
+        let filteredItems = [...items];
 
-        // Filtro de Categoria
+        // Filtro de Categoria (Simulado no Frontend por enquanto)
         if (categoryFilter) {
-          const { collection } = await wixClient.collections.getCollectionBySlug(categoryFilter);
-          if (collection) {
-            query = query.hasSome('collectionIds', [collection._id]);
-          }
+           // Lógica futura: filtrar por ID de coleção
+           console.log("Filtrando por:", categoryFilter);
         }
 
-        /** * CORREÇÃO DO ERRO 400:
-         * O campo de ordenação correto para o Wix Stores é 'priceData.price'
-         */
+        // Ordenação (Frontend)
         if (sortFilter === 'price_asc') {
-          query = query.ascending('priceData.price');
+          filteredItems.sort((a, b) => (a.price?.amount || 0) - (b.price?.amount || 0));
         } else if (sortFilter === 'price_desc') {
-          query = query.descending('priceData.price');
-        } else {
-          query = query.descending('_createdDate'); // Ordena por data de criação
-        }
+          filteredItems.sort((a, b) => (b.price?.amount || 0) - (a.price?.amount || 0));
+        } 
+        // 'newest' é o default que vem do banco
 
-        const { items } = await query.find();
-        setProducts(items);
+        setProducts(filteredItems);
       } catch (err) {
         console.error("Erro ao carregar produtos:", err);
       } finally {
@@ -75,12 +56,10 @@ const ShopPage = () => {
       <FilterSidebar 
         isOpen={isFilterOpen} 
         onClose={() => setIsFilterOpen(false)}
-        collections={collections}
         activeCategory={categoryFilter}
         onSelectCategory={(slug) => {
           const params = new URLSearchParams(searchParams);
-          if (slug) params.set('categoria', slug);
-          else params.delete('categoria');
+          slug ? params.set('categoria', slug) : params.delete('categoria');
           setSearchParams(params);
         }}
         activeSort={sortFilter}
@@ -91,52 +70,38 @@ const ShopPage = () => {
         }}
       />
 
-      <div className="bg-[#0f2A44] text-[#F7F7F4] py-16 md:py-24 px-4 text-center">
-        <span className="font-lato text-[10px] uppercase tracking-[0.5em] text-[#C9A24D] mb-4 block">
-          Catálogo Completo
+      {/* Hero Header */}
+      <div className="bg-[#0f2A44] text-[#F7F7F4] py-12 md:py-20 px-4 text-center">
+        <span className="font-lato text-[10px] uppercase tracking-[0.5em] text-[#C9A24D] mb-4 block animate-fade-in">
+          Catálogo Oficial
         </span>
-        <h1 className="font-playfair text-4xl md:text-6xl mb-6 italic">Loja de Axé</h1>
-        <div className="w-20 h-[1px] bg-[#C9A24D] mx-auto opacity-50"></div>
+        <h1 className="font-playfair text-4xl md:text-5xl mb-6 italic">Loja de Axé</h1>
+        <div className="w-16 h-[1px] bg-[#C9A24D] mx-auto opacity-50"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-        <div className="flex flex-col lg:flex-row gap-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div className="flex flex-col lg:flex-row gap-8">
           
-          <aside className="hidden lg:block w-64 space-y-8">
+          {/* Sidebar Desktop */}
+          <aside className="hidden lg:block w-64 space-y-8 sticky top-24 h-fit">
             <div>
               <div className="flex items-center gap-2 mb-6 text-[#0f2A44]">
                 <SlidersHorizontal size={18} />
-                <h2 className="font-playfair text-xl">Coleções</h2>
+                <h2 className="font-playfair text-xl">Filtros</h2>
               </div>
               
               <ul className="space-y-3">
-                <li>
-                  <button 
-                    onClick={clearFilters}
-                    className={`font-lato text-sm uppercase tracking-widest transition-colors ${!categoryFilter ? 'text-[#C9A24D] font-bold' : 'text-[#0f2A44]/60 hover:text-[#0f2A44]'}`}
-                  >
-                    Todos os Itens
-                  </button>
-                </li>
-                {collections.map((col) => (
-                  <li key={col._id}>
-                    <button 
-                      onClick={() => {
-                        const p = new URLSearchParams(searchParams);
-                        p.set('categoria', col.slug);
-                        setSearchParams(p);
-                      }}
-                      className={`font-lato text-sm uppercase tracking-widest transition-colors ${categoryFilter === col.slug ? 'text-[#C9A24D] font-bold' : 'text-[#0f2A44]/60 hover:text-[#0f2A44]'}`}
-                    >
-                      {col.name}
-                    </button>
-                  </li>
-                ))}
+                 <li>
+                   <button onClick={clearFilters} className={`font-lato text-xs uppercase tracking-widest ${!categoryFilter ? 'text-[#C9A24D] font-bold' : 'text-[#0f2A44]/60 hover:text-[#0f2A44]'}`}>
+                     Todos os Itens
+                   </button>
+                 </li>
+                 {/* Categorias podem ser listadas dinamicamente aqui */}
               </ul>
             </div>
 
             <div className="pt-8 border-t border-[#0f2A44]/5">
-              <h3 className="font-playfair text-xl text-[#0f2A44] mb-4">Ordenar</h3>
+              <h3 className="font-playfair text-lg text-[#0f2A44] mb-4">Ordenar</h3>
               <div className="space-y-2">
                 {[
                   { label: 'Recentes', val: 'newest' },
@@ -160,7 +125,8 @@ const ShopPage = () => {
           </aside>
 
           <main className="flex-1">
-            <div className="flex justify-between items-center mb-10 pb-4 border-b border-[#0f2A44]/10">
+            {/* Toolbar Mobile */}
+            <div className="flex justify-between items-center mb-8 pb-4 border-b border-[#0f2A44]/10">
               <button 
                 onClick={() => setIsFilterOpen(true)}
                 className="lg:hidden flex items-center gap-2 px-4 py-2 border border-[#0f2A44] text-[#0f2A44] font-lato text-[10px] uppercase tracking-widest"
@@ -168,10 +134,10 @@ const ShopPage = () => {
                 <SlidersHorizontal size={14} /> Filtros
               </button>
               
-              <div className="hidden sm:flex items-center gap-2 text-[#0f2A44]/50">
+              <div className="flex items-center gap-2 text-[#0f2A44]/50 ml-auto">
                 <LayoutGrid size={16} />
                 <span className="font-lato text-[10px] uppercase tracking-widest">
-                  {products.length} itens encontrados
+                  {products.length} axés encontrados
                 </span>
               </div>
             </div>
@@ -179,18 +145,19 @@ const ShopPage = () => {
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24 gap-4">
                 <Loader2 className="animate-spin text-[#C9A24D]" size={40} />
-                <p className="font-lato text-[10px] uppercase tracking-widest text-[#0f2A44]/40">Buscando o Axé...</p>
+                <p className="font-lato text-[10px] uppercase tracking-widest text-[#0f2A44]/40">Buscando...</p>
               </div>
             ) : products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 gap-y-12 animate-fade-in">
+              // GRID RESPONSIVO: 1 col (mobile), 2 cols (sm), 3 cols (xl), 4 cols (2xl)
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 gap-y-10 animate-fade-in">
                 {products.map((product) => (
                   <ProductCard key={product._id} product={product} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-24 bg-white/50 border border-dashed border-[#0f2A44]/10">
-                <h3 className="font-playfair text-2xl text-[#0f2A44] mb-2">Nenhum item disponível</h3>
-                <p className="font-lato text-sm text-[#0f2A44]/50">Tente outra categoria ou limpe os filtros.</p>
+                <h3 className="font-playfair text-2xl text-[#0f2A44] mb-2">Nada encontrado</h3>
+                <p className="font-lato text-sm text-[#0f2A44]/50">Tente limpar os filtros.</p>
               </div>
             )}
           </main>
