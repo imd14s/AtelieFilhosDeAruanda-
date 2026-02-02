@@ -38,9 +38,7 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
             (String) config.get("access_token"), "access_token (Config MP)"
         );
 
-        // (opcional) pode manter vindo do config JSON
         String notificationUrl = (String) config.get("notification_url");
-
         BigDecimal amount = (BigDecimal) request.get("amount");
         String email = (String) request.get("email");
         String externalRef = (String) request.get("orderId");
@@ -66,18 +64,19 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mpRequest, headers);
 
-            // ENV: MP_API_URL (default antigo)
-            String apiUrl = env.getProperty("MP_API_URL", "https://api.mercadopago.com/v1/payments").trim();
+            // CORREÇÃO: Fallback hardcoded removido. Exige MP_API_URL no .env ou Config Table.
+            String apiUrl = env.getProperty("MP_API_URL");
+            if (apiUrl == null || apiUrl.isBlank()) {
+                throw new IllegalStateException("Configuração MP_API_URL ausente no ambiente!");
+            }
 
-            Map response = restTemplate.postForObject(apiUrl, entity, Map.class);
+            Map response = restTemplate.postForObject(apiUrl.trim(), entity, Map.class);
 
             Map<String, Object> result = new HashMap<>();
             result.put("provider", "MERCADO_PAGO");
             result.put("status", "pending");
-
             if (response != null) {
                 result.put("external_id", response.get("id"));
-
                 Map poi = (Map) response.get("point_of_interaction");
                 if (poi != null) {
                     Map transData = (Map) poi.get("transaction_data");
@@ -88,7 +87,6 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
                 }
             }
             return result;
-
         } catch (Exception e) {
             return Map.of("error", true, "message", "Erro MP: " + e.getMessage());
         }

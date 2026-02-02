@@ -14,7 +14,6 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,16 +38,18 @@ public class MercadoLivreService implements MarketplaceIntegrationService {
     }
 
     private String mlBaseUrl() {
-        // ENV: ML_API_BASE_URL (default oficial)
-        return env.getProperty("ML_API_BASE_URL", "https://api.mercadolibre.com").trim();
+        // CORREÇÃO: Removido fallback hardcoded. Deve estar no .env como ML_API_BASE_URL
+        String url = env.getProperty("ML_API_BASE_URL");
+        if (url == null || url.isBlank()) {
+            throw new IllegalStateException("Configuração ML_API_BASE_URL ausente no ambiente!");
+        }
+        return url.trim();
     }
 
     private String mlDefaultCategory() {
-        // ENV: ML_CATEGORY_DEFAULT (default existente do código antigo)
         return env.getProperty("ML_CATEGORY_DEFAULT", "MLB3530").trim();
     }
 
-    // --- Lógica INBOUND (Trazer Pedidos) ---
     @Override
     @Transactional(readOnly = true)
     public CreateOrderRequest fetchAndConvertOrder(String resourceId) {
@@ -58,7 +59,6 @@ public class MercadoLivreService implements MarketplaceIntegrationService {
 
         String token = configService.requireString("ML_ACCESS_TOKEN");
         String url = mlBaseUrl() + "/orders/" + resourceId;
-
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(token);
@@ -66,7 +66,6 @@ public class MercadoLivreService implements MarketplaceIntegrationService {
 
             ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.GET, entity, JsonNode.class);
             JsonNode orderJson = response.getBody();
-
             if (orderJson == null) throw new RuntimeException("Empty response from ML");
 
             JsonNode orderItems = orderJson.path("order_items");
@@ -79,7 +78,6 @@ public class MercadoLivreService implements MarketplaceIntegrationService {
             var integration = integrationRepository
                 .findByExternalIdAndIntegrationType(mlItemId, "MERCADO_LIVRE")
                 .orElseThrow(() -> new IllegalArgumentException("Produto não vinculado para item ML: " + mlItemId));
-
             String customerName = orderJson.path("buyer").path("nickname").asText("Desconhecido");
 
             return new CreateOrderRequest(
@@ -88,14 +86,12 @@ public class MercadoLivreService implements MarketplaceIntegrationService {
                 customerName,
                 List.of(new CreateOrderItemRequest(integration.getProduct().getId(), null, quantity))
             );
-
         } catch (Exception e) {
             log.error("Erro integration fetch ML", e);
             throw new RuntimeException("Erro ML Fetch", e);
         }
     }
 
-    // --- Lógica OUTBOUND (Publicar/Atualizar Anúncio Real) ---
     public void createListing(ProductEntity product) {
         if (!configService.containsKey("ML_SYNC_ENABLED") || !configService.requireBoolean("ML_SYNC_ENABLED")) {
             log.info("Sync Mercado Livre desativado no Dashboard. Ignorando produto: {}", product.getName());
@@ -104,7 +100,6 @@ public class MercadoLivreService implements MarketplaceIntegrationService {
 
         String token = configService.requireString("ML_ACCESS_TOKEN");
         String url = mlBaseUrl() + "/items";
-
         Map<String, Object> payload = new HashMap<>();
         payload.put("title", product.getName());
         payload.put("category_id", mlDefaultCategory());
@@ -125,18 +120,13 @@ public class MercadoLivreService implements MarketplaceIntegrationService {
             headers.setBearerAuth(token);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-
             ResponseEntity<JsonNode> response = restTemplate.postForEntity(url, entity, JsonNode.class);
-
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 String mlId = response.getBody().get("id").asText();
                 String permalink = response.getBody().get("permalink").asText();
-
                 log.info("Anúncio criado no ML com sucesso! ID: {}, Link: {}", mlId, permalink);
-
                 saveIntegrationLink(product, mlId);
             }
-
         } catch (Exception e) {
             log.error("Falha ao criar anúncio no ML. Verifique Token/Permissões.", e);
         }
