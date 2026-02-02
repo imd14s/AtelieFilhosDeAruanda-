@@ -1,9 +1,7 @@
 package com.atelie.ecommerce.api.admin;
 
-import com.atelie.ecommerce.api.config.DynamicConfigService;
-import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
-import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
-import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
+import com.atelie.ecommerce.domain.common.event.EntityChangedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,33 +11,20 @@ import java.util.Map;
 @RequestMapping("/api/admin/cache")
 public class AdminCacheController {
 
-    private final DynamicConfigService dynamicConfigService;
-    private final ServiceProviderGateway providerGateway;
-    private final ServiceRoutingRuleGateway routingRuleGateway;
-    private final ServiceProviderConfigGateway providerConfigGateway;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public AdminCacheController(
-            DynamicConfigService dynamicConfigService,
-            ServiceProviderGateway providerGateway,
-            ServiceRoutingRuleGateway routingRuleGateway,
-            ServiceProviderConfigGateway providerConfigGateway
-    ) {
-        this.dynamicConfigService = dynamicConfigService;
-        this.providerGateway = providerGateway;
-        this.routingRuleGateway = routingRuleGateway;
-        this.providerConfigGateway = providerConfigGateway;
+    public AdminCacheController(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<Map<String, Object>> refreshAll() {
-        dynamicConfigService.refresh();
-        providerGateway.refresh();
-        routingRuleGateway.refresh();
-        providerConfigGateway.refresh();
+        // Dispara um evento global que todos os Gateways e o ConfigService ouvem
+        eventPublisher.publishEvent(new EntityChangedEvent(this, "MANUAL_GLOBAL_REFRESH"));
 
         return ResponseEntity.ok(Map.of(
                 "ok", true,
-                "message", "Caches refreshed: dynamic-config + service-engine gateways"
+                "message", "Evento de atualização disparado para todos os listeners de cache."
         ));
     }
 }
