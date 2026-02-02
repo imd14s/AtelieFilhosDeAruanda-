@@ -1,0 +1,1274 @@
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/admin/AdminConfigController.java ---
+package com.atelie.ecommerce.api.admin;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigEntity;
+import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin/configs")
+public class AdminConfigController {
+
+    private final SystemConfigRepository repository;
+    private final DynamicConfigService configService;
+
+    public AdminConfigController(SystemConfigRepository repository, DynamicConfigService configService) {
+        this.repository = repository;
+        this.configService = configService;
+    }
+
+    @GetMapping
+    public List<SystemConfigEntity> listAll() {
+        return repository.findAll();
+    }
+
+    @PostMapping
+    public ResponseEntity<SystemConfigEntity> upsert(@RequestBody SystemConfigEntity dto) {
+        SystemConfigEntity saved = repository.save(dto);
+        // Atualiza o cache local imediatamente para refletir a mudança
+        configService.refresh();
+        return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{key}")
+    public ResponseEntity<Void> delete(@PathVariable String key) {
+        repository.deleteById(key);
+        configService.refresh();
+        return ResponseEntity.noContent().build();
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/admin/AdminRuleController.java ---
+package com.atelie.ecommerce.api.admin;
+
+import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceRoutingRuleJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceRoutingRuleEntity;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/admin/rules")
+public class AdminRuleController {
+
+    private final ServiceRoutingRuleJpaRepository repository;
+    private final ServiceRoutingRuleGateway gateway; // Injeta para refresh
+    private final ExpressionParser parser = new SpelExpressionParser();
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public AdminRuleController(ServiceRoutingRuleJpaRepository repository, ServiceRoutingRuleGateway gateway) {
+        this.repository = repository;
+        this.gateway = gateway;
+    }
+
+    @GetMapping
+    public List<ServiceRoutingRuleEntity> list(@RequestParam(required = false) String type) {
+        if (type != null) {
+            return repository.findByServiceTypeAndEnabledOrderByPriorityAsc(type, true);
+        }
+        return repository.findAll();
+    }
+
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody ServiceRoutingRuleEntity entity) {
+        try { validateSpel(entity.getMatchJson()); } 
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage()); }
+
+        if (entity.getId() == null) entity.setId(UUID.randomUUID());
+        entity.setUpdatedAt(LocalDateTime.now());
+        
+        ServiceRoutingRuleEntity saved = repository.save(entity);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody ServiceRoutingRuleEntity entity) {
+        if (!repository.existsById(id)) return ResponseEntity.notFound().build();
+        try { validateSpel(entity.getMatchJson()); } 
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body("Regra Inválida: " + e.getMessage()); }
+
+        entity.setId(id);
+        entity.setUpdatedAt(LocalDateTime.now());
+        
+        ServiceRoutingRuleEntity saved = repository.save(entity);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        repository.deleteById(id);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.noContent().build();
+    }
+
+    private void validateSpel(String json) {
+        try {
+            if (json == null || json.isBlank()) return;
+            JsonNode root = mapper.readTree(json);
+            if (root.hasNonNull("expression")) {
+                String expr = root.get("expression").asText();
+                parser.parseExpression(expr);
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro de Sintaxe SpEL ou JSON: " + e.getMessage());
+        }
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/admin/AdminProviderConfigController.java ---
+package com.atelie.ecommerce.api.admin;
+
+import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderConfigJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderConfigEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/admin/provider-configs")
+public class AdminProviderConfigController {
+
+    private final ServiceProviderConfigJpaRepository repository;
+    private final ServiceProviderConfigGateway gateway; // Injeta o gateway para limpar cache
+
+    public AdminProviderConfigController(ServiceProviderConfigJpaRepository repository,
+                                         ServiceProviderConfigGateway gateway) {
+        this.repository = repository;
+        this.gateway = gateway;
+    }
+
+    @GetMapping("/{providerId}/{env}")
+    public ResponseEntity<ServiceProviderConfigEntity> get(@PathVariable UUID providerId, @PathVariable String env) {
+        return repository.findTopByProviderIdAndEnvironmentOrderByVersionDesc(providerId, env)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<ServiceProviderConfigEntity> upsert(@RequestBody ServiceProviderConfigEntity config) {
+        if (config.getId() == null) config.setId(UUID.randomUUID());
+        
+        Optional<ServiceProviderConfigEntity> current = repository
+            .findTopByProviderIdAndEnvironmentOrderByVersionDesc(config.getProviderId(), config.getEnvironment());
+            
+        config.setVersion(current.map(c -> c.getVersion() + 1).orElse(1));
+        config.setUpdatedAt(LocalDateTime.now());
+        
+        ServiceProviderConfigEntity saved = repository.save(config);
+        
+        // --- LIMPEZA DE CACHE IMEDIATA ---
+        gateway.refresh();
+        
+        return ResponseEntity.ok(saved);
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/admin/AdminProviderController.java ---
+package com.atelie.ecommerce.api.admin;
+
+import com.atelie.ecommerce.domain.service.port.ServiceProviderGateway;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/admin/providers")
+public class AdminProviderController {
+
+    private final ServiceProviderJpaRepository repository;
+    private final ServiceProviderGateway gateway; // Injeta o gateway para chamar o refresh
+
+    public AdminProviderController(ServiceProviderJpaRepository repository, ServiceProviderGateway gateway) {
+        this.repository = repository;
+        this.gateway = gateway;
+    }
+
+    @GetMapping
+    public List<ServiceProviderEntity> list() {
+        return repository.findAll();
+    }
+
+    @PostMapping
+    public ResponseEntity<ServiceProviderEntity> create(@RequestBody ServiceProviderEntity entity) {
+        if (entity.getId() == null) entity.setId(UUID.randomUUID());
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+        
+        ServiceProviderEntity saved = repository.save(entity);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ServiceProviderEntity> update(@PathVariable UUID id, @RequestBody ServiceProviderEntity dto) {
+        return repository.findById(id)
+            .map(existing -> {
+                existing.setName(dto.getName());
+                existing.setServiceType(dto.getServiceType());
+                existing.setCode(dto.getCode());
+                existing.setPriority(dto.getPriority());
+                existing.setDriverKey(dto.getDriverKey());
+                existing.setHealthEnabled(dto.isHealthEnabled());
+                existing.setEnabled(dto.isEnabled());
+                existing.setUpdatedAt(LocalDateTime.now());
+                
+                ServiceProviderEntity saved = repository.save(existing);
+                gateway.refresh(); // Limpa cache
+                return ResponseEntity.ok(saved);
+            })
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}/toggle")
+    public ResponseEntity<ServiceProviderEntity> toggle(@PathVariable UUID id, @RequestBody Boolean enabled) {
+        return repository.findById(id)
+                .map(provider -> {
+                    provider.setEnabled(enabled);
+                    provider.setUpdatedAt(LocalDateTime.now());
+                    
+                    ServiceProviderEntity saved = repository.save(provider);
+                    gateway.refresh(); // Limpa cache
+                    return ResponseEntity.ok(saved);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/common/error/GlobalExceptionHandler.java ---
+package com.atelie.ecommerce.api.common.error;
+
+import com.atelie.ecommerce.api.common.exception.ConflictException;
+import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.api.common.exception.UnauthorizedException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+@lombok.extern.slf4j.Slf4j
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> 
+            errors.put(error.getField(), error.getDefaultMessage()));
+        return ResponseEntity.badRequest().body(errors);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDbConflict(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("Conflito de dados: Recurso duplicado ou restrição violada.");
+    }
+
+    // --- NOVOS HANDLERS ESPECÍFICOS ---
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
+        // Retorna 400 Bad Request para erros de validação de lógica (ex: estoque negativo)
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalState(IllegalStateException ex) {
+        // Retorna 409 Conflict ou 422 para estados inválidos (ex: cancelar pedido já enviado)
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<String> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<String> handleCustomConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+    
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<String> handleUnauthorized(UnauthorizedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+    // ----------------------------------
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleRuntime(RuntimeException ex) {
+        log.error("Erro não tratado capturado: ", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno do servidor. Contate o suporte.");
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/common/error/ErrorResponse.java ---
+package com.atelie.ecommerce.api.common.error;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.time.OffsetDateTime;
+import java.util.Map;
+
+/**
+ * ErrorResponse.
+ *
+ * Modelo padrão de resposta de erro da API.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ErrorResponse {
+
+    private final OffsetDateTime timestamp;
+    private final int status;
+    private final String error;
+    private final String message;
+    private final String path;
+    private final Map<String, String> fields;
+
+    /**
+     * Constrói um ErrorResponse.
+     *
+     * @param status  status HTTP numérico
+     * @param error   nome curto do erro (ex: "Bad Request")
+     * @param message mensagem humana do erro
+     * @param path    caminho da requisição
+     * @param fields  mapa de erros por campo (opcional)
+     */
+    public ErrorResponse(int status, String error, String message, String path, Map<String, String> fields) {
+        this.timestamp = OffsetDateTime.now();
+        this.status = status;
+        this.error = error;
+        this.message = message;
+        this.path = path;
+        this.fields = fields;
+    }
+
+    /**
+     * Cria resposta 400 (Bad Request) opcionalmente com erros por campo.
+     *
+     * @param message mensagem humana
+     * @param path    rota solicitada
+     * @param fields  erros por campo (pode ser null)
+     * @return ErrorResponse 400
+     */
+    public static ErrorResponse badRequest(String message, String path, Map<String, String> fields) {
+        return new ErrorResponse(400, "Bad Request", message, path, fields);
+    }
+
+    /**
+     * Cria resposta 401 (Unauthorized).
+     *
+     * @param message mensagem humana
+     * @param path    rota solicitada
+     * @return ErrorResponse 401
+     */
+    public static ErrorResponse unauthorized(String message, String path) {
+        return new ErrorResponse(401, "Unauthorized", message, path, null);
+    }
+
+    /**
+     * Cria resposta 404 (Not Found).
+     *
+     * @param message mensagem humana
+     * @param path    rota solicitada
+     * @return ErrorResponse 404
+     */
+    public static ErrorResponse notFound(String message, String path) {
+        return new ErrorResponse(404, "Not Found", message, path, null);
+    }
+
+    /**
+     * Cria resposta 405 (Method Not Allowed).
+     *
+     * @param message mensagem humana
+     * @param path    rota solicitada
+     * @return ErrorResponse 405
+     */
+    public static ErrorResponse methodNotAllowed(String message, String path) {
+        return new ErrorResponse(405, "Method Not Allowed", message, path, null);
+    }
+
+    /**
+     * Cria resposta 409 (Conflict).
+     *
+     * @param message mensagem humana
+     * @param path    rota solicitada
+     * @return ErrorResponse 409
+     */
+    public static ErrorResponse conflict(String message, String path) {
+        return new ErrorResponse(409, "Conflict", message, path, null);
+    }
+
+    /**
+     * Cria resposta 500 (Internal Server Error).
+     *
+     * @param message mensagem humana
+     * @param path    rota solicitada
+     * @return ErrorResponse 500
+     */
+    public static ErrorResponse internalServerError(String message, String path) {
+        return new ErrorResponse(500, "Internal Server Error", message, path, null);
+    }
+
+    public OffsetDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public Map<String, String> getFields() {
+        return fields;
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/common/exception/UnauthorizedException.java ---
+package com.atelie.ecommerce.api.common.exception;
+
+/**
+ * UnauthorizedException.
+ *
+ * Use para cenários de autenticação/autorização inválida.
+ */
+public class UnauthorizedException extends RuntimeException {
+
+    public UnauthorizedException(String message) {
+        super(message);
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/common/exception/NotFoundException.java ---
+package com.atelie.ecommerce.api.common.exception;
+
+/**
+ * NotFoundException.
+ *
+ * Use para cenários de recurso não encontrado (ex: categoria inexistente).
+ */
+public class NotFoundException extends RuntimeException {
+
+    public NotFoundException(String message) {
+        super(message);
+    }
+}
+
+--- ARQUIVO: ./src/main/java/com/atelie/ecommerce/api/common/exception/ConflictException.java ---
+package com.atelie.ecommerce.api.common.exception;
+
+/**
+ * ConflictException.
+ *
+ * Use para cenários de conflito (ex: e-mail já cadastrado).
+ */
+public class ConflictException extends RuntimeException {
+
+    public ConflictException(String message) {
+        super(message);
+    }
+}
+
+--- ARQUIVO: ./src/test/resources/application.yml ---
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:h2:mem:atelie_test_db;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+UPLOAD_DIR: target/test-uploads
+MAX_UPLOAD_MB: 1
+ALLOWED_IMAGE_MIME: image/png
+ALLOWED_VIDEO_MIME: video/mp4
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/ControllerTest.java ---
+package com.atelie.ecommerce;
+
+import com.atelie.ecommerce.infrastructure.config.security.SecurityConfig;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.AliasFor;
+
+import java.lang.annotation.*;
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@WebMvcTest
+@Import(TestMocksConfig.class)
+public @interface ControllerTest {
+    @AliasFor(annotation = WebMvcTest.class, attribute = "controllers")
+    Class<?>[] controllers() default {};
+
+    @AliasFor(annotation = WebMvcTest.class, attribute = "excludeFilters")
+    ComponentScan.Filter[] excludeFilters() default {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class)
+    };
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/application/service/health/HealthServiceTest.java ---
+package com.atelie.ecommerce.application.service.health;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * TESTES (DDT/TDD) - HealthService
+ *
+ * Contrato:
+ * - getStatus() deve retornar exatamente "OK"
+ * - não deve retornar null
+ * - chamadas repetidas devem retornar o mesmo resultado (idempotente)
+ *
+ * Nota DDT:
+ * - Este teste falhará na compilação enquanto o HealthService não existir.
+ * - Isso é esperado nesta fase (teste antes da implementação).
+ */
+class HealthServiceTest {
+
+    @Test
+    void shouldReturnOkStatus() {
+        HealthService service = new HealthService();
+        String status = service.getStatus();
+
+        assertNotNull(status);
+        assertEquals("OK", status);
+    }
+
+    @Test
+    void shouldReturnSameStatusWhenCalledManyTimes() {
+        HealthService service = new HealthService();
+
+        String first = service.getStatus();
+        String second = service.getStatus();
+        String third = service.getStatus();
+
+        assertEquals("OK", first);
+        assertEquals(first, second);
+        assertEquals(second, third);
+    }
+
+    @Test
+    void shouldNotThrowWhenGettingStatus() {
+        HealthService service = new HealthService();
+
+        assertDoesNotThrow(service::getStatus);
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/application/service/catalog/category/CategoryServiceTest.java ---
+package com.atelie.ecommerce.application.service.catalog.category;
+
+import com.atelie.ecommerce.api.catalog.category.dto.CategoryResponse;
+import com.atelie.ecommerce.api.catalog.category.dto.CreateCategoryRequest;
+import com.atelie.ecommerce.api.common.exception.ConflictException;
+import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class CategoryServiceTest {
+
+    @Mock
+    private CategoryRepository repository;
+
+    @InjectMocks
+    private CategoryService service;
+
+    @Test
+    void shouldCreateCategoryAndReturnResponse() {
+        CreateCategoryRequest req = new CreateCategoryRequest();
+        req.setName("Guias Espirituais");
+        req.setActive(true);
+
+        when(repository.findAll()).thenReturn(List.of());
+
+        CategoryResponse res = service.create(req);
+
+        assertNotNull(res);
+        assertNotNull(res.getId());
+        assertEquals("Guias Espirituais", res.getName());
+        assertEquals(true, res.getActive());
+
+        ArgumentCaptor<CategoryEntity> captor = ArgumentCaptor.forClass(CategoryEntity.class);
+        verify(repository, times(1)).save(captor.capture());
+
+        CategoryEntity saved = captor.getValue();
+        assertNotNull(saved.getId());
+        assertEquals("Guias Espirituais", saved.getName());
+        assertEquals(true, saved.getActive());
+    }
+
+    @Test
+    void shouldThrowConflictWhenCategoryAlreadyExistsIgnoringCase() {
+        CreateCategoryRequest req = new CreateCategoryRequest();
+        req.setName("velas");
+        req.setActive(true);
+
+        CategoryEntity existing = new CategoryEntity();
+        existing.setId(UUID.randomUUID());
+        existing.setName("Velas");
+        existing.setActive(true);
+
+        when(repository.findAll()).thenReturn(List.of(existing));
+
+        assertThrows(ConflictException.class, () -> service.create(req));
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void shouldCreateEvenWhenExistingIsDifferentName() {
+        CreateCategoryRequest req = new CreateCategoryRequest();
+        req.setName("Defumadores");
+        req.setActive(false);
+
+        CategoryEntity existing = new CategoryEntity();
+        existing.setId(UUID.randomUUID());
+        existing.setName("Velas");
+        existing.setActive(true);
+
+        when(repository.findAll()).thenReturn(List.of(existing));
+
+        CategoryResponse res = service.create(req);
+
+        assertNotNull(res.getId());
+        assertEquals("Defumadores", res.getName());
+        assertEquals(false, res.getActive());
+
+        verify(repository, times(1)).save(any(CategoryEntity.class));
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/application/service/inventory/InventoryServiceTest.java ---
+package com.atelie.ecommerce.application.service.inventory;
+
+import com.atelie.ecommerce.domain.inventory.MovementType;
+import com.atelie.ecommerce.domain.inventory.event.InventoryChangedEvent;
+import com.atelie.ecommerce.infrastructure.persistence.inventory.InventoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class InventoryServiceTest {
+
+    @Mock private InventoryRepository inventoryRepository;
+    @Mock private ProductVariantRepository variantRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
+
+    @InjectMocks private InventoryService inventoryService;
+
+    @Test
+    void shouldDecrementStock_WhenBalanceIsSufficient() {
+        UUID variantId = UUID.randomUUID();
+        ProductVariantEntity variant = new ProductVariantEntity();
+        variant.setId(variantId);
+        variant.setSku("SKU-TEST");
+        variant.setStockQuantity(10);
+        variant.setProduct(new ProductEntity()); // Necessário para o evento
+
+        when(variantRepository.findById(variantId)).thenReturn(Optional.of(variant));
+        // Simula update bem sucedido (1 linha afetada)
+        when(variantRepository.decrementStock(variantId, 5)).thenReturn(1);
+
+        inventoryService.addMovement(variantId, MovementType.OUT, 5, "Venda", "REF-1");
+
+        // Deve salvar histórico
+        verify(inventoryRepository).save(any(InventoryMovementEntity.class));
+        // Deve publicar evento
+        verify(eventPublisher).publishEvent(any(InventoryChangedEvent.class));
+    }
+
+    @Test
+    void shouldThrow_WhenStockInsufficient() {
+        UUID variantId = UUID.randomUUID();
+        ProductVariantEntity variant = new ProductVariantEntity();
+        variant.setId(variantId);
+        variant.setSku("SKU-TEST");
+
+        when(variantRepository.findById(variantId)).thenReturn(Optional.of(variant));
+        // Simula falha no update (0 linhas afetadas por causa do WHERE quantity >= X)
+        when(variantRepository.decrementStock(variantId, 100)).thenReturn(0);
+
+        assertThrows(IllegalArgumentException.class, () -> 
+            inventoryService.addMovement(variantId, MovementType.OUT, 100, "Venda", "REF-1")
+        );
+        
+        // Não deve salvar movimento se falhou
+        verify(inventoryRepository, never()).save(any());
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/application/service/order/OrderServiceTest.java ---
+package com.atelie.ecommerce.application.service.order;
+
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
+import com.atelie.ecommerce.application.service.inventory.InventoryService;
+import com.atelie.ecommerce.domain.order.OrderStatus;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
+import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
+import com.atelie.ecommerce.domain.inventory.MovementType;
+import java.math.BigDecimal;
+import java.util.List;
+
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+class OrderServiceTest {
+
+    @Mock
+    private OrderRepository orderRepository;
+    @Mock
+    private ProductRepository productRepository;
+    @Mock
+    private ProductVariantRepository variantRepository;
+    @Mock
+    private InventoryService inventoryService;
+
+    @InjectMocks
+    private OrderService orderService;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void testCancelOrder() {
+        UUID orderId = UUID.randomUUID();
+        OrderEntity order = new OrderEntity();
+        order.setId(orderId);
+        order.setStatus(OrderStatus.PENDING.name());
+        // Correção: Inicializa a lista de itens para evitar NullPointerException [cite:
+        // 331]
+        order.setItems(new ArrayList<>());
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(OrderEntity.class))).thenReturn(order);
+
+        orderService.cancelOrder(orderId, "Teste de cancelamento");
+
+        verify(orderRepository, times(1)).save(any(OrderEntity.class));
+    }
+
+    @Test
+    void shouldCreateOrderSuccessfully_WithVariantStockDown() {
+        // CENÁRIO
+        UUID productId = UUID.randomUUID();
+        UUID variantId = UUID.randomUUID();
+        
+        // Produto Mock
+        ProductEntity product = new ProductEntity();
+        product.setId(productId);
+        product.setPrice(new BigDecimal("100.00"));
+        product.setActive(true);
+        product.setName("Produto Teste");
+
+        // Variante Mock
+        ProductVariantEntity variant = new ProductVariantEntity();
+        variant.setId(variantId);
+        variant.setPrice(new BigDecimal("100.00")); // Preço da variante
+        variant.setProduct(product);
+        variant.setStockQuantity(10);
+
+        // Request
+        CreateOrderItemRequest itemReq = new CreateOrderItemRequest(productId, variantId, 2);
+        CreateOrderRequest request = new CreateOrderRequest(
+            "WEB", 
+            "EXT-123", 
+            "Cliente Teste", 
+            List.of(itemReq)
+        );
+
+        // MOCKS
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(variantRepository.findById(variantId)).thenReturn(Optional.of(variant));
+        // O save deve retornar o objeto que foi passado (ou um novo com ID)
+        when(orderRepository.save(any(OrderEntity.class))).thenAnswer(invocation -> {
+            OrderEntity order = invocation.getArgument(0);
+            if(order.getId() == null) order.setId(UUID.randomUUID()); // Simula geração de ID
+            return order;
+        });
+
+        // EXECUÇÃO
+        OrderEntity createdOrder = orderService.createOrder(request);
+
+        // VALIDAÇÕES (Asserts)
+        assertNotNull(createdOrder);
+        assertEquals("PENDING", createdOrder.getStatus());
+        // 2 itens * 100.00 = 200.00
+        assertEquals(new BigDecimal("200.00"), createdOrder.getTotalAmount());
+
+        // Verifica se baixou estoque corretamente (Critical Path)
+        verify(inventoryService, times(1)).addMovement(
+            eq(variantId), 
+            eq(MovementType.OUT), 
+            eq(2), 
+            contains("Sale Order"), 
+            anyString()
+        );
+        
+        // Verifica persistência
+        verify(orderRepository, times(1)).save(any(OrderEntity.class));
+    }
+    
+    @Test
+    void shouldThrowException_WhenProductInactive() {
+        UUID productId = UUID.randomUUID();
+        ProductEntity product = new ProductEntity();
+        product.setId(productId);
+        product.setActive(false); // Inativo
+
+        CreateOrderItemRequest itemReq = new CreateOrderItemRequest(productId, null, 1);
+        CreateOrderRequest request = new CreateOrderRequest("WEB", "123", "User", List.of(itemReq));
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+
+        assertThrows(IllegalStateException.class, () -> orderService.createOrder(request));
+        verify(orderRepository, never()).save(any());
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/application/service/payment/PaymentServiceTest.java ---
+package com.atelie.ecommerce.application.service.payment;
+
+import com.atelie.ecommerce.api.serviceengine.ServiceOrchestrator;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+class PaymentServiceTest {
+
+    // Mockamos a dependência complexa
+    private final ServiceOrchestrator orchestrator = Mockito.mock(ServiceOrchestrator.class);
+    
+    // Injetamos no construtor correto
+    private final PaymentService paymentService = new PaymentService(orchestrator);
+
+    @Test
+    void shouldValidateAmount() {
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> {
+            paymentService.createPixPayment(UUID.randomUUID(), "test@test.com", "12345678900", BigDecimal.ZERO);
+        });
+        Assertions.assertEquals("Valor do pagamento deve ser maior que zero", exception.getMessage());
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/application/integration/mercadolivre/MercadoLivreServiceEnvTest.java ---
+package com.atelie.ecommerce.application.integration.mercadolivre;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.env.MockEnvironment;
+import org.springframework.web.client.RestTemplate;
+
+import java.math.BigDecimal;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class MercadoLivreServiceEnvTest {
+
+    @Test
+    void shouldUseMlApiBaseUrlFromEnvWhenFetchingOrder() {
+        ProductIntegrationRepository repo = mock(ProductIntegrationRepository.class);
+        DynamicConfigService configService = mock(DynamicConfigService.class);
+        RestTemplate restTemplate = mock(RestTemplate.class);
+
+        MockEnvironment env = new MockEnvironment();
+        env.setProperty("ML_API_BASE_URL", "https://example-ml.local");
+
+        when(configService.containsKey("ML_SYNC_ENABLED")).thenReturn(true);
+        when(configService.requireBoolean("ML_SYNC_ENABLED")).thenReturn(true);
+        when(configService.requireString("ML_ACCESS_TOKEN")).thenReturn("token");
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+
+        // Não precisamos de JSON real aqui. Basta capturar a URL e retornar um body nulo para forçar erro rápido.
+        when(restTemplate.exchange(
+            urlCaptor.capture(),
+            eq(HttpMethod.GET),
+            any(HttpEntity.class),
+            eq(com.fasterxml.jackson.databind.JsonNode.class)
+        )).thenReturn(ResponseEntity.ok(null));
+
+        MercadoLivreService service = new MercadoLivreService(repo, configService, restTemplate, env);
+
+        // Deve lançar RuntimeException "Empty response from ML"
+        assertThrows(RuntimeException.class, () -> service.fetchAndConvertOrder("123"));
+
+        assertEquals("https://example-ml.local/orders/123", urlCaptor.getValue());
+    }
+
+    @Test
+    void shouldUseMlCategoryDefaultFromEnvWhenCreatingListing() {
+        ProductIntegrationRepository repo = mock(ProductIntegrationRepository.class);
+        DynamicConfigService configService = mock(DynamicConfigService.class);
+        RestTemplate restTemplate = mock(RestTemplate.class);
+
+        MockEnvironment env = new MockEnvironment();
+        env.setProperty("ML_API_BASE_URL", "https://example-ml.local");
+        env.setProperty("ML_CATEGORY_DEFAULT", "MLB9999");
+
+        when(configService.containsKey("ML_SYNC_ENABLED")).thenReturn(true);
+        when(configService.requireBoolean("ML_SYNC_ENABLED")).thenReturn(true);
+        when(configService.requireString("ML_ACCESS_TOKEN")).thenReturn("token");
+
+        ProductEntity product = new ProductEntity();
+        product.setName("Produto X");
+        product.setPrice(new BigDecimal("10.00"));
+        product.setStockQuantity(2);
+        product.setImageUrl(null);
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        // Como o método engole exceção, vamos apenas simular falha e depois verificar capturas.
+        when(restTemplate.postForEntity(
+            urlCaptor.capture(),
+            entityCaptor.capture(),
+            eq(com.fasterxml.jackson.databind.JsonNode.class)
+        )).thenThrow(new RuntimeException("network down"));
+
+        MercadoLivreService service = new MercadoLivreService(repo, configService, restTemplate, env);
+
+        // Não lança: método captura exceção internamente
+        service.createListing(product);
+
+        assertEquals("https://example-ml.local/items", urlCaptor.getValue());
+
+        Object body = entityCaptor.getValue().getBody();
+        assertNotNull(body);
+        assertTrue(body instanceof Map);
+
+        Map<?, ?> payload = (Map<?, ?>) body;
+        assertEquals("MLB9999", payload.get("category_id"));
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/config/TestProfileConfig.java ---
+package com.atelie.ecommerce.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ActiveProfiles;
+
+@Configuration
+@ActiveProfiles("test")
+public class TestProfileConfig {
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/config/TestApplication.java ---
+package com.atelie.ecommerce.config;
+
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+
+@SpringBootApplication
+@ComponentScan(basePackages = "com.atelie.ecommerce")
+public class TestApplication {
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/TestMocksConfig.java ---
+package com.atelie.ecommerce;
+
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
+import com.atelie.ecommerce.infrastructure.persistence.inventory.InventoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
+import com.atelie.ecommerce.application.service.integration.N8nService;
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.infrastructure.security.JwtAuthenticationFilter;
+import com.atelie.ecommerce.infrastructure.security.TokenProvider;
+import org.mockito.Mockito;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@TestConfiguration
+@EnableWebSecurity
+public class TestMocksConfig {
+
+    @Bean
+    @Primary
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        return http.build();
+    }
+
+    @Bean @Primary public AuthenticationManager authenticationManager() { return Mockito.mock(AuthenticationManager.class); }
+    // JwtService removido daqui pois a classe foi deletada
+    @Bean @Primary public PasswordEncoder passwordEncoder() { return Mockito.mock(PasswordEncoder.class); }
+    @Bean @Primary public TokenProvider tokenProvider() { return Mockito.mock(TokenProvider.class); }
+    @Bean @Primary public JwtAuthenticationFilter jwtAuthenticationFilter() { return Mockito.mock(JwtAuthenticationFilter.class); }
+
+    @Bean @Primary public OrderRepository orderRepository() { return Mockito.mock(OrderRepository.class); }
+    @Bean @Primary public InventoryRepository inventoryRepository() { return Mockito.mock(InventoryRepository.class); }
+    @Bean @Primary public SystemConfigRepository systemConfigRepository() { return Mockito.mock(SystemConfigRepository.class); }
+    @Bean @Primary public N8nService n8nService() { return Mockito.mock(N8nService.class); }
+    @Bean @Primary public DynamicConfigService dynamicConfigService() { return Mockito.mock(DynamicConfigService.class); }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/infrastructure/service/JpaServiceProviderGatewayCacheTest.java ---
+package com.atelie.ecommerce.infrastructure.service;
+
+import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
+import org.junit.jupiter.api.Test;
+
+import java.time.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+class JpaServiceProviderGatewayCacheTest {
+
+    @Test
+    void shouldUseCacheWithinTtlAndReloadAfterTtl() {
+        ServiceProviderJpaRepository repo = mock(ServiceProviderJpaRepository.class);
+        DynamicConfigService cfg = mock(DynamicConfigService.class);
+
+        // TTL de 2s
+        when(cfg.getLong(eq(DynamicConfigService.CACHE_TTL_SECONDS_KEY), anyLong())).thenReturn(2L);
+
+        ServiceProviderEntity e = new ServiceProviderEntity();
+        e.setId(UUID.randomUUID());
+        e.setServiceType("SHIPPING");
+        e.setCode("J3");
+        e.setName("J3");
+        e.setEnabled(true);
+        e.setPriority(1);
+        e.setDriverKey("j3");
+        e.setHealthEnabled(true);
+
+        when(repo.findByServiceTypeAndEnabledOrderByPriorityAsc("SHIPPING", true))
+                .thenReturn(List.of(e));
+
+        Instant base = Instant.parse("2026-01-01T00:00:00Z");
+        Clock fixed = Clock.fixed(base, ZoneOffset.UTC);
+
+        JpaServiceProviderGateway gw = new JpaServiceProviderGateway(repo, cfg, fixed);
+
+        // 1) Primeira chamada: bate no repo
+        gw.findEnabledByTypeOrdered(ServiceType.SHIPPING);
+        // 2) Segunda chamada (mesmo clock): deve vir do cache
+        gw.findEnabledByTypeOrdered(ServiceType.SHIPPING);
+
+        verify(repo, times(1))
+                .findByServiceTypeAndEnabledOrderByPriorityAsc("SHIPPING", true);
+
+        // 3) Avança o tempo além do TTL (3s) e chama de novo => reload
+        Clock after = Clock.fixed(base.plusSeconds(3), ZoneOffset.UTC);
+        JpaServiceProviderGateway gw2 = new JpaServiceProviderGateway(repo, cfg, after);
+
+        gw2.refresh(); // simula o mesmo bean tendo avançado o tempo no mundo real
+        gw2.findEnabledByTypeOrdered(ServiceType.SHIPPING);
+
+        verify(repo, times(2))
+                .findByServiceTypeAndEnabledOrderByPriorityAsc("SHIPPING", true);
+    }
+
+    @Test
+    void shouldCacheFindByCode() {
+        ServiceProviderJpaRepository repo = mock(ServiceProviderJpaRepository.class);
+        DynamicConfigService cfg = mock(DynamicConfigService.class);
+        when(cfg.getLong(eq(DynamicConfigService.CACHE_TTL_SECONDS_KEY), anyLong())).thenReturn(300L);
+
+        ServiceProviderEntity e = new ServiceProviderEntity();
+        e.setId(UUID.randomUUID());
+        e.setServiceType("SHIPPING");
+        e.setCode("J3");
+        e.setName("J3");
+        e.setEnabled(true);
+        e.setPriority(1);
+        e.setDriverKey("j3");
+        e.setHealthEnabled(true);
+
+        when(repo.findByCode("J3")).thenReturn(Optional.of(e));
+
+        Clock clock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
+        JpaServiceProviderGateway gw = new JpaServiceProviderGateway(repo, cfg, clock);
+
+        gw.findByCode(ServiceType.SHIPPING, "J3");
+        gw.findByCode(ServiceType.SHIPPING, "J3");
+
+        verify(repo, times(1)).findByCode("J3");
+        assertEquals("J3", gw.findByCode(ServiceType.SHIPPING, "J3").orElseThrow().code());
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/testsupport/security/TestSecuredController.java ---
+package com.atelie.ecommerce.testsupport.security;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api")
+public class TestSecuredController {
+
+    @GetMapping("/test-secured")
+    public ResponseEntity<String> secured() {
+        return ResponseEntity.ok("ok");
+    }
+
+    @GetMapping("/admin/test-secured")
+    public ResponseEntity<String> adminOnly() {
+        return ResponseEntity.ok("admin-ok");
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/testsupport/SystemConfigTestHelper.java ---
+package com.atelie.ecommerce.testsupport;
+
+import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigEntity;
+import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
+
+public final class SystemConfigTestHelper {
+
+    private SystemConfigTestHelper() {}
+
+    public static void upsert(SystemConfigRepository repo, String key, String value) {
+        SystemConfigEntity c = repo.findById(key).orElseGet(SystemConfigEntity::new);
+        c.setConfigKey(key);
+        c.setConfigValue(value);
+        repo.save(c);
+    }
+}
+
+--- ARQUIVO: ./src/test/java/com/atelie/ecommerce/ControllerTestBase.java ---
+package com.atelie.ecommerce;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.web.servlet.MockMvc;
+
+// Importa a nossa fábrica de mocks
+@AutoConfigureMockMvc(addFilters = false)
+@Import(TestMocksConfig.class)
+public abstract class ControllerTestBase {
+
+    @Autowired
+    protected MockMvc mockMvc;
+
+    @Autowired
+    protected ObjectMapper objectMapper;
+    
+    // Não precisamos declarar @MockBean aqui, pois o TestInfraConfig já injetou tudo.
+}
