@@ -10,6 +10,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Driver J3: 100% dependente da Config Table 'service_provider_configs'.
+ */
 @Component
 public class J3ShippingDriver implements ServiceDriver {
 
@@ -21,12 +24,15 @@ public class J3ShippingDriver implements ServiceDriver {
 
     @Override
     public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
+        // Dados da requisição
         String cep = DriverConfigReader.requireNonBlank((String) request.get("cep"), "cep");
         BigDecimal subtotal = DriverConfigReader.requireMoney(request.get("subtotal"), "subtotal");
 
-        // 100% vindo do config_json (dashboard/db). Sem defaults escondidos.
+        // Configurações vindas do Banco (Config Table) - Zero Hardcode
         BigDecimal rate = DriverConfigReader.requireBigDecimal(config, "rate");
         BigDecimal threshold = DriverConfigReader.requireBigDecimal(config, "free_threshold");
+        
+        // Se 'cep_prefixes' for nulo, consideramos que atende todo o Brasil
         String prefixes = DriverConfigReader.optionalString(config, "cep_prefixes", "");
 
         boolean eligible = true;
@@ -38,6 +44,7 @@ public class J3ShippingDriver implements ServiceDriver {
                     .anyMatch(cepDigits::startsWith);
         }
 
+        // Regra de Frete Grátis baseada no limite da Config Table
         boolean free = subtotal.compareTo(threshold) >= 0;
         BigDecimal cost = (eligible && free) ? BigDecimal.ZERO : rate;
 
@@ -47,6 +54,7 @@ public class J3ShippingDriver implements ServiceDriver {
         response.put("eligible", eligible);
         response.put("free_shipping", free);
         response.put("threshold", threshold);
+        
         return response;
     }
 }
