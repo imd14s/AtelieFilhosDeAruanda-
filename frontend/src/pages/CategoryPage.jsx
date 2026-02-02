@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { wixClient } from '../utils/wixClient';
-import ProductCard from '../components/ProductCard';
-import { Loader2, ChevronLeft, Sparkles, Wind } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
+import { Loader2, ChevronLeft, Sparkles, Wind } from "lucide-react";
 
 const CategoryPage = () => {
   const { slug } = useParams(); // Pega o slug da URL (ex: velas, guias, ervas)
@@ -11,37 +10,36 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Alterar no useEffect de CategoryPage.jsx
     const fetchCategoryData = async () => {
       setLoading(true);
       try {
-        // 1. Busca os dados da coleção (Nome, Descrição, Imagem de Capa)
-        const collectionResponse = await wixClient.collections.getCollectionBySlug(slug);
-        const currentCollection = collectionResponse.collection;
+        const categories = await storeService.getCategories();
+        const currentCollection = categories.find(
+          (c) => c.id === slug || c.name.toLowerCase() === slug,
+        );
         setCollection(currentCollection);
 
-        // 2. Busca produtos que pertencem a esta coleção específica
-        const productsResponse = await wixClient.products
-          .queryProducts()
-          .hasSome('collectionIds', [currentCollection._id])
-          .limit(50)
-          .find();
-
-        setProducts(productsResponse.items);
+        const allProducts = await storeService.getProducts();
+        const filtered = allProducts.filter(
+          (p) => p.category?.id === currentCollection?.id,
+        );
+        setProducts(filtered);
       } catch (error) {
         console.error("Erro ao carregar categoria:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    if (slug) fetchCategoryData();
   }, [slug]);
 
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#F7F7F4] gap-4">
         <Loader2 className="animate-spin text-[#C9A24D]" size={32} />
-        <span className="font-lato text-[10px] uppercase tracking-[0.3em] text-[#0f2A44]">Sintonizando energias...</span>
+        <span className="font-lato text-[10px] uppercase tracking-[0.3em] text-[#0f2A44]">
+          Sintonizando energias...
+        </span>
       </div>
     );
   }
@@ -49,8 +47,15 @@ const CategoryPage = () => {
   if (!collection) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F7F7F4] p-4 text-center">
-        <h2 className="font-playfair text-2xl text-[#0f2A44] mb-4">Categoria não encontrada</h2>
-        <Link to="/loja" className="text-[#C9A24D] font-lato text-xs uppercase tracking-widest border-b border-[#C9A24D]">Voltar para a Loja</Link>
+        <h2 className="font-playfair text-2xl text-[#0f2A44] mb-4">
+          Categoria não encontrada
+        </h2>
+        <Link
+          to="/loja"
+          className="text-[#C9A24D] font-lato text-xs uppercase tracking-widest border-b border-[#C9A24D]"
+        >
+          Voltar para a Loja
+        </Link>
       </div>
     );
   }
@@ -61,34 +66,38 @@ const CategoryPage = () => {
       <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-[#0f2A44]">
         {/* Imagem de Fundo da Categoria (vinda do Wix) */}
         {collection.media?.mainMedia?.image?.url ? (
-          <img 
-            src={collection.media.mainMedia.image.url} 
+          <img
+            src={collection.media.mainMedia.image.url}
             alt={collection.name}
             className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-r from-[#0f2A44] to-[#1a4163]"></div>
         )}
-        
+
         <div className="relative z-10 text-center px-4 space-y-4">
-          <Link to="/loja" className="inline-flex items-center gap-2 text-[#C9A24D] hover:text-[#F7F7F4] transition-colors mb-4">
+          <Link
+            to="/loja"
+            className="inline-flex items-center gap-2 text-[#C9A24D] hover:text-[#F7F7F4] transition-colors mb-4"
+          >
             <ChevronLeft size={16} />
-            <span className="font-lato text-[10px] uppercase tracking-widest">Todos os Produtos</span>
+            <span className="font-lato text-[10px] uppercase tracking-widest">
+              Todos os Produtos
+            </span>
           </Link>
           <h1 className="font-playfair text-5xl md:text-7xl text-[#F7F7F4] capitalize italic">
             {collection.name}
           </h1>
           <div className="flex items-center justify-center gap-4">
-             <div className="h-[1px] w-12 bg-[#C9A24D]/50"></div>
-             <Sparkles size={16} className="text-[#C9A24D]" />
-             <div className="h-[1px] w-12 bg-[#C9A24D]/50"></div>
+            <div className="h-[1px] w-12 bg-[#C9A24D]/50"></div>
+            <Sparkles size={16} className="text-[#C9A24D]" />
+            <div className="h-[1px] w-12 bg-[#C9A24D]/50"></div>
           </div>
         </div>
       </header>
 
       {/* CONTEÚDO */}
       <section className="max-w-7xl mx-auto px-4 py-16 md:py-24">
-        
         {/* DESCRIÇÃO DA CATEGORIA */}
         {collection.description && (
           <div className="max-w-3xl mx-auto text-center mb-20">
@@ -120,12 +129,29 @@ const CategoryPage = () => {
       {/* FOOTER DE NAVEGAÇÃO RÁPIDA */}
       <div className="max-w-7xl mx-auto px-4 pb-20">
         <div className="border-t border-[#0f2A44]/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
-            <h4 className="font-playfair text-[#0f2A44]/40 text-lg uppercase tracking-widest">Explorar Outras Vertentes</h4>
-            <div className="flex gap-8">
-                <Link to="/categoria/velas" className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors">Velas</Link>
-                <Link to="/categoria/guias" className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors">Guias</Link>
-                <Link to="/categoria/ervas" className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors">Ervas</Link>
-            </div>
+          <h4 className="font-playfair text-[#0f2A44]/40 text-lg uppercase tracking-widest">
+            Explorar Outras Vertentes
+          </h4>
+          <div className="flex gap-8">
+            <Link
+              to="/categoria/velas"
+              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors"
+            >
+              Velas
+            </Link>
+            <Link
+              to="/categoria/guias"
+              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors"
+            >
+              Guias
+            </Link>
+            <Link
+              to="/categoria/ervas"
+              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors"
+            >
+              Ervas
+            </Link>
+          </div>
         </div>
       </div>
     </div>

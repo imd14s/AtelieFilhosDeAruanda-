@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, User, Menu, X, LogOut } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { checkMemberStatus, wixClient } from '../utils/wixClient';
+import { storeService } from '../services/storeService'; // Nova importação
 import CartDrawer from './CartDrawer';
 import SearchBar from './SearchBar';
 import NavMenu from './NavMenu';
@@ -12,36 +12,24 @@ const Header = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [cart, setCart] = useState(null);
+  const [cart, setCart] = useState({ items: [] });
   const [searchTerm, setSearchTerm] = useState('');
   
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Inicialização de dados
-  const initHeader = async () => {
-    try {
-      if (wixClient.auth.loggedIn()) {
-        const member = await checkMemberStatus();
-        setUser(member);
-      }
-      if (wixClient.currentCart) {
-        const currentCart = await wixClient.currentCart.getCurrentCart();
-        setCart(currentCart);
-      }
-    } catch (error) {
-      console.log("Header: Visitante não logado.");
-    }
+  const initHeader = () => {
+    setUser(storeService.auth.getUser());
+    setCart(storeService.cart.get());
   };
 
   useEffect(() => {
     initHeader();
-    // Escuta eventos de atualização do carrinho (disparados pelo wixClient.js adaptado)
     window.addEventListener('cart-updated', initHeader);
     return () => window.removeEventListener('cart-updated', initHeader);
   }, [location.pathname]);
 
-  const cartQuantity = cart?.lineItems?.reduce((acc, item) => acc + (item.quantity || 0), 0) || 0;
+  const cartQuantity = cart?.items?.reduce((acc, item) => acc + (item.quantity || 0), 0) || 0;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -52,11 +40,10 @@ const Header = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await wixClient.auth.logout();
+  const handleLogout = () => {
+    storeService.auth.logout();
   };
 
-  // Trava o scroll quando menu está aberto
   useEffect(() => {
     document.body.style.overflow = (isCartOpen || isMenuOpen || isAuthOpen) ? 'hidden' : 'unset';
   }, [isCartOpen, isMenuOpen, isAuthOpen]);
@@ -66,12 +53,10 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4 md:py-6 gap-4">
           
-          {/* BOTÃO MENU MOBILE (Esquerda) */}
           <button className="md:hidden text-[#0f2A44] p-2 -ml-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
-          {/* LOGO */}
           <Link to="/" className="text-center md:text-left md:w-1/3 group">
             <h1 className="font-playfair text-xl md:text-2xl text-[#0f2A44] leading-tight">
               Ateliê 
@@ -81,7 +66,6 @@ const Header = () => {
             </h1>
           </Link>
 
-          {/* BUSCA DESKTOP */}
           <div className="hidden md:flex flex-1 max-w-md justify-center">
             <SearchBar 
               searchTerm={searchTerm} 
@@ -91,16 +75,13 @@ const Header = () => {
             />
           </div>
 
-          {/* AÇÕES (User & Cart) */}
           <div className="flex items-center justify-end gap-2 md:gap-6 md:w-1/3">
-            
-            {/* Desktop User Info */}
             <div className="hidden md:flex items-center gap-5 text-[#0f2A44]">
               {user ? (
                 <div className="flex items-center gap-3 border-r pr-5 border-[#0f2A44]/10">
                   <div className="text-right">
                     <p className="font-lato text-[9px] uppercase tracking-widest text-[#C9A24D]">Axé</p>
-                    <p className="font-playfair text-xs font-bold leading-none">{user.contact?.firstName || 'Membro'}</p>
+                    <p className="font-playfair text-xs font-bold leading-none">{user.name || 'Membro'}</p>
                   </div>
                   <button onClick={handleLogout} className="text-[#0f2A44]/40 hover:text-red-800 transition-colors">
                     <LogOut size={16} />
@@ -114,7 +95,6 @@ const Header = () => {
               )}
             </div>
 
-            {/* Carrinho (Mobile & Desktop) */}
             <button 
               onClick={() => setIsCartOpen(true)} 
               className="relative flex items-center gap-2 text-[#0f2A44] hover:text-[#C9A24D] transition-all p-2 -mr-2 md:mr-0"
@@ -132,18 +112,15 @@ const Header = () => {
           </div>
         </div>
 
-        {/* BUSCA MOBILE */}
         <div className="md:hidden pb-4 px-1">
           <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} onSearch={handleSearch} isMobile={true} />
         </div>
       </div>
 
-      {/* MENU DESKTOP */}
       <div className="hidden md:block border-t border-[#0f2A44]/5">
         <NavMenu isMobile={false} />
       </div>
 
-      {/* DRAWER MOBILE */}
       <div className={`md:hidden fixed inset-0 z-40 bg-[#F7F7F4] pt-24 px-6 transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
          <NavMenu isMobile={true} closeMenu={() => setIsMenuOpen(false)} />
          
@@ -162,7 +139,7 @@ const Header = () => {
          </div>
       </div>
 
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cart?.lineItems || []} onUpdateCart={setCart} />
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cart?.items || []} onUpdateCart={setCart} />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </header>
   );

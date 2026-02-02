@@ -1,60 +1,56 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { wixClient } from '../utils/wixClient';
-import ProductCard from '../components/ProductCard';
-import { Search, Loader2, Wind } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
+import { Search, Loader2, Wind } from "lucide-react";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get('q') || '';
+  const query = searchParams.get("q") || "";
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Alterar no useEffect de SearchPage.jsx
     const performSearch = async () => {
       setLoading(true);
       try {
+        const items = await storeService.getProducts();
         if (query) {
-          // Lógica de Busca do Wix: Procuramos no nome e na descrição
-          const { items } = await wixClient.products
-            .queryProducts()
-            .startsWith('name', query) // Busca por início do nome
-            .or(wixClient.products.queryProducts().contains('name', query)) // Ou contém no nome
-            .or(wixClient.products.queryProducts().contains('description', query)) // Ou na descrição
-            .limit(20)
-            .find();
-          
-          setResults(items);
+          const filtered = items.filter(
+            (p) =>
+              p.name.toLowerCase().includes(query.toLowerCase()) ||
+              p.description.toLowerCase().includes(query.toLowerCase()),
+          );
+          setResults(filtered);
         } else {
-          // Se não houver query, trazemos os mais recentes
-          const { items } = await wixClient.products.queryProducts().limit(12).find();
-          setResults(items);
+          setResults(items.slice(0, 12));
         }
       } catch (error) {
-        console.error("Erro na busca Wix:", error);
+        console.error("Erro na busca:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    performSearch();
   }, [query]);
 
   return (
     <div className="min-h-screen bg-[#F7F7F4] pt-12 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Cabeçalho de Busca */}
         <div className="border-b border-[#0f2A44]/10 pb-10 mb-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-[1px] bg-[#C9A24D]"></div>
-                <span className="font-lato text-[10px] uppercase tracking-[0.4em] text-[#C9A24D]">Busca de Axé</span>
+                <span className="font-lato text-[10px] uppercase tracking-[0.4em] text-[#C9A24D]">
+                  Busca de Axé
+                </span>
               </div>
               <h1 className="font-playfair text-4xl md:text-5xl text-[#0f2A44]">
                 {query ? (
-                  <>Resultados para <span className="italic">"{query}"</span></>
+                  <>
+                    Resultados para <span className="italic">"{query}"</span>
+                  </>
                 ) : (
                   "Nossa Coleção"
                 )}
@@ -62,7 +58,8 @@ const SearchPage = () => {
             </div>
             {!loading && (
               <p className="font-lato text-[11px] text-[#0f2A44]/50 uppercase tracking-[0.2em] bg-white px-4 py-2 border border-[#0f2A44]/5">
-                {results.length} {results.length === 1 ? 'item encontrado' : 'itens encontrados'}
+                {results.length}{" "}
+                {results.length === 1 ? "item encontrado" : "itens encontrados"}
               </p>
             )}
           </div>
@@ -95,26 +92,32 @@ const SearchPage = () => {
           /* Estado Vazio - Estilo Zen */
           <div className="text-center py-32 flex flex-col items-center border border-[#0f2A44]/5 bg-white/50">
             <div className="relative mb-8">
-               <Search size={64} className="text-[#0f2A44]/5" strokeWidth={1} />
-               <Wind size={32} className="text-[#C9A24D]/30 absolute -bottom-2 -right-2 animate-bounce" />
+              <Search size={64} className="text-[#0f2A44]/5" strokeWidth={1} />
+              <Wind
+                size={32}
+                className="text-[#C9A24D]/30 absolute -bottom-2 -right-2 animate-bounce"
+              />
             </div>
-            <h2 className="font-playfair text-3xl text-[#0f2A44] mb-4">Ainda não encontramos...</h2>
+            <h2 className="font-playfair text-3xl text-[#0f2A44] mb-4">
+              Ainda não encontramos...
+            </h2>
             <p className="font-lato text-sm text-[#0f2A44]/60 max-w-sm mx-auto mb-10 leading-relaxed">
-              Não encontramos resultados para sua busca. Que tal tentar termos mais suaves ou explorar nossas coleções principais?
+              Não encontramos resultados para sua busca. Que tal tentar termos
+              mais suaves ou explorar nossas coleções principais?
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-               <Link 
-                to="/store?categoria=velas" 
+              <Link
+                to="/store?categoria=velas"
                 className="border border-[#0f2A44] text-[#0f2A44] px-8 py-3 font-lato text-[10px] uppercase tracking-[0.2em] hover:bg-[#0f2A44] hover:text-white transition-all"
-               >
-                 Velas
-               </Link>
-               <Link 
-                to="/store?categoria=guias" 
+              >
+                Velas
+              </Link>
+              <Link
+                to="/store?categoria=guias"
                 className="border border-[#0f2A44] text-[#0f2A44] px-8 py-3 font-lato text-[10px] uppercase tracking-[0.2em] hover:bg-[#0f2A44] hover:text-white transition-all"
-               >
-                 Guias
-               </Link>
+              >
+                Guias
+              </Link>
             </div>
           </div>
         )}

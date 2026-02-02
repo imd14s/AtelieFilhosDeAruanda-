@@ -1,41 +1,40 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { wixClient } from '../utils/wixClient';
+import { storeService } from '../services/storeService'; // Nova importação
 import { ShoppingBag, Check, Loader2 } from 'lucide-react';
 
 const ProductCard = ({ product }) => {
   const [loading, setLoading] = useState(false);
   const [added, setAdded] = useState(false);
   
-  const handleAddToCart = async (e) => {
+  const handleAddToCart = (e) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      // Usamos o adaptador para adicionar ao carrinho local
-      await wixClient.cart.addToCart(product._id, 1);
-      
+    // Simula um delay pequeno para feedback visual
+    setTimeout(() => {
+      storeService.cart.add(product, 1);
       setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
-    } catch (error) {
-      console.error("Erro ao adicionar:", error);
-      alert("Erro ao adicionar produto.");
-    } finally {
       setLoading(false);
-    }
+      
+      setTimeout(() => setAdded(false), 2000);
+    }, 300);
   };
 
-  const price = product.price?.formatted?.price || 
-                new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price?.amount || 0);
+  // Formatação de preço (agora direta, sem estrutura aninhada do Wix)
+  const priceFormatted = new Intl.NumberFormat('pt-BR', { 
+    style: 'currency', 
+    currency: 'BRL' 
+  }).format(product.price || 0);
 
-  const isOutOfStock = !product.stock?.inStock;
+  const isOutOfStock = product.stockQuantity <= 0;
+  const imageUrl = product.images?.[0] || 'https://via.placeholder.com/500?text=Sem+Imagem';
 
   return (
     <div className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 rounded-sm">
-      {/* Imagem */}
-      <Link to={`/produto/${product.slug}`} className="relative aspect-[4/5] overflow-hidden bg-[#f0f0f0]">
+      <Link to={`/produto/${product.id}`} className="relative aspect-[4/5] overflow-hidden bg-[#f0f0f0]">
         <img
-          src={product.media?.mainMedia?.image?.url || 'https://via.placeholder.com/500'}
+          src={imageUrl}
           alt={product.name}
           className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
         />
@@ -46,13 +45,12 @@ const ProductCard = ({ product }) => {
         )}
       </Link>
 
-      {/* Info */}
       <div className="flex flex-col flex-1 p-4 text-center">
         <p className="font-lato text-[9px] uppercase tracking-[0.2em] text-[#C9A24D] mb-1">
            Ateliê Aruanda
         </p>
         
-        <Link to={`/produto/${product.slug}`}>
+        <Link to={`/produto/${product.id}`}>
           <h3 className="font-playfair text-lg text-[#0f2A44] mb-2 line-clamp-2 group-hover:text-[#C9A24D] transition-colors h-14 flex items-center justify-center">
             {product.name}
           </h3>
@@ -60,7 +58,7 @@ const ProductCard = ({ product }) => {
         
         <div className="mt-auto">
           <p className="font-lato text-sm font-bold text-[#0f2A44] mb-4">
-            {price}
+            {priceFormatted}
           </p>
 
           <button

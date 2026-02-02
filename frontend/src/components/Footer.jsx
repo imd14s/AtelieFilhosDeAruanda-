@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Facebook, Mail, Phone, MapPin, Heart, Send, Loader2 } from 'lucide-react';
-import { wixClient } from '../utils/wixClient';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();

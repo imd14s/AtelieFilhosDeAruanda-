@@ -3,8 +3,6 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Argumentos de Build
-ARG VITE_WIX_CLIENT_ID
-ENV VITE_WIX_CLIENT_ID=$VITE_WIX_CLIENT_ID
 
 COPY package.json package-lock.json* ./
 RUN npm ci

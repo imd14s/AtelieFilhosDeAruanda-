@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -10,39 +10,34 @@ import AboutPage from "./pages/AboutPage";
 import ShopPage from "./pages/ShopPage";
 import ScrollToTop from "./components/ScrollToTop";
 
-// Não precisamos mais inicializar tokens do Wix aqui, pois o wixClient.js já trata isso.
-
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#F7F7F4] flex flex-col font-lato">
+      <div className="min-h-screen bg-[#F7F7F4] flex flex-col font-lato text-[#0f2A44]">
         <ScrollToTop />
         <Header />
 
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/store" element={<ShopPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/store" element={<ShopPage />} />
 
-            {/* Rotas Dinâmicas */}
+            {/* Rotas Dinâmicas usando ID do Java */}
             <Route path="/categoria/:slug" element={<CategoryPage />} />
-            <Route path="/produto/:slug" element={<ProductPage />} />
+            <Route path="/produto/:id" element={<ProductPage />} />
 
-            {/* Rota 404 - Not Found */}
+            {/* Rota 404 */}
             <Route
               path="*"
               element={
-                <div className="flex flex-col items-center justify-center py-40 font-playfair bg-[#F7F7F4] px-4 text-center">
-                  <h2 className="text-6xl text-[#0f2A44] mb-4">404</h2>
+                <div className="flex flex-col items-center justify-center py-40 font-playfair px-4 text-center">
+                  <h2 className="text-6xl mb-4">404</h2>
                   <p className="font-lato uppercase tracking-[0.3em] text-[#C9A24D] text-sm">
                     Caminho não encontrado no axé.
                   </p>
-                  <a
-                    href="/"
-                    className="mt-8 text-xs uppercase tracking-widest border-b border-[#0f2A44] pb-1 text-[#0f2A44]"
-                  >
+                  <a href="/" className="mt-8 text-xs uppercase tracking-widest border-b border-[#0f2A44] pb-1">
                     Voltar para o início
                   </a>
                 </div>
