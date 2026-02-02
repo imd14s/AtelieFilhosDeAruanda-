@@ -1,17 +1,14 @@
 package com.atelie.ecommerce.infrastructure.service;
 
 import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.domain.common.event.EntityChangedEvent;
+import org.springframework.context.event.EventListener;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Classe base para Gateways que precisam de cache com TTL.
- * Centraliza a lógica de expiração e limpeza[cite: 775, 828, 842].
- */
 public abstract class BaseCachingGateway {
-
     protected final DynamicConfigService configService;
     protected final Clock clock;
     protected LocalDateTime lastUpdate = LocalDateTime.MIN;
@@ -22,13 +19,17 @@ public abstract class BaseCachingGateway {
         this.clock = clock;
     }
 
-    protected long getTtlSeconds() {
-        return configService.getLong(DynamicConfigService.CACHE_TTL_SECONDS_KEY, 300);
+    @EventListener
+    public void handleEntityChanged(EntityChangedEvent event) {
+        refresh();
     }
 
     protected void checkCache() {
-        if (lastUpdate.equals(LocalDateTime.MIN)) return;
-        if (LocalDateTime.now(clock).isAfter(lastUpdate.plusSeconds(getTtlSeconds()))) {
+        if (lastUpdate.equals(LocalDateTime.MIN)) {
+            lastUpdate = LocalDateTime.now(clock);
+            return;
+        }
+        if (LocalDateTime.now(clock).isAfter(lastUpdate.plusSeconds(configService.getLong("CACHE_TTL_SECONDS", 300)))) {
             refresh();
         }
     }
@@ -36,11 +37,5 @@ public abstract class BaseCachingGateway {
     public synchronized void refresh() {
         genericCache.clear();
         lastUpdate = LocalDateTime.now(clock);
-    }
-    
-    protected void markAsInitialized() {
-        if (lastUpdate.equals(LocalDateTime.MIN)) {
-            lastUpdate = LocalDateTime.now(clock);
-        }
     }
 }
