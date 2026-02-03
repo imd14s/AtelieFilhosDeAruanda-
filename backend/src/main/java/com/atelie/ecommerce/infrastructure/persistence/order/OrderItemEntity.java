@@ -2,40 +2,66 @@ package com.atelie.ecommerce.infrastructure.persistence.order;
 
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
 @Table(name = "order_items")
-@Data
 public class OrderItemEntity {
 
     @Id
     private UUID id;
 
-    @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "order_id")
     private OrderEntity order;
 
+    // Relacionamento real com Produto (não apenas ID)
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id")
     private ProductEntity product;
 
-    // --- CORREÇÃO CRÍTICA: Mapeamento da Variante ---
+    // Relacionamento com Variante (SKU)
     @ManyToOne
-    @JoinColumn(name = "variant_id", nullable = true) // Nullable para suportar legado
+    @JoinColumn(name = "variant_id")
     private ProductVariantEntity variant;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    @Column(name = "product_name")
+    private String productName;
 
-    @Column(name = "unit_price", nullable = false)
+    private Integer quantity;
+    
+    @Column(name = "unit_price")
     private BigDecimal unitPrice;
 
-    @Column(name = "total_price", nullable = false)
+    @Column(name = "total_price")
     private BigDecimal totalPrice;
+
+    public OrderItemEntity() {}
+
+    // Getters e Setters
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+
+    public OrderEntity getOrder() { return order; }
+    public void setOrder(OrderEntity order) { this.order = order; }
+
+    public ProductEntity getProduct() { return product; }
+    public void setProduct(ProductEntity product) { this.product = product; }
+
+    public ProductVariantEntity getVariant() { return variant; }
+    public void setVariant(ProductVariantEntity variant) { this.variant = variant; }
+
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public BigDecimal getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+
+    public BigDecimal getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
 }
