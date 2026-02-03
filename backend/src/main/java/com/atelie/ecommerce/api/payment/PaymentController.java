@@ -1,15 +1,11 @@
-package com.atelie.ecommerce.application.service.payment;
+package com.atelie.ecommerce.api.payment;
 
+import com.atelie.ecommerce.application.service.payment.PaymentService;
 import com.atelie.ecommerce.application.service.payment.dto.CreatePixPaymentRequest;
 import com.atelie.ecommerce.api.payment.dto.PaymentResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * @deprecated Controller mantido apenas para compatibilidade interna.
- * Use com.atelie.ecommerce.api.payment.PaymentController.
- */
-@Deprecated
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {

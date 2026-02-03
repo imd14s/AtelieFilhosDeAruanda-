@@ -1,0 +1,42 @@
+# PROJECT_SCAN_REPORT
+Generated at: 2026-02-02T21:45:03-03:00
+
+## 1) Directory tree (depth 5)
+.
+_audit
+src
+src/main
+src/main/java
+src/main/java/com
+src/main/java/com/atelie
+src/main/resources
+src/main/resources/db
+src/main/resources/db/migration
+uploads
+
+## 2) Key files found
+Dockerfile
+pom.xml
+src/main/resources/application.yml
+target/classes/application.yml
+
+## 3) ENV vars map (Java/Spring)
+
+
+## 4) Hardcode radar (URLs, secrets, numeric limits, paths)
+
+
+## 5) Controllers & endpoints quick map
+
+
+## 6) Flyway migrations list
+total 40
+drwxrwxr-x 2 imdias imdias 4096 fev  2 21:25 .
+drwxrwxr-x 3 imdias imdias 4096 jan 30 19:28 ..
+-rw-rw-r-- 1 imdias imdias 6729 fev  2 00:31 V1__init_schema.sql
+-rw-rw-r-- 1 imdias imdias 5212 fev  1 22:13 V1__init_schema.sql.bak.20260201_221342
+-rw-rw-r-- 1 imdias imdias  434 fev  2 00:27 V2__init_service_engine.sql
+-rw-rw-r-- 1 imdias imdias  257 fev  2 21:26 V2__orders_add_updated_at_prod.sql
+-rw-rw-r-- 1 imdias imdias 1959 fev  2 00:28 V3__seed_data.sql
+-rw-rw-r-- 1 imdias imdias 3761 fev  2 01:00 V4__seed_products.sql
+
