@@ -23,6 +23,7 @@ Atualizado em: 04/02/2026
 - [x] **Editor de Produto v2**: Suporte a Variantes (Cor/Tamanho) e Mídia Múltipla.
 - [x] **Config de Loja**: Telas de Frete e Pagamento (Integração Realista definida).
 - [x] **Marketing**: Listagem de Cupons e Configuração de Recuperação de Carrinho.
+- [x] **Analytics**: Dashboard Inicial com Gráficos (Vendas + Top Produtos).
 
 ---
 
@@ -50,7 +51,7 @@ Atualizado em: 04/02/2026
 - [x] Recuperação de Carrinho (Configuração de Triggers).
 
 ### Fase 5: Analytics & Onboarding
-- [ ] Dashboards Gráficos.
+- [x] Dashboards Gráficos (Recharts).
 - [ ] Wizard de Criação de Loja.
 
 ---

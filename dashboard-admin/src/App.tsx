@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider } from './context/TenantContext';
 import { LoginPage } from './pages/auth/LoginPage';
-import { DashboardHome } from './pages/dashboard/Home';
+import { DashboardHome } from './pages/dashboard/DashboardHome';
 import { ProductsPage } from './pages/products/ProductsPage';
 import { OrdersPage } from './pages/orders/OrdersList';
 import { ConfigPage } from './pages/configs/ConfigPage';

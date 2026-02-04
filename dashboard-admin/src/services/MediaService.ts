@@ -5,22 +5,18 @@ export interface UploadResponse {
     url: string;
 }
 
-const MOCK_IMAGES = [
-    'https://images.unsplash.com/photo-1523381210434-271e8be1f52b',
-    'https://images.unsplash.com/photo-1542272617-08f086302542',
-    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e'
-];
+
 
 export const MediaService = {
     upload: async (file: File): Promise<UploadResponse> => {
-        // Mock upload
-        console.warn('Using Mock Upload');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const randomImage = MOCK_IMAGES[Math.floor(Math.random() * MOCK_IMAGES.length)];
-        return {
-            id: crypto.randomUUID(),
-            url: randomImage
-        };
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Assumindo endpoint realista conforme padrão
+        const { data } = await api.post<UploadResponse>('/media/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return data;
     },
 
     removeBackground: async (mediaId: string): Promise<string> => {
