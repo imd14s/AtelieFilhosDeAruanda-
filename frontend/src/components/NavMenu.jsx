@@ -21,14 +21,13 @@ const NavMenu = ({ isMobile, closeMenu }) => {
 
   if (isMobile) {
     return (
-      <ul className="flex flex-col items-center gap-8 py-4 bg-[#F7F7F4]">
+      <ul className="flex flex-col items-center gap-8 py-4 bg-[var(--branco-off-white)]">
         {navItems.map((item) => (
           <li key={item.name}>
-            <Link 
-              to={item.path} 
-              className={`font-lato text-[12px] uppercase tracking-[0.2em] transition-colors ${
-                isActive(item.path) ? 'text-[#C9A24D] font-bold' : 'text-[#0f2A44]/80'
-              }`} 
+            <Link
+              to={item.path}
+              className={`font-lato text-[12px] uppercase tracking-[0.2em] transition-colors ${isActive(item.path) ? 'text-[var(--dourado-suave)] font-bold' : 'text-[var(--azul-profundo)]/80'
+                }`}
               onClick={closeMenu}
             >
               {item.name}
@@ -40,21 +39,19 @@ const NavMenu = ({ isMobile, closeMenu }) => {
   }
 
   return (
-    <nav className="hidden md:block border-t border-[#0f2A44]/5 bg-[#F7F7F4]/80 backdrop-blur-sm">
+    <nav className="hidden md:block border-t border-[var(--azul-profundo)]/5 bg-[var(--branco-off-white)]/80 backdrop-blur-sm">
       <ul className="flex justify-center gap-12 py-4">
         {navItems.map((item) => (
           <li key={item.name}>
-            <Link 
-              to={item.path} 
-              className={`font-lato text-[10px] uppercase tracking-[0.2em] transition-all duration-300 relative group ${
-                isActive(item.path) ? 'text-[#C9A24D]' : 'text-[#0f2A44]/70 hover:text-[#C9A24D]'
-              }`}
+            <Link
+              to={item.path}
+              className={`font-lato text-[10px] uppercase tracking-[0.2em] transition-all duration-300 relative group ${isActive(item.path) ? 'text-[var(--dourado-suave)]' : 'text-[var(--azul-profundo)]/70 hover:text-[var(--dourado-suave)]'
+                }`}
             >
               {item.name}
               {/* Linha de Hover/Ativo */}
-              <span className={`absolute -bottom-1 left-1/2 -translate-x-1/2 h-[1px] bg-[#C9A24D] transition-all duration-300 ${
-                isActive(item.path) ? 'w-full' : 'w-0 group-hover:w-full'
-              }`}></span>
+              <span className={`absolute -bottom-1 left-1/2 -translate-x-1/2 h-[1px] bg-[var(--dourado-suave)] transition-all duration-300 ${isActive(item.path) ? 'w-full' : 'w-0 group-hover:w-full'
+                }`}></span>
             </Link>
           </li>
         ))}

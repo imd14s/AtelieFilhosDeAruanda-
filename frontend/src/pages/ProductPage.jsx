@@ -42,14 +42,19 @@ const ProductPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F7F7F4] pt-8 pb-20 px-4">
+    <div className="min-h-screen bg-[var(--branco-off-white)] pt-12 pb-24">
       <SEO
         title={product.name}
         description={product.description?.substring(0, 160)}
         image={product.images?.[0]}
         type="product"
       />
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Breadcrumb Otimizado */}
+        <Link to="/store" className="inline-flex items-center gap-2 text-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)] mb-12 transition-colors">
+          <ChevronLeft size={16} />
+          <span className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)]">Voltar para a Loja</span>
+        </Link>
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
 
           {/* Galeria de Imagens */}
@@ -72,59 +77,51 @@ const ProductPage = () => {
 
           {/* Info do Produto */}
           <div className="flex-1 flex flex-col">
-            <span className="font-lato text-[10px] uppercase tracking-[0.4em] text-[#C9A24D] mb-4 block">
-              Coleção Ateliê Aruanda
-            </span>
-            <h1 className="font-playfair text-4xl md:text-5xl text-[#0f2A44] mb-6 leading-tight">
-              {product.name}
-            </h1>
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <span className="font-lato text-[10px] uppercase tracking-[0.4em] text-[var(--dourado-suave)] block">Arte e Fé</span>
+                <h1 className="font-playfair text-4xl md:text-5xl text-[var(--azul-profundo)] leading-tight">{product.name}</h1>
+                <p className="font-lato text-2xl text-[var(--dourado-suave)]">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                </p>
+              </div>
 
-            <div className="flex items-center gap-4 mb-8">
-              <span className="font-lato text-2xl font-bold text-[#0f2A44]">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
-              </span>
-              <div className="h-4 w-[1px] bg-[#0f2A44]/10"></div>
-              <span className="font-lato text-[10px] uppercase tracking-widest text-green-700">
-                {product.stockQuantity > 0 ? 'Em estoque' : 'Sob encomenda'}
-              </span>
-            </div>
+              <div className="prose prose-sm font-lato text-[var(--azul-profundo)]/70 leading-relaxed border-t border-[var(--azul-profundo)]/5 pt-8">
+                <p className="italic">"{product.description}"</p>
+              </div>
 
-            <div className="prose prose-sm font-lato text-[#0f2A44]/70 mb-10 border-t border-[#0f2A44]/5 pt-8">
-              <p className="leading-relaxed">{product.description}</p>
-            </div>
+              {/* Ações */}
+              <div className="space-y-6 mb-12">
+                <div className="flex flex-col gap-4 pt-4">
+                  <div className="flex items-center border border-[var(--azul-profundo)]/10 w-fit bg-white rounded-sm">
+                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-2 hover:bg-[var(--branco-off-white)] transition-colors">-</button>
+                    <span className="px-4 font-lato min-w-[40px] text-center">{quantity}</span>
+                    <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-2 hover:bg-[var(--branco-off-white)] transition-colors">+</button>
+                  </div>
 
-            {/* Ações */}
-            <div className="space-y-6 mb-12">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center border border-[#0f2A44]/20 bg-white">
-                  <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="px-4 py-3 text-[#0f2A44]">-</button>
-                  <span className="px-6 font-lato font-bold">{quantity}</span>
-                  <button onClick={() => setQuantity(q => q + 1)} className="px-4 py-3 text-[#0f2A44]">+</button>
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full bg-[var(--azul-profundo)] text-white py-5 px-8 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all flex items-center justify-center gap-3 group rounded-sm shadow-xl"
+                  >
+                    <ShoppingBag size={18} className="group-hover:scale-110 transition-transform" />
+                    Adicionar à Sacola
+                  </button>
                 </div>
-                <button
-                  onClick={handleAddToCart}
-                  className={`flex-1 py-4 font-lato text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${added ? 'bg-green-700 text-white' : 'bg-[#0f2A44] text-white hover:bg-[#C9A24D]'
-                    }`}
-                >
-                  <ShoppingBag size={18} />
-                  {added ? 'Adicionado com Sucesso' : 'Adicionar à Sacola'}
-                </button>
               </div>
-            </div>
 
-            {/* Benefícios */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10 border-t border-[#0f2A44]/5">
-              <div className="flex items-center gap-3 opacity-60">
-                <ShieldCheck size={20} className="text-[#C9A24D]" />
-                <span className="font-lato text-[9px] uppercase tracking-widest leading-tight">Produção Artesanal Ritualizada</span>
-              </div>
-              <div className="flex items-center gap-3 opacity-60">
-                <Truck size={20} className="text-[#C9A24D]" />
-                <span className="font-lato text-[9px] uppercase tracking-widest leading-tight">Envio Seguro para todo Brasil</span>
-              </div>
-              <div className="flex items-center gap-3 opacity-60">
-                <RefreshCcw size={20} className="text-[#C9A24D]" />
-                <span className="font-lato text-[9px] uppercase tracking-widest leading-tight">Devolução em até 7 dias</span>
+              <div className="grid grid-cols-2 gap-4 pt-12 border-t border-[var(--azul-profundo)]/5 mt-12">
+                <div className="flex flex-col items-center p-4 bg-white/50 border border-[var(--azul-profundo)]/5 rounded-sm">
+                  <Truck size={24} className="text-[var(--dourado-suave)] mb-2" />
+                  <span className="text-[10px] uppercase font-lato tracking-widest text-[var(--azul-profundo)]/60 text-center">Envio para todo o Brasil</span>
+                </div>
+                <div className="flex flex-col items-center p-4 bg-white/50 border border-[var(--azul-profundo)]/5 rounded-sm">
+                  <ShieldCheck size={24} className="text-[var(--dourado-suave)] mb-2" />
+                  <span className="text-[10px] uppercase font-lato tracking-widest text-[var(--azul-profundo)]/60 text-center">Compra totalmente Segura</span>
+                </div>
+                <div className="flex flex-col items-center p-4 bg-white/50 border border-[var(--azul-profundo)]/5 rounded-sm">
+                  <RefreshCcw size={24} className="text-[var(--dourado-suave)] mb-2" />
+                  <span className="text-[10px] uppercase font-lato tracking-widest text-[var(--azul-profundo)]/60 text-center">Devolução em até 7 dias</span>
+                </div>
               </div>
             </div>
           </div>

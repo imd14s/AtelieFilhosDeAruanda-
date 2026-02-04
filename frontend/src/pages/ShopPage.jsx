@@ -41,7 +41,7 @@ const ShopPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-[#F7F7F4] pb-20">
+    <div className="min-h-screen bg-[var(--branco-off-white)] pb-20">
       <SEO
         title={categoryFilter ? `Coleção ${categoryFilter}` : "Loja de Artigos Religiosos"}
         description="Explore nossa seleção de velas, guias e produtos artesanais para sua espiritualidade."
@@ -56,7 +56,7 @@ const ShopPage = () => {
           setSearchParams(p);
         }}
       />
-      <div className="bg-[#0f2A44] text-[#F7F7F4] py-12 text-center">
+      <div className="bg-[var(--azul-profundo)] text-[var(--branco-off-white)] py-12 text-center">
         <h1 className="font-playfair text-4xl italic">Loja de Axé</h1>
       </div>
       <main className="max-w-7xl mx-auto px-4 mt-8">

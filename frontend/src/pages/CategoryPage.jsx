@@ -36,9 +36,9 @@ const CategoryPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[#F7F7F4] gap-4">
-        <Loader2 className="animate-spin text-[#C9A24D]" size={32} />
-        <span className="font-lato text-[10px] uppercase tracking-[0.3em] text-[#0f2A44]">
+      <div className="min-h-[70vh] flex flex-col items-center justify-center bg-[var(--branco-off-white)] gap-4">
+        <Loader2 className="animate-spin text-[var(--dourado-suave)]" size={32} />
+        <span className="font-lato text-[10px] uppercase tracking-[0.3em] text-[var(--azul-profundo)]">
           Sintonizando energias...
         </span>
       </div>
@@ -47,13 +47,13 @@ const CategoryPage = () => {
 
   if (!collection) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F7F7F4] p-4 text-center">
-        <h2 className="font-playfair text-2xl text-[#0f2A44] mb-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--branco-off-white)] p-4 text-center">
+        <h2 className="font-playfair text-2xl text-[var(--azul-profundo)] mb-4">
           Categoria não encontrada
         </h2>
         <Link
           to="/loja"
-          className="text-[#C9A24D] font-lato text-xs uppercase tracking-widest border-b border-[#C9A24D]"
+          className="text-[var(--dourado-suave)] font-lato text-xs uppercase tracking-widest border-b border-[var(--dourado-suave)]"
         >
           Voltar para a Loja
         </Link>
@@ -62,7 +62,7 @@ const CategoryPage = () => {
   }
 
   return (
-    <div className="bg-[#F7F7F4] min-h-screen">
+    <div className="bg-[var(--branco-off-white)] min-h-screen">
 
       <SEO
         title={collection.name}
@@ -70,7 +70,7 @@ const CategoryPage = () => {
         image={collection.media?.mainMedia?.image?.url}
       />
       {/* HEADER DINÂMICO DA CATEGORIA */}
-      <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-[#0f2A44]">
+      <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-[var(--azul-profundo)]">
         {/* Imagem de Fundo da Categoria (vinda do Wix) */}
         {collection.media?.mainMedia?.image?.url ? (
           <img
@@ -85,20 +85,20 @@ const CategoryPage = () => {
         <div className="relative z-10 text-center px-4 space-y-4">
           <Link
             to="/loja"
-            className="inline-flex items-center gap-2 text-[#C9A24D] hover:text-[#F7F7F4] transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-[var(--dourado-suave)] hover:text-[var(--branco-off-white)] transition-colors mb-4"
           >
             <ChevronLeft size={16} />
             <span className="font-lato text-[10px] uppercase tracking-widest">
               Todos os Produtos
             </span>
           </Link>
-          <h1 className="font-playfair text-5xl md:text-7xl text-[#F7F7F4] capitalize italic">
+          <h1 className="font-playfair text-5xl md:text-7xl text-[var(--branco-off-white)] capitalize italic">
             {collection.name}
           </h1>
           <div className="flex items-center justify-center gap-4">
-            <div className="h-[1px] w-12 bg-[#C9A24D]/50"></div>
-            <Sparkles size={16} className="text-[#C9A24D]" />
-            <div className="h-[1px] w-12 bg-[#C9A24D]/50"></div>
+            <div className="h-[1px] w-12 bg-[var(--dourado-suave)]/50"></div>
+            <Sparkles size={16} className="text-[var(--dourado-suave)]" />
+            <div className="h-[1px] w-12 bg-[var(--dourado-suave)]/50"></div>
           </div>
         </div>
       </header>
@@ -108,7 +108,7 @@ const CategoryPage = () => {
         {/* DESCRIÇÃO DA CATEGORIA */}
         {collection.description && (
           <div className="max-w-3xl mx-auto text-center mb-20">
-            <p className="font-lato text-base md:text-lg text-[#0f2A44]/70 leading-relaxed italic">
+            <p className="font-lato text-base md:text-lg text-[var(--azul-profundo)]/70 leading-relaxed italic">
               "{collection.description}"
             </p>
           </div>
@@ -124,9 +124,9 @@ const CategoryPage = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-white/50 border border-dashed border-[#0f2A44]/10 rounded-lg">
-            <Wind className="mx-auto text-[#0f2A44]/20 mb-4" size={40} />
-            <p className="font-lato text-[11px] uppercase tracking-widest text-[#0f2A44]/40">
+          <div className="text-center py-20 bg-white/50 border border-dashed border-[var(--azul-profundo)]/10 rounded-lg">
+            <Wind className="mx-auto text-[var(--azul-profundo)]/20 mb-4" size={40} />
+            <p className="font-lato text-[11px] uppercase tracking-widest text-[var(--azul-profundo)]/40">
               Nenhum item disponível nesta categoria no momento.
             </p>
           </div>
@@ -135,26 +135,26 @@ const CategoryPage = () => {
 
       {/* FOOTER DE NAVEGAÇÃO RÁPIDA */}
       <div className="max-w-7xl mx-auto px-4 pb-20">
-        <div className="border-t border-[#0f2A44]/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
-          <h4 className="font-playfair text-[#0f2A44]/40 text-lg uppercase tracking-widest">
+        <div className="border-t border-[var(--azul-profundo)]/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <h4 className="font-playfair text-[var(--azul-profundo)]/40 text-lg uppercase tracking-widest">
             Explorar Outras Vertentes
           </h4>
           <div className="flex gap-8">
             <Link
               to="/categoria/velas"
-              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors"
+              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
             >
               Velas
             </Link>
             <Link
               to="/categoria/guias"
-              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors"
+              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
             >
               Guias
             </Link>
             <Link
               to="/categoria/ervas"
-              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44] hover:text-[#C9A24D] transition-colors"
+              className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
             >
               Ervas
             </Link>

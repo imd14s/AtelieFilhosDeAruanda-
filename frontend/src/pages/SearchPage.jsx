@@ -35,7 +35,7 @@ const SearchPage = () => {
   }, [query]);
 
   return (
-    <div className="min-h-screen bg-[#F7F7F4] pt-12 pb-24">
+    <div className="min-h-screen bg-[var(--branco-off-white)] pt-12 pb-24">
 
       <SEO
         title={query ? `Busca: ${query}` : "Nossa Coleção"}
@@ -43,16 +43,16 @@ const SearchPage = () => {
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Cabeçalho de Busca */}
-        <div className="border-b border-[#0f2A44]/10 pb-10 mb-12">
+        <div className="border-b border-[var(--azul-profundo)]/10 pb-10 mb-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-[1px] bg-[#C9A24D]"></div>
-                <span className="font-lato text-[10px] uppercase tracking-[0.4em] text-[#C9A24D]">
+                <div className="w-8 h-[1px] bg-[var(--dourado-suave)]"></div>
+                <span className="font-lato text-[10px] uppercase tracking-[0.4em] text-[var(--dourado-suave)]">
                   Busca de Axé
                 </span>
               </div>
-              <h1 className="font-playfair text-4xl md:text-5xl text-[#0f2A44]">
+              <h1 className="font-playfair text-4xl md:text-5xl text-[var(--azul-profundo)]">
                 {query ? (
                   <>
                     Resultados para <span className="italic">"{query}"</span>

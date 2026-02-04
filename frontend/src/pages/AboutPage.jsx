@@ -4,7 +4,7 @@ import SEO from '../components/SEO';
 
 const AboutPage = () => {
   return (
-    <div className="bg-[#F7F7F4] min-h-screen">
+    <div className="bg-[var(--branco-off-white)] min-h-screen">
 
       <SEO
         title="Nossa Essência"
@@ -22,31 +22,34 @@ const AboutPage = () => {
         </div>
 
         <div className="relative z-10 text-center px-4">
-          <span className="font-lato text-[10px] md:text-xs uppercase tracking-[0.5em] text-[#C9A24D] mb-4 block animate-fade-in">
-            Nossa Essência
-          </span>
-          <h1 className="font-playfair text-4xl md:text-6xl text-[#0f2A44] leading-tight">
-            Feito de Fé, <br />
-            <span className="italic font-normal">por Almas Gêmeas.</span>
-          </h1>
+          <span className="font-lato text-[10px] md:text-xs uppercase tracking-[0.4em] text-[var(--dourado-suave)] block mb-4">Desde 2023</span>
+          <h1 className="font-playfair text-5xl md:text-7xl text-[var(--branco-off-white)] leading-tight mb-6">Nossa Essência</h1>
+          <div className="flex items-center gap-4 text-[var(--branco-off-white)]/60 justify-center">
+            <div className="h-[1px] w-12 bg-[var(--dourado-suave)]"></div>
+            <Sparkles size={18} className="text-[var(--dourado-suave)]" />
+            <div className="h-[1px] w-12 bg-[var(--dourado-suave)]"></div>
+          </div>
         </div>
       </section>
 
       {/* SEÇÃO 1: O ENCONTRO */}
       <section className="max-w-5xl mx-auto px-4 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div className="space-y-6">
-            <div className="w-12 h-[1px] bg-[#C9A24D]"></div>
-            <h2 className="font-playfair text-3xl text-[#0f2A44]">O Início de Tudo</h2>
-            <p className="font-lato text-base text-[#0f2A44]/70 leading-relaxed">
-              O **Ateliê Filhos de Aruanda** nasceu do encontro de duas almas gêmeas unidas pelo amor, pela fé e pelo respeito à espiritualidade.
-              Mais do que uma loja, somos um espaço criado com propósito, axé e cuidado em cada detalhe.
-            </p>
-            <p className="font-lato text-base text-[#0f2A44]/70 leading-relaxed">
-              Acreditamos na Umbanda como caminho de luz, caridade e evolução espiritual. Por isso, cada produto é escolhido e preparado com carinho e intenção positiva.
-            </p>
+        <div className="flex flex-col md:flex-row gap-16 items-center">
+          <div className="w-full md:w-1/2 space-y-8">
+            <h2 className="font-playfair text-4xl text-[var(--azul-profundo)]">Trabalho de Fé e Amor</h2>
+            <div className="space-y-6 font-lato text-base text-[var(--azul-profundo)]/70 leading-relaxed">
+              <p>
+                O Ateliê Filhos de Aruanda nasceu do desejo de unir a arte manual com a espiritualidade.
+                Acreditamos que cada objeto carrega uma energia única, e por isso, cada guia, cada vela e
+                cada banho é preparado com absoluto respeito às tradições.
+              </p>
+              <p>
+                Nossa missão é fornecer ferramentas para que você possa vivenciar sua fé com beleza, dignidade e
+                propósito, mantendo viva a chama da nossa ancestralidade.
+              </p>
+            </div>
           </div>
-          <div className="relative">
+          <div className="relative w-full md:w-1/2">
             <div className="aspect-[3/4] overflow-hidden shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1515831332135-d4e94a091d03?q=80&w=800"

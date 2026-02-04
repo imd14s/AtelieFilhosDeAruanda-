@@ -85,11 +85,11 @@ const CheckoutPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#F7F7F4] pt-12 pb-24 px-4">
+        <div className="min-h-screen bg-[var(--branco-off-white)] pt-12 pb-24 px-4">
             <SEO title="Checkout" description="Finalize sua compra com segurança no Ateliê Filhos de Aruanda." />
             <div className="max-w-7xl mx-auto">
 
-                <Link to="/" className="inline-flex items-center gap-2 text-[#0f2A44]/40 hover:text-[#0f2A44] transition-colors mb-12">
+                <Link to="/" className="inline-flex items-center gap-2 text-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)] transition-colors mb-12">
                     <ChevronLeft size={16} />
                     <span className="font-lato text-[10px] uppercase tracking-widest">Voltar</span>
                 </Link>
@@ -99,54 +99,54 @@ const CheckoutPage = () => {
                     <div className="flex-[1.5] space-y-12">
                         <section className="space-y-8">
                             <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[#0f2A44] text-white flex items-center justify-center font-playfair text-sm">1</span>
-                                <h2 className="font-playfair text-2xl text-[#0f2A44]">Informações de Contato</h2>
+                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">1</span>
+                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Informações de Contato</h2>
                             </div>
                             <div className="grid grid-cols-1 gap-6">
                                 <input
                                     type="email" name="email" required placeholder="E-mail para acompanhamento"
                                     value={formData.email} onChange={handleInputChange}
-                                    className="w-full border border-[#0f2A44]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[#C9A24D]"
+                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                                 />
                             </div>
                         </section>
 
                         <section className="space-y-8">
                             <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[#0f2A44] text-white flex items-center justify-center font-playfair text-sm">2</span>
-                                <h2 className="font-playfair text-2xl text-[#0f2A44]">Endereço de Entrega</h2>
+                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">2</span>
+                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Endereço de Entrega</h2>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <input
                                     type="text" name="nome" required placeholder="Nome"
                                     value={formData.nome} onChange={handleInputChange}
-                                    className="w-full border border-[#0f2A44]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[#C9A24D]"
+                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                                 />
                                 <input
                                     type="text" name="sobrenome" required placeholder="Sobrenome"
                                     value={formData.sobrenome} onChange={handleInputChange}
-                                    className="w-full border border-[#0f2A44]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[#C9A24D]"
+                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                                 />
                                 <input
                                     type="text" name="endereco" required placeholder="Endereço e Número"
                                     value={formData.endereco} onChange={handleInputChange}
-                                    className="md:col-span-2 w-full border border-[#0f2A44]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[#C9A24D]"
+                                    className="md:col-span-2 w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                                 />
                                 <input
                                     type="text" name="cidade" required placeholder="Cidade"
                                     value={formData.cidade} onChange={handleInputChange}
-                                    className="w-full border border-[#0f2A44]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[#C9A24D]"
+                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                                 />
                                 <div className="grid grid-cols-2 gap-6">
                                     <input
                                         type="text" name="estado" required placeholder="UF"
                                         value={formData.estado} onChange={handleInputChange}
-                                        className="w-full border border-[#0f2A44]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[#C9A24D]"
+                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                                     />
                                     <input
                                         type="text" name="cep" required placeholder="CEP"
                                         value={formData.cep} onChange={handleInputChange}
-                                        className="w-full border border-[#0f2A44]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[#C9A24D]"
+                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                                     />
                                 </div>
                             </div>
@@ -154,22 +154,22 @@ const CheckoutPage = () => {
 
                         <section className="space-y-8">
                             <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[#0f2A44] text-white flex items-center justify-center font-playfair text-sm">3</span>
-                                <h2 className="font-playfair text-2xl text-[#0f2A44]">Pagamento</h2>
+                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">3</span>
+                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Pagamento</h2>
                             </div>
                             <div className="space-y-4">
-                                <label className="flex items-center gap-4 p-6 border border-[#C9A24D] bg-[#C9A24D]/5 cursor-pointer">
-                                    <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange} className="accent-[#0f2A44]" />
+                                <label className="flex items-center gap-4 p-6 border border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5 cursor-pointer">
+                                    <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange} className="accent-[var(--azul-profundo)]" />
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[#0f2A44] shadow-sm italic font-bold">PIX</div>
-                                        <span className="font-lato text-sm font-bold uppercase tracking-widest text-[#0f2A44]">Pix com 5% de desconto</span>
+                                        <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
+                                        <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Pix com 5% de desconto</span>
                                     </div>
                                 </label>
-                                <label className="flex items-center gap-4 p-6 border border-[#0f2A44]/10 bg-white opacity-50 cursor-not-allowed">
-                                    <input type="radio" name="metodoPagamento" value="card" disabled className="accent-[#0f2A44]" />
+                                <label className="flex items-center gap-4 p-6 border border-[var(--azul-profundo)]/10 bg-white opacity-50 cursor-not-allowed">
+                                    <input type="radio" name="metodoPagamento" value="card" disabled className="accent-[var(--azul-profundo)]" />
                                     <div className="flex items-center gap-3">
-                                        <CreditCard size={24} className="text-[#0f2A44]/40" />
-                                        <span className="font-lato text-sm uppercase tracking-widest text-[#0f2A44]/40">Cartão de Crédito (Breve)</span>
+                                        <CreditCard size={24} className="text-[var(--azul-profundo)]/40" />
+                                        <span className="font-lato text-sm uppercase tracking-widest text-[var(--azul-profundo)]/40">Cartão de Crédito (Breve)</span>
                                     </div>
                                 </label>
                             </div>
