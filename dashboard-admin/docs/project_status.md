@@ -24,6 +24,7 @@ Atualizado em: 04/02/2026
 - [x] **Config de Loja**: Telas de Frete e Pagamento (Integração Realista definida).
 - [x] **Marketing**: Listagem de Cupons e Configuração de Recuperação de Carrinho.
 - [x] **Analytics**: Dashboard Inicial com Gráficos (Vendas + Top Produtos).
+- [x] **Onboarding**: Wizard de configuração inicial da loja.
 
 ---
 
@@ -52,7 +53,7 @@ Atualizado em: 04/02/2026
 
 ### Fase 5: Analytics & Onboarding
 - [x] Dashboards Gráficos (Recharts).
-- [ ] Wizard de Criação de Loja.
+- [x] Wizard de Criação de Loja.
 
 ---
 

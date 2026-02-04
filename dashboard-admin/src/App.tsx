@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider } from './context/TenantContext';
 import { LoginPage } from './pages/auth/LoginPage';
+import { SetupWizard } from './pages/setup/SetupWizard';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
 import { ProductsPage } from './pages/products/ProductsPage';
 import { OrdersPage } from './pages/orders/OrdersList';
@@ -25,6 +26,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/setup" element={<SetupWizard />} />
 
       <Route element={<PrivateRoute />}>
         <Route path="/" element={<DashboardHome />} />
