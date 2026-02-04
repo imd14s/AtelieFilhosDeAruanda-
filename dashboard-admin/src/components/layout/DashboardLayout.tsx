@@ -13,7 +13,6 @@ export function DashboardLayout() {
     { icon: ShoppingBag, label: 'Pedidos', path: '/orders' },
     { icon: Package, label: 'Produtos', path: '/products' },
     { icon: Zap, label: 'Automações & IA', path: '/automations' },
-    { icon: Zap, label: 'Automações & IA', path: '/automations' },
     { icon: Settings, label: 'Configurações', path: '/configs' },
     { icon: Users, label: 'Equipe', path: '/settings/team' },
     { icon: Shield, label: 'Auditoria', path: '/settings/audit' },
