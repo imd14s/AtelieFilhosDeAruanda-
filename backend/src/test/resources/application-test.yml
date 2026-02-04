@@ -2,7 +2,7 @@ spring:
   application:
     name: ecommerce-api-test
   datasource:
-    url: jdbc:postgresql://172.18.0.2:5432/ecommerce_db
+    url: jdbc:postgresql://localhost:5432/ecommerce_db
     username: postgres
     password: local_dev_password
     driverClassName: org.postgresql.Driver
