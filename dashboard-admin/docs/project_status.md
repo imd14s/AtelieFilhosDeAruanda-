@@ -18,14 +18,16 @@ Atualizado em: 04/02/2026
 - [x] **Produtos (Simples)**: Listagem e "Toggle Alert" de estoque.
 - [x] **Pedidos**: Listagem e Modal de Cancelamento (UI Ok, Backend 500*).
 - [x] **Configurações**: CRUD de variáveis de sistema (UI Ok, Backend 500*).
+- [x] **Gestão de Acessos**: Listagem de usuários e exibição de Roles.
+- [x] **Auditoria**: Tela de logs de ações do sistema.
 
 ---
 
 ## 🚧 2. Em Progresso / Próximos Passos
 
 ### Fase 1: Multi-Tenancy & Segurança
-- [ ] **Gestão de Acessos**: Definir perfis (Admin, Equipe) no Frontend.
-- [ ] **Auditoria**: Tela de logs de atividade.
+- [x] **Gestão de Acessos**: Definir perfis (Admin, Equipe) no Frontend.
+- [x] **Auditoria**: Tela de logs de atividade.
 
 ### Fase 2: Catálogo Avançado
 - [ ] **Editor de Produto v2**: Suporte a Variantes (Cor/Tamanho).

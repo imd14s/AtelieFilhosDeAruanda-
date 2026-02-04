@@ -6,6 +6,8 @@ import { DashboardHome } from './pages/dashboard/Home';
 import { ProductsPage } from './pages/products/ProductsPage';
 import { OrdersPage } from './pages/orders/OrdersList';
 import { ConfigPage } from './pages/configs/ConfigPage';
+import { TeamPage } from './pages/settings/TeamPage';
+import { AuditLogPage } from './pages/settings/AuditLogPage';
 import { ProductForm } from './pages/products/ProductForm';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -26,6 +28,8 @@ function AppRoutes() {
         <Route path="/products/new" element={<ProductForm />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/configs" element={<ConfigPage />} />
+        <Route path="/settings/team" element={<TeamPage />} />
+        <Route path="/settings/audit" element={<AuditLogPage />} />
       </Route>
     </Routes>
   );
