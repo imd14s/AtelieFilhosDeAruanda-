@@ -47,61 +47,62 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // CORS (API consumida por front separado)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // CORS (API consumida por front separado)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            // CSRF não faz sentido em API stateless (não usa cookie de sessão)
-            .csrf(csrf -> csrf.disable())
+                // CSRF não faz sentido em API stateless (não usa cookie de sessão)
+                .csrf(csrf -> csrf.disable())
 
-            // Sem sessão no servidor
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Sem sessão no servidor
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // Tratamento REST de erro de auth
-            .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(restAuthenticationEntryPoint())
-                .accessDeniedHandler(restAccessDeniedHandler())
-            )
+                // Tratamento REST de erro de auth
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(restAuthenticationEntryPoint())
+                        .accessDeniedHandler(restAccessDeniedHandler()))
 
-            // Regras de autorização (Least Privilege)
-            .authorizeHttpRequests(auth -> auth
+                // Regras de autorização (Least Privilege)
+                .authorizeHttpRequests(auth -> auth
 
-                // Saúde/infra
-                .requestMatchers("/api/health").permitAll()
+                        // Documentação (Swagger/OpenAPI)
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
-                // Auth: apenas login é público; registro de novos usuários só por admin (exige JWT)
-                .requestMatchers("/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                .requestMatchers("/api/auth/**").authenticated()
+                        // Saúde/infra
+                        .requestMatchers("/api/health").permitAll()
 
-                // Webhooks: já usam segredo próprio (ex: header X-Webhook-Token),
-                // então não devem exigir JWT
-                .requestMatchers("/api/webhooks/**").permitAll()
+                        // Auth: apenas login é público; registro de novos usuários só por admin (exige
+                        // JWT)
+                        .requestMatchers("/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/**").authenticated()
 
-                // Mídia pública
-                .requestMatchers(HttpMethod.GET, "/api/media/public/**").permitAll()
+                        // Webhooks: já usam segredo próprio (ex: header X-Webhook-Token),
+                        // então não devem exigir JWT
+                        .requestMatchers("/api/webhooks/**").permitAll()
 
-                // Catálogo público (atenção: categories está sem /api no seu projeto)
-                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
+                        // Mídia pública
+                        .requestMatchers(HttpMethod.GET, "/api/media/public/**").permitAll()
 
-                // Se seu checkout for público:
-                .requestMatchers("/api/shipping/**").permitAll()
+                        // Catálogo público (atenção: categories está sem /api no seu projeto)
+                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
 
-                // Admin: exige ADMIN
-                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        // Se seu checkout for público:
+                        .requestMatchers("/api/shipping/**").permitAll()
 
-                // Demais rotas: autenticado
-                .anyRequest().authenticated()
-            )
+                        // Admin: exige ADMIN
+                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-            // Boas práticas básicas de headers
-            .headers(headers -> headers
-                .frameOptions(frame -> frame.deny())
-                .contentTypeOptions(Customizer.withDefaults())
-            )
+                        // Demais rotas: autenticado
+                        .anyRequest().authenticated())
 
-            // JWT filter (antes do filtro padrão de login)
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                // Boas práticas básicas de headers
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.deny())
+                        .contentTypeOptions(Customizer.withDefaults()))
+
+                // JWT filter (antes do filtro padrão de login)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -110,7 +111,8 @@ public class SecurityConfig {
      * Metodologia: Externalized Config (12-factor)
      *
      * Variáveis suportadas:
-     * - CORS_ALLOWED_ORIGINS: lista separada por vírgula (ex: https://site.com,https://admin.site.com)
+     * - CORS_ALLOWED_ORIGINS: lista separada por vírgula (ex:
+     * https://site.com,https://admin.site.com)
      * - CORS_ALLOWED_ORIGIN_PATTERNS: patterns (ex: https://*.site.com)
      *
      * Observação importante:
@@ -177,7 +179,8 @@ public class SecurityConfig {
     }
 
     private static List<String> splitCsv(String raw) {
-        if (raw == null || raw.isBlank()) return List.of();
+        if (raw == null || raw.isBlank())
+            return List.of();
         return Arrays.stream(raw.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
