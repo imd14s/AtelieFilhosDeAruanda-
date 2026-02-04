@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap } from 'lucide-react';
 import clsx from 'clsx';
+import { StoreSelector } from './StoreSelector';
 
 export function DashboardLayout() {
   const { logout } = useAuth();
@@ -19,11 +20,12 @@ export function DashboardLayout() {
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md flex flex-col">
-        <div className="p-6 border-b">
-          <h1 className="text-xl font-bold text-indigo-600">Ateliê Admin</h1>
-          <p className="text-xs text-gray-500">Service Engine Control</p>
+
+
+        <div className="p-4 border-b">
+          <StoreSelector />
         </div>
-        
+
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -34,8 +36,8 @@ export function DashboardLayout() {
                 to={item.path}
                 className={clsx(
                   "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
-                  isActive 
-                    ? "bg-indigo-50 text-indigo-700" 
+                  isActive
+                    ? "bg-indigo-50 text-indigo-700"
                     : "text-gray-700 hover:bg-gray-50"
                 )}
               >

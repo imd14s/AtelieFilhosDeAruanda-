@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductService } from '../../services/ProductService';
 import type { Product } from '../../types/dashboard';
-import { Package, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Package, Plus, Search, Edit, Trash2, Bell } from 'lucide-react';
 
 export function ProductsPage() {
   // Inicializa com array vazio para evitar erro no primeiro render
@@ -19,7 +19,7 @@ export function ProductsPage() {
     try {
       setLoading(true);
       const data = await ProductService.getAll();
-      
+
       // BLINDAGEM: Verifica se é realmente um array antes de setar
       if (Array.isArray(data)) {
         setProducts(data);
@@ -35,10 +35,23 @@ export function ProductsPage() {
     }
   };
 
+  const handleToggleAlert = async (id: string) => {
+    try {
+      await ProductService.toggleAlert(id);
+      // O ideal seria atualizar apenas o item no estado, mas por simplicidade recarregamos
+      // await loadProducts(); 
+      // Ou melhor, feedback visual
+      alert('Alerta de estoque atualizado!');
+    } catch (error) {
+      console.error('Erro ao atualizar alerta', error);
+      alert('Erro ao atualizar alerta');
+    }
+  };
+
   // Garante que products é um array antes de filtrar
   const safeProducts = Array.isArray(products) ? products : [];
 
-  const filteredProducts = safeProducts.filter(p => 
+  const filteredProducts = safeProducts.filter(p =>
     p.name ? p.name.toLowerCase().includes(searchTerm.toLowerCase()) : false
   );
 
@@ -49,7 +62,7 @@ export function ProductsPage() {
           <h1 className="text-2xl font-bold text-gray-800">Produtos</h1>
           <p className="text-gray-500">Gerencie o catálogo da loja</p>
         </div>
-        <button 
+        <button
           onClick={() => navigate('/products/new')}
           className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
         >
@@ -61,9 +74,9 @@ export function ProductsPage() {
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input 
+          <input
             type="text"
-            placeholder="Buscar por nome..." 
+            placeholder="Buscar por nome..."
             className="w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -87,11 +100,11 @@ export function ProductsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredProducts.length === 0 ? (
-                 <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">
-                        Nenhum produto encontrado.
-                    </td>
-                 </tr>
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-gray-500">
+                    Nenhum produto encontrado.
+                  </td>
+                </tr>
               ) : (
                 filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50 transition">
@@ -110,17 +123,23 @@ export function ProductsPage() {
                       {product.price ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price) : 'R$ 0,00'}
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        (product.stockQuantity || 0) < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${(product.stockQuantity || 0) < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                        }`}>
                         {product.stockQuantity || 0} un
                       </span>
                     </td>
                     <td className="p-4">
                       <span className={`inline-block w-2 h-2 rounded-full ${product.active ? 'bg-green-500' : 'bg-gray-300'}`} />
                     </td>
-                    <td className="p-4 text-right">
-                      <button className="text-gray-400 hover:text-indigo-600 mx-2 transition">
+                    <td className="p-4 text-right flex justify-end gap-2">
+                      <button
+                        onClick={() => handleToggleAlert(product.id)}
+                        className="text-gray-400 hover:text-yellow-600 transition"
+                        title="Alternar Alerta de Estoque"
+                      >
+                        <Bell size={18} />
+                      </button>
+                      <button className="text-gray-400 hover:text-indigo-600 transition">
                         <Edit size={18} />
                       </button>
                       <button className="text-gray-400 hover:text-red-600 transition">

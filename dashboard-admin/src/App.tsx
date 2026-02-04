@@ -1,10 +1,12 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { TenantProvider } from './context/TenantContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardHome } from './pages/dashboard/Home';
 import { ProductsPage } from './pages/products/ProductsPage';
-import { ProductForm } from './pages/products/ProductForm'; // Import do Form
+import { OrdersPage } from './pages/orders/OrdersList';
+import { ConfigPage } from './pages/configs/ConfigPage';
+import { ProductForm } from './pages/products/ProductForm';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 const PrivateRoute = () => {
@@ -17,11 +19,13 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      
+
       <Route element={<PrivateRoute />}>
         <Route path="/" element={<DashboardHome />} />
         <Route path="/products" element={<ProductsPage />} />
-        <Route path="/products/new" element={<ProductForm />} /> {/* Rota de Criação */}
+        <Route path="/products/new" element={<ProductForm />} />
+        <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/configs" element={<ConfigPage />} />
       </Route>
     </Routes>
   );
@@ -31,7 +35,9 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppRoutes />
+        <TenantProvider>
+          <AppRoutes />
+        </TenantProvider>
       </AuthProvider>
     </Router>
   );

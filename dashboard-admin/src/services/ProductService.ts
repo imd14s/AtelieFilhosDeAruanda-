@@ -28,5 +28,9 @@ export const ProductService = {
 
   delete: async (id: string) => {
     return api.delete(`/products/${id}`);
+  },
+
+  toggleAlert: async (id: string) => {
+    return api.put(`/dashboard/products/${id}/toggle-alert`);
   }
 };
