@@ -22,6 +22,7 @@ Atualizado em: 04/02/2026
 - [x] **Auditoria**: Tela de logs de ações do sistema.
 - [x] **Editor de Produto v2**: Suporte a Variantes (Cor/Tamanho) e Mídia Múltipla.
 - [x] **Config de Loja**: Telas de Frete e Pagamento (Integração Realista definida).
+- [x] **Marketing**: Listagem de Cupons e Configuração de Recuperação de Carrinho.
 
 ---
 
@@ -45,8 +46,8 @@ Atualizado em: 04/02/2026
 - [x] Módulo de Pagamento (Credenciais).
 
 ### Fase 4: Marketing
-- [ ] Cupons de Desconto.
-- [ ] Recuperação de Carrinho (E-mail).
+- [x] Cupons de Desconto (Listagem e Actions).
+- [x] Recuperação de Carrinho (Configuração de Triggers).
 
 ### Fase 5: Analytics & Onboarding
 - [ ] Dashboards Gráficos.

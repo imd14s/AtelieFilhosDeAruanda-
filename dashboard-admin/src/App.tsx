@@ -10,6 +10,8 @@ import { TeamPage } from './pages/settings/TeamPage';
 import { AuditLogPage } from './pages/settings/AuditLogPage';
 import { ShippingPage } from './pages/settings/ShippingPage';
 import { PaymentPage } from './pages/settings/PaymentPage';
+import { CouponList } from './pages/marketing/CouponList';
+import { AbandonedCartPage } from './pages/marketing/AbandonedCartPage';
 import { ProductForm } from './pages/products/ProductForm';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -34,6 +36,8 @@ function AppRoutes() {
         <Route path="/settings/audit" element={<AuditLogPage />} />
         <Route path="/settings/shipping" element={<ShippingPage />} />
         <Route path="/settings/payment" element={<PaymentPage />} />
+        <Route path="/marketing/coupons" element={<CouponList />} />
+        <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
       </Route>
     </Routes>
   );

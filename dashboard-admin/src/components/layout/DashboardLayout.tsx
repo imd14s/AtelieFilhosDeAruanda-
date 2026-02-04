@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail } from 'lucide-react';
 import clsx from 'clsx';
 import { StoreSelector } from './StoreSelector';
 
@@ -19,6 +19,8 @@ export function DashboardLayout() {
     { icon: Shield, label: 'Auditoria', path: '/settings/audit' },
     { icon: Truck, label: 'Frete', path: '/settings/shipping' },
     { icon: CreditCard, label: 'Pagamentos', path: '/settings/payment' },
+    { icon: Ticket, label: 'Cupons', path: '/marketing/coupons' },
+    { icon: Mail, label: 'Recuperação', path: '/marketing/abandoned-cart' },
   ];
 
   return (
