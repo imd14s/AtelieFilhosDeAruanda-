@@ -2,17 +2,17 @@ spring:
   application:
     name: ecommerce-api-test
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
-    driverClassName: org.h2.Driver
-    username: sa
-    password: password
+    url: jdbc:postgresql://172.18.0.2:5432/ecommerce_db
+    username: postgres
+    password: local_dev_password
+    driverClassName: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: create-drop
     show-sql: false
   flyway:
-    enabled: false
+    enabled: false # Ignora flyway para testes rápidos se ddl-auto estiver ativo, ou habilita se necessário. Com ddl-auto create-drop, melhor desabilitar flyway para evitar conflito.
 
 # Segurança (Mock) - Necessário para TokenProvider não falhar no @Value
 JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

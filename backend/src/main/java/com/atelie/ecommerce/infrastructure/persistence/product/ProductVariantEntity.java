@@ -35,6 +35,7 @@ public class ProductVariantEntity {
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
 
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     @Column(name = "attributes_json", columnDefinition = "jsonb")
     private String attributesJson;
 
@@ -49,8 +50,10 @@ public class ProductVariantEntity {
 
     @PrePersist
     public void prePersist() {
-        if (this.stockQuantity == null) this.stockQuantity = 0;
-        if (this.active == null) this.active = true;
+        if (this.stockQuantity == null)
+            this.stockQuantity = 0;
+        if (this.active == null)
+            this.active = true;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
