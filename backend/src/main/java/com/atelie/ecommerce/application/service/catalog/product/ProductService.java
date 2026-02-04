@@ -22,14 +22,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductVariantRepository variantRepository; // New dependency
-    private final GtinGeneratorService gtinGenerator;         // New dependency
+    private final GtinGeneratorService gtinGenerator; // New dependency
     private final ApplicationEventPublisher eventPublisher;
 
     public ProductService(ProductRepository productRepository,
-                          CategoryRepository categoryRepository,
-                          ProductVariantRepository variantRepository,
-                          GtinGeneratorService gtinGenerator,
-                          ApplicationEventPublisher eventPublisher) {
+            CategoryRepository categoryRepository,
+            ProductVariantRepository variantRepository,
+            GtinGeneratorService gtinGenerator,
+            ApplicationEventPublisher eventPublisher) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.variantRepository = variantRepository;
@@ -48,7 +48,7 @@ public class ProductService {
         CategoryEntity category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not found with ID: " + categoryId));
         product.setCategory(category);
-        
+
         boolean isNew = product.getId() == null;
         if (isNew) {
             product.setId(UUID.randomUUID()); // Ensure ID is generated before saving variant
@@ -75,8 +75,32 @@ public class ProductService {
                 .active(true)
                 .attributesJson("{\"default\": true}")
                 .build();
-        
+
         variantRepository.save(defaultVariant);
+    }
+
+    @Transactional
+    public ProductEntity updateProduct(UUID id, ProductEntity details) {
+        ProductEntity existing = findById(id);
+
+        existing.setName(details.getName());
+        existing.setDescription(details.getDescription());
+        existing.setPrice(details.getPrice());
+        existing.setStockQuantity(details.getStockQuantity());
+        // Ajuste de imagens: se vier nulo, mantém. Se vier vazio, limpa.
+        if (details.getImages() != null) {
+            existing.setImages(details.getImages());
+        }
+
+        existing.setUpdatedAt(java.time.LocalDateTime.now());
+
+        ProductEntity saved = productRepository.save(existing);
+
+        // Evento também no update, garantindo consistência (ex: indexação, cache
+        // eviction)
+        eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), false));
+
+        return saved;
     }
 
     @Transactional(readOnly = true)

@@ -22,8 +22,8 @@ public class ProductController {
     private final MediaStorageService mediaStorageService;
 
     public ProductController(ProductRepository productRepository,
-                             ProductService productService,
-                             MediaStorageService mediaStorageService) {
+            ProductService productService,
+            MediaStorageService mediaStorageService) {
         this.productRepository = productRepository;
         this.productService = productService;
         this.mediaStorageService = mediaStorageService;
@@ -55,7 +55,7 @@ public class ProductController {
         product.setPrice(request.price());
         product.setStockQuantity(request.stockQuantity());
         product.setImages(request.images());
-        
+
         // Datas e defaults são tratados pelo Service ou Entity
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
@@ -63,10 +63,10 @@ public class ProductController {
 
         // Delega para o Service (que resolve a Categoria e cria Variantes)
         ProductEntity savedProduct = productService.saveProduct(product, request.categoryId());
-        
+
         return ResponseEntity.ok(savedProduct);
     }
-    
+
     @PostMapping("/upload-image")
     public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
@@ -81,18 +81,11 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductEntity> update(@PathVariable UUID id, @RequestBody ProductEntity productDetails) {
-        // TODO: Mover lógica de update para o Service futuramente para consistência
-        return productRepository.findById(id)
-            .map(existing -> {
-                existing.setName(productDetails.getName());
-                existing.setDescription(productDetails.getDescription());
-                existing.setPrice(productDetails.getPrice());
-                existing.setStockQuantity(productDetails.getStockQuantity());
-                existing.setImages(productDetails.getImages());
-                existing.setUpdatedAt(LocalDateTime.now());
-                return ResponseEntity.ok(productRepository.save(existing));
-            })
-            .orElse(ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.ok(productService.updateProduct(id, productDetails));
+        } catch (com.atelie.ecommerce.api.common.exception.NotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
