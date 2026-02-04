@@ -1,9 +1,38 @@
-import React from 'react';
-import { X, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { X, Trash2, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 import { storeService } from '../services/storeService';
 
 const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
+  const navigate = useNavigate();
+  const [cep, setCep] = useState('');
+  const [shippingOptions, setShippingOptions] = useState([]);
+  const [shippingSelected, setShippingSelected] = useState(null);
+  const [calculateLoading, setCalculateLoading] = useState(false);
+
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+  const handleCalculateShipping = async () => {
+    if (cep.length < 9) return;
+    setCalculateLoading(true);
+    try {
+      const options = await storeService.calculateShipping(cep, cartItems);
+      // MOCK se a API falhar para demonstração (remover em produção real se não desejado)
+      if (options.length === 0) {
+        setShippingOptions([
+          { provider: 'Correios (PAC)', price: 25.90, days: 8 },
+          { provider: 'Correios (SEDEX)', price: 42.10, days: 3 }
+        ]);
+      } else {
+        setShippingOptions(options);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCalculateLoading(false);
+    }
+  };
+
 
   const removeItem = (id) => {
     storeService.cart.remove(id);
@@ -27,7 +56,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
   return (
     <div className="fixed inset-0 z-[150] overflow-hidden">
       <div className="absolute inset-0 bg-[#0f2A44]/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      
+
       <div className="absolute inset-y-0 right-0 max-w-full flex">
         <div className="w-screen max-w-md bg-[#F7F7F4] shadow-2xl flex flex-col">
           <div className="px-6 py-8 border-b border-[#0f2A44]/5 flex items-center justify-between">
@@ -73,19 +102,94 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
           </div>
 
           {cartItems.length > 0 && (
-            <div className="px-6 py-8 bg-white border-t border-[#0f2A44]/5">
-              <div className="flex justify-between mb-6">
-                <span className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44]/60">Subtotal</span>
-                <span className="font-lato font-bold text-[#0f2A44]">
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal)}
-                </span>
+            <div className="px-6 py-6 bg-white border-t border-[#0f2A44]/5 space-y-6">
+              {/* Cálculo de Frete */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44]/60">Calcular Frete</span>
+                  {shippingOptions.length > 0 && (
+                    <button onClick={() => { setCep(''); setShippingOptions([]); setShippingSelected(null); }} className="text-[9px] uppercase text-[#C9A24D]">Limpar</button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="00000-000"
+                    value={cep}
+                    onChange={(e) => setCep(e.target.value.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').substring(0, 9))}
+                    className="flex-1 border border-[#0f2A44]/10 px-3 py-2 font-lato text-xs focus:border-[#C9A24D] outline-none"
+                  />
+                  <button
+                    onClick={handleCalculateShipping}
+                    disabled={calculateLoading || cep.length < 9}
+                    className="bg-[#0f2A44] text-white px-4 py-2 font-lato text-[10px] uppercase tracking-widest disabled:opacity-50"
+                  >
+                    {calculateLoading ? <Loader2 size={14} className="animate-spin" /> : 'Calcular'}
+                  </button>
+                </div>
+
+                {shippingOptions.length > 0 && (
+                  <div className="space-y-2 pt-2">
+                    {shippingOptions.map((opt, i) => (
+                      <label key={i} className={`flex items-center justify-between p-3 border cursor-pointer transition-all ${shippingSelected?.provider === opt.provider ? 'border-[#C9A24D] bg-[#C9A24D]/5' : 'border-[#0f2A44]/5'}`}>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="shipping"
+                            className="hidden"
+                            checked={shippingSelected?.provider === opt.provider}
+                            onChange={() => setShippingSelected(opt)}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-lato text-[10px] font-bold uppercase">{opt.provider}</span>
+                            <span className="font-lato text-[9px] text-[#0f2A44]/40">{opt.days} dias úteis</span>
+                          </div>
+                        </div>
+                        <span className="font-lato text-xs font-bold text-[#0f2A44]">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opt.price)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
-              <button className="w-full bg-[#0f2A44] text-white py-4 font-lato text-xs uppercase tracking-[0.2em] hover:bg-[#C9A24D] transition-all flex items-center justify-center gap-3 group">
+
+              <div className="border-t border-[#0f2A44]/5 pt-6 space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44]/60">Subtotal</span>
+                  <span className="font-lato text-xs text-[#0f2A44]">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal)}
+                  </span>
+                </div>
+                {shippingSelected && (
+                  <div className="flex justify-between">
+                    <span className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#0f2A44]/60">Frete ({shippingSelected.provider})</span>
+                    <span className="font-lato text-xs text-[#0f2A44]">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(shippingSelected.price)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-2">
+                  <span className="font-lato text-[10px] uppercase tracking-[0.2em] font-bold text-[#0f2A44]">Total</span>
+                  <span className="font-lato font-bold text-[#0f2A44] text-lg">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal + (shippingSelected?.price || 0))}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  onClose();
+                  navigate('/checkout', { state: { shippingSelected, cep } });
+                }}
+                className="w-full bg-[#0f2A44] text-white py-4 font-lato text-xs uppercase tracking-[0.2em] hover:bg-[#C9A24D] transition-all flex items-center justify-center gap-3 group"
+              >
                 Finalizar Compra
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           )}
+
         </div>
       </div>
     </div>

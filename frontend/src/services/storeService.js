@@ -51,7 +51,41 @@ export const storeService = {
     }
   },
 
+  // --- CHECKOUT & FRETE ---
+  /**
+   * Calcula as opções de frete para um CEP e itens específicos.
+   */
+  calculateShipping: async (cep, items) => {
+    try {
+      const response = await api.post('/checkout/calculate-shipping', {
+        cep,
+        items: items.map(i => ({ id: i.id, quantity: i.quantity }))
+      }, { headers: TENANT_HEADER });
+
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error("[storeService] Erro ao calcular frete:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Cria um novo pedido no backend.
+   */
+  createOrder: async (orderData) => {
+    try {
+      const response = await api.post('/checkout/process', orderData, {
+        headers: TENANT_HEADER
+      });
+      return response.data;
+    } catch (error) {
+      console.error("[storeService] Erro ao processar checkout:", error);
+      throw error;
+    }
+  },
+
   // --- CATEGORIAS ---
+
   /**
    * Busca todas as categorias disponíveis.
    */
