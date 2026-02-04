@@ -1,20 +1,35 @@
 package com.atelie.ecommerce.application.service.ai;
 
-import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class AiContentService {
 
-    private final MediaStorageService mediaStorageService;
+    /**
+     * Gera uma descrição determinística (sem dependências externas).
+     * Em produção, você pode trocar por integração real via ENV/Config Table.
+     */
+    public String generateDescription(String productName, String context) {
+        String name = (productName == null || productName.isBlank()) ? "Produto" : productName.trim();
+        String ctx = (context == null) ? "" : context.trim();
 
-    public AiContentService(MediaStorageService mediaStorageService) {
-        this.mediaStorageService = mediaStorageService;
+        if (ctx.isBlank()) {
+            return name + " — descrição gerada automaticamente para catálogo. " +
+                   "Produto selecionado com cuidado, com foco em qualidade e boa experiência.";
+        }
+
+        return name + " — " + ctx + " " +
+               "Descrição gerada automaticamente para catálogo, com foco em clareza e conversão.";
     }
 
-    public String processAndStore(MultipartFile file) {
-        // futuramente: processamento IA
-        return mediaStorageService.storeImage(file);
+    /**
+     * Sem credenciais/IA: retorna a mesma referência de imagem.
+     * Quando você habilitar IA, aqui vira chamada real.
+     */
+    public String removeImageBackground(String imageUrlOrPath) {
+        if (imageUrlOrPath == null || imageUrlOrPath.isBlank()) {
+            throw new IllegalArgumentException("imageUrlOrPath is required");
+        }
+        return imageUrlOrPath.trim();
     }
 }

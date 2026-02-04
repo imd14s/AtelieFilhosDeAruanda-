@@ -1,10 +1,16 @@
 package com.atelie.ecommerce.api.media;
 
 import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/media")
@@ -16,35 +22,49 @@ public class MediaController {
         this.media = media;
     }
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> upload(
-        @RequestParam("file") MultipartFile file,
-        @RequestParam("type") String type,
-        @RequestParam(value = "public", defaultValue = "true") boolean isPublic
-    ) {
-        var saved = media.upload(file, type, isPublic);
-        return ResponseEntity.ok(java.util.Map.of(
-            "id", saved.getId(),
-            "type", saved.getType().name(),
-            "mimeType", saved.getMimeType(),
-            "sizeBytes", saved.getSizeBytes(),
-            "isPublic", saved.isPublic(),
-            "publicUrl", "/api/media/public/" + saved.getId()
-        ));
+    @PostMapping("/upload")
+    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file,
+                                    @RequestParam(value = "category", required = false) String category,
+                                    @RequestParam(value = "public", defaultValue = "false") boolean isPublic) {
+        return ResponseEntity.ok(media.upload(file, category, isPublic));
     }
 
     @GetMapping("/public/{id}")
-    public ResponseEntity<FileSystemResource> getPublic(@PathVariable("id") long id) {
-        var opt = media.loadPublic(id);
-        if (opt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    public ResponseEntity<Resource> downloadPublic(@PathVariable("id") long id) {
+        Optional<Resource> opt = media.loadPublic(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
 
-        var dl = opt.get();
-        FileSystemResource res = new FileSystemResource(dl.path().toFile());
+        Resource resource = opt.get();
 
-        return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(dl.mimeType()))
-            .contentLength(dl.sizeBytes())
-            .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable")
-            .body(res);
+        String filename = resource.getFilename() != null ? resource.getFilename() : "file";
+        String contentType = "application/octet-stream";
+        long sizeBytes = -1L;
+
+        try {
+            // Para FileSystemResource, conseguimos acessar o Path e descobrir mime
+            Path path = resource.getFile().toPath();
+            String probed = Files.probeContentType(path);
+            if (probed != null && !probed.isBlank()) contentType = probed;
+        } catch (Exception ignored) {
+            // fallback mantém octet-stream
+        }
+
+        try {
+            sizeBytes = resource.contentLength();
+        } catch (Exception ignored) {
+            // sem content-length
+        }
+
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType(contentType));
+
+        if (sizeBytes >= 0) {
+            builder.header(HttpHeaders.CONTENT_LENGTH, String.valueOf(sizeBytes));
+        }
+
+        return builder.body(resource);
     }
 }

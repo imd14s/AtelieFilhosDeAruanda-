@@ -22,9 +22,11 @@ public class AdminBootstrap implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${ADMIN_EMAIL:admin@atelie.com}")
+    /** Obrigatório via env: não há default. Email do único usuário inicial (admin). */
+    @Value("${ADMIN_EMAIL:}")
     private String adminEmail;
 
+    /** Obrigatório via env: senha do admin. Sem valor default. */
     @Value("${ADMIN_PASSWORD:}")
     private String adminPassword;
 
@@ -36,8 +38,8 @@ public class AdminBootstrap implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (adminPassword == null || adminPassword.isBlank()) {
-            System.out.println("⚠️ ADMIN_PASSWORD não configurada. Pulando bootstrap de admin.");
+        if (adminEmail == null || adminEmail.isBlank() || adminPassword == null || adminPassword.isBlank()) {
+            System.out.println("⚠️ ADMIN_EMAIL e ADMIN_PASSWORD devem ser configurados via variáveis de ambiente. Pulando bootstrap de admin.");
             return;
         }
 

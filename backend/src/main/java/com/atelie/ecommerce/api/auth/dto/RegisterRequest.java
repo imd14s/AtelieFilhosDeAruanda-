@@ -16,4 +16,7 @@ public class RegisterRequest {
 
     @NotBlank
     private String password;
+
+    /** Role do novo usuário: USER ou ADMIN. Só outro admin pode definir ADMIN. Se omitido, default USER. */
+    private String role;
 }

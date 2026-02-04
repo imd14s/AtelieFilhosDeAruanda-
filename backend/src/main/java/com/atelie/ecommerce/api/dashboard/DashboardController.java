@@ -1,5 +1,7 @@
 package com.atelie.ecommerce.api.dashboard;
 
+import com.atelie.ecommerce.application.service.integration.N8nService;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,28 +17,36 @@ import java.util.Map;
 public class DashboardController {
 
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+    private final N8nService n8nService;
 
-    public DashboardController(ProductRepository productRepository) {
+    public DashboardController(ProductRepository productRepository,
+                              OrderRepository orderRepository,
+                              N8nService n8nService) {
         this.productRepository = productRepository;
+        this.orderRepository = orderRepository;
+        this.n8nService = n8nService;
     }
 
     @GetMapping("/summary")
     public ResponseEntity<Map<String, Object>> getSummary() {
-        // Usa o repositório existente para contar produtos reais
         long totalProducts = productRepository.count();
-        
-        // Mock para Vendas (pois a estrutura de Order é complexa no seu projeto original)
+        BigDecimal totalSales = orderRepository.sumTotalSales();
+        if (totalSales == null) totalSales = BigDecimal.ZERO;
+        long pendingOrders = orderRepository.countPendingOrders();
+        int lowStockAlerts = productRepository.findCriticalStock().size();
+
         Map<String, Object> summary = new HashMap<>();
         summary.put("totalProducts", totalProducts);
-        summary.put("totalSales", new BigDecimal("1500.00")); 
-        summary.put("pendingOrders", 3);
-        summary.put("lowStockAlerts", 0);
-        
+        summary.put("totalSales", totalSales);
+        summary.put("pendingOrders", pendingOrders);
+        summary.put("lowStockAlerts", lowStockAlerts);
+
         return ResponseEntity.ok(summary);
     }
 
     @GetMapping("/automation/status")
     public ResponseEntity<Map<String, Boolean>> getAutomationStatus() {
-        return ResponseEntity.ok(Map.of("enabled", true));
+        return ResponseEntity.ok(Map.of("enabled", n8nService.isAutomationEnabled()));
     }
 }

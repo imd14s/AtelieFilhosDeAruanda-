@@ -1,14 +1,15 @@
 package com.atelie.ecommerce.api.catalog.product.image;
 
-import com.atelie.ecommerce.domain.catalog.product.ProductEntity;
-import com.atelie.ecommerce.domain.catalog.product.ProductRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.UUID;
+
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/api/products/{productId}/image")
 public class ProductImageController {
 
     private final ProductRepository productRepository;
@@ -20,18 +21,14 @@ public class ProductImageController {
         this.mediaStorageService = mediaStorageService;
     }
 
-    @PostMapping("/{id}/image")
-    public ResponseEntity<?> uploadImage(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file
-    ) {
-        ProductEntity product = productRepository.findById(id)
+    @PostMapping
+    public ResponseEntity<String> uploadImage(@PathVariable UUID productId,
+                                              @RequestParam("file") MultipartFile file) {
+
+        productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
         String filename = mediaStorageService.storeImage(file);
-        product.setImage(filename);
-        productRepository.save(product);
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(filename);
     }
 }

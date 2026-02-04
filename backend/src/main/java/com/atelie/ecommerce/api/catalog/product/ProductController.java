@@ -2,13 +2,13 @@ package com.atelie.ecommerce.api.catalog.product;
 
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
-import com.atelie.ecommerce.application.service.catalog.product.ProductService; // Import Service
+import com.atelie.ecommerce.application.service.catalog.product.ProductService;
+import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.nio.file.*;
-import java.io.IOException;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -18,19 +18,15 @@ import java.util.UUID;
 public class ProductController {
 
     private final ProductRepository productRepository;
-    private final ProductService productService; // Injeção do Service
-    private final Path fileStorageLocation;
+    private final ProductService productService;
+    private final MediaStorageService mediaStorageService;
 
-    public ProductController(ProductRepository productRepository, ProductService productService) {
+    public ProductController(ProductRepository productRepository,
+                             ProductService productService,
+                             MediaStorageService mediaStorageService) {
         this.productRepository = productRepository;
         this.productService = productService;
-        
-        this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
-        try {
-            Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new RuntimeException("Erro ao criar diretório de uploads.", ex);
-        }
+        this.mediaStorageService = mediaStorageService;
     }
 
     @GetMapping
@@ -74,11 +70,11 @@ public class ProductController {
     @PostMapping("/upload-image")
     public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Path targetLocation = this.fileStorageLocation.resolve(fileName);
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            return ResponseEntity.ok("/uploads/" + fileName);
-        } catch (IOException ex) {
+            String filename = mediaStorageService.storeImage(file);
+            return ResponseEntity.ok("/uploads/" + filename);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Falha no upload");
         }
     }

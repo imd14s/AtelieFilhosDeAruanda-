@@ -1,19 +1,14 @@
 package com.atelie.ecommerce.domain.inventory;
 
+import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface InventoryRepository extends JpaRepository<StockMovementEntity, Long> {
+import java.util.UUID;
 
-    /**
-     * Auditoria de estoque calculado POR VARIANTE.
-     *
-     * Regra de produção:
-     * - ENTRADA soma
-     * - SAIDA subtrai
-     * - Baseado exclusivamente em variantId
-     */
+public interface InventoryRepository extends JpaRepository<InventoryMovementEntity, Long> {
+
     @Query("""
         SELECT COALESCE(SUM(
             CASE
@@ -22,19 +17,8 @@ public interface InventoryRepository extends JpaRepository<StockMovementEntity, 
                 ELSE 0
             END
         ), 0)
-        FROM StockMovementEntity m
-        WHERE m.variant.id = :variantId
+        FROM InventoryMovementEntity m
+        WHERE m.variantId = :variantId
     """)
-    int auditCalculatedStockByVariant(@Param("variantId") Long variantId);
-
-    /**
-     * @deprecated NÃO usar em produção.
-     * Mistura conceito de produto com variante.
-     */
-    @Deprecated
-    default int auditCalculatedStockByProduct(Long productId) {
-        throw new UnsupportedOperationException(
-                "Stock audit by product is deprecated. Use variant-based audit."
-        );
-    }
+    int auditCalculatedStockByVariant(@Param("variantId") UUID variantId);
 }

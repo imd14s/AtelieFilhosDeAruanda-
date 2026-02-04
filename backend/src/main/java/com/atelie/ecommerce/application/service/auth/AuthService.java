@@ -9,9 +9,12 @@ import com.atelie.ecommerce.infrastructure.security.TokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.security.access.AccessDeniedException;
 
 @Service
 public class AuthService {
@@ -39,17 +42,32 @@ public class AuthService {
         return tokenProvider.generateToken(auth);
     }
 
+    /**
+     * Cria um novo usuário. Apenas um admin autenticado pode chamar este método.
+     * Apenas um admin pode atribuir a role ADMIN ao novo usuário; caso contrário, role será USER.
+     */
     @Transactional
     public void register(RegisterRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()))) {
+            throw new AccessDeniedException("Apenas administradores podem criar usuários.");
+        }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ConflictException("E-mail já cadastrado no sistema.");
+        }
+
+        String role = "USER";
+        if (request.getRole() != null && "ADMIN".equalsIgnoreCase(request.getRole().trim())) {
+            role = "ADMIN"; // Só chega aqui se o caller já é admin (verificado acima).
         }
 
         UserEntity newUser = new UserEntity(
             request.getName(),
             request.getEmail(),
             passwordEncoder.encode(request.getPassword()),
-            "USER"
+            role
         );
         userRepository.save(newUser);
     }
