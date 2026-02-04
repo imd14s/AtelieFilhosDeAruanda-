@@ -78,3 +78,22 @@ Gerenciamento de gateways e métodos de pagamento.
 - Todas as requisições enviadas pelo Dashboard Admin incluem o header `Authorization: Bearer <jwt>`.
 - O Backend deve validar se o usuário tem permissão `SETTINGS_WRITE` para alterar estes dados.
 - Erros de validação (ex: credencial inválida) devem retornar `400 Bad Request` com mensagem clara.
+
+---
+
+## 4. Módulo Loja (Storefront) - NECESSIDADES DETECTADAS
+
+O Frontend da loja identificou os seguintes pontos que podem não estar cobertos pelos endpoints de administração acima:
+
+### Endpoints de Checkout
+- **POST /api/checkout/calculate-shipping**
+    - Necessário para calcular o frete no carrinho/checkout sem criar o pedido.
+    - Payload: `{ "cep": "...", "items": [{ "id": "...", "quantity": 1 }] }`
+    - Response: `[{ "provider": "CORREIOS", "price": 25.00, "days": 5 }]`
+
+- **POST /api/checkout/process**
+    - Processar o pagamento e criar o pedido final.
+    - Payload: Dados do cliente, itens, método de pagamento escolhido.
+    
+### Endpoints de Produtos (Público)
+- Confirmar se `GET /api/products` suporta filtro por `slug` além de `categoryId`. O frontend atual usa `id` temporariamente para detalhes.

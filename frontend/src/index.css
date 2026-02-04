@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* 
+   ==========================================================================
+   THEME SOURCE OF TRUTH - ATELIÊ FILHOS DE ARUANDA
+   ==========================================================================
+   DO NOT MODIFY THESE VALUES WITHOUT EXPLICIT AUTHORIZATION.
+   Matches STYLE_GUIDE.md.
+*/
+
 @font-face {
     font-family: "PlayFair";
     src: url('/src/assets/fonts/PlayfairDisplay-Medium.ttf');
@@ -11,12 +19,19 @@
 }
 
 :root {
+    /* --- COLOR PALETTE --- */
     --azul-profundo: #0f2A44;
+    /* Primary Text & Headers */
     --branco-off-white: #F7F7F4;
+    /* Backgrounds */
     --dourado-suave: #C9A24D;
+    /* Accents & CTAs */
     --verde-musgo: #3EDF4B;
+    /* Success */
     --marron-terra: #5A3E2B;
+    /* Earthy Details */
 
+    /* --- TYPOGRAPHY --- */
     --main-font: 'Playfair Display', serif;
     --secondary-font: 'Lato', sans-serif;
 }
