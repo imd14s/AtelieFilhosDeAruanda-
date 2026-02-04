@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductService } from '../../services/ProductService';
-import type { Product } from '../../types/dashboard';
+import type { Product } from '../../types/product';
 import { Package, Plus, Search, Edit, Trash2, Bell } from 'lucide-react';
 
 export function ProductsPage() {
@@ -52,7 +52,7 @@ export function ProductsPage() {
   const safeProducts = Array.isArray(products) ? products : [];
 
   const filteredProducts = safeProducts.filter(p =>
-    p.name ? p.name.toLowerCase().includes(searchTerm.toLowerCase()) : false
+    p.title ? p.title.toLowerCase().includes(searchTerm.toLowerCase()) : false
   );
 
   return (
@@ -114,7 +114,7 @@ export function ProductsPage() {
                           <Package size={20} />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800">{product.name}</p>
+                          <p className="font-medium text-gray-800">{product.title}</p>
                           <p className="text-xs text-gray-500 truncate max-w-[200px]">{product.description}</p>
                         </div>
                       </div>
@@ -123,9 +123,9 @@ export function ProductsPage() {
                       {product.price ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price) : 'R$ 0,00'}
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${(product.stockQuantity || 0) < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${(product.stock || 0) < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                         }`}>
-                        {product.stockQuantity || 0} un
+                        {product.stock || 0} un
                       </span>
                     </td>
                     <td className="p-4">

@@ -1,7 +1,5 @@
 import { api } from '../api/axios';
-import type { Product } from '../types/dashboard';
-
-export type CreateProductDTO = Omit<Product, 'id' | 'active'>;
+import type { Product, CreateProductDTO } from '../types/product';
 
 export const ProductService = {
   getAll: async (): Promise<Product[]> => {

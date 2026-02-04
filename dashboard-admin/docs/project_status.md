@@ -20,6 +20,7 @@ Atualizado em: 04/02/2026
 - [x] **Configurações**: CRUD de variáveis de sistema (UI Ok, Backend 500*).
 - [x] **Gestão de Acessos**: Listagem de usuários e exibição de Roles.
 - [x] **Auditoria**: Tela de logs de ações do sistema.
+- [x] **Editor de Produto v2**: Suporte a Variantes (Cor/Tamanho) e Mídia Múltipla.
 
 ---
 
@@ -30,9 +31,9 @@ Atualizado em: 04/02/2026
 - [x] **Auditoria**: Tela de logs de atividade.
 
 ### Fase 2: Catálogo Avançado
-- [ ] **Editor de Produto v2**: Suporte a Variantes (Cor/Tamanho).
-- [ ] **Galeria de Mídia**: Upload múltiplo.
-- [ ] **Editor IA**: Interface para remover fundo e gerar mockups.
+- [x] **Editor de Produto v2**: Suporte a Variantes (Cor/Tamanho).
+- [x] **Galeria de Mídia**: Upload múltiplo.
+- [x] **Editor IA**: Interface para remover fundo e gerar mockups.
 
 ---
 
