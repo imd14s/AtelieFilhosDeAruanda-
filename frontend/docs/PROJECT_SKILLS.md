@@ -38,4 +38,14 @@ src/
 ## 6. Coding Standards
 *   **Linter**: ESLint is configured. Run `npm run lint` before committing.
 *   **Formatting**: Keep code clean and indented.
-*   **Comments**: Comment complex logic, especially tailored business rules (e.g., shipping calculations).
+
+## 7. SEO Best Practices
+> [!NOTE]
+> All public pages must be optimized for search engines.
+
+*   **Meta Tags**: Every page must have a unique `<title>` and `<meta name="description">`.
+*   **Semantic HTML**: Use `<header>`, `<main>`, `<footer>`, `<article>`, `<section>` appropriately.
+*   **Heading Hierarchy**: ONE `<h1>` per page. Use `<h2>` through `<h6>` for nested subsections.
+*   **Images**: All images must have descriptive `alt` text.
+*   **Performance**: Minimize CLS (Cumulative Layout Shift). Use lazy loading for below-the-fold images.
+*   **Social**: Implement Open Graph (OG) tags for rich sharing previews.
