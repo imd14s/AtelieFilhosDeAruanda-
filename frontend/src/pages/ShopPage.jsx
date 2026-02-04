@@ -21,19 +21,14 @@ const ShopPage = () => {
       setLoading(true);
       try {
         const [prodData, catData] = await Promise.all([
-          storeService.getProducts(),
+          storeService.getProducts({
+            category: categoryFilter,
+            sort: sortFilter
+          }),
           storeService.getCategories()
         ]);
 
-        let filtered = [...prodData];
-        if (categoryFilter) {
-          filtered = filtered.filter(p => p.category?.id === categoryFilter || p.category?.name === categoryFilter);
-        }
-
-        if (sortFilter === 'price_asc') filtered.sort((a, b) => a.price - b.price);
-        else if (sortFilter === 'price_desc') filtered.sort((a, b) => b.price - a.price);
-
-        setProducts(filtered);
+        setProducts(prodData);
         setCategories(catData);
       } catch (err) {
         console.error("Fetch error:", err);
@@ -43,6 +38,7 @@ const ShopPage = () => {
     };
     fetchData();
   }, [categoryFilter, sortFilter]);
+
 
   return (
     <div className="min-h-screen bg-[#F7F7F4] pb-20">

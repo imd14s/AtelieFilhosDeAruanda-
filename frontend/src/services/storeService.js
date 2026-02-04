@@ -1,40 +1,68 @@
 import api from './api';
 
+/**
+ * Ateliê Filhos de Aruanda - Store Service
+ * Centraliza toda a lógica de comunicação com a API do Backend.
+ */
+
+// Header de Tenant para multi-loja (conforme especificações de integração)
+const TENANT_HEADER = { 'X-Tenant-ID': 'atelie-aruanda' };
+
 export const storeService = {
   // --- PRODUTOS ---
+  /**
+   * Busca lista de produtos com filtros opcionais.
+   * Suporta paginação se o backend retornar objeto 'content'.
+   */
   getProducts: async (filters = {}) => {
     try {
-      // Passa filtros como query params para o Java
       const params = new URLSearchParams();
       if (filters.category) params.append('categoryId', filters.category);
-      // Aqui poderíamos passar sort e page também
-      
-      const response = await api.get('/products', { params });
-      return response.data.content || response.data; // Suporta Page<> ou List<>
+      if (filters.sort) params.append('sort', filters.sort);
+      if (filters.search) params.append('q', filters.search);
+
+      const response = await api.get('/products', {
+        params,
+        headers: TENANT_HEADER
+      });
+
+      // Padronização: retorna sempre um array
+      return response.data?.content || (Array.isArray(response.data) ? response.data : []);
     } catch (error) {
-      console.error("Erro ao buscar produtos:", error);
-      return [];
+      console.error("[storeService] Erro ao buscar produtos:", error);
+      return []; // Falha graciosa conforme PROJECT_SKILLS
     }
   },
 
-  getProductBySlug: async (slug) => {
-    // Como ainda não temos busca por slug no Java, vamos buscar pelo ID (que estamos usando como slug temporário)
+  /**
+   * Busca detalhes de um produto específico.
+   * Atualmente usa ID como slug.
+   */
+  getProductBySlug: async (id) => {
+    if (!id) return null;
     try {
-      const response = await api.get(`/products/${slug}`);
-      return response.data;
+      const response = await api.get(`/products/${id}`, {
+        headers: TENANT_HEADER
+      });
+      return response.data || null;
     } catch (error) {
-      console.error("Erro ao buscar produto:", error);
+      console.error(`[storeService] Erro ao buscar produto ${id}:`, error);
       return null;
     }
   },
 
   // --- CATEGORIAS ---
+  /**
+   * Busca todas as categorias disponíveis.
+   */
   getCategories: async () => {
     try {
-      const response = await api.get('/categories');
-      return response.data;
+      const response = await api.get('/categories', {
+        headers: TENANT_HEADER
+      });
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
-      console.error("Erro ao buscar categorias:", error);
+      console.error("[storeService] Erro ao buscar categorias:", error);
       return [];
     }
   },
@@ -42,10 +70,18 @@ export const storeService = {
   // --- CARRINHO (Gerenciamento Local) ---
   cart: {
     get: () => {
-      return JSON.parse(localStorage.getItem('cart') || '{"items": []}');
+      try {
+        const cart = localStorage.getItem('cart');
+        return cart ? JSON.parse(cart) : { items: [] };
+      } catch (e) {
+        console.error("[storeService] Erro ao ler carrinho do localStorage", e);
+        return { items: [] };
+      }
     },
-    
+
     add: (product, quantity = 1) => {
+      if (!product || !product.id) return;
+
       const cart = storeService.cart.get();
       const existingItem = cart.items.find(item => item.id === product.id);
 
@@ -62,7 +98,7 @@ export const storeService = {
       }
 
       localStorage.setItem('cart', JSON.stringify(cart));
-      window.dispatchEvent(new Event('cart-updated')); // Notifica o Header
+      window.dispatchEvent(new Event('cart-updated'));
     },
 
     remove: (productId) => {
@@ -81,20 +117,36 @@ export const storeService = {
   // --- AUTENTICAÇÃO ---
   auth: {
     login: async (email, password) => {
-      const response = await api.post('/auth/login', { email, password });
-      localStorage.setItem('auth_token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      return response.data.user;
+      try {
+        const response = await api.post('/auth/login', { email, password });
+        if (response.data?.token) {
+          localStorage.setItem('auth_token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.user || { email }));
+          return response.data.user || { email };
+        }
+        throw new Error("Resposta de login inválida");
+      } catch (error) {
+        console.error("[storeService] Erro no login:", error);
+        throw error; // Repassa o erro para o componente UI tratar
+      }
     },
+
     logout: () => {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      window.location.reload();
+      window.location.href = '/'; // Redirecionamento limpo
     },
+
     getUser: () => {
-      const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
+      try {
+        const userStr = localStorage.getItem('user');
+        return userStr ? JSON.parse(userStr) : null;
+      } catch (e) {
+        return null;
+      }
     },
+
     isAuthenticated: () => !!localStorage.getItem('auth_token')
   }
 };
+
