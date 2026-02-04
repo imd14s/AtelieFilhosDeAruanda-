@@ -17,6 +17,8 @@ export function DashboardLayout() {
     { icon: Settings, label: 'Configurações', path: '/configs' },
     { icon: Users, label: 'Equipe', path: '/settings/team' },
     { icon: Shield, label: 'Auditoria', path: '/settings/audit' },
+    { icon: Truck, label: 'Frete', path: '/settings/shipping' },
+    { icon: CreditCard, label: 'Pagamentos', path: '/settings/payment' },
   ];
 
   return (

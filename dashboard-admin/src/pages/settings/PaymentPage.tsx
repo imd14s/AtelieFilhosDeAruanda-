@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CreditCard, Save, AlertCircle } from 'lucide-react';
+import { CreditCard, AlertCircle } from 'lucide-react';
 import { PaymentService } from '../../services/PaymentService';
 import type { PaymentProvider } from '../../types/store-settings';
 

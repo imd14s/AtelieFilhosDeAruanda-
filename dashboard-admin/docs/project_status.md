@@ -21,6 +21,7 @@ Atualizado em: 04/02/2026
 - [x] **Gestão de Acessos**: Listagem de usuários e exibição de Roles.
 - [x] **Auditoria**: Tela de logs de ações do sistema.
 - [x] **Editor de Produto v2**: Suporte a Variantes (Cor/Tamanho) e Mídia Múltipla.
+- [x] **Config de Loja**: Telas de Frete e Pagamento (Integração Realista definida).
 
 ---
 
@@ -40,8 +41,8 @@ Atualizado em: 04/02/2026
 ## 📅 3. Planejado (Roadmap)
 
 ### Fase 3: Operações
-- [ ] Módulo de Frete (Regras de envio).
-- [ ] Módulo de Pagamento (Credenciais).
+- [x] Módulo de Frete (Regras de envio).
+- [x] Módulo de Pagamento (Credenciais).
 
 ### Fase 4: Marketing
 - [ ] Cupons de Desconto.
