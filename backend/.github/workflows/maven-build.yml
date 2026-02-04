@@ -1,0 +1,35 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Build with Maven
+      # Ajustado para rodar assumindo que o repo root é onde o pom.xml está, ou ajustando o caminho
+      # Se o repositório contém pasta 'backend', use --file backend/pom.xml
+      # Se este arquivo está em backend/.github, assumimos que backend é subpasta.
+      run: mvn -B clean test --file backend/pom.xml
+      env:
+        # Variáveis Mock para CI (mesmos valores do application-test.yml, segurança redobrada)
+        JWT_SECRET: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+        JWT_EXPIRATION_MS: 86400000
+        WEBHOOK_SECRET: "test-webhook-secret-123"
+        ADMIN_EMAIL: "admin@test.com"
+        ADMIN_PASSWORD: "admin-password-test"
