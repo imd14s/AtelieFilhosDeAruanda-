@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+import SEO from "../components/SEO";
 import { Search, Loader2, Wind } from "lucide-react";
 
 const SearchPage = () => {
@@ -35,6 +36,11 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F7F4] pt-12 pb-24">
+
+      <SEO
+        title={query ? `Busca: ${query}` : "Nossa Coleção"}
+        description={`Resultados de busca para ${query || 'artigos religiosos'} no Ateliê Filhos de Aruanda.`}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Cabeçalho de Busca */}
         <div className="border-b border-[#0f2A44]/10 pb-10 mb-12">

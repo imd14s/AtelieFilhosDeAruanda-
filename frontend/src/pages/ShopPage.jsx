@@ -3,13 +3,14 @@ import { useSearchParams } from 'react-router-dom';
 import { storeService } from '../services/storeService';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../components/FilterSidebar';
+import SEO from '../components/SEO';
 import { Loader2, SlidersHorizontal, LayoutGrid } from 'lucide-react';
 
 const ShopPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryFilter = searchParams.get('categoria');
   const sortFilter = searchParams.get('sort') || 'newest';
-  
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +46,11 @@ const ShopPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F7F4] pb-20">
-      <FilterSidebar 
+      <SEO
+        title={categoryFilter ? `Coleção ${categoryFilter}` : "Loja de Artigos Religiosos"}
+        description="Explore nossa seleção de velas, guias e produtos artesanais para sua espiritualidade."
+      />
+      <FilterSidebar
         isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}
         collections={categories.map(c => ({ _id: c.id, name: c.name, slug: c.id }))}
         activeCategory={categoryFilter}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { storeService } from '../services/storeService';
+import SEO from '../components/SEO';
 import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw } from 'lucide-react';
 
 const ProductPage = () => {
@@ -42,15 +43,21 @@ const ProductPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F7F4] pt-8 pb-20 px-4">
+      <SEO
+        title={product.name}
+        description={product.description?.substring(0, 160)}
+        image={product.images?.[0]}
+        type="product"
+      />
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
-          
+
           {/* Galeria de Imagens */}
           <div className="flex-1 space-y-4">
             <div className="aspect-[4/5] bg-white overflow-hidden shadow-sm">
-              <img 
-                src={product.images?.[0] || 'https://via.placeholder.com/800'} 
-                alt={product.name} 
+              <img
+                src={product.images?.[0] || 'https://via.placeholder.com/800'}
+                alt={product.name}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -71,7 +78,7 @@ const ProductPage = () => {
             <h1 className="font-playfair text-4xl md:text-5xl text-[#0f2A44] mb-6 leading-tight">
               {product.name}
             </h1>
-            
+
             <div className="flex items-center gap-4 mb-8">
               <span className="font-lato text-2xl font-bold text-[#0f2A44]">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
@@ -94,11 +101,10 @@ const ProductPage = () => {
                   <span className="px-6 font-lato font-bold">{quantity}</span>
                   <button onClick={() => setQuantity(q => q + 1)} className="px-4 py-3 text-[#0f2A44]">+</button>
                 </div>
-                <button 
+                <button
                   onClick={handleAddToCart}
-                  className={`flex-1 py-4 font-lato text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${
-                    added ? 'bg-green-700 text-white' : 'bg-[#0f2A44] text-white hover:bg-[#C9A24D]'
-                  }`}
+                  className={`flex-1 py-4 font-lato text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${added ? 'bg-green-700 text-white' : 'bg-[#0f2A44] text-white hover:bg-[#C9A24D]'
+                    }`}
                 >
                   <ShoppingBag size={18} />
                   {added ? 'Adicionado com Sucesso' : 'Adicionar à Sacola'}

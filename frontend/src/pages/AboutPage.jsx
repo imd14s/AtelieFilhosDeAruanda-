@@ -1,20 +1,26 @@
 import React from 'react';
 import { Sparkles, Heart, Handshake, Sun } from 'lucide-react';
+import SEO from '../components/SEO';
 
 const AboutPage = () => {
   return (
     <div className="bg-[#F7F7F4] min-h-screen">
+
+      <SEO
+        title="Nossa Essência"
+        description="Conheça a história e os valores do Ateliê Filhos de Aruanda. Um trabalho de fé, amor e axé."
+      />
       {/* HERO DA PÁGINA */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=2000&auto=format&fit=crop" 
-            alt="Fundo espiritual" 
+          <img
+            src="https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=2000&auto=format&fit=crop"
+            alt="Fundo espiritual"
             className="w-full h-full object-cover opacity-30 grayscale-[50%]"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#F7F7F4]/0 to-[#F7F7F4]"></div>
         </div>
-        
+
         <div className="relative z-10 text-center px-4">
           <span className="font-lato text-[10px] md:text-xs uppercase tracking-[0.5em] text-[#C9A24D] mb-4 block animate-fade-in">
             Nossa Essência
@@ -33,7 +39,7 @@ const AboutPage = () => {
             <div className="w-12 h-[1px] bg-[#C9A24D]"></div>
             <h2 className="font-playfair text-3xl text-[#0f2A44]">O Início de Tudo</h2>
             <p className="font-lato text-base text-[#0f2A44]/70 leading-relaxed">
-              O **Ateliê Filhos de Aruanda** nasceu do encontro de duas almas gêmeas unidas pelo amor, pela fé e pelo respeito à espiritualidade. 
+              O **Ateliê Filhos de Aruanda** nasceu do encontro de duas almas gêmeas unidas pelo amor, pela fé e pelo respeito à espiritualidade.
               Mais do que uma loja, somos um espaço criado com propósito, axé e cuidado em cada detalhe.
             </p>
             <p className="font-lato text-base text-[#0f2A44]/70 leading-relaxed">
@@ -42,9 +48,9 @@ const AboutPage = () => {
           </div>
           <div className="relative">
             <div className="aspect-[3/4] overflow-hidden shadow-2xl">
-              <img 
-                src="https://images.unsplash.com/photo-1515831332135-d4e94a091d03?q=80&w=800" 
-                alt="Processo artesanal" 
+              <img
+                src="https://images.unsplash.com/photo-1515831332135-d4e94a091d03?q=80&w=800"
+                alt="Processo artesanal"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -99,11 +105,11 @@ const AboutPage = () => {
           <div className="bg-[#0f2A44] p-12 md:p-20 text-[#F7F7F4] relative">
             {/* Aspas Decorativas */}
             <span className="absolute top-8 left-8 text-6xl font-serif text-[#C9A24D] opacity-30">"</span>
-            
+
             <p className="font-lato text-lg md:text-xl leading-relaxed italic relative z-10">
               Que este espaço seja um ponto de encontro com a paz, a proteção e o amor de Aruanda.
             </p>
-            
+
             <span className="absolute bottom-4 right-8 text-6xl font-serif text-[#C9A24D] opacity-30">"</span>
           </div>
           <p className="font-lato text-sm text-[#0f2A44]/50 uppercase tracking-[0.3em]">

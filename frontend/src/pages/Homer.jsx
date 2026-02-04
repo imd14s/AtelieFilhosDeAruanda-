@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sparkles, Loader2 } from 'lucide-react';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
+import SEO from '../components/SEO';
 import { storeService } from '../services/storeService';
 
 const Home = () => {
@@ -31,7 +32,12 @@ const Home = () => {
 
   return (
     <div className="bg-[#F7F7F4] min-h-screen">
+      <SEO
+        title="Bem-vindo ao Axé"
+        description="Velas artesanais, guias personalizadas e ervas sagradas. O melhor do artesanato religioso com a qualidade do Ateliê Filhos de Aruanda."
+      />
       <Hero />
+
       <section className="max-w-7xl mx-auto px-4 py-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {categories.map((cat) => (

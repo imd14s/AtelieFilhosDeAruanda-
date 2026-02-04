@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+import SEO from "../components/SEO";
 import { Loader2, ChevronLeft, Sparkles, Wind } from "lucide-react";
 
 const CategoryPage = () => {
@@ -62,6 +63,12 @@ const CategoryPage = () => {
 
   return (
     <div className="bg-[#F7F7F4] min-h-screen">
+
+      <SEO
+        title={collection.name}
+        description={collection.description}
+        image={collection.media?.mainMedia?.image?.url}
+      />
       {/* HEADER DINÂMICO DA CATEGORIA */}
       <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-[#0f2A44]">
         {/* Imagem de Fundo da Categoria (vinda do Wix) */}
