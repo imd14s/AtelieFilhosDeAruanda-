@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { DashboardService } from '../../services/DashboardService';
-// CORREÇÃO AQUI: 'import type'
-import type { DashboardSummary } from '../../types/dashboard';
+import { Package, AlertTriangle, DollarSign, ShoppingBag } from 'lucide-react';
 
 export function DashboardHome() {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalSales: 0,
+    pendingOrders: 0,
+    lowStockAlerts: 0
+  });
   const [loading, setLoading] = useState(true);
-  const [automationEnabled, setAutomationEnabled] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -15,12 +18,9 @@ export function DashboardHome() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [summaryData, autoStatus] = await Promise.all([
-        DashboardService.getSummary(),
-        DashboardService.getAutomationStatus()
-      ]);
-      setSummary(summaryData);
-      setAutomationEnabled(autoStatus.enabled);
+      // O Frontend agora calcula tudo baseando-se na lista de itens do Backend
+      const data = await DashboardService.getSummaryFromProducts();
+      setStats(data);
     } catch (error) {
       console.error('Erro ao carregar dashboard', error);
     } finally {
@@ -28,78 +28,68 @@ export function DashboardHome() {
     }
   };
 
-  const handleToggleAutomation = async () => {
-    try {
-      await DashboardService.toggleAutomation(!automationEnabled);
-      setAutomationEnabled(!automationEnabled);
-    } catch (error) {
-      alert('Erro ao alterar automação');
-    }
-  };
-
-  if (loading) return <div className="p-8 text-gray-500">Carregando painel de controle...</div>;
+  if (loading) return <div className="p-8 text-gray-500">Calculando métricas...</div>;
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-      <header className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Visão Geral</h1>
-          <p className="text-gray-500">Ateliê Filhos de Aruanda</p>
-        </div>
-        
-        <div className="flex items-center gap-4 bg-white p-3 rounded-lg shadow-sm">
-          <span className="text-sm font-medium text-gray-600">Automação (n8n/Webhooks)</span>
-          <button
-            onClick={handleToggleAutomation}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              automationEnabled ? 'bg-green-500' : 'bg-gray-300'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                automationEnabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Visão Geral</h1>
+        <p className="text-gray-500">Ateliê Filhos de Aruanda</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
-          <h3 className="text-gray-500 text-sm font-medium uppercase">Vendas Totais (Pagas)</h3>
-          <p className="text-3xl font-bold text-gray-800 mt-2">
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(summary?.totalSales || 0)}
-          </p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        
+        {/* Card 1: Total de Produtos (Real) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+          <div className="flex justify-between items-start">
+            <div>
+                <h3 className="text-gray-500 text-sm font-medium uppercase">Produtos Ativos</h3>
+                <p className="text-3xl font-bold text-gray-800 mt-2">{stats.totalProducts}</p>
+            </div>
+            <Package className="text-blue-500 opacity-20" size={32} />
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
-          <h3 className="text-gray-500 text-sm font-medium uppercase">Aguardando Envio</h3>
-          <p className="text-3xl font-bold text-gray-800 mt-2">
-            {summary?.pendingOrders || 0}
-          </p>
-        </div>
-
+        {/* Card 2: Estoque Baixo (Calculado Real) */}
         <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500">
-          <h3 className="text-gray-500 text-sm font-medium uppercase">Produtos com Estoque Baixo</h3>
-          <p className="text-3xl font-bold text-red-600 mt-2">
-            {summary?.lowStockAlerts || 0}
-          </p>
-          <span className="text-xs text-gray-400">Abaixo de 10 unidades</span>
+          <div className="flex justify-between items-start">
+            <div>
+                <h3 className="text-gray-500 text-sm font-medium uppercase">Alerta de Estoque</h3>
+                <p className="text-3xl font-bold text-red-600 mt-2">{stats.lowStockAlerts}</p>
+                <span className="text-xs text-gray-400">Abaixo de 10 un.</span>
+            </div>
+            <AlertTriangle className="text-red-500 opacity-20" size={32} />
+          </div>
         </div>
+
+        {/* Card 3: Vendas (Placeholder - Backend não tem endpoint ainda) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500 opacity-60">
+          <div className="flex justify-between items-start">
+            <div>
+                <h3 className="text-gray-500 text-sm font-medium uppercase">Vendas (Mês)</h3>
+                <p className="text-3xl font-bold text-gray-800 mt-2">R$ --</p>
+                <span className="text-xs text-gray-400">Em desenvolvimento</span>
+            </div>
+            <DollarSign className="text-green-500 opacity-20" size={32} />
+          </div>
+        </div>
+
+         {/* Card 4: Pedidos (Placeholder) */}
+         <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 opacity-60">
+          <div className="flex justify-between items-start">
+            <div>
+                <h3 className="text-gray-500 text-sm font-medium uppercase">Pedidos Pendentes</h3>
+                <p className="text-3xl font-bold text-gray-800 mt-2">--</p>
+                <span className="text-xs text-gray-400">Em desenvolvimento</span>
+            </div>
+            <ShoppingBag className="text-yellow-500 opacity-20" size={32} />
+          </div>
+        </div>
+
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Ações Rápidas</h2>
-        <div className="flex gap-4">
-            <button 
-                onClick={() => DashboardService.triggerTest()}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium">
-                🔔 Testar Alerta de Estoque (n8n)
-            </button>
-            <button className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition text-sm font-medium">
-                📦 Criar Novo Produto
-            </button>
-        </div>
+      <div className="bg-white rounded-xl shadow-sm p-6 text-center text-gray-400 text-sm">
+        <p>O Backend está focado no catálogo de produtos. As funcionalidades de Vendas e Automação serão ativadas futuramente.</p>
       </div>
     </div>
   );

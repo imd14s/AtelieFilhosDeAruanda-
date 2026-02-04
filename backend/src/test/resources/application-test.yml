@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: ecommerce-api-test
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  flyway:
+    enabled: false
+
+# Segurança (Mock) - Necessário para TokenProvider não falhar no @Value
+JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+JWT_EXPIRATION_MS: 86400000
+JWT_ROLES_CLAIM: roles
+
+# Media / Uploads Mock
+UPLOAD_DIR: target/test-uploads
+MAX_UPLOAD_MB: 10
+ALLOWED_IMAGE_MIME: image/png,image/jpeg
+
+# Integrations Mock
+WEBHOOK_SECRET: "test-webhook-secret-123"
+
+# Admin Bootstrap Mock
+ADMIN_EMAIL: "admin@test.com"
+ADMIN_PASSWORD: "admin-password-test"

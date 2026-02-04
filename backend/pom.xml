@@ -100,6 +100,13 @@
       <version>2.3.0</version>
     </dependency>
 
+    <!-- H2 Database (for tests) -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <!-- Tests (mesmo que você não rode agora) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

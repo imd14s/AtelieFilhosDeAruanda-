@@ -1,0 +1,1409 @@
+
+
+================================================
+ARQUIVO: ./Dockerfile
+================================================
+
+# --- Stage 1: Build ---
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Argumentos de Build (Vite precisa disso aqui)
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+COPY . .
+RUN npx vite build --emptyOutDir
+
+# --- Stage 2: Serve ---
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+RUN rm -rf ./*
+COPY --from=builder /app/dist .
+# Configuração SPA
+RUN echo 'server { \
+    listen 80; \
+    server_name localhost; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html index.htm; \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+
+================================================
+ARQUIVO: ./vite.config.ts
+================================================
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000, // Força porta 3000 para alinhar com CORS do backend
+  }
+})
+
+
+================================================
+ARQUIVO: ./tsconfig.app.json
+================================================
+
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}
+
+
+================================================
+ARQUIVO: ./package.json
+================================================
+
+{
+  "name": "dashboard-admin",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "axios": "^1.13.4",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.563.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.71.1",
+    "react-router-dom": "^7.13.0",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.23",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4"
+  }
+}
+
+
+================================================
+ARQUIVO: ./eslint.config.js
+================================================
+
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+
+================================================
+ARQUIVO: ./tsconfig.json
+================================================
+
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+
+
+================================================
+ARQUIVO: ./tsconfig.node.json
+================================================
+
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+
+================================================
+ARQUIVO: ./.env
+================================================
+
+VITE_API_URL=http://localhost:8080/api
+
+
+================================================
+ARQUIVO: ./tailwind.config.js
+================================================
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+
+================================================
+ARQUIVO: ./README.md
+================================================
+
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+
+================================================
+ARQUIVO: ./.gitignore
+================================================
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+================================================
+ARQUIVO: ./postcss.config.js
+================================================
+
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+
+================================================
+ARQUIVO: ./index.html
+================================================
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dashboard-admin</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+
+================================================
+ARQUIVO: ./src/components/ui/FeatureGateModal.tsx
+================================================
+
+import React from 'react';
+import { X, Settings, AlertTriangle } from 'lucide-react';
+
+interface FeatureGateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  featureName: string;
+}
+
+export function FeatureGateModal({ isOpen, onClose, featureName }: FeatureGateModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mb-4">
+            <AlertTriangle className="text-yellow-600" size={32} />
+          </div>
+          
+          <h3 className="text-xl font-bold text-gray-800 mb-2">
+            Configuração Necessária
+          </h3>
+          
+          <p className="text-gray-600 mb-6">
+            A funcionalidade <strong>{featureName}</strong> requer integração externa (n8n / OpenAI) que ainda não foi configurada neste ambiente.
+          </p>
+
+          <div className="bg-gray-50 p-4 rounded-lg text-left w-full mb-6 border border-gray-100">
+            <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Próximos Passos:</h4>
+            <ul className="text-sm text-gray-600 space-y-2 list-disc pl-4">
+              <li>Configurar variáveis de ambiente (.env)</li>
+              <li>Ativar Webhook no n8n</li>
+              <li>Inserir chave de API (OpenAI/Stable Diffusion)</li>
+            </ul>
+          </div>
+
+          <button 
+            onClick={onClose}
+            className="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 transition font-medium flex items-center justify-center gap-2"
+          >
+            <Settings size={18} />
+            Ir para Configurações
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+ARQUIVO: ./src/components/layout/DashboardLayout.tsx
+================================================
+
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap } from 'lucide-react';
+import clsx from 'clsx';
+
+export function DashboardLayout() {
+  const { logout } = useAuth();
+  const location = useLocation();
+
+  const navItems = [
+    { icon: LayoutDashboard, label: 'Resumo', path: '/' },
+    { icon: ShoppingBag, label: 'Pedidos', path: '/orders' },
+    { icon: Package, label: 'Produtos', path: '/products' },
+    { icon: Zap, label: 'Automações & IA', path: '/automations' },
+    { icon: Settings, label: 'Configurações', path: '/configs' },
+  ];
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white shadow-md flex flex-col">
+        <div className="p-6 border-b">
+          <h1 className="text-xl font-bold text-indigo-600">Ateliê Admin</h1>
+          <p className="text-xs text-gray-500">Service Engine Control</p>
+        </div>
+        
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={clsx(
+                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                  isActive 
+                    ? "bg-indigo-50 text-indigo-700" 
+                    : "text-gray-700 hover:bg-gray-50"
+                )}
+              >
+                <Icon className="w-5 h-5 mr-3" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t">
+          <button
+            onClick={logout}
+            className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <LogOut className="w-5 h-5 mr-3" />
+            Sair
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto p-8">
+        <div className="max-w-7xl mx-auto">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+
+================================================
+ARQUIVO: ./src/context/AuthContext.tsx
+================================================
+
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { api } from '../api/axios';
+
+interface AuthContextType {
+  isAuthenticated: boolean;
+  login: (token: string) => void;
+  logout: () => void;
+  isLoading: boolean;
+}
+
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const validateToken = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Tenta bater num endpoint leve para ver se o token é válido e o back está vivo
+        // Se der erro de rede, cai no catch e desloga
+        await api.get('/health'); 
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Sessão inválida ou Backend offline:", error);
+        localStorage.removeItem('auth_token');
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    validateToken();
+  }, []);
+
+  const login = (token: string) => {
+    localStorage.setItem('auth_token', token);
+    setIsAuthenticated(true);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('auth_token');
+    setIsAuthenticated(false);
+    window.location.href = '/login';
+  };
+
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => useContext(AuthContext);
+
+
+================================================
+ARQUIVO: ./src/App.tsx
+================================================
+
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginPage } from './pages/auth/LoginPage';
+import { DashboardHome } from './pages/dashboard/Home';
+import { ProductsPage } from './pages/products/ProductsPage';
+import { ProductForm } from './pages/products/ProductForm'; // Import do Form
+import { DashboardLayout } from './components/layout/DashboardLayout';
+
+const PrivateRoute = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;
+  return isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      
+      <Route element={<PrivateRoute />}>
+        <Route path="/" element={<DashboardHome />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/new" element={<ProductForm />} /> {/* Rota de Criação */}
+      </Route>
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
+  );
+}
+
+
+================================================
+ARQUIVO: ./src/main.tsx
+================================================
+
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.tsx'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+
+================================================
+ARQUIVO: ./src/index.css
+================================================
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+
+================================================
+ARQUIVO: ./src/types/dashboard.ts
+================================================
+
+export interface DashboardSummary {
+    totalSales: number;
+    pendingOrders: number;
+    lowStockAlerts: number;
+}
+
+export interface AutomationStatus {
+    enabled: boolean;
+}
+
+export interface ProductVariant {
+  id?: string;
+  name: string;      // Ex: "Tamanho G"
+  sku: string;       // Ex: "CAM-AZUL-G"
+  price: number;
+  stock: number;
+  image?: string;    // URL da imagem específica desta variação
+  attributes?: string; // Ex: "Cor: Azul, Material: Algodão"
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stockQuantity: number;
+  active: boolean;
+  images: string[];
+  variants: ProductVariant[];
+  category?: {
+      name: string;
+  };
+}
+
+
+================================================
+ARQUIVO: ./src/services/FileService.ts
+================================================
+
+import { api } from '../api/axios';
+
+export const FileService = {
+  upload: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const { data } = await api.post<string>('/files/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    // O backend retorna o caminho relativo (/api/files/view/xyz.jpg)
+    // Se precisarmos da URL completa, concatenamos com a baseURL, 
+    // mas geralmente salvamos o caminho relativo no banco.
+    return data; 
+  }
+};
+
+
+================================================
+ARQUIVO: ./src/services/ProductService.ts
+================================================
+
+import { api } from '../api/axios';
+import type { Product } from '../types/dashboard';
+
+export type CreateProductDTO = Omit<Product, 'id' | 'active'>;
+
+export const ProductService = {
+  getAll: async (): Promise<Product[]> => {
+    const { data } = await api.get<Product[]>('/products');
+    return data;
+  },
+
+  getById: async (id: string): Promise<Product> => {
+    const { data } = await api.get<Product>(`/products/${id}`);
+    return data;
+  },
+
+  create: async (product: CreateProductDTO) => {
+    return api.post('/products', product);
+  },
+
+  update: async (id: string, product: Partial<CreateProductDTO>) => {
+    return api.put(`/products/${id}`, product);
+  },
+
+  toggleActive: async (id: string) => {
+    return api.patch(`/products/${id}/toggle`);
+  },
+
+  delete: async (id: string) => {
+    return api.delete(`/products/${id}`);
+  }
+};
+
+
+================================================
+ARQUIVO: ./src/services/DashboardService.ts
+================================================
+
+import { api } from '../api/axios';
+// CORREÇÃO AQUI: 'import type' garante que isso suma no JS final
+import type { DashboardSummary, AutomationStatus } from '../types/dashboard';
+
+export const DashboardService = {
+  getSummary: async (): Promise<DashboardSummary> => {
+    const { data } = await api.get<DashboardSummary>('/dashboard/summary');
+    return data;
+  },
+  getAutomationStatus: async (): Promise<AutomationStatus> => {
+    const { data } = await api.get<AutomationStatus>('/dashboard/automation/status');
+    return data;
+  },
+  toggleAutomation: async (enabled: boolean) => {
+    return api.post('/dashboard/automation/toggle', { enabled });
+  },
+  triggerTest: async () => {
+    return api.post('/dashboard/automation/test-trigger');
+  }
+};
+
+
+================================================
+ARQUIVO: ./src/api/axios.ts
+================================================
+
+import axios from 'axios';
+
+// REGRA ZERO HARDCODE: Falhar se a variável não estiver definida.
+// Jamais assumir localhost em código produtivo.
+const API_URL = import.meta.env.VITE_API_URL;
+
+if (!API_URL) {
+  console.error('[Config] CRITICAL: VITE_API_URL is missing under import.meta.env');
+}
+
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor para adicionar token (mantendo lógica original segura)
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+
+================================================
+ARQUIVO: ./src/pages/products/ProductForm.tsx
+================================================
+
+import React, { useState, useRef } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { ProductService } from '../../services/ProductService';
+import { FileService } from '../../services/FileService';
+import type { CreateProductDTO } from '../../services/ProductService';
+import { FeatureGateModal } from '../../components/ui/FeatureGateModal';
+import { 
+  ArrowLeft, Save, Loader2, Sparkles, Image as ImageIcon, 
+  Wand2, Layers, Trash2, Plus, Upload, X, Camera 
+} from 'lucide-react';
+
+// --- SEÇÃO DE VARIAÇÕES ---
+const VariantsSection = ({ control, register }: { control: Control<CreateProductDTO>, register: any }) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "variants"
+  });
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <Layers size={20} className="text-indigo-600" />
+          Variações (SKUs)
+        </h3>
+        <button type="button" onClick={() => append({ name: '', sku: '', price: 0, stock: 0, image: '', attributes: '' })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+          <Plus size={16} /> Adicionar Variação
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {fields.map((field, index) => (
+          <div key={field.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 grid grid-cols-12 gap-4 items-start">
+            <div className="col-span-1 flex flex-col items-center justify-center">
+               {/* Upload de Variação (Visual por enquanto) */}
+               <label className="w-12 h-12 rounded-lg bg-gray-200 border border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition overflow-hidden">
+                  <Camera size={20} className="text-gray-500" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => console.log('Variação visual selecionada')} />
+               </label>
+               <span className="text-[10px] text-gray-500 mt-1">Foto</span>
+            </div>
+            <div className="col-span-3">
+              <label className="text-xs text-gray-500 font-semibold">Nome/Cor</label>
+              <input {...register(`variants.${index}.name`)} className="w-full bg-white px-3 py-2 border rounded text-sm" placeholder="Ex: Azul" />
+            </div>
+            <div className="col-span-3">
+               <label className="text-xs text-gray-500 font-semibold">Atributos</label>
+               <input {...register(`variants.${index}.attributes`)} className="w-full bg-white px-3 py-2 border rounded text-sm" placeholder="Ex: Algodão" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs text-gray-500 font-semibold">SKU</label>
+              <input {...register(`variants.${index}.sku`)} className="w-full bg-white px-3 py-2 border rounded text-sm" placeholder="COD-01" />
+            </div>
+            <div className="col-span-1">
+              <label className="text-xs text-gray-500 font-semibold">Preço</label>
+              <input type="number" step="0.01" {...register(`variants.${index}.price`)} className="w-full bg-white px-3 py-2 border rounded text-sm" />
+            </div>
+            <div className="col-span-1">
+               <label className="text-xs text-gray-500 font-semibold">Qtd</label>
+               <input type="number" {...register(`variants.${index}.stock`)} className="w-full bg-white px-3 py-2 border rounded text-sm" />
+            </div>
+            <div className="col-span-1 flex justify-end pt-6">
+              <button type="button" onClick={() => remove(index)} className="text-gray-400 hover:text-red-500">
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+        ))}
+        {fields.length === 0 && <p className="text-sm text-gray-400 italic text-center p-4">Nenhuma variação adicionada.</p>}
+      </div>
+    </div>
+  );
+};
+
+// --- FORMULÁRIO PRINCIPAL ---
+export function ProductForm() {
+  const { register, control, handleSubmit, setValue, watch, formState: { errors } } = useForm<CreateProductDTO>({
+    defaultValues: { variants: [], images: [] }
+  });
+  
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateFeature, setGateFeature] = useState('');
+  
+  // States de Imagem
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'upload' | 'ai-edit'>('upload');
+  
+  // REF PARA O INPUT DE ARQUIVO (Correção do Bug)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const openGate = (feature: string) => { setGateFeature(feature); setGateOpen(true); };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setPendingFiles([...pendingFiles, ...newFiles]);
+      setPreviewUrls([...previewUrls, ...newPreviews]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    const newFiles = pendingFiles.filter((_, i) => i !== index);
+    const newPreviews = previewUrls.filter((_, i) => i !== index);
+    setPendingFiles(newFiles);
+    setPreviewUrls(newPreviews);
+  };
+
+  // Trigger do clique (A mágica acontece aqui)
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const onSubmit = async (data: CreateProductDTO) => {
+    try {
+      setIsSubmitting(true);
+
+      // 1. Upload Real
+      const uploadedUrls: string[] = [];
+      if (pendingFiles.length > 0) {
+        const uploadPromises = pendingFiles.map(file => FileService.upload(file));
+        const results = await Promise.all(uploadPromises);
+        uploadedUrls.push(...results);
+      }
+
+      // 2. Salvar Produto
+      const payload = {
+        ...data,
+        price: Number(data.price),
+        stockQuantity: Number(data.stockQuantity),
+        images: uploadedUrls
+      };
+
+      await ProductService.create(payload);
+      navigate('/products');
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao conectar com o servidor. Verifique se o backend está rodando.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+      <FeatureGateModal isOpen={gateOpen} onClose={() => setGateOpen(false)} featureName={gateFeature} />
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/products')} className="p-2 hover:bg-gray-100 rounded-full transition">
+            <ArrowLeft size={20} className="text-gray-600" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Novo Produto</h1>
+            <p className="text-gray-500">Cadastro de Catálogo</p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <button 
+            onClick={handleSubmit(onSubmit)} 
+            disabled={isSubmitting}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 font-medium shadow-sm"
+          >
+            {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+            Publicar Produto
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Produto</label>
+              <input {...register('name', { required: 'Nome é obrigatório' })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Imagem de São Jorge 30cm" />
+            </div>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+              <div className="relative">
+                <textarea {...register('description')} rows={6} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Descreva os detalhes do produto..." />
+                <button type="button" onClick={() => openGate('Geração de Texto (GPT-4o)')} className="absolute bottom-3 right-3 flex items-center gap-2 bg-gradient-to-r from-gray-700 to-gray-900 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:shadow-md transition">
+                  <Sparkles size={14} /> Gerar com IA
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$)</label>
+                <input type="number" step="0.01" {...register('price', { required: true })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estoque Total</label>
+                <input type="number" {...register('stockQuantity', { required: true })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+          </div>
+          <VariantsSection control={control} register={register} />
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <ImageIcon size={20} className="text-indigo-600" />
+              Mídia & IA Studio
+            </h3>
+            <div className="flex border-b mb-4">
+              <button type="button" onClick={() => setActiveTab('upload')} className={`flex-1 pb-2 text-sm font-medium ${activeTab === 'upload' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500'}`}>Upload</button>
+              <button type="button" onClick={() => setActiveTab('ai-edit')} className={`flex-1 pb-2 text-sm font-medium ${activeTab === 'ai-edit' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500'}`}>Edição IA</button>
+            </div>
+
+            {activeTab === 'upload' && (
+              <div className="space-y-4">
+                {/* ÁREA DE CLIQUE CORRIGIDA */}
+                <div 
+                  onClick={triggerFileInput}
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition"
+                >
+                  <Upload size={32} className="text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">Arraste fotos ou clique aqui</p>
+                  {/* INPUT OCULTO CONECTADO VIA REF */}
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    multiple 
+                    accept="image/*" 
+                    onChange={handleFileSelect} 
+                  />
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  {previewUrls.map((img, idx) => (
+                    <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border">
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={(e) => { e.stopPropagation(); removeFile(idx); }} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'ai-edit' && (
+              <div className="space-y-4">
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                  <h4 className="text-sm font-bold text-purple-800 mb-2 flex items-center gap-2"><Wand2 size={16} /> Ferramentas Mágicas</h4>
+                  <div className="space-y-3">
+                    <button type="button" onClick={() => openGate('Remoção de Fundo')} className="w-full bg-white border border-purple-200 text-purple-700 py-2 rounded text-sm hover:bg-purple-100 transition flex justify-between px-4">Remover Fundo <span>✂️</span></button>
+                    <div>
+                        <label className="text-xs text-purple-700 font-semibold mb-1 block">Juntar Fotos</label>
+                        <textarea placeholder="Prompt..." className="w-full text-xs p-2 border border-purple-200 rounded mb-2 h-20" />
+                        <button type="button" onClick={() => openGate('Stable Diffusion Merge')} className="w-full bg-purple-600 text-white py-2 rounded text-sm hover:bg-purple-700 transition">Gerar Composição</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+ARQUIVO: ./src/pages/products/ProductsPage.tsx
+================================================
+
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ProductService } from '../../services/ProductService';
+import type { Product } from '../../types/dashboard';
+import { Package, Plus, Search, Edit, Trash2 } from 'lucide-react';
+
+export function ProductsPage() {
+  // Inicializa com array vazio para evitar erro no primeiro render
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await ProductService.getAll();
+      
+      // BLINDAGEM: Verifica se é realmente um array antes de setar
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        console.error('API retornou formato inválido (esperado array):', data);
+        setProducts([]); // Fallback para lista vazia
+      }
+    } catch (error) {
+      console.error('Erro ao carregar produtos', error);
+      setProducts([]); // Fallback em caso de erro de rede
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Garante que products é um array antes de filtrar
+  const safeProducts = Array.isArray(products) ? products : [];
+
+  const filteredProducts = safeProducts.filter(p => 
+    p.name ? p.name.toLowerCase().includes(searchTerm.toLowerCase()) : false
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Produtos</h1>
+          <p className="text-gray-500">Gerencie o catálogo da loja</p>
+        </div>
+        <button 
+          onClick={() => navigate('/products/new')}
+          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+        >
+          <Plus size={20} />
+          Novo Produto
+        </button>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <input 
+            type="text"
+            placeholder="Buscar por nome..." 
+            className="w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {loading ? (
+          <div className="p-8 text-center text-gray-500">Carregando catálogo...</div>
+        ) : (
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="p-4 text-sm font-semibold text-gray-600">Produto</th>
+                <th className="p-4 text-sm font-semibold text-gray-600">Preço</th>
+                <th className="p-4 text-sm font-semibold text-gray-600">Estoque</th>
+                <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
+                <th className="p-4 text-sm font-semibold text-gray-600 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredProducts.length === 0 ? (
+                 <tr>
+                    <td colSpan={5} className="p-8 text-center text-gray-500">
+                        Nenhum produto encontrado.
+                    </td>
+                 </tr>
+              ) : (
+                filteredProducts.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50 transition">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
+                          <Package size={20} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800">{product.name}</p>
+                          <p className="text-xs text-gray-500 truncate max-w-[200px]">{product.description}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 font-medium text-gray-700">
+                      {product.price ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price) : 'R$ 0,00'}
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        (product.stockQuantity || 0) < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {product.stockQuantity || 0} un
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-block w-2 h-2 rounded-full ${product.active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    </td>
+                    <td className="p-4 text-right">
+                      <button className="text-gray-400 hover:text-indigo-600 mx-2 transition">
+                        <Edit size={18} />
+                      </button>
+                      <button className="text-gray-400 hover:text-red-600 transition">
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+ARQUIVO: ./src/pages/auth/LoginPage.tsx
+================================================
+
+import { useForm } from 'react-hook-form';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../api/axios';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+
+export function LoginPage() {
+  const { register, handleSubmit } = useForm();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
+
+  const onSubmit = async (data: any) => {
+    try {
+      const res = await api.post('/auth/login', data);
+      login(res.data.token);
+      navigate('/');
+    } catch (err) {
+      setError('Credenciais inválidas');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Acesso Administrativo</h2>
+        
+        {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{error}</div>}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              {...register('email')}
+              type="email"
+              className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="admin@atelie.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Senha</label>
+            <input
+              {...register('password')}
+              type="password"
+              className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="••••••"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+          >
+            Entrar
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+ARQUIVO: ./src/pages/dashboard/Home.tsx
+================================================
+
+import React, { useEffect, useState } from 'react';
+import { DashboardService } from '../../services/DashboardService';
+// CORREÇÃO AQUI: 'import type'
+import type { DashboardSummary } from '../../types/dashboard';
+
+export function DashboardHome() {
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [automationEnabled, setAutomationEnabled] = useState(false);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [summaryData, autoStatus] = await Promise.all([
+        DashboardService.getSummary(),
+        DashboardService.getAutomationStatus()
+      ]);
+      setSummary(summaryData);
+      setAutomationEnabled(autoStatus.enabled);
+    } catch (error) {
+      console.error('Erro ao carregar dashboard', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleAutomation = async () => {
+    try {
+      await DashboardService.toggleAutomation(!automationEnabled);
+      setAutomationEnabled(!automationEnabled);
+    } catch (error) {
+      alert('Erro ao alterar automação');
+    }
+  };
+
+  if (loading) return <div className="p-8 text-gray-500">Carregando painel de controle...</div>;
+
+  return (
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <header className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Visão Geral</h1>
+          <p className="text-gray-500">Ateliê Filhos de Aruanda</p>
+        </div>
+        
+        <div className="flex items-center gap-4 bg-white p-3 rounded-lg shadow-sm">
+          <span className="text-sm font-medium text-gray-600">Automação (n8n/Webhooks)</span>
+          <button
+            onClick={handleToggleAutomation}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              automationEnabled ? 'bg-green-500' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                automationEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
+          <h3 className="text-gray-500 text-sm font-medium uppercase">Vendas Totais (Pagas)</h3>
+          <p className="text-3xl font-bold text-gray-800 mt-2">
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(summary?.totalSales || 0)}
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+          <h3 className="text-gray-500 text-sm font-medium uppercase">Aguardando Envio</h3>
+          <p className="text-3xl font-bold text-gray-800 mt-2">
+            {summary?.pendingOrders || 0}
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500">
+          <h3 className="text-gray-500 text-sm font-medium uppercase">Produtos com Estoque Baixo</h3>
+          <p className="text-3xl font-bold text-red-600 mt-2">
+            {summary?.lowStockAlerts || 0}
+          </p>
+          <span className="text-xs text-gray-400">Abaixo de 10 unidades</span>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Ações Rápidas</h2>
+        <div className="flex gap-4">
+            <button 
+                onClick={() => DashboardService.triggerTest()}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium">
+                🔔 Testar Alerta de Estoque (n8n)
+            </button>
+            <button className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition text-sm font-medium">
+                📦 Criar Novo Produto
+            </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,56 +1,38 @@
 services:
-  api:
-    build: ./backend
-    container_name: atelie_api
-    ports:
-      - "${SERVER_PORT}:8080"
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - DB_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASSWORD}
-      - DB_POOL_SIZE=${DB_POOL_SIZE}
-      
-      # Segurança & Tokens
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
-      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-      
-      # Integrações
-      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
-      
-      # CORREÇÃO: Credenciais do Admin (Lidas do .env)
-      - ADMIN_EMAIL=${ADMIN_EMAIL}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      
-    networks:
-      - ecommerce_default
-
   db:
     image: postgres:16-alpine
     container_name: atelie_db
+    env_file:
+      - .env
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      TZ: ${TZ}
     ports:
       - "${DB_PORT}:5432"
     volumes:
       - ecommerce_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - ecommerce_default
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atelie_api
+    env_file:
+      - .env
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    volumes:
+      - ./backend/uploads:${UPLOAD_DIR}
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   ecommerce_postgres_data:
-
-networks:
-  ecommerce_default:
-    driver: bridge

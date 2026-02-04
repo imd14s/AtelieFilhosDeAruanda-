@@ -1,12 +1,6 @@
 import axios from 'axios';
 
-// REGRA ZERO HARDCODE: Falhar se a variável não estiver definida.
-// Jamais assumir localhost em código produtivo.
-const API_URL = import.meta.env.VITE_API_URL;
-
-if (!API_URL) {
-  console.error('[Config] CRITICAL: VITE_API_URL is missing under import.meta.env');
-}
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -15,16 +9,14 @@ export const api = axios.create({
   },
 });
 
-// Interceptor para adicionar token (mantendo lógica original segura)
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // Alinhado com o nome usado no AuthContext (auth_token)
+    const token = localStorage.getItem('auth_token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );

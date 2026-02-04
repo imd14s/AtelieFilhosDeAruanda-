@@ -51,17 +51,17 @@
 - [x] Upload de imagem unificado (ProductController → MediaStorageService)
 - [ ] **Pendente:** Extrair lógica de reflexão duplicada (MediaStorageService + PaymentService) para util compartilhado (ex.: ReflectionPropertyUtils)
 - [ ] **Pendente:** Unificar ou renomear as duas interfaces OrderRepository (domain vs infrastructure)
-- [ ] **Pendente:** Mover lógica de update de produto do ProductController para ProductService (TODO no código)
+- [ ] **Pendente:** Mover lógica de update de produto do ProductController para ProductService (TODO confirmado no código: `src/main/java/com/atelie/ecommerce/api/catalog/product/ProductController.java`)
 
 ### 2.4 Infra e ambiente
 
-- [ ] Definir/documentar variáveis de ambiente obrigatórias (JWT_SECRET, JWT_EXPIRATION_MS, WEBHOOK_SECRET, UPLOAD_DIR, MAX_UPLOAD_MB, ALLOWED_IMAGE_MIME, ADMIN_PASSWORD, etc.)
+- [ ] Definir/documentar variáveis de ambiente obrigatórias (JWT_SECRET, JWT_EXPIRATION_MS, WEBHOOK_SECRET, UPLOAD_DIR, MAX_UPLOAD_MB, ALLOWED_IMAGE_MIME, ADMIN_PASSWORD, CORS_ALLOWED_ORIGINS).
 - [ ] Garantir que CORS (CORS_ALLOWED_ORIGINS / CORS_ALLOWED_ORIGIN_PATTERNS) esteja configurado para prod
 - [ ] Flyway: migrations aplicadas e sem conflito (V1, V2, V3, V4 presentes)
 
 ### 2.5 Testes e qualidade
 
-- [ ] Cobertura de testes (unitários/integração) conforme meta do projeto
+- [ ] **CRÍTICO:** Diretório `src/test` NÃO EXISTE. Cobertura atual: 0%. Prioridade máxima para evitar regressões.
 - [ ] Nenhum secret ou URL sensível em repositório (apenas env)
 
 ---
