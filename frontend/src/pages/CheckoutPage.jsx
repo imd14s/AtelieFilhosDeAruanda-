@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, CreditCard, Truck, CheckCircle, AlertCircle } from 'lucide-react';
+import { ChevronLeft, CreditCard, ShoppingBag, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { storeService } from '../services/storeService';
 import SEO from '../components/SEO';
 
@@ -11,7 +11,7 @@ const CheckoutPage = () => {
 
     const [cart, setCart] = useState(storeService.cart.get());
     const [loading, setLoading] = useState(false);
-    const [orderComplete, setOrderComplete] = useState(null);
+    const [successOrder, setSuccessOrder] = useState(null);
 
     const [formData, setFormData] = useState({
         email: '',
@@ -35,18 +35,18 @@ const CheckoutPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-
         try {
-            const orderData = {
-                customer: formData,
-                items: cart.items,
-                shipping: shippingSelected,
-                total: total
+            const order = {
+                items: cart.items.map(i => ({ productId: i.id, quantity: i.quantity })),
+                customerEmail: formData.email,
+                shippingAddress: `${formData.endereco}, ${formData.cidade} - ${formData.estado} (CEP: ${formData.cep})`,
+                totalAmount: total,
+                paymentMethod: formData.metodoPagamento
             };
 
-            const result = await storeService.createOrder(orderData);
-            setOrderComplete(result || { id: 'AUR-' + Math.random().toString(36).substr(2, 9).toUpperCase() });
-            storeService.cart.clear();
+            const result = await storeService.createOrder(order);
+            setSuccessOrder(result);
+            storeService.cart.clear(); // Limpa carrinho ao finalizar
         } catch (error) {
             console.error(error);
             alert("Erro ao processar o pedido. Tente novamente.");
@@ -55,31 +55,32 @@ const CheckoutPage = () => {
         }
     };
 
-    if (orderComplete) {
+    if (successOrder) {
         return (
-            <div className="min-h-screen bg-[#F7F7F4] flex flex-col items-center justify-center p-4 text-center">
+            <div className="min-h-screen bg-[var(--branco-off-white)] flex flex-col items-center justify-center p-4 text-center">
                 <SEO title="Pedido Confirmado" />
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-8 animate-bounce">
                     <CheckCircle size={40} />
                 </div>
-                <h1 className="font-playfair text-4xl text-[#0f2A44] mb-4">Que o Axé te acompanhe!</h1>
-                <p className="font-lato text-base text-[#0f2A44]/60 mb-8 max-w-md">
-                    Seu pedido <strong>#{orderComplete.id || orderComplete.orderId}</strong> foi recebido com sucesso.
+                <h1 className="font-playfair text-4xl text-[var(--azul-profundo)] mb-4">Que o Axé te acompanhe!</h1>
+                <p className="font-lato text-base text-[var(--azul-profundo)]/60 mb-8 max-w-md">
+                    Seu pedido <strong>#{successOrder.id || successOrder.orderId}</strong> foi recebido com sucesso.
                     Você receberá um e-mail com os detalhes e o código de rastreio em breve.
                 </p>
-                <Link to="/" className="bg-[#0f2A44] text-white px-10 py-4 font-lato text-xs uppercase tracking-widest hover:bg-[#C9A24D] transition-all">
-                    Voltar para a Início
+                <Link to="/" className="bg-[var(--azul-profundo)] text-white px-10 py-4 font-lato text-xs uppercase tracking-widest hover:bg-[var(--dourado-suave)] transition-all">
+                    Voltar para o Início
                 </Link>
             </div>
         );
     }
 
-    if (cart.items.length === 0 && !orderComplete) {
+
+    if (cart.items.length === 0 && !successOrder) {
         return (
-            <div className="min-h-screen bg-[#F7F7F4] flex flex-col items-center justify-center p-4">
+            <div className="min-h-screen bg-[var(--branco-off-white)] flex flex-col items-center justify-center p-4">
                 <SEO title="Checkout" />
-                <p className="font-playfair text-xl text-[#0f2A44] mb-8">Sua sacola está vazia.</p>
-                <Link to="/store" className="text-[#C9A24D] font-lato text-xs uppercase tracking-widest border-b border-[#C9A24D]">Ir para a Loja</Link>
+                <p className="font-playfair text-xl text-[var(--azul-profundo)] mb-8">Sua sacola está vazia.</p>
+                <Link to="/store" className="text-[var(--dourado-suave)] font-lato text-xs uppercase tracking-widest border-b border-[var(--dourado-suave)]">Ir para a Loja</Link>
             </div>
         );
     }
@@ -231,9 +232,9 @@ const CheckoutPage = () => {
                                 <button
                                     onClick={handleSubmit}
                                     disabled={loading || !shippingSelected || !formData.email || !formData.nome}
-                                    className="w-full bg-[#0f2A44] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[#C9A24D] transition-all disabled:opacity-30 flex items-center justify-center gap-3"
+                                    className="w-full bg-[var(--azul-profundo)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3"
                                 >
-                                    {loading ? <Loader2 className="animate-spin" size={20} /> : 'Finalizar Pedido'}
+                                    {loading ? <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span> : 'Finalizar Pedido'}
                                 </button>
                             </div>
 

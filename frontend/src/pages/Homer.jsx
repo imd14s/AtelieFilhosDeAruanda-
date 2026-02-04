@@ -25,9 +25,9 @@ const Home = () => {
   }, []);
 
   const categories = [
-    { name: 'Velas', img: 'https://images.unsplash.com/photo-1603006905393-c36140d0469b?q=80&w=500', path: '/store?categoria=velas' },
-    { name: 'Guias', img: 'https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?q=80&w=500', path: '/store?categoria=guias' },
-    { name: 'Ervas', img: 'https://images.unsplash.com/photo-1591185520173-097585800078?q=80&w=500', path: '/store?categoria=ervas' },
+    { name: 'Velas', img: 'https://images.unsplash.com/photo-1596435764491-9e79e6423ccf?q=80&w=500', path: '/store?categoria=velas' },
+    { name: 'Guias', img: 'https://images.unsplash.com/photo-1605282910795-3ca373976865?q=80&w=500', path: '/store?categoria=guias' },
+    { name: 'Ervas', img: 'https://images.unsplash.com/photo-1517191434949-5e90cd67d2b6?q=80&w=500', path: '/store?categoria=ervas' },
   ];
 
   return (

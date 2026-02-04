@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { storeService } from '../services/storeService';
 import SEO from '../components/SEO';
-import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw } from 'lucide-react';
+import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft } from 'lucide-react';
 
 const ProductPage = () => {
   const { id } = useParams();
@@ -14,7 +14,7 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
-      const data = await storeService.getProductBySlug(id);
+      const data = await storeService.getProductById(id);
       setProduct(data);
       setLoading(false);
     };

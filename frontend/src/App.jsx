@@ -14,7 +14,7 @@ import ScrollToTop from "./components/ScrollToTop";
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#F7F7F4] flex flex-col font-lato text-[#0f2A44]">
+      <div className="min-h-screen bg-[var(--branco-off-white)] flex flex-col font-lato text-[var(--azul-profundo)]">
         <ScrollToTop />
         <Header />
 

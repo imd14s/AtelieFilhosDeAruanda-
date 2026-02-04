@@ -52,9 +52,9 @@ const AboutPage = () => {
           <div className="relative w-full md:w-1/2">
             <div className="aspect-[3/4] overflow-hidden shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1515831332135-d4e94a091d03?q=80&w=800"
+                src="https://images.unsplash.com/photo-1506466010722-395aa2bef877?q=80&w=800"
                 alt="Processo artesanal"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
               />
             </div>
             {/* Detalhe Decorativo */}
