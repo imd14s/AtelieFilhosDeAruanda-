@@ -41,7 +41,7 @@ public class ProductController {
         }
 
         if (categoryId != null) {
-            return ResponseEntity.ok(productRepository.findByCategoryId(categoryId));
+            return ResponseEntity.ok(productRepository.findByCategory_Id(categoryId));
         }
 
         return ResponseEntity.ok(productRepository.findAll());

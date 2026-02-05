@@ -34,6 +34,8 @@ public class PaymentSettingsController {
                 provider.setConfig(payload.getConfig());
             if (payload.getInstallments() != null)
                 provider.setInstallments(payload.getInstallments());
+            if (payload.getEnabled() != null)
+                provider.setEnabled(payload.getEnabled());
             return ResponseEntity.ok(repository.save(provider));
         }).orElse(ResponseEntity.notFound().build());
     }

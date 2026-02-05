@@ -35,6 +35,8 @@ public class ShippingSettingsController {
                 provider.setRules(payload.getRules());
             if (payload.getHeaders() != null)
                 provider.setHeaders(payload.getHeaders());
+            if (payload.getEnabled() != null)
+                provider.setEnabled(payload.getEnabled());
             return ResponseEntity.ok(repository.save(provider));
         }).orElse(ResponseEntity.notFound().build());
     }
