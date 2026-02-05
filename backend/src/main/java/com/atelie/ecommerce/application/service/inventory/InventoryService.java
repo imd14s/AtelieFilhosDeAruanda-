@@ -11,9 +11,12 @@ import java.util.UUID;
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
+    private final com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository variantRepository;
 
-    public InventoryService(InventoryRepository inventoryRepository) {
+    public InventoryService(InventoryRepository inventoryRepository,
+            com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository variantRepository) {
         this.inventoryRepository = inventoryRepository;
+        this.variantRepository = variantRepository;
     }
 
     /**
@@ -21,18 +24,25 @@ public class InventoryService {
      * registra movimentação por VARIANTE com contexto (reason/source).
      */
     public void addMovement(UUID variantId,
-                            MovementType type,
-                            Integer quantity,
-                            String reason,
-                            String source) {
+            MovementType type,
+            Integer quantity,
+            String reason,
+            String source) {
 
-        if (variantId == null) throw new IllegalArgumentException("variantId is required");
-        if (type == null) throw new IllegalArgumentException("type is required");
-        if (quantity == null || quantity <= 0) throw new IllegalArgumentException("quantity must be > 0");
+        if (variantId == null)
+            throw new IllegalArgumentException("variantId is required");
+        if (type == null)
+            throw new IllegalArgumentException("type is required");
+        if (quantity == null || quantity <= 0)
+            throw new IllegalArgumentException("quantity must be > 0");
+
+        var variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new IllegalArgumentException("Variant not found: " + variantId));
 
         InventoryMovementEntity m = new InventoryMovementEntity();
         // Esperado pelo projeto: variantId como UUID.
         m.setVariantId(variantId);
+        m.setProduct(variant.getProduct()); // Fix: Set duplicate/denormalized product reference
         m.setType(type);
         m.setQuantity(quantity);
 
@@ -48,16 +58,19 @@ public class InventoryService {
      * Alias esperado pelo InventoryController.
      */
     public int getStock(UUID variantId) {
-        if (variantId == null) throw new IllegalArgumentException("variantId is required");
+        if (variantId == null)
+            throw new IllegalArgumentException("variantId is required");
         return inventoryRepository.auditCalculatedStockByVariant(variantId);
     }
 
     /**
      * Pequeno helper para evitar hard-fail caso um campo opcional não exista.
-     * Isso mantém produção estável e permite evolução incremental sem quebrar build.
+     * Isso mantém produção estável e permite evolução incremental sem quebrar
+     * build.
      */
     private static void trySet(Object target, String methodName, Object value) {
-        if (value == null) return;
+        if (value == null)
+            return;
         try {
             target.getClass().getMethod(methodName, value.getClass()).invoke(target, value);
         } catch (Exception ignored) {
