@@ -30,7 +30,20 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductEntity>> getAll() {
+    public ResponseEntity<?> getAll(
+            @RequestParam(required = false) String slug,
+            @RequestParam(required = false) UUID categoryId) {
+
+        if (slug != null) {
+            return productRepository.findBySlug(slug)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        }
+
+        if (categoryId != null) {
+            return ResponseEntity.ok(productRepository.findByCategoryId(categoryId));
+        }
+
         return ResponseEntity.ok(productRepository.findAll());
     }
 

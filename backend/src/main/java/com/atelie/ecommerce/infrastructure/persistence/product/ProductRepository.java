@@ -12,9 +12,13 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
-    
+
     Page<ProductEntity> findByActiveTrue(Pageable pageable);
 
     @Query("SELECT p FROM ProductEntity p WHERE p.stockQuantity <= 5 AND p.alertEnabled = true")
     List<ProductEntity> findCriticalStock();
+
+    java.util.Optional<ProductEntity> findBySlug(String slug);
+
+    List<ProductEntity> findByCategoryId(UUID categoryId);
 }
