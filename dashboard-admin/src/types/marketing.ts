@@ -2,24 +2,20 @@ export interface Coupon {
     id: string;
     code: string;
     type: 'PERCENTAGE' | 'FIXED';
-    value: number; // 10% or R$ 10.00
-    minValue?: number; // Pedido mínimo
-    maxDiscount?: number; // Limite de desconto
-    startDate: string;
-    endDate?: string;
-    active: boolean;
+    value: number;
     usageCount: number;
-    usageLimit?: number;
+    usageLimit: number;
+    active: boolean;
+}
+
+export interface AbandonedCartTrigger {
+    delayMinutes: number;
+    subject: string;
 }
 
 export interface AbandonedCartSettings {
-    id: string;
     enabled: boolean;
-    triggers: {
-        delayMinutes: number; // 60 = 1 hora
-        subject: string;
-        templateId: string;
-    }[];
+    triggers: AbandonedCartTrigger[];
 }
 
-export type CreateCouponDTO = Omit<Coupon, 'id' | 'usageCount'>;
+export type CreateCouponDTO = Omit<Coupon, 'id' | 'usageCount' | 'active'>;

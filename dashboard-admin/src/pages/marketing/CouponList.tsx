@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Ticket, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { MarketingService } from '../../services/MarketingService';
-import type { Coupon } from '../../types/marketing';
+import type { Coupon, CreateCouponDTO } from '../../types/marketing';
+import { CouponModal } from './CouponModal';
 
 export function CouponList() {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         loadCoupons();
@@ -21,6 +23,11 @@ export function CouponList() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleCreate = async (dto: CreateCouponDTO) => {
+        await MarketingService.createCoupon(dto);
+        await loadCoupons();
     };
 
     const handleToggle = async (id: string, currentStatus: boolean) => {
@@ -49,7 +56,10 @@ export function CouponList() {
                     <h1 className="text-2xl font-bold text-gray-800">Cupons de Desconto</h1>
                     <p className="text-gray-500">Crie campanhas promocionais</p>
                 </div>
-                <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                >
                     <Plus size={20} />
                     Criar Cupom
                 </button>
@@ -69,7 +79,6 @@ export function CouponList() {
                             <tr>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Código</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Desconto</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Validade</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Usos</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600 text-right">Ações</th>
@@ -81,9 +90,6 @@ export function CouponList() {
                                     <td className="p-4 font-mono font-bold text-indigo-700">{coupon.code}</td>
                                     <td className="p-4 text-gray-700">
                                         {coupon.type === 'PERCENTAGE' ? `${coupon.value}%` : `R$ ${coupon.value.toFixed(2)}`}
-                                    </td>
-                                    <td className="p-4 text-sm text-gray-500">
-                                        {coupon.endDate ? new Date(coupon.endDate).toLocaleDateString() : 'Indeterminado'}
                                     </td>
                                     <td className="p-4 text-sm text-gray-500">
                                         {coupon.usageCount} {coupon.usageLimit ? `/ ${coupon.usageLimit}` : ''}
@@ -104,6 +110,12 @@ export function CouponList() {
                     </table>
                 )}
             </div>
+
+            <CouponModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleCreate}
+            />
         </div>
     );
 }

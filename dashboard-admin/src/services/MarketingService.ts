@@ -26,7 +26,7 @@ export const MarketingService = {
         return data;
     },
 
-    updateAbandonedCartSettings: async (settings: Partial<AbandonedCartSettings>) => {
+    updateAbandonedCartSettings: async (settings: AbandonedCartSettings) => {
         return api.put('/marketing/abandoned-carts', settings);
     }
 };
