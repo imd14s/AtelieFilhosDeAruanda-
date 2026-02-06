@@ -18,6 +18,13 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+# --- SEGURANÇA (JWT) ---
+# Em produção, estas variáveis DEVEM ser providas pelo Ambiente (Docker/K8s).
+# Se ausentes, o Spring falhará corretamente com "Could not resolve placeholder".
+
+# --- MEDIA / UPLOADS ---
+# --- INTEGRAÇÕES ---
+
 management:
   endpoints:
     web:
