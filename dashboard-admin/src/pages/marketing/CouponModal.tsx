@@ -69,14 +69,14 @@ export function CouponModal({ isOpen, onClose, onSave }: CouponModalProps) {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                {formData.type === 'PERCENTAGE' ? 'Porcentagem' : 'Valor'}
+                                {formData.type === 'PERCENTAGE' ? 'Porcentagem (%)' : 'Valor (R$)'}
                             </label>
                             <input
                                 required
                                 type="number"
                                 step="0.01"
                                 value={formData.value}
-                                onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
+                                onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
                                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                             />
                         </div>

@@ -1,0 +1,101 @@
+Manual de Prontidão para Produção: Ateliê Filhos de Aruanda
+Data: 05/02/2026 Responsável: Antigravity AI Versão: 1.0 (Pré-Produção)
+
+1. Resumo Executivo
+O sistema encontra-se estável para a primeira fase de produção. Todas as funcionalidades críticas (catálogo, checkout, autenticação) foram testadas.
+
+Status de Segurança: 🟢 Seguro Status de Mídia: 🟡 Armazenamento em Disco (Requer volume persistente) Status de Configuração: 🟢 Flexível (JSONB)
+
+2. Funcionalidades do Projeto
+O backend oferece uma API REST completa para operar a loja:
+
+Catálogo de Produtos
+Listagem pública com filtros (/api/products).
+Detalhes d e produto e variantes (/api/products/{id}).
+Categorias (/api/categories).
+Checkout e Pedidos
+Carrinho de compras (gerenciado no front, finalizado no back).
+Criação de pedidos com itens, frete e método de pagamento.
+Histórico de pedidos (Admin).
+Agendador de Carrinho Abandonado (recuperação de vendas).
+Gestão de Estoque
+Controle automático de saldo ao criar pedido.
+Ajuste manual e movimentações (/api/inventory).
+Autenticação e Segurança
+Login e Registro de usuários (/api/auth).
+Proteção via JWT (JSON Web Tokens).
+Perfis de acesso (USER / ADMIN).
+Integrações e Webhooks
+Callbacks de pagamento (Mercado Pago).
+Cálculo de frete dinâmico.
+3. Verificação de Mídia (Imagens e Vídeos)
+Pergunta: "É estritamente essencial a confirmação de que o db está suportando salvamento de imagens e vídeos?"
+
+Resposta Técnica: O banco de dados (H2/PostgreSQL) NÃO armazena o arquivo binário da imagem/vídeo. Ele armazena apenas metadados (nome, tipo, tamanho, quem enviou).
+
+Os arquivos físicos são salvos no Sistema de Arquivos do Servidor (Disco).
+
+Código: MediaStorageService.storeImage usa Files.copy(inputStream, target).
+Local: Definido pela variável de ambiente UPLOAD_DIR.
+⚠️ Atenção para Produção (Docker): Para que as imagens não sumam ao reiniciar o container, você DEVE configurar um volume no 
+docker-compose.yml
+:
+
+yaml
+volumes:
+  - ./uploads_data:/app/uploads
+E configurar a variável: UPLOAD_DIR=/app/uploads
+
+Se essa configuração for feita, o sistema suporta perfeitamente o salvamento de milhares de imagens e vídeos, limitado apenas pelo espaço em disco do servidor, o que é mais eficiente do que salvar no banco de dados.
+
+4. Guia de Configuração (Frete e Pagamento)
+O sistema utiliza uma arquitetura moderna de Configuração Dinâmica (JSONB). Isso significa que você não precisa alterar código para mudar as chaves de API; basta enviar um JSON para o endpoint de administração.
+
+Endpoint de Configuração
+POST /api/admin/provider-configs Auth: Requer Token JWT de Admin.
+
+Exemplo: Configurar Pagamento (Mercado Pago)
+Para configurar as credenciais do Mercado Pago, envie o seguinte JSON:
+
+json
+{
+  "providerId": "uuid-do-mercado-pago", 
+  "configJson": "{\"publicKey\": \"PUB_KEY_123\", \"accessToken\": \"ACCESS_TOKEN_ABC\"}",
+  "environment": "PRODUCTION",
+  "version": 1
+}
+Onde pegar as chaves: No painel de desenvolvedor do Mercado Pago.
+Provider ID: Consulte na tabela service_providers (busque onde code = MERCADO_PAGO).
+Exemplo: Configurar Frete (Melhor Envio / Correios)
+Para configurar, o processo é o mesmo. O conteúdo do configJson depende do provedor específico (ex: Token de API, CEP de origem).
+
+json
+{
+  "providerId": "uuid-do-melhor-envio",
+  "configJson": "{\"apiToken\": \"SEU_TOKEN_AQUI\", \"originCep\": \"01001-000\"}",
+  "environment": "PRODUCTION"
+}
+5. Auditoria de Segurança (Brechas e Correções)
+Realizei uma varredura minuciosa no código e configurações:
+
+✅ Pontos Fortes (Seguro)
+JWT Stateless: Não usamos sessões no servidor, o que protege contra ataques de sequestro de sessão comuns.
+CORS Restrito: A configuração de 
+SecurityConfig
+ permite definir origens (ex: https://sualoja.com.br) via variável de ambiente, bloqueando sites maliciosos.
+Senhas: Todas as senhas são hashadas com BCrypt antes de salvar (PasswordEncoder).
+Tratamento de Erro: O 
+GlobalExceptionHandler
+ agora trata BadCredentialsException, evitando vazar stacktraces de erro 500 no login incorreto.
+⚠️ Pontos de Atenção (Ações Recomendadas)
+Chaves de API em Variáveis:
+Evite commitar chaves como JWT_SECRET no Git. Em produção, injete-as via 
+.env
+ ou gerenciador de segredos da nuvem.
+HTTPS (SSL):
+O backend fala HTTP. O HTTPS deve ser provido pelo Load Balancer (Nginx/Cloudflare) na frente do container Docker. O backend não faz terminação SSL nativa.
+Limitação de Tamanho de Upload:
+O sistema respeita MAX_UPLOAD_MB. Certifique-se de configurar esse valor (ex: 10) para evitar ataques de DoS com arquivos gigantes.
+Conclusão: O sistema está pronto tecnicamente. A segurança depende agora da "higiene" das credenciais (não vazar 
+.env
+) e da configuração correta do servidor (Firewall/HTTPS).

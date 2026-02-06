@@ -9,13 +9,13 @@ export interface Coupon {
 }
 
 export interface AbandonedCartTrigger {
-    delayMinutes: number;
-    subject: string;
+    delayMinutes?: number;
+    subject?: string;
 }
 
 export interface AbandonedCartSettings {
-    enabled: boolean;
-    triggers: AbandonedCartTrigger[];
+    enabled?: boolean;
+    triggers?: AbandonedCartTrigger[];
 }
 
 export type CreateCouponDTO = Omit<Coupon, 'id' | 'usageCount' | 'active'>;

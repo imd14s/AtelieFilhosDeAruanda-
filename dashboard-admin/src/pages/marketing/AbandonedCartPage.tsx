@@ -45,7 +45,7 @@ export function AbandonedCartPage() {
     };
 
     if (loading) return <div className="p-8 text-center text-gray-500">Carregando configurações...</div>;
-    if (!settings) return <div className="p-8 text-center text-red-500">Erro ao carregar módulo.</div>;
+    if (!settings || !settings.triggers) return <div className="p-8 text-center text-red-500">Erro ao carregar módulo ou dados incompletos.</div>;
 
     return (
         <div className="space-y-6">
@@ -59,7 +59,7 @@ export function AbandonedCartPage() {
                         <span className="text-sm font-medium text-gray-700">Módulo Ativo</span>
                         <input
                             type="checkbox"
-                            checked={settings.enabled}
+                            checked={settings?.enabled ?? false}
                             onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
                             className="w-10 h-5 bg-gray-200 rounded-full appearance-none checked:bg-indigo-600 relative transition-colors cursor-pointer before:content-[''] before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 before:transition-transform checked:before:translate-x-5"
                         />
@@ -76,43 +76,49 @@ export function AbandonedCartPage() {
             </div>
 
             <div className="grid gap-6">
-                {settings.triggers.map((trigger, index) => (
-                    <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                                <Clock size={20} />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-gray-800">Envio #{index + 1}</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-sm text-gray-500 text-nowrap">Disparar após</span>
-                                    <input
-                                        type="number"
-                                        value={trigger.delayMinutes}
-                                        onChange={(e) => updateTrigger(index, 'delayMinutes', parseInt(e.target.value))}
-                                        className="w-20 p-1 border rounded text-sm text-center"
-                                    />
-                                    <span className="text-sm text-gray-500 text-nowrap">minutos de inatividade</span>
+                {Array.isArray(settings.triggers) && settings.triggers.length > 0 ? (
+                    settings.triggers.map((trigger, index) => (
+                        <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
+                                    <Clock size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-gray-800">Envio #{index + 1}</h3>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-sm text-gray-500 text-nowrap">Disparar após</span>
+                                        <input
+                                            type="number"
+                                            value={trigger.delayMinutes ?? 0}
+                                            onChange={(e) => updateTrigger(index, 'delayMinutes', parseInt(e.target.value) || 0)}
+                                            className="w-20 p-1 border rounded text-sm text-center"
+                                        />
+                                        <span className="text-sm text-gray-500 text-nowrap">minutos de inatividade</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-xs font-semibold text-gray-500 uppercase">Assunto do Email</label>
-                                <div className="flex gap-2 items-center mt-1">
-                                    <Mail size={16} className="text-gray-400" />
-                                    <input
-                                        value={trigger.subject}
-                                        onChange={(e) => updateTrigger(index, 'subject', e.target.value)}
-                                        className="flex-1 p-2 border rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        placeholder="Ex: Você esqueceu algo em seu carrinho!"
-                                    />
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase">Assunto do Email</label>
+                                    <div className="flex gap-2 items-center mt-1">
+                                        <Mail size={16} className="text-gray-400" />
+                                        <input
+                                            value={trigger.subject ?? ''}
+                                            onChange={(e) => updateTrigger(index, 'subject', e.target.value)}
+                                            className="flex-1 p-2 border rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            placeholder="Ex: Você esqueceu algo em seu carrinho!"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    ))
+                ) : (
+                    <div className="p-8 text-center text-gray-400 bg-white rounded-xl border border-dashed border-gray-200">
+                        Nenhum gatilho configurado.
                     </div>
-                ))}
+                )}
             </div>
         </div>
     );

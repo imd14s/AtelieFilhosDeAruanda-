@@ -38,13 +38,25 @@ export function ProductsPage() {
   const handleToggleAlert = async (id: string) => {
     try {
       await ProductService.toggleAlert(id);
-      // O ideal seria atualizar apenas o item no estado, mas por simplicidade recarregamos
-      // await loadProducts(); 
-      // Ou melhor, feedback visual
-      alert('Alerta de estoque atualizado!');
+      await loadProducts();
     } catch (error) {
       console.error('Erro ao atualizar alerta', error);
       alert('Erro ao atualizar alerta');
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/products/edit/${id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) return;
+    try {
+      await ProductService.delete(id);
+      await loadProducts();
+    } catch (error) {
+      console.error('Erro ao excluir produto', error);
+      alert('Erro ao excluir produto. Verifique o console.');
     }
   };
 
@@ -139,10 +151,18 @@ export function ProductsPage() {
                       >
                         <Bell size={18} />
                       </button>
-                      <button className="text-gray-400 hover:text-indigo-600 transition">
+                      <button
+                        onClick={() => handleEdit(product.id)}
+                        className="text-gray-400 hover:text-indigo-600 transition"
+                        title="Editar Produto"
+                      >
                         <Edit size={18} />
                       </button>
-                      <button className="text-gray-400 hover:text-red-600 transition">
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        className="text-gray-400 hover:text-red-600 transition"
+                        title="Excluir Produto"
+                      >
                         <Trash2 size={18} />
                       </button>
                     </td>
