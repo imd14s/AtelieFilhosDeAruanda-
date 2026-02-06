@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import SEO from "../components/SEO";
+import { storeService } from "../services/storeService";
 import { Search, Loader2, Wind } from "lucide-react";
 
 const SearchPage = () => {
@@ -11,7 +12,6 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Alterar no useEffect de SearchPage.jsx
     const performSearch = async () => {
       setLoading(true);
       try {
@@ -32,6 +32,7 @@ const SearchPage = () => {
         setLoading(false);
       }
     };
+    performSearch();
   }, [query]);
 
   return (

@@ -21,11 +21,14 @@ export const storeService = {
   /**
    * Busca lista de produtos com filtros opcionais.
    * Suporta paginação se o backend retornar objeto 'content'.
+   * Filtros suportados: categoryId, slug, sort, search
    */
   getProducts: async (filters = {}) => {
     try {
       const params = new URLSearchParams();
-      if (filters.category) params.append('categoryId', filters.category);
+      if (filters.categoryId) params.append('categoryId', filters.categoryId);
+      if (filters.category) params.append('categoryId', filters.category); // Backward compatibility
+      if (filters.slug) params.append('slug', filters.slug);
       if (filters.sort) params.append('sort', filters.sort);
       if (filters.search) params.append('q', filters.search);
 
@@ -40,13 +43,13 @@ export const storeService = {
       console.error("[storeService] Erro ao buscar produtos:", error);
       console.warn('API indisponível, usando dados mockados para demonstração.');
       // Falha graciosa conforme PROJECT_SKILLS, usando mock data
-      return MOCK_PRODUCTS.filter(p => !filters.category || p.category === filters.category);
+      const categoryFilter = filters.categoryId || filters.category;
+      return MOCK_PRODUCTS.filter(p => !categoryFilter || p.category === categoryFilter);
     }
   },
 
   /**
-   * Busca detalhes de um produto específico.
-   * Atualmente usa ID como slug.
+   * Busca detalhes de um produto específico por ID.
    */
   getProductById: async (id) => {
     try {
@@ -55,6 +58,30 @@ export const storeService = {
     } catch (error) {
       console.warn(`[storeService] Produto ${id} não encontrado na API, buscando no Mock...`);
       const product = MOCK_PRODUCTS.find(p => String(p.id) === String(id));
+      if (product) return product;
+      throw error;
+    }
+  },
+
+  /**
+   * Busca produto por slug (SEO-friendly URL).
+   * Usa o endpoint GET /api/products?slug=product-slug
+   */
+  getProductBySlug: async (slug) => {
+    try {
+      const response = await api.get('/products', {
+        params: { slug },
+        headers: TENANT_HEADER
+      });
+
+      // Backend retorna array, pegamos o primeiro resultado
+      const products = response.data?.content || (Array.isArray(response.data) ? response.data : []);
+      if (products.length > 0) return products[0];
+
+      throw new Error(`Produto com slug '${slug}' não encontrado`);
+    } catch (error) {
+      console.warn(`[storeService] Produto com slug '${slug}' não encontrado na API, buscando no Mock...`);
+      const product = MOCK_PRODUCTS.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === slug);
       if (product) return product;
       throw error;
     }
