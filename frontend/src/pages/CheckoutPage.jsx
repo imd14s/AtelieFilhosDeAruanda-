@@ -188,7 +188,12 @@ const CheckoutPage = () => {
                                         <div key={item.id} className="flex justify-between items-start gap-4">
                                             <div className="flex gap-4">
                                                 <div className="w-12 h-16 bg-[#F7F7F4] overflow-hidden flex-shrink-0">
-                                                    <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                                    <img
+                                                        src={item.image || '/images/default.png'}
+                                                        alt=""
+                                                        onError={(e) => { e.target.src = '/images/default.png'; }}
+                                                        className="w-full h-full object-cover"
+                                                    />
                                                 </div>
                                                 <div>
                                                     <p className="font-lato text-[11px] font-bold text-[#0f2A44] uppercase">{item.name}</p>

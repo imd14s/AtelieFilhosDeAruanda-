@@ -28,7 +28,7 @@ const ProductCard = ({ product }) => {
   }).format(product.price || 0);
 
   const isOutOfStock = product.stockQuantity <= 0;
-  const imageUrl = product.images?.[0] || 'https://via.placeholder.com/500?text=Sem+Imagem';
+  const imageUrl = product.images?.[0] || '/images/default.png';
 
   return (
     <div className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 rounded-sm">
@@ -36,6 +36,7 @@ const ProductCard = ({ product }) => {
         <img
           src={imageUrl}
           alt={product.name}
+          onError={(e) => { e.target.src = '/images/default.png'; }}
           className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
         />
         {isOutOfStock && (
@@ -65,10 +66,10 @@ const ProductCard = ({ product }) => {
             onClick={handleAddToCart}
             disabled={loading || isOutOfStock}
             className={`w-full flex items-center justify-center gap-2 py-3 px-4 font-lato text-[11px] uppercase tracking-[0.2em] transition-all duration-300 rounded-sm ${isOutOfStock
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : added
-                  ? 'bg-green-700 text-white'
-                  : 'bg-[var(--azul-profundo)] text-white hover:bg-[var(--dourado-suave)]'
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : added
+                ? 'bg-green-700 text-white'
+                : 'bg-[var(--azul-profundo)] text-white hover:bg-[var(--dourado-suave)]'
               }`}
           >
             {loading ? (

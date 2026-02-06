@@ -14,7 +14,7 @@ const AboutPage = () => {
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=2000&auto=format&fit=crop"
+            src="/images/wallpaper.jpg"
             alt="Fundo espiritual"
             className="w-full h-full object-cover opacity-30 grayscale-[50%]"
           />
@@ -52,7 +52,7 @@ const AboutPage = () => {
           <div className="relative w-full md:w-1/2">
             <div className="aspect-[3/4] overflow-hidden shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1506466010722-395aa2bef877?q=80&w=800"
+                src="/images/art.jpg"
                 alt="Processo artesanal"
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
               />

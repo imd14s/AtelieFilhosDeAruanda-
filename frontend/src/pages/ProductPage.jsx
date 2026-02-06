@@ -61,15 +61,21 @@ const ProductPage = () => {
           <div className="flex-1 space-y-4">
             <div className="aspect-[4/5] bg-white overflow-hidden shadow-sm">
               <img
-                src={product.images?.[0] || 'https://via.placeholder.com/800'}
+                src={product.images?.[0] || '/images/default.png'}
                 alt={product.name}
+                onError={(e) => { e.target.src = '/images/default.png'; }}
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="grid grid-cols-4 gap-4">
               {product.images?.slice(1).map((img, i) => (
                 <div key={i} className="aspect-square bg-white overflow-hidden shadow-sm opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={img}
+                    alt=""
+                    onError={(e) => { e.target.src = '/images/default.png'; }}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               ))}
             </div>

@@ -10,10 +10,10 @@ const TENANT_HEADER = { 'X-Tenant-ID': 'atelie-aruanda' };
 
 // Mock de produtos para fallback em caso de erro na API
 const MOCK_PRODUCTS = [
-  { id: 1, name: 'Vela de Sete Linhas', price: 45.90, category: 'velas', images: ['https://images.unsplash.com/photo-1620215175664-cb078f441584?q=80&w=500'], stockQuantity: 10, description: 'Vela artesanal ritualizada para proteção e equilíbrio.' },
-  { id: 2, name: 'Guia de Proteção Oxalá', price: 89.00, category: 'guias', images: ['https://images.unsplash.com/photo-1621619856624-42fd193a0661?q=80&w=500'], stockQuantity: 5, description: 'Guia confeccionada com sementes e cristais selecionados.' },
-  { id: 3, name: 'Banho de Ervas Sagradas', price: 29.90, category: 'ervas', images: ['https://images.unsplash.com/photo-1517191434949-5e90cd67d2b6?q=80&w=500'], stockQuantity: 15, description: 'Mix de ervas naturais para limpeza espiritual.' },
-  { id: 4, name: 'Incenso de Breu Branco', price: 15.00, category: 'ervas', images: ['https://images.unsplash.com/photo-1602166540742-f4834bc58ec0?q=80&w=500'], stockQuantity: 20, description: 'Incenso natural de resina pura colhida na Amazônia.' },
+  { id: 1, name: 'Vela de Sete Linhas', price: 45.90, category: 'velas', images: ['/images/velas.png'], stockQuantity: 10, description: 'Vela artesanal ritualizada para proteção e equilíbrio.' },
+  { id: 2, name: 'Guia de Proteção Oxalá', price: 89.00, category: 'guias', images: ['/images/guias.png'], stockQuantity: 5, description: 'Guia confeccionada com sementes e cristais selecionados.' },
+  { id: 3, name: 'Banho de Ervas Sagradas', price: 29.90, category: 'ervas', images: ['/images/ervas.png'], stockQuantity: 15, description: 'Mix de ervas naturais para limpeza espiritual.' },
+  { id: 4, name: 'Incenso de Breu Branco', price: 15.00, category: 'ervas', images: ['/images/ervas.png'], stockQuantity: 20, description: 'Incenso natural de resina pura colhida na Amazônia.' },
 ];
 
 export const storeService = {

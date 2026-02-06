@@ -7,6 +7,7 @@ import SearchPage from "./pages/SearchPage";
 import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
 import AboutPage from "./pages/AboutPage";
+import EthicsPage from "./pages/EthicsPage";
 import ShopPage from "./pages/ShopPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ScrollToTop from "./components/ScrollToTop";
@@ -24,6 +25,7 @@ function App() {
             <Route path="/store" element={<ShopPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/ethics" element={<EthicsPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
 
             {/* Rotas Dinâmicas usando ID do Java */}

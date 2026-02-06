@@ -83,6 +83,7 @@ const Footer = () => {
           <div>
             <h3 className="font-playfair text-lg mb-6 border-b border-[var(--dourado-suave)]/30 pb-2 inline-block">Suporte</h3>
             <ul className="space-y-3 font-lato text-sm text-[var(--branco-off-white)]/70">
+              <li><Link to="/ethics" className="hover:text-[var(--dourado-suave)] transition-colors">Ética & Valores</Link></li>
               <li><Link to="/" className="hover:text-[var(--dourado-suave)] transition-colors">Políticas de Envio</Link></li>
               <li><Link to="/" className="hover:text-[var(--dourado-suave)] transition-colors">Trocas e Devoluções</Link></li>
               <li><Link to="/" className="hover:text-[var(--dourado-suave)] transition-colors">Perguntas Frequentes</Link></li>
