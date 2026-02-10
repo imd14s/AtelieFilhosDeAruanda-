@@ -2,6 +2,7 @@ package com.atelie.ecommerce.infrastructure.persistence.product.entity;
 
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -20,6 +21,7 @@ public class ProductEntity {
     @Id
     private UUID id;
 
+    @JsonProperty("title")
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -27,6 +29,7 @@ public class ProductEntity {
 
     private BigDecimal price;
 
+    @JsonProperty("stock")
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
 
@@ -68,6 +71,7 @@ public class ProductEntity {
     }
 
     // Método auxiliar exigido pelo ProductManagementController
+    @JsonProperty("category")
     public UUID getCategoryId() {
         return category != null ? category.getId() : null;
     }

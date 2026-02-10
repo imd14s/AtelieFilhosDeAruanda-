@@ -1,32 +1,34 @@
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ProductService } from '../../services/ProductService';
+import { CategoryService } from '../../services/CategoryService';
 import { VariantsManager } from '../../components/products/VariantsManager';
 import { MediaGallery } from '../../components/products/MediaGallery';
 import { ChevronLeft, Save } from 'lucide-react';
 import type { CreateProductDTO, ProductMedia, ProductVariant } from '../../types/product';
+import type { Category } from '../../types/category';
 
 const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),
   description: z.string(),
-  price: z.number().min(0),
-  stock: z.number().min(0),
+  price: z.number().min(0, 'Preço deve ser positivo'),
+  stock: z.number().min(0, 'Estoque deve ser positivo'),
   category: z.string().min(1, 'Categoria obrigatória'),
-  tenantId: z.string().default('1'), // Falback
+  tenantId: z.string(),
 });
 
 type FormData = z.infer<typeof schema>;
 
 export function ProductForm() {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { id } = useParams();
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
-
-  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
+  const [categories, setCategories] = useState<Category[]>([]);
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       price: 0,
@@ -35,8 +37,45 @@ export function ProductForm() {
     }
   });
 
+  useEffect(() => {
+    loadCategories();
+    if (id) {
+      loadProduct();
+    }
+  }, [id]);
+
+  const loadCategories = async () => {
+    try {
+      const data = await CategoryService.getAll();
+      setCategories(data);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+    }
+  };
+
+  const loadProduct = async () => {
+    if (!id) return;
+    try {
+      const product = await ProductService.getById(id);
+
+      // Mapping fields if backend uses different names (name vs title, stockQuantity vs stock)
+      reset({
+        title: product.title || (product as any).name || '',
+        description: product.description || '',
+        price: product.price || 0,
+        stock: product.stock !== undefined ? product.stock : (product as any).stockQuantity || 0,
+        category: (product as any).categoryId || product.category || '',
+        tenantId: product.tenantId || '1'
+      });
+
+      if (product.variants) setVariants(product.variants);
+      if (product.media) setMedia(product.media);
+    } catch (error) {
+      console.error('Error loading product', error);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
     try {
       const payload: CreateProductDTO = {
         ...data,
@@ -45,13 +84,15 @@ export function ProductForm() {
         media
       };
 
-      await ProductService.create(payload);
+      if (id) {
+        await ProductService.update(id, payload);
+      } else {
+        await ProductService.create(payload);
+      }
       navigate('/products');
     } catch (error) {
       console.error('Erro ao salvar produto', error);
-      alert('Erro ao criar produto');
-    } finally {
-      setIsSubmitting(false);
+      alert(`Erro ao ${id ? 'atualizar' : 'criar'} produto`);
     }
   };
 
@@ -74,33 +115,40 @@ export function ProductForm() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Título do Produto</label>
-              <input {...register('title')} className="w-full p-2 border rounded-lg" placeholder="Ex: Camiseta Branca" />
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Título do Produto</label>
+              <input id="title" {...register('title')} className="w-full p-2 border rounded-lg" placeholder="Ex: Camiseta Branca" />
               {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-              <textarea {...register('description')} className="w-full p-2 border rounded-lg h-24" />
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+              <textarea id="description" {...register('description')} className="w-full p-2 border rounded-lg h-24" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$)</label>
-              <input type="number" step="0.01" {...register('price', { valueAsNumber: true })} className="w-full p-2 border rounded-lg" />
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$)</label>
+              <input id="price" type="number" step="0.01" {...register('price', { valueAsNumber: true })} className="w-full p-2 border rounded-lg" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estoque Total</label>
-              <input type="number" {...register('stock', { valueAsNumber: true })} className="w-full p-2 border rounded-lg" />
+              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">Estoque Total</label>
+              <input id="stock" type="number" {...register('stock', { valueAsNumber: true })} className="w-full p-2 border rounded-lg" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-              <input
-                {...register('category')}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                placeholder="Ex: Roupas"
-              />
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+              <select
+                {...register('category', { required: 'Categoria é obrigatória' })}
+                id="category"
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
               {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
             </div>
           </div>

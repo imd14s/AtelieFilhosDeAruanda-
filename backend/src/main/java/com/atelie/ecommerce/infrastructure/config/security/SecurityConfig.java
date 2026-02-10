@@ -74,6 +74,9 @@ public class SecurityConfig {
                         // JWT)
                         .requestMatchers("/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/verify").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/google").permitAll()
                         .requestMatchers("/api/auth/**").authenticated()
 
                         // Webhooks: já usam segredo próprio (ex: header X-Webhook-Token),

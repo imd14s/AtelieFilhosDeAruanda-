@@ -14,10 +14,12 @@ services:
     volumes:
       - ecommerce_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - atelie-network
 
   api:
     build:
@@ -33,6 +35,40 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - atelie-network
+
+  dashboard:
+    build:
+      context: ./dashboard-admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: atelie_dashboard
+    ports:
+      - "${DASHBOARD_PORT}:80"
+    depends_on:
+      - api
+    networks:
+      - atelie-network
+
+  store:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: atelie_store
+    ports:
+      - "${STORE_PORT}:80"
+    depends_on:
+      - api
+    networks:
+      - atelie-network
+
+networks:
+  atelie-network:
+    driver: bridge
 
 volumes:
   ecommerce_postgres_data:

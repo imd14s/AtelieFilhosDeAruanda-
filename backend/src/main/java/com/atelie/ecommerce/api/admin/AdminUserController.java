@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -34,9 +35,30 @@ public class AdminUserController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserEntity>> listEmployees() {
-        // Simple listing for now. Ideally should filter by ROLE_EMPLOYEE or similar.
-        // Returning all users is fine for MVP admin, or filter in service.
-        // Let's return all for now to let admin see customers too.
         return ResponseEntity.ok(userRepository.findAll());
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserEntity> updateEmployee(@PathVariable java.util.UUID id, @RequestBody UserEntity details) {
+        return userRepository.findById(id)
+                .map(user -> {
+                    user.setName(details.getName());
+                    user.setEmail(details.getEmail());
+                    user.setRole(details.getRole());
+                    user.setActive(details.getActive());
+                    return ResponseEntity.ok(userRepository.save(user));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable java.util.UUID id) {
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }
