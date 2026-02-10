@@ -6,13 +6,15 @@ import { DollarSign, ShoppingBag, Package, TrendingUp } from 'lucide-react';
 export function DashboardHome() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
     const [loading, setLoading] = useState(true);
+    const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
     useEffect(() => {
         loadMetrics();
-    }, []);
+    }, [period]);
 
     const loadMetrics = async () => {
-        const data = await AnalyticsService.getDashboardMetrics();
+        setLoading(true);
+        const data = await AnalyticsService.getDashboardMetrics(period);
         setMetrics(data);
         setLoading(false);
     };
@@ -35,9 +37,15 @@ export function DashboardHome() {
                     <h1 className="text-2xl font-bold text-gray-800">Visão Geral</h1>
                     <p className="text-gray-500">Acompanhe o desempenho da sua loja</p>
                 </div>
-                <select className="border rounded-lg p-2 bg-white text-sm">
+                <select 
+                    value={period}
+                    onChange={(e) => setPeriod(e.target.value as '7d' | '30d' | '90d')}
+                    className="border rounded-lg p-2 bg-white text-sm"
+                >
                     <option value="7d">Últimos 7 dias</option>
                     <option value="30d">Últimos 30 dias</option>
+                    <option value="90d">Últimos 90 dias</option>
+                </select>
                 </select>
             </div>
 
