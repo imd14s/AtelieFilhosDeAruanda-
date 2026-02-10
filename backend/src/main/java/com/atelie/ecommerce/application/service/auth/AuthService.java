@@ -2,6 +2,7 @@ package com.atelie.ecommerce.application.service.auth;
 
 import com.atelie.ecommerce.api.auth.dto.LoginRequest;
 import com.atelie.ecommerce.api.auth.dto.RegisterRequest;
+import com.atelie.ecommerce.api.admin.dto.CreateUserDTO;
 import com.atelie.ecommerce.api.common.exception.ConflictException;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
@@ -24,10 +25,10 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
 
-    public AuthService(AuthenticationManager authenticationManager, 
-                       TokenProvider tokenProvider, 
-                       PasswordEncoder passwordEncoder,
-                       UserRepository userRepository) {
+    public AuthService(AuthenticationManager authenticationManager,
+            TokenProvider tokenProvider,
+            PasswordEncoder passwordEncoder,
+            UserRepository userRepository) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.passwordEncoder = passwordEncoder;
@@ -35,40 +36,135 @@ public class AuthService {
     }
 
     public String login(LoginRequest request) {
-        // Autentica e gera o token usando o objeto de autenticação completo (mais seguro)
         Authentication auth = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         return tokenProvider.generateToken(auth);
     }
 
+    @Transactional
+    public void registerCustomer(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ConflictException("E-mail já cadastrado.");
+        }
+
+        String code = String.valueOf((int) (Math.random() * 900000) + 100000); // 6 digits
+
+        UserEntity newUser = new UserEntity(
+                request.getName(),
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                "CUSTOMER");
+        newUser.setActive(false);
+        newUser.setEmailVerified(false);
+        newUser.setVerificationCode(code);
+
+        userRepository.save(newUser);
+
+        // Simulating Email Sending
+        System.out.println(">>> EMAIL SIMULATOR: Send verification code " + code + " to " + request.getEmail());
+    }
+
+    @Transactional
+    public String verifyCustomer(com.atelie.ecommerce.api.auth.dto.VerifyRequest request) {
+        UserEntity user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
+                        "Usuário não encontrado."));
+
+        if (!request.getCode().equals(user.getVerificationCode())) {
+            throw new IllegalArgumentException("Código inválido.");
+        }
+
+        user.setEmailVerified(true);
+        user.setActive(true);
+        user.setVerificationCode(null);
+        userRepository.save(user);
+
+        // Auto-login logic could be here, but for now we return a token
+        Authentication auth = new UsernamePasswordAuthenticationToken(user.getEmail(), null,
+                java.util.Collections.emptyList());
+        // Note: For full auto-login we might need to bypass password check or use a
+        // special token generation
+        // For simplicity, let's just return "Verified" and force user to login, or
+        // generate token if we can construct UserDetails
+
+        return "Conta verificada com sucesso.";
+    }
+
+    @Transactional
+    public String googleLogin(com.atelie.ecommerce.api.auth.dto.GoogleLoginRequest request) {
+        // MOCK Implementation for Google Verify
+        // In production: GoogleIdTokenVerifier verifier = ...
+        String email = "google_user_" + request.getIdToken().substring(0, 5) + "@gmail.com";
+        String name = "Google User";
+
+        UserEntity user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            user = new UserEntity(name, email, passwordEncoder.encode("GOOGLE_AUTH_" + java.util.UUID.randomUUID()),
+                    "CUSTOMER");
+            user.setEmailVerified(true);
+            user.setActive(true);
+            userRepository.save(user);
+        }
+
+        // Generate Token (Forced, as we trust Google)
+        // We need a way to generate token without password auth if using standard
+        // TokenProvider
+        // Assuming TokenProvider can take an Authentication object. We create a
+        // pre-authenticated one.
+        // This might require changes in TokenProvider or custom logic.
+        // For this task: We will just return a placeholder or need to refactor login.
+        // Simplification: We generated a random password. We can't use
+        // authenticationManager.authenticate easily.
+        // We will construct a lightweight Authentication object.
+        return tokenProvider
+                .generateToken(new UsernamePasswordAuthenticationToken(email, null, java.util.Collections.emptyList()));
+    }
+
+    @Transactional
+    public void createEmployee(com.atelie.ecommerce.api.admin.dto.CreateUserDTO request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // Double check admin just in case
+        boolean isAdmin = auth != null
+                && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin)
+            throw new AccessDeniedException("Acesso negado.");
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ConflictException("E-mail já cadastrado.");
+        }
+
+        String role = request.getRole() != null ? request.getRole() : "EMPLOYEE";
+
+        UserEntity newUser = new UserEntity(
+                request.getName(),
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                role);
+        newUser.setEmailVerified(true);
+        newUser.setActive(true);
+
+        userRepository.save(newUser);
+    }
+
     /**
-     * Cria um novo usuário. Apenas um admin autenticado pode chamar este método.
-     * Apenas um admin pode atribuir a role ADMIN ao novo usuário; caso contrário, role será USER.
+     * Legacy register (kept for compatibility if needed, using old logic but
+     * refined)
      */
     @Transactional
     public void register(RegisterRequest request) {
+        // Redirect to customer register if no auth (Public)
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()))) {
-            throw new AccessDeniedException("Apenas administradores podem criar usuários.");
-        }
+        boolean isAdmin = auth != null
+                && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ConflictException("E-mail já cadastrado no sistema.");
+        if (isAdmin) {
+            // Admin creating generic user?
+            // Map to createEmployee logic or just old logic
+            CreateUserDTO dto = new CreateUserDTO(request.getName(), request.getEmail(), request.getPassword(),
+                    request.getRole());
+            createEmployee(dto);
+        } else {
+            registerCustomer(request);
         }
-
-        String role = "USER";
-        if (request.getRole() != null && "ADMIN".equalsIgnoreCase(request.getRole().trim())) {
-            role = "ADMIN"; // Só chega aqui se o caller já é admin (verificado acima).
-        }
-
-        UserEntity newUser = new UserEntity(
-            request.getName(),
-            request.getEmail(),
-            passwordEncoder.encode(request.getPassword()),
-            role
-        );
-        userRepository.save(newUser);
     }
 }

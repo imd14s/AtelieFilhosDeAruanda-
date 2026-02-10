@@ -19,8 +19,20 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest request) {
-        authService.register(request);
+        authService.registerCustomer(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<String> verify(@Valid @RequestBody VerifyRequest request) {
+        String msg = authService.verifyCustomer(request);
+        return ResponseEntity.ok(msg);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> google(@Valid @RequestBody GoogleLoginRequest request) {
+        String token = authService.googleLogin(request);
+        return ResponseEntity.ok(new LoginResponse(token));
     }
 
     @PostMapping("/login")

@@ -24,9 +24,15 @@ public class UserEntity {
 
     @Column(nullable = false)
     private String password;
-    
+
     @Column(nullable = false)
-    private String role; // USER, ADMIN
+    private String role; // ADMIN, EMPLOYEE, CUSTOMER
+
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
+    @Column(name = "verification_code")
+    private String verificationCode;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -38,21 +44,31 @@ public class UserEntity {
     private LocalDateTime updatedAt;
 
     // --- CONSTRUTOR DE COMPATIBILIDADE (Resgate) ---
-    // Necessário para AuthService e AdminBootstrap funcionarem sem refatoração profunda
+    // Necessário para AuthService e AdminBootstrap funcionarem sem refatoração
+    // profunda
     public UserEntity(String name, String email, String password, String role) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.emailVerified = "ADMIN".equals(role); // Admin já nasce verificado
+        this.active = true;
     }
 
     @PrePersist
     protected void onCreate() {
-        if (id == null) id = UUID.randomUUID();
-        if (createdAt == null) createdAt = LocalDateTime.now();
-        if (updatedAt == null) updatedAt = LocalDateTime.now();
-        if (role == null) role = "USER";
-        if (active == null) active = true;
+        if (id == null)
+            id = UUID.randomUUID();
+        if (createdAt == null)
+            createdAt = LocalDateTime.now();
+        if (updatedAt == null)
+            updatedAt = LocalDateTime.now();
+        if (role == null)
+            role = "CUSTOMER"; // Default agora é CUSTOMER
+        if (active == null)
+            active = false; // Default inactive until verified
+        if (emailVerified == null)
+            emailVerified = false;
     }
 
     @PreUpdate

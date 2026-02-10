@@ -1,19 +1,21 @@
-export type Role = 'MASTER' | 'STORE_ADMIN' | 'STORE_TEAM';
-
-export type Permission =
-    | 'CATALOG_READ' | 'CATALOG_WRITE'
-    | 'ORDERS_READ' | 'ORDERS_WRITE'
-    | 'FINANCIAL_READ' | 'FINANCIAL_WRITE'
-    | 'SETTINGS_WRITE';
+export type Role = 'ADMIN' | 'EMPLOYEE' | 'CUSTOMER';
 
 export interface User {
     id: string;
     name: string;
     email: string;
     role: Role;
-    permissions: Permission[];
-    avatarUrl?: string;
+    active: boolean;
+    createdAt: string;
+    // Optional for compatibility if backend doesn't send them yet
+    permissions?: string[];
     lastLogin?: string;
+    avatarUrl?: string;
 }
 
-export type CreateUserDTO = Omit<User, 'id' | 'lastLogin'>;
+export interface CreateUserDTO {
+    name: string;
+    email: string;
+    password?: string; // Optional only if editing, strictly required for creation
+    role: Role;
+}

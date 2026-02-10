@@ -32,7 +32,9 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<?> getAll(
             @RequestParam(required = false) String slug,
-            @RequestParam(required = false) UUID categoryId) {
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String q,
+            org.springframework.data.domain.Pageable pageable) {
 
         if (slug != null) {
             return productRepository.findBySlug(slug)
@@ -41,10 +43,15 @@ public class ProductController {
         }
 
         if (categoryId != null) {
+            // TODO: Paginate this too in future
             return ResponseEntity.ok(productRepository.findByCategory_Id(categoryId));
         }
 
-        return ResponseEntity.ok(productRepository.findAll());
+        if (q != null && !q.isBlank()) {
+            return ResponseEntity.ok(productService.searchProducts(q, pageable));
+        }
+
+        return ResponseEntity.ok(productRepository.findAll(pageable));
     }
 
     @GetMapping("/{id}")

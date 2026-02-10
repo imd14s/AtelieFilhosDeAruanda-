@@ -37,7 +37,7 @@ export function DashboardHome() {
                     <h1 className="text-2xl font-bold text-gray-800">Visão Geral</h1>
                     <p className="text-gray-500">Acompanhe o desempenho da sua loja</p>
                 </div>
-                <select 
+                <select
                     value={period}
                     onChange={(e) => setPeriod(e.target.value as '7d' | '30d' | '90d')}
                     className="border rounded-lg p-2 bg-white text-sm"
@@ -45,7 +45,6 @@ export function DashboardHome() {
                     <option value="7d">Últimos 7 dias</option>
                     <option value="30d">Últimos 30 dias</option>
                     <option value="90d">Últimos 90 dias</option>
-                </select>
                 </select>
             </div>
 

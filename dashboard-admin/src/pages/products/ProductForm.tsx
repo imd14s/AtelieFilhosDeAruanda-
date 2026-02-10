@@ -96,7 +96,11 @@ export function ProductForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-              <input {...register('category')} className="w-full p-2 border rounded-lg" placeholder="Ex: Roupas" />
+              <input
+                {...register('category')}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="Ex: Roupas"
+              />
               {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
             </div>
           </div>

@@ -6,6 +6,8 @@ import { UserPlus, Shield, Trash2, Edit } from 'lucide-react';
 export function TeamPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'EMPLOYEE' as const });
 
     useEffect(() => {
         loadUsers();
@@ -13,9 +15,27 @@ export function TeamPage() {
 
     const loadUsers = async () => {
         setLoading(true);
-        const data = await UserService.getAll();
-        setUsers(data);
-        setLoading(false);
+        try {
+            const data = await UserService.getAll();
+            setUsers(data);
+        } catch (error) {
+            console.error('Failed to load users', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await UserService.create(newUser);
+            setIsModalOpen(false);
+            setNewUser({ name: '', email: '', password: '', role: 'EMPLOYEE' });
+            loadUsers();
+        } catch (error) {
+            console.error('Failed to create user', error);
+            alert('Erro ao criar usuário. Verifique os dados.');
+        }
     };
 
     return (
@@ -25,7 +45,10 @@ export function TeamPage() {
                     <h1 className="text-2xl font-bold text-gray-800">Equipe & Permissões</h1>
                     <p className="text-gray-500">Gerencie quem tem acesso à loja</p>
                 </div>
-                <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                >
                     <UserPlus size={20} />
                     Convidar Membro
                 </button>
@@ -41,7 +64,7 @@ export function TeamPage() {
                                 <th className="p-4 text-sm font-semibold text-gray-600">Nome</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Email</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Função</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Último Acesso</th>
+                                <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600 text-right">Ações</th>
                             </tr>
                         </thead>
@@ -56,16 +79,16 @@ export function TeamPage() {
                                     </td>
                                     <td className="p-4 text-gray-600">{user.email}</td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit ${user.role === 'MASTER' ? 'bg-purple-100 text-purple-700' :
-                                            user.role === 'STORE_ADMIN' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-gray-100 text-gray-700'
+                                        <span className={`px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                                                user.role === 'EMPLOYEE' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-gray-100 text-gray-700'
                                             }`}>
                                             <Shield size={12} />
                                             {user.role}
                                         </span>
                                     </td>
                                     <td className="p-4 text-sm text-gray-500">
-                                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '-'}
+                                        {user.active ? <span className="text-green-600">Ativo</span> : <span className="text-red-500">Inativo</span>}
                                     </td>
                                     <td className="p-4 text-right">
                                         <button className="text-gray-400 hover:text-indigo-600 mx-2 transition">
@@ -81,6 +104,73 @@ export function TeamPage() {
                     </table>
                 )}
             </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+                        <h2 className="text-xl font-bold mb-4">Adicionar Membro</h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Nome</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full border rounded p-2"
+                                    value={newUser.name}
+                                    onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Email</label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="w-full border rounded p-2"
+                                    value={newUser.email}
+                                    onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Senha</label>
+                                <input
+                                    type="password"
+                                    required
+                                    className="w-full border rounded p-2"
+                                    value={newUser.password}
+                                    onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Função</label>
+                                <select
+                                    className="w-full border rounded p-2"
+                                    value={newUser.role}
+                                    onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}
+                                >
+                                    <option value="EMPLOYEE">Funcionário</option>
+                                    <option value="ADMIN">Administrador</option>
+                                    <option value="CUSTOMER">Cliente</option>
+                                </select>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                                >
+                                    Salvar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

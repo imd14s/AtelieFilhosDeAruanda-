@@ -107,4 +107,19 @@ public class ProductService {
     public Page<ProductEntity> getAllActiveProducts(Pageable pageable) {
         return productRepository.findByActiveTrue(pageable);
     }
+
+    @Transactional(readOnly = true)
+    public Page<ProductEntity> searchProducts(String query, Pageable pageable) {
+        // If repository returns List, we might need to change it to Page or wrap it.
+        // Repository has: List<ProductEntity> findByNameContainingIgnoreCase(String
+        // name);
+        // Let's update repository to return Page first or manually paginate list (less
+        // efficient).
+        // Ideally update repository. For now, let's assume we want to return a list or
+        // update repo.
+        // Given existing pattern uses Page, let's update Repository signature too.
+        // But for now, let's just return List if that's what repo has, or update repo.
+        // Let's update Repo to return Page.
+        return productRepository.findByNameContainingIgnoreCase(query, pageable);
+    }
 }
