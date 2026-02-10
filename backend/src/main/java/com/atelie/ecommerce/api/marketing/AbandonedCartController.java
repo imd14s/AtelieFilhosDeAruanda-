@@ -21,9 +21,14 @@ public class AbandonedCartController {
     public ResponseEntity<AbandonedCartConfig> getConfig() {
         List<AbandonedCartConfig> configs = repository.findAll();
         if (configs.isEmpty()) {
-            return ResponseEntity.ok(AbandonedCartConfig.builder().enabled(false).build());
+            return ResponseEntity
+                    .ok(AbandonedCartConfig.builder().enabled(false).triggers(new java.util.ArrayList<>()).build());
         }
-        return ResponseEntity.ok(configs.get(0));
+        AbandonedCartConfig config = configs.get(0);
+        if (config.getTriggers() == null) {
+            config.setTriggers(new java.util.ArrayList<>());
+        }
+        return ResponseEntity.ok(config);
     }
 
     @PutMapping

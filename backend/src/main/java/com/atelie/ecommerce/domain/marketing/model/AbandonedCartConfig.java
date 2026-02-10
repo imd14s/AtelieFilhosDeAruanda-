@@ -24,9 +24,10 @@ public class AbandonedCartConfig {
 
     private Boolean enabled;
 
+    @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private List<Map<String, Object>> triggers;
+    private List<Map<String, Object>> triggers = new java.util.ArrayList<>();
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
