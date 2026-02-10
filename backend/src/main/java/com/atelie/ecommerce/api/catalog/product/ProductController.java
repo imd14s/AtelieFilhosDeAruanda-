@@ -67,12 +67,19 @@ public class ProductController {
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStockQuantity(request.stockQuantity());
-        product.setImages(request.images());
+
+        // Map media objects to URL strings
+        if (request.media() != null) {
+            List<String> imageUrls = request.media().stream()
+                    .map(ProductCreateRequest.ProductMediaItem::url)
+                    .toList();
+            product.setImages(imageUrls);
+        }
 
         // Datas e defaults são tratados pelo Service ou Entity
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
-        product.setActive(true);
+        product.setActive(request.active() != null ? request.active() : true);
 
         // Delega para o Service (que resolve a Categoria e cria Variantes)
         ProductEntity savedProduct = productService.saveProduct(product, request.categoryId());

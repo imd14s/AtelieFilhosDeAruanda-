@@ -66,7 +66,8 @@ public class ProductControllerTest {
                 BigDecimal.valueOf(100.00),
                 10,
                 categoryId,
-                new java.util.ArrayList<>() // images (List<String>)
+                new java.util.ArrayList<>(), // media
+                true // active
         );
         mockMvc.perform(post("/api/products")
                 .contentType(MediaType.APPLICATION_JSON)

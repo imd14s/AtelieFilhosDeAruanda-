@@ -74,7 +74,8 @@ public class ProductControllerIntegrationTest {
                 new BigDecimal("99.90"),
                 10,
                 category.getId(),
-                List.of("image1.jpg"));
+                List.of(new ProductCreateRequest.ProductMediaItem("image1.jpg", "IMAGE", true)),
+                true);
 
         mockMvc.perform(post("/api/products")
                 .contentType(MediaType.APPLICATION_JSON)
