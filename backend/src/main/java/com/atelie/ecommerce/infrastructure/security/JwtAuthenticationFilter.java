@@ -24,8 +24,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Environment env;
 
     public JwtAuthenticationFilter(TokenProvider tokenProvider,
-                                   CustomUserDetailsService userDetailsService,
-                                   Environment env) {
+            CustomUserDetailsService userDetailsService,
+            Environment env) {
         this.tokenProvider = tokenProvider;
         this.userDetailsService = userDetailsService;
         this.env = env;
@@ -33,8 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain chain) throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
@@ -48,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             username = tokenProvider.getUsernameFromToken(token);
         } catch (Exception e) {
-            logger.error("Invalid JWT (cannot extract subject)", e);
+            logger.warn("Invalid JWT: " + e.getMessage());
             chain.doFilter(request, response);
             return;
         }
@@ -67,11 +67,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Só aplica stateless se o token realmente tiver roles
                 if (!roles.isEmpty() && tokenProvider.validateTokenBasic(token)) {
                     var authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .toList();
+                            .map(SimpleGrantedAuthority::new)
+                            .toList();
 
-                    UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username,
+                            null, authorities);
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -84,8 +84,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Fallback: modo antigo (depende de UserDetails/DB)
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             if (tokenProvider.validateTokenWithUserDetails(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
+                        null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }

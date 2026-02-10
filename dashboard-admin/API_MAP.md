@@ -9,7 +9,7 @@ O dashboard deve obter um token JWT antes de acessar as rotas protegidas.
 - **Login**
   - **POST** `/api/auth/login`
   - **Body**: `{ "email": "admin@atelie.com", "password": "..." }`
-  - **Response**: `{ "accessToken": "...", "tokenType": "Bearer" }`
+  - **Response**: `{ "token": "...", "accessToken": "..." }`
 
 ## 2. Dashboard & Gestão de Produtos
 Rotas otimizadas para visão administrativa (tabelas, métricas).
