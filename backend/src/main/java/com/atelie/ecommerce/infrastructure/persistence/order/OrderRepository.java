@@ -17,4 +17,8 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
     // Conta quantos pedidos estão pendentes
     @Query("SELECT COUNT(o) FROM OrderEntity o WHERE o.status = 'PENDING'")
     long countPendingOrders();
+
+    long countByStatusNot(com.atelie.ecommerce.domain.order.OrderStatus status);
+
+    java.util.List<OrderEntity> findByCreatedAtAfter(java.time.Instant date);
 }

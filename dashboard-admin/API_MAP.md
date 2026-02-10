@@ -22,6 +22,11 @@ Rotas otimizadas para visão administrativa (tabelas, métricas).
   - **PUT** `/api/dashboard/products/{id}/toggle-alert`
   - **Response**: Produto atualizado.
 
+- **Métricas do Dashboard**
+  - **GET** `/api/analytics/dashboard`
+  - **Query Param**: `period` (ex: `30d`, `7d`, `90d`)
+  - **Response**: `{ totalSales, totalOrders, averageTicket, activeProducts, salesByDate[], topProducts[] }`
+
 ## 3. Administração de Pedidos
 Ações sensíveis sobre pedidos.
 

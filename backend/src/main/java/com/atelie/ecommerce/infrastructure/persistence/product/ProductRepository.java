@@ -21,4 +21,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
     java.util.Optional<ProductEntity> findBySlug(String slug);
 
     List<ProductEntity> findByCategory_Id(UUID categoryId);
+
+    long countByActiveTrue();
 }
