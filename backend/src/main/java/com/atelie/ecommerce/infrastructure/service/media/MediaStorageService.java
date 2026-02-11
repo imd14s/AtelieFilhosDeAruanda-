@@ -3,6 +3,7 @@ package com.atelie.ecommerce.infrastructure.service.media;
 import com.atelie.ecommerce.api.common.util.ReflectionPropertyUtils;
 import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetRepository;
 import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetEntity;
+import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -54,24 +55,19 @@ public class MediaStorageService {
 
         MediaAssetEntity asset = ReflectionPropertyUtils.instantiate(MediaAssetEntity.class);
 
-        // Preenche best-effort (nomes variam no seu entity)
-        ReflectionPropertyUtils.trySet(asset, "setFilename", filename);
-        ReflectionPropertyUtils.trySet(asset, "setFileName", filename);
+        asset.setStorageKey(filename);
+        asset.setOriginalFilename(file.getOriginalFilename());
+        asset.setMimeType(file.getContentType());
+        asset.setSizeBytes(file.getSize());
+        asset.setPublic(isPublic);
+        asset.setCreatedAt(Instant.now());
 
-        ReflectionPropertyUtils.trySet(asset, "setContentType", file.getContentType());
-        ReflectionPropertyUtils.trySet(asset, "setMimeType", file.getContentType());
-
-        ReflectionPropertyUtils.trySet(asset, "setSizeBytes", file.getSize());
-        ReflectionPropertyUtils.trySet(asset, "setSize", file.getSize());
-
-        ReflectionPropertyUtils.trySet(asset, "setCategory", category);
-
-        ReflectionPropertyUtils.trySet(asset, "setPublic", isPublic);
-        ReflectionPropertyUtils.trySet(asset, "setIsPublic", isPublic);
-        ReflectionPropertyUtils.trySet(asset, "setPublicAsset", isPublic);
-
-        // Seu erro mostrou Instant, então usamos Instant.
-        ReflectionPropertyUtils.trySet(asset, "setCreatedAt", Instant.now());
+        // Determine type explicitly
+        MediaAssetType type = MediaAssetType.IMAGE;
+        if (file.getContentType() != null && file.getContentType().startsWith("video/")) {
+            type = MediaAssetType.VIDEO;
+        }
+        asset.setType(type);
 
         return repo.save(asset);
     }

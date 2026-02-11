@@ -7,7 +7,7 @@ import { ProductService } from '../../services/ProductService';
 import { CategoryService } from '../../services/CategoryService';
 import { VariantsManager } from '../../components/products/VariantsManager';
 import { MediaGallery } from '../../components/products/MediaGallery';
-import { ChevronLeft, Save } from 'lucide-react';
+import { ChevronLeft, Save, Plus } from 'lucide-react';
 import type { CreateProductDTO, ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
 
@@ -28,11 +28,12 @@ export function ProductForm() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const { register, handleSubmit, reset, setValue, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      price: 0,
-      stock: 0,
       tenantId: '1'
     }
   });
@@ -74,6 +75,27 @@ export function ProductForm() {
       console.error('Error loading product', error);
     }
   };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+
+    setIsCreatingCategory(true);
+    try {
+      const newCategory = await CategoryService.create({ name: newCategoryName, active: true });
+      setCategories(prev => [...prev, newCategory]);
+      setShowCategoryModal(false);
+      setNewCategoryName('');
+
+      // Selecionar automaticamente a nova categoria
+      setValue('category', newCategory.id);
+    } catch (error) {
+      console.error('Erro ao criar categoria:', error);
+      alert('Erro ao criar categoria');
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
+
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -127,28 +149,39 @@ export function ProductForm() {
 
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Preço Base (R$)</label>
-              <input id="price" type="number" step="0.01" {...register('price', { valueAsNumber: true })} className="w-full p-2 border rounded-lg" />
+              <input id="price" type="number" step="0.01" placeholder="0.00" {...register('price', { valueAsNumber: true })} className="w-full p-2 border rounded-lg" />
             </div>
 
             <div>
               <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">Estoque Total</label>
-              <input id="stock" type="number" {...register('stock', { valueAsNumber: true })} className="w-full p-2 border rounded-lg" />
+              <input id="stock" type="number" placeholder="0" {...register('stock', { valueAsNumber: true })} className="w-full p-2 border rounded-lg" />
             </div>
 
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-              <select
-                {...register('category', { required: 'Categoria é obrigatória' })}
-                id="category"
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-              >
-                <option value="">Selecione uma categoria</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <select
+                  {...register('category', { required: 'Categoria é obrigatória' })}
+                  id="category"
+                  className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                >
+                  <option value="">Selecione uma categoria</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(true)}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1"
+                  title="Criar nova categoria"
+                >
+                  <Plus size={16} />
+                  Nova
+                </button>
+              </div>
               {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
             </div>
           </div>
@@ -185,6 +218,44 @@ export function ProductForm() {
           </button>
         </div>
       </form>
+
+      {/* Modal de Criação de Categoria */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Nova Categoria</h3>
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="Nome da categoria"
+              className="w-full p-2 border rounded-lg mb-4"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCategoryModal(false);
+                  setNewCategoryName('');
+                }}
+                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateCategory}
+                disabled={isCreatingCategory || !newCategoryName.trim()}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {isCreatingCategory ? 'Criando...' : 'Criar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

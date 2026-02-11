@@ -8,13 +8,19 @@ export interface UploadResponse {
 
 
 export const MediaService = {
-    upload: async (file: File): Promise<UploadResponse> => {
+    upload: async (file: File, onProgress?: (progress: number) => void): Promise<UploadResponse> => {
         const formData = new FormData();
         formData.append('file', file);
 
         // Assumindo endpoint realista conforme padrão
         const { data } = await api.post<UploadResponse>('/media/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (progressEvent) => {
+                if (onProgress && progressEvent.total) {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    onProgress(progress);
+                }
+            }
         });
         return data;
     },

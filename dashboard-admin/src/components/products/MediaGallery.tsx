@@ -10,15 +10,19 @@ interface MediaGalleryProps {
 
 export function MediaGallery({ media, onChange }: MediaGalleryProps) {
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             setIsUploading(true);
+            setUploadProgress(0);
             const newMediaItems: ProductMedia[] = [];
 
             for (const file of e.target.files) {
                 try {
-                    const response = await MediaService.upload(file);
+                    const response = await MediaService.upload(file, (progress) => {
+                        setUploadProgress(progress);
+                    });
                     newMediaItems.push({
                         id: response.id,
                         url: response.url,
@@ -32,6 +36,7 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
 
             onChange([...media, ...newMediaItems]);
             setIsUploading(false);
+            setUploadProgress(0);
         }
     };
 
@@ -56,10 +61,25 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* Upload Button */}
                 <label className="border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition">
-                    <Upload className="text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500">
-                        {isUploading ? 'Enviando...' : 'Adicionar Fotos'}
-                    </span>
+                    {isUploading ? (
+                        <div className="w-full px-4">
+                            <Upload className="text-indigo-600 mb-2 mx-auto" />
+                            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                <div
+                                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                            <span className="text-sm text-indigo-600 font-medium">
+                                {uploadProgress}%
+                            </span>
+                        </div>
+                    ) : (
+                        <>
+                            <Upload className="text-gray-400 mb-2" />
+                            <span className="text-sm text-gray-500">Adicionar Fotos</span>
+                        </>
+                    )}
                     <input type="file" multiple className="hidden" accept="image/*" onChange={handleUpload} />
                 </label>
 

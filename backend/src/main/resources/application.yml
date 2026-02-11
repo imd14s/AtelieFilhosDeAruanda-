@@ -12,8 +12,14 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   flyway:
     enabled: true
+    placeholders:
+      PGCRYPTO_EXTENSION: ${PGCRYPTO_EXTENSION:CREATE EXTENSION IF NOT EXISTS pgcrypto;}
 
 server:
   port: ${SERVER_PORT:8080}

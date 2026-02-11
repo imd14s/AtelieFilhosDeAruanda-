@@ -7,5 +7,10 @@ export const CategoryService = {
         // Based on SecurityConfig, GET /categories/** is public
         const { data } = await api.get<Category[]>('/products/categories');
         return data;
+    },
+
+    create: async (payload: { name: string; active: boolean }): Promise<Category> => {
+        const { data } = await api.post<Category>('/categories', payload);
+        return data;
     }
 };
