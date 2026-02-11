@@ -61,7 +61,6 @@ public class ProductController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // CORREÇÃO: Usa DTO e chama o Service
     @PostMapping
     public ResponseEntity<ProductEntity> create(@RequestBody ProductCreateRequest request) {
         if (request.categoryId() == null) {
