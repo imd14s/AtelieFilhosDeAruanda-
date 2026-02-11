@@ -680,6 +680,24 @@ curl -X POST "http://localhost:8080/api/webhooks/mercadopago" \
 
 Base path: **/api/admin/...**. **Todas** as rotas de admin exigem **ROLE_ADMIN** (usuário autenticado com perfil Admin). Use sempre `Authorization: Bearer <JWT>` de um usuário admin.
 
+### Gestão de Equipe (Admin)
+
+Base path: **/api/admin/users**. Exige **ROLE_ADMIN**.
+
+#### GET /api/admin/users
+Lista todos os membros da equipe.
+
+#### POST /api/admin/users
+Convida um novo membro. Recebe `CreateUserDTO` (name, email, password, role).
+
+#### PUT /api/admin/users/{id}
+Atualiza dados de um membro existente.
+
+#### DELETE /api/admin/users/{id}
+Remove um membro da equipe.
+
+---
+
 ### Regras de roteamento (Service Engine)
 
 #### GET /api/admin/rules
