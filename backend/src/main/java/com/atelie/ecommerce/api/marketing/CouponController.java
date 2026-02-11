@@ -44,6 +44,19 @@ public class CouponController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Coupon> update(@PathVariable UUID id, @RequestBody Coupon details) {
+        return repository.findById(id).map(existing -> {
+            existing.setCode(details.getCode());
+            existing.setType(details.getType());
+            existing.setValue(details.getValue());
+            existing.setUsageLimit(details.getUsageLimit());
+            existing.setActive(details.isActive());
+            // Se tiver datas de expiração etc. no seu model, adicione aqui.
+            return ResponseEntity.ok(repository.save(existing));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         if (repository.existsById(id)) {

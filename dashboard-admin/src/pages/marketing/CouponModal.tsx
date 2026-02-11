@@ -6,9 +6,10 @@ interface CouponModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (coupon: CreateCouponDTO) => Promise<void>;
+    initialData?: CreateCouponDTO;
 }
 
-export function CouponModal({ isOpen, onClose, onSave }: CouponModalProps) {
+export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModalProps) {
     const [formData, setFormData] = useState<CreateCouponDTO>({
         code: '',
         type: 'PERCENTAGE',
@@ -16,6 +17,19 @@ export function CouponModal({ isOpen, onClose, onSave }: CouponModalProps) {
         usageLimit: 100
     });
     const [loading, setLoading] = useState(false);
+
+    React.useEffect(() => {
+        if (initialData) {
+            setFormData(initialData);
+        } else {
+            setFormData({
+                code: '',
+                type: 'PERCENTAGE',
+                value: 0,
+                usageLimit: 100
+            });
+        }
+    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
@@ -26,7 +40,7 @@ export function CouponModal({ isOpen, onClose, onSave }: CouponModalProps) {
             await onSave(formData);
             onClose();
         } catch (error) {
-            alert('Erro ao criar cupom');
+            alert(initialData ? 'Erro ao atualizar cupom' : 'Erro ao criar cupom');
         } finally {
             setLoading(false);
         }
@@ -36,7 +50,9 @@ export function CouponModal({ isOpen, onClose, onSave }: CouponModalProps) {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-                    <h2 className="text-xl font-bold text-gray-800">Novo Cupom</h2>
+                    <h2 className="text-xl font-bold text-gray-800">
+                        {initialData ? 'Editar Cupom' : 'Novo Cupom'}
+                    </h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
                         <X size={24} />
                     </button>
@@ -106,7 +122,7 @@ export function CouponModal({ isOpen, onClose, onSave }: CouponModalProps) {
                             type="submit"
                             className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium disabled:opacity-50"
                         >
-                            {loading ? 'Criando...' : 'Criar Cupom'}
+                            {loading ? (initialData ? 'Salvando...' : 'Criando...') : (initialData ? 'Salvar Alterações' : 'Criar Cupom')}
                         </button>
                     </div>
                 </form>

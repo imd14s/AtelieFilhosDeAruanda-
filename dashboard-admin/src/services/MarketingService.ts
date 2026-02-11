@@ -12,6 +12,10 @@ export const MarketingService = {
         return api.post('/marketing/coupons', coupon);
     },
 
+    updateCoupon: async (id: string, coupon: CreateCouponDTO) => {
+        return api.put(`/marketing/coupons/${id}`, coupon);
+    },
+
     toggleCoupon: async (id: string, active: boolean) => {
         return api.patch(`/marketing/coupons/${id}`, { active });
     },

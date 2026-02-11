@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Ticket, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Ticket, Plus, Trash2, ToggleLeft, ToggleRight, Edit2 } from 'lucide-react';
 import { MarketingService } from '../../services/MarketingService';
 import type { Coupon, CreateCouponDTO } from '../../types/marketing';
 import { CouponModal } from './CouponModal';
@@ -8,6 +8,7 @@ export function CouponList() {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
 
     useEffect(() => {
         loadCoupons();
@@ -25,8 +26,22 @@ export function CouponList() {
         }
     };
 
-    const handleCreate = async (dto: CreateCouponDTO) => {
-        await MarketingService.createCoupon(dto);
+    const handleOpenCreate = () => {
+        setSelectedCoupon(null);
+        setIsModalOpen(true);
+    };
+
+    const handleOpenEdit = (coupon: Coupon) => {
+        setSelectedCoupon(coupon);
+        setIsModalOpen(true);
+    };
+
+    const handleSave = async (dto: CreateCouponDTO) => {
+        if (selectedCoupon) {
+            await MarketingService.updateCoupon(selectedCoupon.id, dto);
+        } else {
+            await MarketingService.createCoupon(dto);
+        }
         await loadCoupons();
     };
 
@@ -57,7 +72,7 @@ export function CouponList() {
                     <p className="text-gray-500">Crie campanhas promocionais</p>
                 </div>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={handleOpenCreate}
                     className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
                 >
                     <Plus size={20} />
@@ -100,9 +115,22 @@ export function CouponList() {
                                         </button>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <button onClick={() => handleDelete(coupon.id)} className="text-gray-400 hover:text-red-600 transition">
-                                            <Trash2 size={18} />
-                                        </button>
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => handleOpenEdit(coupon)}
+                                                className="p-1 text-gray-400 hover:text-indigo-600 transition"
+                                                title="Editar"
+                                            >
+                                                <Edit2 size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(coupon.id)}
+                                                className="p-1 text-gray-400 hover:text-red-600 transition"
+                                                title="Excluir"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -114,7 +142,8 @@ export function CouponList() {
             <CouponModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={handleCreate}
+                onSave={handleSave}
+                initialData={selectedCoupon || undefined}
             />
         </div>
     );
