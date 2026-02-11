@@ -11,6 +11,7 @@ export const MediaService = {
     upload: async (file: File, onProgress?: (progress: number) => void): Promise<UploadResponse> => {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('public', 'true'); // Garante que a imagem seja acessível publicamente
 
         // Assumindo endpoint realista conforme padrão
         const { data } = await api.post<UploadResponse>('/media/upload', formData, {

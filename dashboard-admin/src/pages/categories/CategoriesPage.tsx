@@ -29,10 +29,13 @@ export function CategoriesPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
+        // Simple window.confirm for now, but ensure it blocks
+        const confirmed = window.confirm('Tem certeza que deseja excluir esta categoria?');
+        if (!confirmed) return;
+
         try {
             await CategoryService.delete(id);
-            setCategories(categories.filter(c => c.id !== id));
+            setCategories(prev => prev.filter(c => c.id !== id));
         } catch (error) {
             alert('Erro ao excluir categoria. Verifique se não há produtos associados.');
             console.error(error);

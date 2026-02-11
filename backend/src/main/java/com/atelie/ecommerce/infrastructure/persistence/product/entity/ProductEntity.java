@@ -37,6 +37,9 @@ public class ProductEntity {
     @Column(name = "image_url")
     private List<String> images;
 
+    @OneToMany(mappedBy = "product", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants;
+
     @Column(name = "active")
     private Boolean active;
 

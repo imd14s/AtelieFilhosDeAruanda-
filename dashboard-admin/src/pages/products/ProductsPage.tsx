@@ -39,9 +39,16 @@ export function ProductsPage() {
     try {
       await ProductService.toggleAlert(id);
       await loadProducts();
-    } catch (error) {
+      alert('Alerta de estoque atualizado com sucesso!');
+    } catch (error: any) {
       console.error('Erro ao atualizar alerta', error);
-      alert('Erro ao atualizar alerta');
+      if (error.response?.status === 404) {
+        alert('Funcionalidade não implementada na API ou produto não encontrado.');
+      } else if (error.response?.status === 500) {
+        alert('Erro de configuração no servidor. Verifique se as variáveis de ambiente estão corretas.');
+      } else {
+        alert('Erro ao atualizar alerta: ' + (error.message || 'Erro desconhecido.'));
+      }
     }
   };
 

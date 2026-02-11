@@ -16,8 +16,32 @@ export const ProductService = {
   },
 
   getById: async (id: string): Promise<Product> => {
-    const { data } = await api.get<Product>(`/products/${id}`);
-    return data;
+    const { data } = await api.get<any>(`/products/${id}`);
+
+    // Adapter: Transform Backend Entity to Frontend Interface
+    const product: Product = {
+      ...data,
+      // Map 'stockQuantity' (backend) to 'stock' (frontend)
+      stock: data.stockQuantity !== undefined ? data.stockQuantity : data.stock,
+
+      // Parse attributesJson string to attributes object
+      variants: (data.variants || []).map((v: any) => ({
+        ...v,
+        stock: v.stockQuantity, // Map variant stock
+        attributes: v.attributesJson ? JSON.parse(v.attributesJson) : (v.attributes || {}),
+        media: [] // Backend variants don't have media yet
+      })),
+
+      // Map simple string[] images to full ProductMedia[]
+      media: (data.images || []).map((url: string, index: number) => ({
+        id: crypto.randomUUID(), // Generate temp ID for frontend key
+        url: url,
+        type: 'IMAGE',
+        isMain: index === 0
+      }))
+    };
+
+    return product;
   },
 
   create: async (product: CreateProductDTO) => {

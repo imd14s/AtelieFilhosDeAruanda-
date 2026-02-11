@@ -34,6 +34,7 @@ function AppRoutes() {
         <Route path="/" element={<DashboardHome />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/new" element={<ProductForm />} />
+        <Route path="/products/edit/:id" element={<ProductForm />} />
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/configs" element={<ConfigPage />} />

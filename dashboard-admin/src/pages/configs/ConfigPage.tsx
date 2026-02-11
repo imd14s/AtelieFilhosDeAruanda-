@@ -84,7 +84,27 @@ export function ConfigPage() {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {configs.length === 0 ? (
-                                <tr><td colSpan={4} className="p-6 text-center text-gray-500">Nenhuma configuração encontrada.</td></tr>
+                                <tr>
+                                    <td colSpan={4} className="p-12 text-center text-gray-500">
+                                        <p className="mb-4">Nenhuma configuração encontrada.</p>
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm('Deseja criar as configurações padrão (Ex: OPENAI_API_TOKEN)?')) return;
+                                                try {
+                                                    await ConfigService.upsert({
+                                                        key: 'OPENAI_API_TOKEN',
+                                                        value: 'sk-placeholder',
+                                                        description: 'Token da API da OpenAI'
+                                                    });
+                                                    loadConfigs();
+                                                } catch (e) { alert('Erro ao criar defaults') }
+                                            }}
+                                            className="text-indigo-600 hover:text-indigo-800 font-medium underline"
+                                        >
+                                            Clique aqui para criar configurações padrão
+                                        </button>
+                                    </td>
+                                </tr>
                             ) : (
                                 configs.map((config) => (
                                     <tr key={config.key} className="hover:bg-gray-50 transition">

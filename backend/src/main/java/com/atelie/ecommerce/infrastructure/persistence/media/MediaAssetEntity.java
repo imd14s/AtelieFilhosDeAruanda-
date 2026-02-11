@@ -36,29 +36,76 @@ public class MediaAssetEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
-    public Long getId() { return id; }
+    public Long getId() {
+        return id;
+    }
 
-    public MediaAssetType getType() { return type; }
-    public void setType(MediaAssetType type) { this.type = type; }
+    public MediaAssetType getType() {
+        return type;
+    }
 
-    public String getStorageKey() { return storageKey; }
-    public void setStorageKey(String storageKey) { this.storageKey = storageKey; }
+    public void setType(MediaAssetType type) {
+        this.type = type;
+    }
 
-    public String getOriginalFilename() { return originalFilename; }
-    public void setOriginalFilename(String originalFilename) { this.originalFilename = originalFilename; }
+    public String getStorageKey() {
+        return storageKey;
+    }
 
-    public String getMimeType() { return mimeType; }
-    public void setMimeType(String mimeType) { this.mimeType = mimeType; }
+    public void setStorageKey(String storageKey) {
+        this.storageKey = storageKey;
+    }
 
-    public long getSizeBytes() { return sizeBytes; }
-    public void setSizeBytes(long sizeBytes) { this.sizeBytes = sizeBytes; }
+    // Helper for MediaStorageService.loadPublic reflection
+    public String getFilename() {
+        return storageKey;
+    }
 
-    public String getChecksumSha256() { return checksumSha256; }
-    public void setChecksumSha256(String checksumSha256) { this.checksumSha256 = checksumSha256; }
+    public String getOriginalFilename() {
+        return originalFilename;
+    }
 
-    public boolean isPublic() { return isPublic; }
-    public void setPublic(boolean aPublic) { isPublic = aPublic; }
+    public void setOriginalFilename(String originalFilename) {
+        this.originalFilename = originalFilename;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
+    }
+
+    public long getSizeBytes() {
+        return sizeBytes;
+    }
+
+    public void setSizeBytes(long sizeBytes) {
+        this.sizeBytes = sizeBytes;
+    }
+
+    public String getChecksumSha256() {
+        return checksumSha256;
+    }
+
+    public void setChecksumSha256(String checksumSha256) {
+        this.checksumSha256 = checksumSha256;
+    }
+
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(boolean aPublic) {
+        isPublic = aPublic;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 }

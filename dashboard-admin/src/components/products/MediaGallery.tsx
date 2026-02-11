@@ -59,25 +59,26 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
         onChange(media.map(m => m.id === id ? { ...m, url: newUrl } : m));
     };
 
+    const getImageUrl = (url: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        // Remove /api sufixo base se existir para evitar duplicação ou monta corretamente
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        const cleanBase = apiUrl.replace(/\/api$/, '');
+        return `${cleanBase}${url}`;
+    };
+
     return (
         <div className="space-y-4">
             <h3 className="font-semibold text-gray-700">Galeria de Mídia</h3>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* Upload Button */}
-                <label className="border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition">
+                <label className={`border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition relative ${isUploading ? 'pointer-events-none bg-gray-50' : ''}`}>
                     {isUploading ? (
-                        <div className="w-full px-4">
-                            <Upload className="text-indigo-600 mb-2 mx-auto" />
-                            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                                <div
-                                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                                    style={{ width: `${uploadProgress}%` }}
-                                />
-                            </div>
-                            <span className="text-sm text-indigo-600 font-medium">
-                                {uploadProgress}%
-                            </span>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10 p-2">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
+                            <span className="text-xs font-semibold text-indigo-600">Enviando {uploadProgress}%</span>
                         </div>
                     ) : (
                         <div className="text-center w-full px-4">
@@ -85,13 +86,20 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                             <span className="text-sm text-gray-500 block">Adicionar Fotos</span>
                         </div>
                     )}
-                    <input type="file" multiple className="hidden" accept="image/*" onChange={handleUpload} />
+                    <input type="file" multiple className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
                 </label>
 
                 {/* Media List */}
                 {media.map(item => (
                     <div key={item.id} className="relative group rounded-lg overflow-hidden border h-40">
-                        <img src={item.url} className="w-full h-full object-cover" />
+                        <img
+                            src={getImageUrl(item.url)}
+                            alt="Media Preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Erro+Imagem';
+                            }}
+                        />
 
                         {/* Overlay Actions */}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
