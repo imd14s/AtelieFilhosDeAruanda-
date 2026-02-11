@@ -10,7 +10,7 @@ import { MediaGallery } from '../../components/products/MediaGallery';
 import { ChevronLeft, Save, Plus, Wand2 } from 'lucide-react';
 import type { CreateProductDTO, ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
-import { TokenModal } from '../../components/ui/TokenModal';
+
 
 const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),
@@ -32,7 +32,6 @@ export function ProductForm() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-  const [showTokenModal, setShowTokenModal] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   const { register, handleSubmit, reset, setValue, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
@@ -98,28 +97,19 @@ export function ProductForm() {
     const title = getValues('title');
     if (!title) return alert('Preencha o título do produto primeiro.');
 
-    const token = localStorage.getItem('openai_token');
-    if (!token) {
-      setShowTokenModal(true);
-      return;
-    }
-
     setIsGeneratingAI(true);
     try {
-      // Mock AI generation
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setValue('description', `Descrição gerada por IA para: ${title}\n\nEste produto exclusivo do Ateliê Filhos de Aruanda é feito artesanalmente com materiais de alta qualidade, garantindo durabilidade e axé.`);
-    } catch (e) {
-      alert('Erro ao gerar descrição. Verifique seu token.');
+      const description = await ProductService.generateDescription(title);
+      setValue('description', description);
+    } catch (error: any) {
+      console.error('Erro IA:', error);
+      // Check for specifics if possible, or just generic error with config prompt
+      if (confirm('Erro ao gerar descrição (Verifique se o Token OpenAI está configurado em Configurações). Deseja ir para configurações agora?')) {
+        navigate('/configs');
+      }
     } finally {
       setIsGeneratingAI(false);
     }
-  };
-
-  const onSaveToken = (token: string) => {
-    localStorage.setItem('openai_token', token);
-    setShowTokenModal(false);
-    handleGenerateDescription();
   };
 
   const onSubmit = async (data: FormData) => {
@@ -291,12 +281,6 @@ export function ProductForm() {
           </div>
         </div>
       )}
-
-      <TokenModal
-        isOpen={showTokenModal}
-        onClose={() => setShowTokenModal(false)}
-        onSave={onSaveToken}
-      />
     </div>
   );
 }

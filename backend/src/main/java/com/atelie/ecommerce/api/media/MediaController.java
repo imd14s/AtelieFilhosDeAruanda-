@@ -23,10 +23,16 @@ public class MediaController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file,
-                                    @RequestParam(value = "category", required = false) String category,
-                                    @RequestParam(value = "public", defaultValue = "false") boolean isPublic) {
-        return ResponseEntity.ok(media.upload(file, category, isPublic));
+    public ResponseEntity<MediaResponse> upload(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "public", defaultValue = "false") boolean isPublic) {
+        var saved = media.upload(file, category, isPublic);
+        var url = "/api/media/public/" + saved.getId();
+        return ResponseEntity
+                .ok(new MediaResponse(saved.getId(), url, saved.getType().name(), saved.getOriginalFilename()));
+    }
+
+    public record MediaResponse(Long id, String url, String type, String filename) {
     }
 
     @GetMapping("/public/{id}")
@@ -46,7 +52,8 @@ public class MediaController {
             // Para FileSystemResource, conseguimos acessar o Path e descobrir mime
             Path path = resource.getFile().toPath();
             String probed = Files.probeContentType(path);
-            if (probed != null && !probed.isBlank()) contentType = probed;
+            if (probed != null && !probed.isBlank())
+                contentType = probed;
         } catch (Exception ignored) {
             // fallback mantém octet-stream
         }

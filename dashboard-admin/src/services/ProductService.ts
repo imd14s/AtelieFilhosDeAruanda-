@@ -36,7 +36,12 @@ export const ProductService = {
     return api.delete(`/products/${id}`);
   },
 
-  toggleAlert: async (id: string) => {
-    return api.put(`/dashboard/products/${id}/toggle-alert`);
+  toggleAlert: async (id: string): Promise<void> => {
+    await api.put(`/products/${id}/toggle-alert`);
+  },
+
+  generateDescription: async (title: string): Promise<string> => {
+    const { data } = await api.post<{ description: string }>('/products/generate-description', { title });
+    return data.description;
   }
 };

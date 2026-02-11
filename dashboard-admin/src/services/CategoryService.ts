@@ -11,5 +11,9 @@ export const CategoryService = {
     create: async (payload: { name: string; active: boolean }): Promise<Category> => {
         const { data } = await api.post<Category>('/categories', payload);
         return data;
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/categories/${id}`);
     }
 };

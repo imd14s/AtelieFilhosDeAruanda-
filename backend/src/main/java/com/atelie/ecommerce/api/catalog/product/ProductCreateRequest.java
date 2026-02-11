@@ -18,7 +18,12 @@ public record ProductCreateRequest(
         @JsonProperty("stock") Integer stockQuantity,
         @JsonProperty("category") UUID categoryId,
         List<ProductMediaItem> media,
+        List<ProductVariantRequest> variants,
         Boolean active) {
     public record ProductMediaItem(String url, String type, Boolean isMain) {
+    }
+
+    public record ProductVariantRequest(String sku, BigDecimal price, Integer stock,
+            java.util.Map<String, String> attributes) {
     }
 }

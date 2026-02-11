@@ -59,6 +59,7 @@ Atualizado em: 04/02/2026
 
 ## 🚨 4. Pontos de Atenção (Backend Alignment)
 *Funcionalidades que dependem de correções no Backend:*
-1.  **Cancelamento de Pedido**: Endpoint retornando 500.
+1.  **Cancelamento de Pedido**: Endpoint retornando 500 (Em análise).
 2.  **Criação de Configuração**: Endpoint retornando 500 (`IdentifierGenerationException`).
 3.  **Multi-Tenancy**: Backend precisa validar o header `X-Tenant-ID`.
+4.  **Categorias e Mídia**: Endpoints corrigidos (`DELETE /categories`, Upload com resposta JSON).

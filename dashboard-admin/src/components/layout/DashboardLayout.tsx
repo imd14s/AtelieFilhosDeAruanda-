@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight, Plus, Tag } from 'lucide-react';
 import clsx from 'clsx';
 import { StoreSelector } from './StoreSelector';
 
@@ -16,7 +16,8 @@ export function DashboardLayout() {
   const { logout } = useAuth();
   const location = useLocation();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    'Configurações': true, // Default expanded
+    'Produtos': true,
+    'Configurações': true,
     'Marketing': true
   });
 
@@ -27,7 +28,15 @@ export function DashboardLayout() {
   const navItems: NavItem[] = [
     { icon: LayoutDashboard, label: 'Resumo', path: '/' },
     { icon: ShoppingBag, label: 'Pedidos', path: '/orders' },
-    { icon: Package, label: 'Produtos', path: '/products' },
+    {
+      icon: Package,
+      label: 'Produtos',
+      children: [
+        { icon: Package, label: 'Listagem', path: '/products' },
+        { icon: Plus, label: 'Novo Produto', path: '/products/new' },
+        { icon: Tag, label: 'Categorias', path: '/categories' }
+      ]
+    },
     { icon: Zap, label: 'Automações & IA', path: '/automations' },
     {
       icon: Ticket,

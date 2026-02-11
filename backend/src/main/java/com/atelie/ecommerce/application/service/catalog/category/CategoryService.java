@@ -41,4 +41,11 @@ public class CategoryService {
                 .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getActive()))
                 .toList();
     }
+
+    public void delete(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new com.atelie.ecommerce.api.common.exception.NotFoundException("Categoria não encontrada.");
+        }
+        repository.deleteById(id);
+    }
 }

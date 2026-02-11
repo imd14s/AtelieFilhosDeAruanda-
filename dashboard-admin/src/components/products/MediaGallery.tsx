@@ -80,19 +80,10 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                             </span>
                         </div>
                     ) : (
-                        <>
-                            {isUploading ? (
-                                <div className="text-center w-full px-4">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
-                                    <span className="text-sm text-gray-400">Processando...</span>
-                                </div>
-                            ) : (
-                                <>
-                                    <Upload className="text-gray-400 mb-2" />
-                                    <span className="text-sm text-gray-500">Adicionar Fotos</span>
-                                </>
-                            )}
-                        </>
+                        <div className="text-center w-full px-4">
+                            <Upload className="text-gray-400 mb-2 mx-auto" />
+                            <span className="text-sm text-gray-500 block">Adicionar Fotos</span>
+                        </div>
                     )}
                     <input type="file" multiple className="hidden" accept="image/*" onChange={handleUpload} />
                 </label>

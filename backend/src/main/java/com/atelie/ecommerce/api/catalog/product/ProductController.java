@@ -63,17 +63,15 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<ProductEntity> create(@RequestBody ProductCreateRequest request) {
         if (request.categoryId() == null) {
-            return ResponseEntity.badRequest().build(); // Validação básica
+            return ResponseEntity.badRequest().build();
         }
 
-        // Mapeia DTO -> Entity
         ProductEntity product = new ProductEntity();
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStockQuantity(request.stockQuantity());
 
-        // Map media objects to URL strings
         if (request.media() != null) {
             List<String> imageUrls = request.media().stream()
                     .map(ProductCreateRequest.ProductMediaItem::url)
@@ -81,13 +79,35 @@ public class ProductController {
             product.setImages(imageUrls);
         }
 
-        // Datas e defaults são tratados pelo Service ou Entity
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
         product.setActive(request.active() != null ? request.active() : true);
 
-        // Delega para o Service (que resolve a Categoria e cria Variantes)
-        ProductEntity savedProduct = productService.saveProduct(product, request.categoryId());
+        // Map variants
+        List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants = null;
+        if (request.variants() != null) {
+            variants = request.variants().stream().map(v -> {
+                String attrsJson = "{}";
+                try {
+                    if (v.attributes() != null) {
+                        attrsJson = new com.fasterxml.jackson.databind.ObjectMapper()
+                                .writeValueAsString(v.attributes());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                return com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity.builder()
+                        .sku(v.sku())
+                        .price(v.price())
+                        .stockQuantity(v.stock())
+                        .active(true)
+                        .attributesJson(attrsJson)
+                        .build();
+            }).toList();
+        }
+
+        ProductEntity savedProduct = productService.saveProduct(product, request.categoryId(), variants);
 
         return ResponseEntity.ok(savedProduct);
     }
@@ -95,10 +115,7 @@ public class ProductController {
     @PostMapping("/upload-image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
-            // Persist as MediaAssetEntity to get an ID
             var mediaAsset = mediaStorageService.upload(file, "product-image", true);
-
-            // Return JSON structure expected by frontend (UploadResponse)
             return ResponseEntity.ok(new java.util.HashMap<String, String>() {
                 {
                     put("id", mediaAsset.getId().toString());
@@ -118,6 +135,32 @@ public class ProductController {
             return ResponseEntity.ok(productService.updateProduct(id, productDetails));
         } catch (com.atelie.ecommerce.api.common.exception.NotFoundException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}/toggle-alert")
+    public ResponseEntity<Void> toggleAlert(@PathVariable UUID id) {
+        try {
+            productService.toggleAlert(id);
+            return ResponseEntity.ok().build();
+        } catch (com.atelie.ecommerce.api.common.exception.NotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/generate-description")
+    public ResponseEntity<?> generateDescription(@RequestBody java.util.Map<String, String> payload) {
+        String title = payload.get("title");
+        if (title == null || title.isBlank())
+            return ResponseEntity.badRequest().body("Title required");
+
+        try {
+            String desc = productService.generateDescription(title);
+            return ResponseEntity.ok(java.util.Map.of("description", desc));
+        } catch (com.atelie.ecommerce.api.common.exception.BusinessException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(java.util.Map.of("error", "Erro interno"));
         }
     }
 

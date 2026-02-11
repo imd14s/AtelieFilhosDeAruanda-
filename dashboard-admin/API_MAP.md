@@ -19,8 +19,14 @@ Rotas otimizadas para visão administrativa (tabelas, métricas).
   - **Response**: Lista completa de produtos (incluindo status, IDs internos).
 
 - **Toggle Alerta de Estoque**
-  - **PUT** `/api/dashboard/products/{id}/toggle-alert`
-  - **Response**: Produto atualizado.
+  - **PUT** `/api/products/{id}/toggle-alert`
+  - **Response**: 200 OK.
+
+- **Gerenciar Categorias**
+  - **GET** `/api/categories` - Lista categorias.
+  - **POST** `/api/categories` - Cria categoria.
+  - **DELETE** `/api/categories/{id}` - Remove categoria.
+
 
 - **Métricas do Dashboard**
   - **GET** `/api/analytics/dashboard`

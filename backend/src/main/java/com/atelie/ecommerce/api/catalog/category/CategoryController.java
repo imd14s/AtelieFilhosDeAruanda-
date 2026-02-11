@@ -45,4 +45,15 @@ public class CategoryController {
     public List<CategoryResponse> list() {
         return service.list();
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Deletar categoria", description = "Remove uma categoria pelo ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Categoria removida com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Categoria não encontrada")
+    })
+    public void delete(@PathVariable java.util.UUID id) {
+        service.delete(id);
+    }
 }

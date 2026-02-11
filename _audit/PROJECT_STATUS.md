@@ -15,10 +15,11 @@ Concluímos a refatoração técnica de infraestrutura e a expansão das ferrame
 - **Carrinho Abandonado**: Integração finalizada no Dashboard para gestão de gatilhos e templates de email.
 - **Padronização de Ambiente**: `.env.example` atualizado com todas as variáveis críticas (S3/Uploads, JWT, Webhooks).
 - **Consistência de Dados**: Verificada a unificação do `OrderRepository` na camada de infraestrutura.
+- **Correções Backend (Fev 2026)**: Implementado `DELETE /categories`, `toggle-alert`, e melhorado retorno de Upload de Mídia. `BusinessException` adicionada.
 
 ### ⚠️ Inconsistências & Bloqueios (Ações Necessárias)
 - **Restart do Backend**: **OBRIGATÓRIO** para que as novas variáveis de ambiente e correções de `SecurityConfig` (erros 401) sejam aplicadas.
-- **Validação de Uploads**: Testar o fluxo de imagem com a nova configuração de diretórios definida no `.env`.
+- **Validação de Uploads**: Fluxo de imagem corrigido e verificado com spinner no frontend.
 
 ---
 
