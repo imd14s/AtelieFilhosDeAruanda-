@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor, api } from '../../test-utils';
 import { LoginPage } from './LoginPage';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('LoginPage Component', () => {
     it('should render login form correctly', () => {

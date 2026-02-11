@@ -1,5 +1,5 @@
 import { api } from '../api/axios';
-import { Category } from '../types/category';
+import type { Category } from '../types/category';
 
 export const CategoryService = {
     getAll: async (): Promise<Category[]> => {

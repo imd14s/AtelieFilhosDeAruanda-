@@ -78,8 +78,9 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
                     <input
                         type="number"
                         className="w-full p-2 border rounded"
-                        value={newVariant.price}
-                        onChange={e => setNewVariant({ ...newVariant, price: Number(e.target.value) })}
+                        value={newVariant.price || ''}
+                        onChange={e => setNewVariant({ ...newVariant, price: e.target.value ? Number(e.target.value) : 0 })}
+                        placeholder="0.00"
                     />
                 </div>
                 <button

@@ -7,7 +7,7 @@ import { ProductService } from '../../services/ProductService';
 import { CategoryService } from '../../services/CategoryService';
 import { VariantsManager } from '../../components/products/VariantsManager';
 import { MediaGallery } from '../../components/products/MediaGallery';
-import { ChevronLeft, Save, Plus } from 'lucide-react';
+import { ChevronLeft, Save, Plus, Wand2 } from 'lucide-react';
 import type { CreateProductDTO, ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
 
@@ -143,8 +143,34 @@ export function ProductForm() {
             </div>
 
             <div className="col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-              <textarea id="description" {...register('description')} className="w-full p-2 border rounded-lg h-24" />
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descrição</label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const title = getValues('title');
+                    if (!title) return alert('Preencha o título primeiro');
+
+                    let token = localStorage.getItem('openai_token');
+                    if (!token) {
+                      token = prompt('Insira seu Token da OpenAI para usar este recurso:');
+                      if (token) localStorage.setItem('openai_token', token);
+                      else return;
+                    }
+
+                    try {
+                      // Simulação de chamada AI (substituir por fetch real se desejar)
+                      setValue('description', `Descrição gerada por IA para: ${title}\n\nEste produto é feito com materiais de alta qualidade...`);
+                    } catch (e) {
+                      alert('Erro ao gerar descrição');
+                    }
+                  }}
+                  className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 flex items-center gap-1"
+                >
+                  <Wand2 size={12} /> Gerar com IA
+                </button>
+              </div>
+              <textarea id="description" {...register('description')} className="w-full p-2 border rounded-lg h-24" placeholder="Descreva os detalhes do produto..." />
             </div>
 
             <div>

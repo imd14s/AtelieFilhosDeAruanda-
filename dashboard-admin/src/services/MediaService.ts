@@ -25,14 +25,14 @@ export const MediaService = {
         return data;
     },
 
-    removeBackground: async (mediaId: string): Promise<string> => {
+    removeBackground: async (_mediaId: string): Promise<string> => {
         console.warn('Using Mock AI Remove Background');
         await new Promise(resolve => setTimeout(resolve, 1500));
         // Retorna uma imagem com "fundo removido" (mock)
         return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?bg=removed';
     },
 
-    generateMockup: async (mediaId: string, modelId: string): Promise<string> => {
+    generateMockup: async (_mediaId: string, _modelId: string): Promise<string> => {
         console.warn('Using Mock AI Mockup Generation');
         await new Promise(resolve => setTimeout(resolve, 2000));
         return 'https://images.unsplash.com/photo-1542272617-08f086302542?mockup=generated';

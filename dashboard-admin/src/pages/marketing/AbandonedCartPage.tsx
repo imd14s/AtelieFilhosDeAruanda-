@@ -39,7 +39,7 @@ export function AbandonedCartPage() {
 
     const updateTrigger = (index: number, field: string, value: any) => {
         if (!settings) return;
-        const newTriggers = [...settings.triggers];
+        const newTriggers = [...(settings.triggers || [])];
         newTriggers[index] = { ...newTriggers[index], [field]: value };
         setSettings({ ...settings, triggers: newTriggers });
     };

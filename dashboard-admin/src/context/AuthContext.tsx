@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
 import { api } from '../api/axios';
 
 interface AuthContextType {
@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         // Tenta bater num endpoint leve para ver se o token é válido e o back está vivo
         // Se der erro de rede, cai no catch e desloga
-        await api.get('/health'); 
+        await api.get('/health');
         setIsAuthenticated(true);
       } catch (error) {
         console.error("Sessão inválida ou Backend offline:", error);

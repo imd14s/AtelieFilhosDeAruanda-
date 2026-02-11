@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { X, Settings, AlertTriangle } from 'lucide-react';
 
 interface FeatureGateModalProps {
@@ -13,7 +13,7 @@ export function FeatureGateModal({ isOpen, onClose, featureName }: FeatureGateMo
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
@@ -24,11 +24,11 @@ export function FeatureGateModal({ isOpen, onClose, featureName }: FeatureGateMo
           <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mb-4">
             <AlertTriangle className="text-yellow-600" size={32} />
           </div>
-          
+
           <h3 className="text-xl font-bold text-gray-800 mb-2">
             Configuração Necessária
           </h3>
-          
+
           <p className="text-gray-600 mb-6">
             A funcionalidade <strong>{featureName}</strong> requer integração externa (n8n / OpenAI) que ainda não foi configurada neste ambiente.
           </p>
@@ -42,7 +42,7 @@ export function FeatureGateModal({ isOpen, onClose, featureName }: FeatureGateMo
             </ul>
           </div>
 
-          <button 
+          <button
             onClick={onClose}
             className="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 transition font-medium flex items-center justify-center gap-2"
           >

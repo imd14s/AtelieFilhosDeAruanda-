@@ -91,8 +91,9 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                                 required
                                 type="number"
                                 step="0.01"
-                                value={formData.value}
+                                value={formData.value || ''}
                                 onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                                placeholder={formData.type === 'PERCENTAGE' ? "10" : "50.00"}
                                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                             />
                         </div>
@@ -103,8 +104,9 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                         <input
                             required
                             type="number"
-                            value={formData.usageLimit}
-                            onChange={(e) => setFormData({ ...formData, usageLimit: parseInt(e.target.value) })}
+                            value={formData.usageLimit || ''}
+                            onChange={(e) => setFormData({ ...formData, usageLimit: parseInt(e.target.value) || 0 })}
+                            placeholder="100"
                             className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                     </div>

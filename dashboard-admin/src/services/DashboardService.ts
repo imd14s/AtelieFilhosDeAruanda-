@@ -9,15 +9,15 @@ export const DashboardService = {
     try {
       // 1. Busca a lista real do Backend
       const products = await ProductService.getAll();
-      
+
       // 2. Faz os cálculos no Frontend (Navegador)
       const totalProducts = products.length;
-      
+
       // Conta produtos com estoque abaixo de 10
-      const lowStockAlerts = products.filter(p => (p.stockQuantity || 0) < 10).length;
+      const lowStockAlerts = products.filter(p => ((p as any).stockQuantity || 0) < 10).length;
 
       // Como não temos endpoint de "Vendas" no backend ainda, mockamos ou zeramos
-      const totalSales = 0; 
+      const totalSales = 0;
       const pendingOrders = 0;
 
       return {
