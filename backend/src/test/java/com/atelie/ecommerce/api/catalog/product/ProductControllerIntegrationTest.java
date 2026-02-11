@@ -75,6 +75,7 @@ public class ProductControllerIntegrationTest {
                 10,
                 category.getId(),
                 List.of(new ProductCreateRequest.ProductMediaItem("image1.jpg", "IMAGE", true)),
+                List.of(), // variants
                 true);
 
         mockMvc.perform(post("/api/products")
