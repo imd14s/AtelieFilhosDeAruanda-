@@ -2,7 +2,7 @@ package com.atelie.ecommerce.application.service.catalog.category;
 
 import com.atelie.ecommerce.api.catalog.category.dto.CategoryResponse;
 import com.atelie.ecommerce.api.catalog.category.dto.CreateCategoryRequest;
-import com.atelie.ecommerce.api.common.exception.ConflictException;
+import com.atelie.ecommerce.api.common.exception.DuplicateResourceException;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import org.springframework.stereotype.Service;
@@ -20,17 +20,16 @@ public class CategoryService {
     }
 
     public CategoryResponse create(CreateCategoryRequest request) {
-        boolean exists = repository.findAll().stream()
-                .anyMatch(c -> c.getName().equalsIgnoreCase(request.getName()));
-
-        if (exists) {
-            throw new ConflictException("Category already exists");
+        // Validar se já existe categoria com o mesmo nome
+        if (repository.existsByNameIgnoreCase(request.getName())) {
+            throw new DuplicateResourceException(
+                    "Já existe uma categoria com o nome '" + request.getName() + "'");
         }
 
         CategoryEntity entity = new CategoryEntity();
         entity.setId(UUID.randomUUID());
         entity.setName(request.getName());
-        entity.setActive(request.getActive());
+        entity.setActive(request.getActive() != null ? request.getActive() : true);
 
         repository.save(entity);
 

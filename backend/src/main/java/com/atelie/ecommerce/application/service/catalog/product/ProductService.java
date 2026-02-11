@@ -46,7 +46,8 @@ public class ProductService {
     @Transactional
     public ProductEntity saveProduct(ProductEntity product, UUID categoryId) {
         CategoryEntity category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Category not found with ID: " + categoryId));
+                .orElseThrow(() -> new NotFoundException(
+                        "Categoria com ID " + categoryId + " não foi encontrada"));
         product.setCategory(category);
 
         boolean isNew = product.getId() == null;

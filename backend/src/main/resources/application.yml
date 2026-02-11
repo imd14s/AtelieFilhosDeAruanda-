@@ -25,6 +25,16 @@ server:
 # --- MEDIA / UPLOADS ---
 # --- INTEGRAÇÕES ---
 
+# --- SWAGGER / OpenAPI ---
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+
 management:
   endpoints:
     web:
