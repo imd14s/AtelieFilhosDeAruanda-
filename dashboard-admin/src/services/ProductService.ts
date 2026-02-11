@@ -5,7 +5,14 @@ export const ProductService = {
   getAll: async (): Promise<Product[]> => {
     const { data } = await api.get<any>('/products');
     // Se vier paginado (Spring Page), retorna o content. Se vier array direto, retorna data.
-    return Array.isArray(data) ? data : (data.content || []);
+    const content = Array.isArray(data) ? data : (data.content || []);
+
+    // Map backend 'name' to frontend 'title' to ensure list displays correctly
+    return content.map((p: any) => ({
+      ...p,
+      title: p.name || p.title || 'Sem Título',
+      stock: p.stockQuantity !== undefined ? p.stockQuantity : p.stock
+    }));
   },
 
   getById: async (id: string): Promise<Product> => {

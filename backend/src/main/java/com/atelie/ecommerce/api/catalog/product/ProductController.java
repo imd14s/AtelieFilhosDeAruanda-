@@ -93,14 +93,22 @@ public class ProductController {
     }
 
     @PostMapping("/upload-image")
-    public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
-            String filename = mediaStorageService.storeImage(file);
-            return ResponseEntity.ok("/uploads/" + filename);
+            // Persist as MediaAssetEntity to get an ID
+            var mediaAsset = mediaStorageService.upload(file, "product-image", true);
+
+            // Return JSON structure expected by frontend (UploadResponse)
+            return ResponseEntity.ok(new java.util.HashMap<String, String>() {
+                {
+                    put("id", mediaAsset.getId().toString());
+                    put("url", "/api/media/public/" + mediaAsset.getId());
+                }
+            });
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         } catch (Exception ex) {
-            return ResponseEntity.internalServerError().body("Falha no upload");
+            return ResponseEntity.internalServerError().body("Falha no upload: " + ex.getMessage());
         }
     }
 

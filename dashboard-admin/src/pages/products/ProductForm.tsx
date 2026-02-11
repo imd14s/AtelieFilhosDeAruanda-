@@ -10,6 +10,7 @@ import { MediaGallery } from '../../components/products/MediaGallery';
 import { ChevronLeft, Save, Plus, Wand2 } from 'lucide-react';
 import type { CreateProductDTO, ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
+import { TokenModal } from '../../components/ui/TokenModal';
 
 const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),
@@ -31,6 +32,9 @@ export function ProductForm() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
   const { register, handleSubmit, reset, setValue, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -58,8 +62,6 @@ export function ProductForm() {
     if (!id) return;
     try {
       const product = await ProductService.getById(id);
-
-      // Mapping fields if backend uses different names (name vs title, stockQuantity vs stock)
       reset({
         title: product.title || (product as any).name || '',
         description: product.description || '',
@@ -68,7 +70,6 @@ export function ProductForm() {
         category: (product as any).categoryId || product.category || '',
         tenantId: product.tenantId || '1'
       });
-
       if (product.variants) setVariants(product.variants);
       if (product.media) setMedia(product.media);
     } catch (error) {
@@ -78,24 +79,48 @@ export function ProductForm() {
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
-
     setIsCreatingCategory(true);
     try {
       const newCategory = await CategoryService.create({ name: newCategoryName, active: true });
       setCategories(prev => [...prev, newCategory]);
       setShowCategoryModal(false);
       setNewCategoryName('');
-
-      // Selecionar automaticamente a nova categoria
       setValue('category', newCategory.id);
     } catch (error) {
       console.error('Erro ao criar categoria:', error);
-      alert('Erro ao criar categoria');
+      alert('Não foi possível criar a categoria. Verifique se já existe ou tente novamente.');
     } finally {
       setIsCreatingCategory(false);
     }
   };
 
+  const handleGenerateDescription = async () => {
+    const title = getValues('title');
+    if (!title) return alert('Preencha o título do produto primeiro.');
+
+    const token = localStorage.getItem('openai_token');
+    if (!token) {
+      setShowTokenModal(true);
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    try {
+      // Mock AI generation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setValue('description', `Descrição gerada por IA para: ${title}\n\nEste produto exclusivo do Ateliê Filhos de Aruanda é feito artesanalmente com materiais de alta qualidade, garantindo durabilidade e axé.`);
+    } catch (e) {
+      alert('Erro ao gerar descrição. Verifique seu token.');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  const onSaveToken = (token: string) => {
+    localStorage.setItem('openai_token', token);
+    setShowTokenModal(false);
+    handleGenerateDescription();
+  };
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -125,7 +150,7 @@ export function ProductForm() {
           <ChevronLeft />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Novo Produto</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{id ? 'Editar Produto' : 'Novo Produto'}</h1>
           <p className="text-gray-500">Cadastro completo com Variantes e Mídia</p>
         </div>
       </div>
@@ -147,27 +172,11 @@ export function ProductForm() {
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descrição</label>
                 <button
                   type="button"
-                  onClick={async () => {
-                    const title = getValues('title');
-                    if (!title) return alert('Preencha o título primeiro');
-
-                    let token = localStorage.getItem('openai_token');
-                    if (!token) {
-                      token = prompt('Insira seu Token da OpenAI para usar este recurso:');
-                      if (token) localStorage.setItem('openai_token', token);
-                      else return;
-                    }
-
-                    try {
-                      // Simulação de chamada AI (substituir por fetch real se desejar)
-                      setValue('description', `Descrição gerada por IA para: ${title}\n\nEste produto é feito com materiais de alta qualidade...`);
-                    } catch (e) {
-                      alert('Erro ao gerar descrição');
-                    }
-                  }}
-                  className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 flex items-center gap-1"
+                  onClick={handleGenerateDescription}
+                  disabled={isGeneratingAI}
+                  className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 flex items-center gap-1 disabled:opacity-50"
                 >
-                  <Wand2 size={12} /> Gerar com IA
+                  <Wand2 size={12} /> {isGeneratingAI ? 'Gerando...' : 'Gerar com IA'}
                 </button>
               </div>
               <textarea id="description" {...register('description')} className="w-full p-2 border rounded-lg h-24" placeholder="Descreva os detalhes do produto..." />
@@ -282,6 +291,12 @@ export function ProductForm() {
           </div>
         </div>
       )}
+
+      <TokenModal
+        isOpen={showTokenModal}
+        onClose={() => setShowTokenModal(false)}
+        onSave={onSaveToken}
+      />
     </div>
   );
 }

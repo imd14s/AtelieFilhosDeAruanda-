@@ -20,21 +20,26 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
 
             for (const file of e.target.files) {
                 try {
+                    // Backend now returns { id: "...", url: "..." }
                     const response = await MediaService.upload(file, (progress) => {
                         setUploadProgress(progress);
                     });
+
                     newMediaItems.push({
                         id: response.id,
-                        url: response.url,
+                        url: response.url, // Use the URL returned by backend
                         type: 'IMAGE',
                         isMain: media.length === 0 // Primeira vira capa
                     });
                 } catch (err) {
-                    console.error(err);
+                    console.error("Upload failed", err);
+                    alert("Erro ao fazer upload da imagem."); // Feedback pro usuário
                 }
             }
 
-            onChange([...media, ...newMediaItems]);
+            if (newMediaItems.length > 0) {
+                onChange([...media, ...newMediaItems]);
+            }
             setIsUploading(false);
             setUploadProgress(0);
         }
