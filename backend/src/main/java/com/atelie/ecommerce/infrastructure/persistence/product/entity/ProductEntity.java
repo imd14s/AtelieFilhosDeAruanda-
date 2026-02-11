@@ -21,7 +21,6 @@ public class ProductEntity {
     @Id
     private UUID id;
 
-    @JsonProperty("title")
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -29,7 +28,6 @@ public class ProductEntity {
 
     private BigDecimal price;
 
-    @JsonProperty("stock")
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
 

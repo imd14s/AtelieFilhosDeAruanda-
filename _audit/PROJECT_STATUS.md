@@ -5,39 +5,36 @@
 
 ---
 
-## 1. Estado Atual: Fase 6 (CRUD & UX) - Validação 🔄
+## 1. Estado Atual: Fase 8 (Marketing & Expansão) 🔄
 
-Estamos na fase final de validação das funcionalidades de gestão.
+Concluímos a refatoração técnica de infraestrutura e a expansão das ferramentas de marketing.
 
 ### ✅ Avanços Recentes (Concluídos)
-- **ProductForm (Edit Mode)**: Refatorado para usar UUIDs de categorias (corrige Erro 500 relatado).
-- **Team Management**: Endpoints `PUT` e `DELETE` implementados em `AdminUserController`.
-- **Backend Security**: Endpoints `/api/auth/register` e `/api/auth/verify` marcados como `permitAll()`.
-- **Infra de Testes**: Suítes de testes presentes no Backend (28 arquivos), Loja (19 testes) e Dashboard (14 testes).
+- **Centralização de Reflection**: Criada a utilidade `ReflectionPropertyUtils` e refatorados `MediaStorageService` e `PaymentService`.
+- **Gestão de Cupons (Full CRUD)**: Implementado suporte completo para criação, listagem, edição e exclusão no Dashboard e Backend.
+- **Carrinho Abandonado**: Integração finalizada no Dashboard para gestão de gatilhos e templates de email.
+- **Padronização de Ambiente**: `.env.example` atualizado com todas as variáveis críticas (S3/Uploads, JWT, Webhooks).
+- **Consistência de Dados**: Verificada a unificação do `OrderRepository` na camada de infraestrutura.
 
 ### ⚠️ Inconsistências & Bloqueios (Ações Necessárias)
-- **Restart do Backend**: Muitas correções de segurança (`SecurityConfig`) exigem o restart do serviço para sanar erros 401 relatados.
-- **Divergência Documental**: O arquivo `RELATORIO_TESTE_VISUAL.md` ainda lista o Erro 500 de produtos como "Falha", mas o código do `ProductForm.tsx` já foi atualizado para usar IDs.
-- **Relatório de Testes**: `_audit/PROJECT_STATUS.md` anterior afirmava 0% de cobertura no backend, o que é falso. O diretório `src/test` existe e está populado.
+- **Restart do Backend**: **OBRIGATÓRIO** para que as novas variáveis de ambiente e correções de `SecurityConfig` (erros 401) sejam aplicadas.
+- **Validação de Uploads**: Testar o fluxo de imagem com a nova configuração de diretórios definida no `.env`.
 
 ---
 
 ## 2. Mapa de Funcionalidades (Real vs Doc)
 
 ### 2.1 Backend API (`/backend`)
-- [x] **Auth**: Login, Registro (Público), Webhooks (Token-based).
-- [x] **Catálogo**: CRUD de Produtos e Categorias.
-- [x] **Marketing**: Cupons e Carrinho Abandonado (Endpoints base).
+- [x] **Auth**: Login, Registro, Verificação de Token.
+- [x] **Catálogo**: CRUD de Produtos, Categorias e Variantes.
+- [x] **Marketing**: Cupons (CRUD Completo) e Carrinho Abandonado.
 - [x] **Gestão de Equipe**: CRUD completo em `/api/admin/users`.
+- [x] **Common Utils**: Abstração de Reflection e tratamento de propriedades dinâmicas.
 
 ### 2.2 Dashboard Admin (`/dashboard-admin`)
-- [x] **Produtos**: Listagem e edição funcional.
+- [x] **Produtos**: Listagem e edição (UUID based).
 - [x] **Equipe**: Gestão completa funcional.
-- [!] **Marketing**: Interface de Cupons ainda precisa de expansão (Visualização apenas).
-
-### 2.3 Storefront (`/frontend`)
-- [x] **Fluxo de Compra**: Home -> Shop -> Product -> Cart -> Checkout (Funcional).
-- [x] **SEO**: Componente `SEO.jsx` integrado e testado.
+- [x] **Marketing**: Dashboard funcional para Cupons e Carrinho Abandonado.
 
 ---
 
@@ -45,16 +42,15 @@ Estamos na fase final de validação das funcionalidades de gestão.
 
 ### Alta Prioridade (P1)
 - [ ] **Garantir Restart**: Validar se alterações no `SecurityConfig.java` foram carregadas no container.
-- [ ] **Reflexão Duplicada**: Extrair `ReflectionPropertyUtils` (lógica comum entre `MediaStorageService` e `PaymentService`).
-- [ ] **Interface OrderRepository**: Unificar ou renomear interfaces duplicadas (domain vs infrastructure).
+- [ ] **Teste de Fluxo de Caixa**: Validar cálculo de descontos (cupons) no checkout do storefront.
 
 ### Média Prioridade (P2)
-- [ ] **ProductService**: Mover lógica de update remanescente do `ProductController` para o `ProductService`.
-- [ ] **Environment Docs**: Atualizar `.env.example` com todas as novas variáveis (`ALLOWED_IMAGE_MIME`, etc).
+- [ ] **ProductService**: Mover lógica de update remanescente do `ProductController` para o `ProductService` (Confirmado em Service, mas Controller ainda possui mapeamento manual).
+- [ ] **Auditoria de Logs**: Implementar logging estruturado para operações críticas de marketing.
 
 ---
 
 ## 4. Próximos Passos
-1. Validar fluxo de convite de equipe após restart completo do ambiente Docker.
-2. Executar auditoria de segurança nos novos endpoints de Admin.
-3. Padronizar DTOs de resposta para erros de validação (400 Bad Request).
+1. Reiniciar ambiente Docker para validar correções de 401.
+2. Executar teste E2E de compra usando um cupom de desconto editado.
+3. Finalizar documentação de API para os novos endpoints de Cupons no `ROTAS_AND_REQUEST.md`.

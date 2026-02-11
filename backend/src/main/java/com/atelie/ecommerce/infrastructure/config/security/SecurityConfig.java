@@ -86,9 +86,9 @@ public class SecurityConfig {
                         // Mídia pública
                         .requestMatchers(HttpMethod.GET, "/api/media/public/**").permitAll()
 
-                        // Catálogo público (atenção: categories está sem /api no seu projeto)
+                        // Catálogo público
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
 
                         // Se seu checkout for público:
                         .requestMatchers("/api/shipping/**").permitAll()
@@ -102,7 +102,9 @@ public class SecurityConfig {
                 // Boas práticas básicas de headers
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.deny())
-                        .contentTypeOptions(Customizer.withDefaults()))
+                        .contentTypeOptions(Customizer.withDefaults())
+                        .xssProtection(xss -> xss.disable())) // XSS Protection deprecated in modern browsers,
+                                                              // Content-Security-Policy is preferred
 
                 // JWT filter (antes do filtro padrão de login)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

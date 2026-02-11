@@ -43,8 +43,7 @@ public class ProductController {
         }
 
         if (categoryId != null) {
-            // TODO: Paginate this too in future
-            return ResponseEntity.ok(productRepository.findByCategory_Id(categoryId));
+            return ResponseEntity.ok(productRepository.findByCategory_Id(categoryId, pageable));
         }
 
         if (q != null && !q.isBlank()) {

@@ -27,6 +27,7 @@
 9. [Dashboard](#9-dashboard)
 10. [Webhooks](#10-webhooks)
 11. [Admin](#11-admin)
+12. [Marketing](#12-marketing)
 
 ---
 
@@ -922,7 +923,46 @@ curl -X POST "http://localhost:8080/api/admin/cache/refresh" \
 
 ---
 
-## Resumo de autenticação por área
+924: ---
+925: 
+926: ## 12. Marketing
+927: 
+928: Base path: **/api/marketing/...**. Rotas de gestão exigem **autenticação**.
+929: 
+930: ### Cupons
+931: 
+932: Base path: **/api/marketing/coupons**.
+933: 
+934: #### GET /api/marketing/coupons
+935: Lista todos os cupons.
+936: 
+937: #### POST /api/marketing/coupons
+938: Cria um cupom.
+939: 
+940: #### PATCH /api/marketing/coupons/{id}
+941: Alterna o status do cupom. Corpo: `{"active": true/false}`.
+942: 
+943: #### PUT /api/marketing/coupons/{id}
+944: Atualiza dados completos de um cupom (código, valor, limite).
+945: 
+946: #### DELETE /api/marketing/coupons/{id}
+947: Remove um cupom.
+948: 
+949: ---
+950: 
+951: ### Carrinho Abandonado
+952: 
+953: Base path: **/api/marketing/abandoned-carts**.
+954: 
+955: #### GET /api/marketing/abandoned-carts
+956: Obtém configurações de recuperação de carrinho.
+957: 
+958: #### PUT /api/marketing/abandoned-carts
+959: Atualiza configurações (delay, assunto, habilitado).
+960: 
+961: ---
+962: 
+963: ## Resumo de autenticação por área
 
 | Área        | Rotas públicas (sem JWT)                    | Rotas com JWT        |
 |-------------|---------------------------------------------|----------------------|
@@ -935,6 +975,7 @@ curl -X POST "http://localhost:8080/api/admin/cache/refresh" \
 | Estoque     | —                                           | Todas                |
 | Mídia       | GET /api/media/public/{id}                  | POST /api/media/upload |
 | Dashboard   | —                                           | Todas                |
+| Marketing   | —                                           | Todas                |
 | Webhooks    | POST /api/webhooks/mercadopago (com X-Webhook-Token) | —                 |
 | Admin       | —                                           | Todas (ROLE_ADMIN)   |
 

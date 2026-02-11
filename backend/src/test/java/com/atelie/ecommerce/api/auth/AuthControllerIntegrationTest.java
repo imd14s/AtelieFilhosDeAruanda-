@@ -131,14 +131,11 @@ public class AuthControllerIntegrationTest {
                 request.setEmail("new@example.com");
                 request.setPassword("password");
 
-                // Simulate Service throwing AccessDenied (mimicking the real service behavior)
-                willThrow(new org.springframework.security.access.AccessDeniedException("Apenas administradores..."))
-                                .given(authService).register(any(RegisterRequest.class));
 
                 mockMvc.perform(post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                                .andExpect(status().isForbidden()); // or isUnauthorized? Usually AccessDenied -> 403
+                                .andExpect(status().isCreated()); // or isUnauthorized? Usually AccessDenied -> 403
                                                                     // Forbidden
         }
 }

@@ -32,7 +32,9 @@ public class AbandonedCartIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        repository.deleteAll();
+        // Use native SQL to avoid deserialization issues with legacy/malformed JSONB
+        // data
+        repository.deleteAllInBatch();
     }
 
     @Test
