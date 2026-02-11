@@ -19,7 +19,7 @@ const EthicsPage = () => {
                         alt="Símbolos espirituais"
                         className="w-full h-full object-cover opacity-20 grayscale-[30%]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#F7F7F4]/0 to-[#F7F7F4]"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-[var(--azul-profundo)]/50 via-[var(--azul-profundo)]/30 to-[#F7F7F4]"></div>
                 </div>
 
                 <div className="relative z-10 text-center px-4">

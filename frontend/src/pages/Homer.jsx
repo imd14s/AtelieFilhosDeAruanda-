@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Sparkles, Loader2 } from 'lucide-react';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
+import ProductCarousel from '../components/ProductCarousel';
+import ProductionNotice from '../components/ProductionNotice';
 import SEO from '../components/SEO';
 import { storeService } from '../services/storeService';
 
@@ -14,7 +16,7 @@ const Home = () => {
     const loadProducts = async () => {
       try {
         const items = await storeService.getProducts();
-        setFeaturedProducts(items.slice(0, 4));
+        setFeaturedProducts(items.slice(0, 7));
       } catch (error) {
         console.error("Erro ao carregar destaques:", error);
       } finally {
@@ -24,12 +26,6 @@ const Home = () => {
     loadProducts();
   }, []);
 
-  const categories = [
-    { name: 'Velas', img: '/images/velas.png', path: '/store?categoria=velas' },
-    { name: 'Guias', img: '/images/guias.png', path: '/store?categoria=guias' },
-    { name: 'Ervas', img: '/images/ervas.png', path: '/store?categoria=ervas' },
-  ];
-
   return (
     <div className="bg-[var(--branco-off-white)] min-h-screen">
       <SEO
@@ -38,29 +34,16 @@ const Home = () => {
       />
       <Hero />
 
-      <section className="max-w-7xl mx-auto px-4 py-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {categories.map((cat) => (
-            <Link key={cat.name} to={cat.path} className="group relative overflow-hidden aspect-[4/5] shadow-sm">
-              <img src={cat.img} alt={cat.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--azul-profundo)]/90 to-transparent"></div>
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-12">
-                <h3 className="font-playfair text-3xl text-[var(--branco-off-white)]">{cat.name}</h3>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <ProductionNotice />
 
+      {/* Destaques do Ateliê */}
       <section className="bg-white py-24 border-y border-[var(--azul-profundo)]/5">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="font-playfair text-4xl text-[var(--azul-profundo)] mb-16 text-center">Destaques do Ateliê</h2>
           {loading ? (
             <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[var(--dourado-suave)]" size={32} /></div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {featuredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
-            </div>
+            <ProductCarousel products={featuredProducts.slice(0, 7)} />
           )}
         </div>
       </section>

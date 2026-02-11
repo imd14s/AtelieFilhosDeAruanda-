@@ -4,12 +4,14 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Homer";
 import SearchPage from "./pages/SearchPage";
-import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
 import AboutPage from "./pages/AboutPage";
 import EthicsPage from "./pages/EthicsPage";
 import ShopPage from "./pages/ShopPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import ShippingPolicy from "./pages/ShippingPolicy";
+import ReturnsPolicy from "./pages/ReturnsPolicy";
+import FAQ from "./pages/FAQ";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -26,11 +28,11 @@ function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/ethics" element={<EthicsPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/shipping-policy" element={<ShippingPolicy />} />
+            <Route path="/returns-policy" element={<ReturnsPolicy />} />
+            <Route path="/faq" element={<FAQ />} />
 
-            {/* Rotas Dinâmicas usando ID do Java */}
-
-            <Route path="/categoria/:slug" element={<CategoryPage />} />
+            {/* Rotas Dinâmicas */}
             <Route path="/produto/:id" element={<ProductPage />} />
 
             {/* Rota 404 */}

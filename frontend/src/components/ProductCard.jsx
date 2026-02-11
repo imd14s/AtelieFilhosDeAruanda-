@@ -52,7 +52,7 @@ const ProductCard = ({ product }) => {
         </p>
 
         <Link to={`/produto/${product.id}`}>
-          <h3 className="font-playfair text-lg text-[var(--azul-profundo)] mb-2 line-clamp-2 group-hover:text-[var(--dourado-suave)] transition-colors h-14 flex items-center justify-center">
+          <h3 className="font-playfair text-lg text-[var(--azul-profundo)] mb-2 line-clamp-2 group-hover:text-[var(--dourado-suave)] transition-colors min-h-[3.5rem]">
             {product.name}
           </h3>
         </Link>
@@ -62,26 +62,14 @@ const ProductCard = ({ product }) => {
             {priceFormatted}
           </p>
 
-          <button
-            onClick={handleAddToCart}
-            disabled={loading || isOutOfStock}
-            className={`w-full flex items-center justify-center gap-2 py-3 px-4 font-lato text-[11px] uppercase tracking-[0.2em] transition-all duration-300 rounded-sm ${isOutOfStock
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : added
-                ? 'bg-green-700 text-white'
-                : 'bg-[var(--azul-profundo)] text-white hover:bg-[var(--dourado-suave)]'
-              }`}
+          <a
+            href={product.tiktokUrl || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 font-lato text-[11px] uppercase tracking-[0.2em] transition-all duration-300 rounded-sm bg-black text-white hover:bg-[#FE2C55] shadow-sm hover:shadow-md"
           >
-            {loading ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : added ? (
-              <><Check size={16} /> Na Sacola</>
-            ) : isOutOfStock ? (
-              'Indisponível'
-            ) : (
-              <><ShoppingBag size={16} /> Comprar</>
-            )}
-          </button>
+            <ShoppingBag size={16} /> Ver na TikTok Shop
+          </a>
         </div>
       </div>
     </div>

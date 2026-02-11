@@ -3,9 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
   { name: 'Home', path: '/' },
-  { name: 'Velas', path: '/store?categoria=velas' },
-  { name: 'Guias', path: '/store?categoria=guias' },
-  { name: 'Ervas & Incensos', path: '/store?categoria=ervas' },
+  { name: 'Produtos', path: '/store' },
   { name: 'Nossa História', path: '/about' },
   { name: 'Axé & Ética', path: '/ethics' }
 ];

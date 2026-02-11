@@ -18,13 +18,13 @@ const AboutPage = () => {
             alt="Fundo espiritual"
             className="w-full h-full object-cover opacity-30 grayscale-[50%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#F7F7F4]/0 to-[#F7F7F4]"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--azul-profundo)]/60 via-[var(--azul-profundo)]/40 to-[#F7F7F4]"></div>
         </div>
 
         <div className="relative z-10 text-center px-4">
           <span className="font-lato text-[10px] md:text-xs uppercase tracking-[0.4em] text-[var(--dourado-suave)] block mb-4">Desde 2023</span>
-          <h1 className="font-playfair text-5xl md:text-7xl text-[var(--branco-off-white)] leading-tight mb-6">Nossa Essência</h1>
-          <div className="flex items-center gap-4 text-[var(--branco-off-white)]/60 justify-center">
+          <h1 className="font-playfair text-5xl md:text-7xl text-[var(--azul-profundo)] leading-tight mb-6 drop-shadow-lg">Nossa Essência</h1>
+          <div className="flex items-center gap-4 text-[var(--azul-profundo)]/60 justify-center">
             <div className="h-[1px] w-12 bg-[var(--dourado-suave)]"></div>
             <Sparkles size={18} className="text-[var(--dourado-suave)]" />
             <div className="h-[1px] w-12 bg-[var(--dourado-suave)]"></div>

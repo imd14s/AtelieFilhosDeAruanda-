@@ -75,41 +75,6 @@ const Header = () => {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 md:gap-6 md:w-1/3">
-            <div className="hidden md:flex items-center gap-5 text-[var(--azul-profundo)]">
-              {user ? (
-                <div className="flex items-center gap-3 border-r pr-5 border-[var(--azul-profundo)]/10">
-                  <div className="text-right">
-                    <p className="font-lato text-[9px] uppercase tracking-widest text-[var(--dourado-suave)]">Axé</p>
-                    <p className="font-playfair text-xs font-bold leading-none">{user.name || 'Membro'}</p>
-                  </div>
-                  <button onClick={handleLogout} className="text-[var(--azul-profundo)]/40 hover:text-red-800 transition-colors">
-                    <LogOut size={16} />
-                  </button>
-                </div>
-              ) : (
-                <button onClick={() => setIsAuthOpen(true)} className="flex items-center gap-2 hover:text-[var(--dourado-suave)] transition-all">
-                  <User size={19} strokeWidth={1.5} />
-                  <span className="text-[10px] uppercase font-lato tracking-[0.2em]">Entrar</span>
-                </button>
-              )}
-            </div>
-
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative flex items-center gap-2 text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-all p-2 -mr-2 md:mr-0"
-            >
-              <div className="relative">
-                <ShoppingCart size={22} strokeWidth={1.5} />
-                {cartQuantity > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[var(--dourado-suave)] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                    {cartQuantity}
-                  </span>
-                )}
-              </div>
-              <span className="hidden md:block text-[10px] uppercase font-lato tracking-[0.2em]">Carrinho</span>
-            </button>
-          </div>
         </div>
 
         <div className="md:hidden pb-4 px-1">
@@ -123,25 +88,11 @@ const Header = () => {
 
       <div className={`md:hidden fixed inset-0 z-40 bg-[var(--branco-off-white)] pt-24 px-6 transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <NavMenu isMobile={true} closeMenu={() => setIsMenuOpen(false)} />
-
-        <div className="mt-8 pt-8 border-t border-[var(--azul-profundo)]/10">
-          {!user ? (
-            <button onClick={() => { setIsAuthOpen(true); setIsMenuOpen(false); }} className="w-full py-3 bg-white border border-[var(--azul-profundo)]/10 rounded flex items-center justify-center gap-2 text-[var(--azul-profundo)]">
-              <User size={18} />
-              <span className="text-xs uppercase tracking-widest">Entrar / Cadastrar</span>
-            </button>
-          ) : (
-            <button onClick={handleLogout} className="w-full py-3 bg-red-50 text-red-800 rounded flex items-center justify-center gap-2">
-              <LogOut size={18} />
-              <span className="text-xs uppercase tracking-widest">Sair</span>
-            </button>
-          )}
-        </div>
       </div>
 
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cart?.items || []} onUpdateCart={setCart} />
+
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-    </header>
+    </header >
   );
 };
 

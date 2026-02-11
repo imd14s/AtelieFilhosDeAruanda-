@@ -8,13 +8,38 @@ import api from './api';
 // Header de Tenant para multi-loja (conforme especificações de integração)
 const TENANT_HEADER = { 'X-Tenant-ID': 'atelie-aruanda' };
 
-// Mock de produtos para fallback em caso de erro na API
-const MOCK_PRODUCTS = [
-  { id: 1, name: 'Vela de Sete Linhas', price: 45.90, category: 'velas', images: ['/images/velas.png'], stockQuantity: 10, description: 'Vela artesanal ritualizada para proteção e equilíbrio.' },
-  { id: 2, name: 'Guia de Proteção Oxalá', price: 89.00, category: 'guias', images: ['/images/guias.png'], stockQuantity: 5, description: 'Guia confeccionada com sementes e cristais selecionados.' },
-  { id: 3, name: 'Banho de Ervas Sagradas', price: 29.90, category: 'ervas', images: ['/images/ervas.png'], stockQuantity: 15, description: 'Mix de ervas naturais para limpeza espiritual.' },
-  { id: 4, name: 'Incenso de Breu Branco', price: 15.00, category: 'ervas', images: ['/images/ervas.png'], stockQuantity: 20, description: 'Incenso natural de resina pura colhida na Amazônia.' },
-];
+// Função para carregar o catálogo do TikTok Shop
+let CATALOG_CACHE = null;
+
+const loadTikTokCatalog = async () => {
+  if (CATALOG_CACHE) return CATALOG_CACHE;
+
+  try {
+    const response = await fetch('/catalog_tiktokshop_with_urls.json');
+    const catalog = await response.json();
+
+    // Filtra apenas produtos ativos e transforma para o formato esperado
+    CATALOG_CACHE = catalog
+      .filter(item => item.is_active === true)
+      .map((item) => ({
+        id: item.sku_id || item.id,
+        name: item.title,
+        price: item.price || 0,
+        category: item.category?.split('(')[0]?.trim() || 'geral',
+        images: [item.image_url || '/images/default.png'],
+        stockQuantity: item.quantity || 0,
+        description: item.description || '',
+        tiktokUrl: item.tiktok_product_url,
+        variation: item.variation || ''
+      }));
+
+    return CATALOG_CACHE;
+  } catch (error) {
+    console.error('Erro ao carregar catálogo do TikTok:', error);
+    return [];
+  }
+};
+
 
 export const storeService = {
   // --- PRODUTOS ---
@@ -41,10 +66,28 @@ export const storeService = {
       return response.data?.content || (Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("[storeService] Erro ao buscar produtos:", error);
-      console.warn('API indisponível, usando dados mockados para demonstração.');
-      // Falha graciosa conforme PROJECT_SKILLS, usando mock data
+      console.warn('API indisponível, usando catálogo TikTok Shop.');
+
+      // Carrega o catálogo do TikTok Shop
+      const catalog = await loadTikTokCatalog();
+
+      // Aplica filtros
+      let filtered = [...catalog];
       const categoryFilter = filters.categoryId || filters.category;
-      return MOCK_PRODUCTS.filter(p => !categoryFilter || p.category === categoryFilter);
+
+      if (categoryFilter) {
+        filtered = filtered.filter(p => p.category === categoryFilter);
+      }
+
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filtered = filtered.filter(p =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.description.toLowerCase().includes(searchLower)
+        );
+      }
+
+      return filtered;
     }
   },
 
@@ -56,8 +99,9 @@ export const storeService = {
       const response = await api.get(`/products/${id}`);
       return response.data;
     } catch (error) {
-      console.warn(`[storeService] Produto ${id} não encontrado na API, buscando no Mock...`);
-      const product = MOCK_PRODUCTS.find(p => String(p.id) === String(id));
+      console.warn(`[storeService] Produto ${id} não encontrado na API, buscando no catálogo TikTok...`);
+      const catalog = await loadTikTokCatalog();
+      const product = catalog.find(p => String(p.id) === String(id));
       if (product) return product;
       throw error;
     }
@@ -80,8 +124,9 @@ export const storeService = {
 
       throw new Error(`Produto com slug '${slug}' não encontrado`);
     } catch (error) {
-      console.warn(`[storeService] Produto com slug '${slug}' não encontrado na API, buscando no Mock...`);
-      const product = MOCK_PRODUCTS.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === slug);
+      console.warn(`[storeService] Produto com slug '${slug}' não encontrado na API, buscando no catálogo TikTok...`);
+      const catalog = await loadTikTokCatalog();
+      const product = catalog.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === slug);
       if (product) return product;
       throw error;
     }

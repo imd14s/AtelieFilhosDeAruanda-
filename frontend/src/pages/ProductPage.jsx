@@ -97,22 +97,16 @@ const ProductPage = () => {
               </div>
 
               {/* Ações */}
-              <div className="space-y-6 mb-12">
-                <div className="flex flex-col gap-4 pt-4">
-                  <div className="flex items-center border border-[var(--azul-profundo)]/10 w-fit bg-white rounded-sm">
-                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-2 hover:bg-[var(--branco-off-white)] transition-colors">-</button>
-                    <span className="px-4 font-lato min-w-[40px] text-center">{quantity}</span>
-                    <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-2 hover:bg-[var(--branco-off-white)] transition-colors">+</button>
-                  </div>
-
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full bg-[var(--azul-profundo)] text-white py-5 px-8 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all flex items-center justify-center gap-3 group rounded-sm shadow-xl"
-                  >
-                    <ShoppingBag size={18} className="group-hover:scale-110 transition-transform" />
-                    Adicionar à Sacola
-                  </button>
-                </div>
+              <div className="flex flex-col gap-4 pt-4">
+                <a
+                  href={product.tiktokUrl || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-black text-white py-5 px-8 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[#FE2C55] transition-all flex items-center justify-center gap-3 group rounded-sm shadow-xl"
+                >
+                  <ShoppingBag size={18} className="group-hover:scale-110 transition-transform" />
+                  Ver na TikTok Shop
+                </a>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-12 border-t border-[var(--azul-profundo)]/5 mt-12">

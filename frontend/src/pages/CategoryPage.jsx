@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { storeService } from "../services/storeService";
 import ProductCard from "../components/ProductCard";
 import SEO from "../components/SEO";
 import { Loader2, ChevronLeft, Sparkles, Wind } from "lucide-react";
@@ -11,7 +12,6 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Alterar no useEffect de CategoryPage.jsx
     const fetchCategoryData = async () => {
       setLoading(true);
       try {
@@ -23,7 +23,7 @@ const CategoryPage = () => {
 
         const allProducts = await storeService.getProducts();
         const filtered = allProducts.filter(
-          (p) => p.category?.id === currentCollection?.id,
+          (p) => p.category?.toLowerCase() === slug.toLowerCase(),
         );
         setProducts(filtered);
       } catch (error) {
@@ -32,6 +32,8 @@ const CategoryPage = () => {
         setLoading(false);
       }
     };
+
+    fetchCategoryData();
   }, [slug]);
 
   if (loading) {
@@ -126,8 +128,22 @@ const CategoryPage = () => {
         ) : (
           <div className="text-center py-20 bg-white/50 border border-dashed border-[var(--azul-profundo)]/10 rounded-lg">
             <Wind className="mx-auto text-[var(--azul-profundo)]/20 mb-4" size={40} />
-            <p className="font-lato text-[11px] uppercase tracking-widest text-[var(--azul-profundo)]/40">
+            <p className="font-playfair text-xl text-[var(--azul-profundo)] mb-2">
+              Em breve, novos produtos
+            </p>
+            <p className="font-lato text-sm text-[var(--azul-profundo)]/60 mb-4">
               Nenhum item disponível nesta categoria no momento.
+            </p>
+            <p className="font-lato text-xs text-[var(--azul-profundo)]/40">
+              Enquanto isso, confira nossos produtos na{" "}
+              <a
+                href="https://www.tiktok.com/@atelie_filhos_de_aruanda"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--dourado-suave)] hover:underline"
+              >
+                TikTok Shop
+              </a>
             </p>
           </div>
         )}
