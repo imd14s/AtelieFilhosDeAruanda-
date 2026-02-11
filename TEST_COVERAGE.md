@@ -13,8 +13,8 @@ Este documento lista todas as funcionalidades da aplicação divididas por módu
 | Aplicação | Cobertura Est. | Status | Ferramentas |
 | :--- | :---: | :--- | :--- |
 | **Backend API** | **~85%** | ✅ **Excelente** | JUnit 5, MockMvc, H2 |
-| **Storefront (Loja)** | **~30%** | ✅ **Estável** (Fluxos Críticos) | Vitest, React Testing Library |
-| **Admin Dashboard** | **~25%** | ✅ **Estável** (Fluxos Críticos) | Vitest, React Testing Library |
+| **Storefront (Loja)** | **~45%** | ✅ **Estável** (Fluxos Críticos) | Vitest, React Testing Library |
+| **Admin Dashboard** | **~40%** | ✅ **Estável** (Fluxos Críticos) | Vitest, React Testing Library |
 
 ---
 
@@ -58,7 +58,7 @@ Implementamos 16 testes automatizados cobrindo os fluxos principais.
 | | Detalhe de Produto | ✅ | Alta |
 | | Busca | ✅ | Média |
 | **Checkout** | Carrinho (Adicionar/Remover) | ✅ | **Crítica** |
-| | Fluxo de Pagamento | ❌ | **Crítica** |
+| | Fluxo de Pagamento | ✅ | **Crítica** |
 
 ---
 
@@ -72,6 +72,6 @@ Implementamos 7 testes automatizados cobrindo autenticação e gestão de produt
 | **Auth** | Login Admin | ✅ | **Crítica** |
 | **Produtos** | Listagem | ✅ | Alta |
 | | Criação/Edição (Form) | ✅ | **Crítica** |
-| **Pedidos** | Visualização/Status | ❌ | Alta |
+| **Pedidos** | Visualização/Status | ✅ | Alta |
 | **Configurações** | Gerenciar Equipe | ✅ | Média |
-| | Configurar Frete/Pagto | ❌ | Média |
+| | Configurar Frete/Pagto | ✅ | Média |

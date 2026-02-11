@@ -1,38 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1770766343043" clover="3.2.0">
-  <project timestamp="1770766343043" name="All files">
-    <metrics statements="169" coveredstatements="97" conditionals="38" coveredconditionals="15" methods="60" coveredmethods="24" elements="267" coveredelements="136" complexity="0" loc="169" ncloc="169" packages="6" files="8" classes="8"/>
+<coverage generated="1770768080642" clover="3.2.0">
+  <project timestamp="1770768080642" name="All files">
+    <metrics statements="322" coveredstatements="190" conditionals="164" coveredconditionals="78" methods="116" coveredmethods="54" elements="602" coveredelements="322" complexity="0" loc="322" ncloc="322" packages="8" files="11" classes="11"/>
     <package name="src">
       <metrics statements="19" coveredstatements="17" conditionals="0" coveredconditionals="0" methods="9" coveredmethods="7"/>
       <file name="test-utils.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/test-utils.tsx">
         <metrics statements="19" coveredstatements="17" conditionals="0" coveredconditionals="0" methods="9" coveredmethods="7"/>
-        <line num="1" count="2" type="stmt"/>
-        <line num="2" count="2" type="stmt"/>
-        <line num="3" count="2" type="stmt"/>
-        <line num="4" count="2" type="stmt"/>
-        <line num="5" count="2" type="stmt"/>
-        <line num="9" count="2" type="stmt"/>
-        <line num="22" count="2" type="stmt"/>
-        <line num="24" count="6" type="stmt"/>
-        <line num="32" count="2" type="stmt"/>
+        <line num="1" count="5" type="stmt"/>
+        <line num="2" count="5" type="stmt"/>
+        <line num="3" count="5" type="stmt"/>
+        <line num="4" count="5" type="stmt"/>
+        <line num="5" count="5" type="stmt"/>
+        <line num="9" count="5" type="stmt"/>
+        <line num="22" count="5" type="stmt"/>
+        <line num="24" count="13" type="stmt"/>
+        <line num="32" count="5" type="stmt"/>
         <line num="34" count="0" type="stmt"/>
-        <line num="38" count="2" type="stmt"/>
+        <line num="38" count="5" type="stmt"/>
         <line num="40" count="0" type="stmt"/>
-        <line num="47" count="2" type="stmt"/>
-        <line num="48" count="6" type="stmt"/>
-        <line num="51" count="2" type="stmt"/>
-        <line num="59" count="2" type="stmt"/>
-        <line num="62" count="6" type="stmt"/>
-        <line num="65" count="2" type="stmt"/>
-        <line num="66" count="2" type="stmt"/>
+        <line num="47" count="5" type="stmt"/>
+        <line num="48" count="13" type="stmt"/>
+        <line num="51" count="5" type="stmt"/>
+        <line num="59" count="5" type="stmt"/>
+        <line num="62" count="13" type="stmt"/>
+        <line num="65" count="5" type="stmt"/>
+        <line num="66" count="5" type="stmt"/>
       </file>
     </package>
     <package name="src.components.products">
       <metrics statements="39" coveredstatements="10" conditionals="18" coveredconditionals="3" methods="22" coveredmethods="2"/>
       <file name="MediaGallery.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/components/products/MediaGallery.tsx">
         <metrics statements="24" coveredstatements="6" conditionals="10" coveredconditionals="1" methods="12" coveredmethods="1"/>
-        <line num="12" count="12" type="stmt"/>
-        <line num="14" count="12" type="stmt"/>
+        <line num="12" count="14" type="stmt"/>
+        <line num="14" count="14" type="stmt"/>
         <line num="15" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="16" count="0" type="stmt"/>
         <line num="17" count="0" type="stmt"/>
@@ -43,14 +43,14 @@
         <line num="29" count="0" type="stmt"/>
         <line num="33" count="0" type="stmt"/>
         <line num="34" count="0" type="stmt"/>
-        <line num="38" count="12" type="stmt"/>
+        <line num="38" count="14" type="stmt"/>
         <line num="39" count="0" type="stmt"/>
-        <line num="42" count="12" type="stmt"/>
+        <line num="42" count="14" type="stmt"/>
         <line num="43" count="0" type="stmt"/>
-        <line num="46" count="12" type="stmt"/>
+        <line num="46" count="14" type="stmt"/>
         <line num="48" count="0" type="stmt"/>
         <line num="49" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="52" count="12" type="stmt"/>
+        <line num="52" count="14" type="stmt"/>
         <line num="68" count="0" type="stmt"/>
         <line num="74" count="0" type="stmt"/>
         <line num="80" count="0" type="stmt"/>
@@ -58,15 +58,15 @@
       </file>
       <file name="VariantsManager.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/components/products/VariantsManager.tsx">
         <metrics statements="15" coveredstatements="4" conditionals="8" coveredconditionals="2" methods="10" coveredmethods="1"/>
-        <line num="11" count="12" type="stmt"/>
-        <line num="18" count="12" type="stmt"/>
+        <line num="11" count="14" type="stmt"/>
+        <line num="18" count="14" type="stmt"/>
         <line num="19" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="21" count="0" type="stmt"/>
         <line num="29" count="0" type="stmt"/>
         <line num="30" count="0" type="stmt"/>
-        <line num="33" count="12" type="stmt"/>
+        <line num="33" count="14" type="stmt"/>
         <line num="34" count="0" type="stmt"/>
-        <line num="37" count="12" type="stmt"/>
+        <line num="37" count="14" type="stmt"/>
         <line num="48" count="0" type="stmt"/>
         <line num="57" count="0" type="stmt"/>
         <line num="69" count="0" type="stmt"/>
@@ -79,15 +79,15 @@
       <metrics statements="53" coveredstatements="33" conditionals="8" coveredconditionals="4" methods="14" coveredmethods="8"/>
       <file name="AuthContext.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/context/AuthContext.tsx">
         <metrics statements="26" coveredstatements="16" conditionals="2" coveredconditionals="1" methods="6" coveredmethods="5"/>
-        <line num="11" count="2" type="stmt"/>
-        <line num="14" count="13" type="stmt"/>
-        <line num="15" count="13" type="stmt"/>
-        <line num="17" count="13" type="stmt"/>
-        <line num="18" count="6" type="stmt"/>
-        <line num="19" count="6" type="stmt"/>
-        <line num="20" count="6" type="cond" truecount="1" falsecount="1"/>
-        <line num="21" count="6" type="stmt"/>
-        <line num="22" count="6" type="stmt"/>
+        <line num="11" count="5" type="stmt"/>
+        <line num="14" count="27" type="stmt"/>
+        <line num="15" count="27" type="stmt"/>
+        <line num="17" count="27" type="stmt"/>
+        <line num="18" count="13" type="stmt"/>
+        <line num="19" count="13" type="stmt"/>
+        <line num="20" count="13" type="cond" truecount="1" falsecount="1"/>
+        <line num="21" count="13" type="stmt"/>
+        <line num="22" count="13" type="stmt"/>
         <line num="25" count="0" type="stmt"/>
         <line num="28" count="0" type="stmt"/>
         <line num="29" count="0" type="stmt"/>
@@ -95,45 +95,45 @@
         <line num="32" count="0" type="stmt"/>
         <line num="33" count="0" type="stmt"/>
         <line num="35" count="0" type="stmt"/>
-        <line num="39" count="6" type="stmt"/>
-        <line num="42" count="13" type="stmt"/>
+        <line num="39" count="13" type="stmt"/>
+        <line num="42" count="27" type="stmt"/>
         <line num="43" count="1" type="stmt"/>
         <line num="44" count="1" type="stmt"/>
-        <line num="47" count="13" type="stmt"/>
+        <line num="47" count="27" type="stmt"/>
         <line num="48" count="0" type="stmt"/>
         <line num="49" count="0" type="stmt"/>
         <line num="50" count="0" type="stmt"/>
-        <line num="53" count="13" type="stmt"/>
+        <line num="53" count="27" type="stmt"/>
         <line num="60" count="9" type="stmt"/>
       </file>
       <file name="TenantContext.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/context/TenantContext.tsx">
         <metrics statements="27" coveredstatements="17" conditionals="6" coveredconditionals="3" methods="8" coveredmethods="3"/>
-        <line num="14" count="2" type="stmt"/>
-        <line num="17" count="11" type="stmt"/>
-        <line num="18" count="11" type="stmt"/>
-        <line num="19" count="11" type="stmt"/>
-        <line num="21" count="11" type="stmt"/>
-        <line num="22" count="6" type="stmt"/>
-        <line num="25" count="11" type="stmt"/>
-        <line num="26" count="6" type="stmt"/>
-        <line num="27" count="6" type="stmt"/>
-        <line num="28" count="6" type="stmt"/>
-        <line num="31" count="6" type="stmt"/>
-        <line num="32" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="34" count="6" type="cond" truecount="1" falsecount="1"/>
+        <line num="14" count="5" type="stmt"/>
+        <line num="17" count="25" type="stmt"/>
+        <line num="18" count="25" type="stmt"/>
+        <line num="19" count="25" type="stmt"/>
+        <line num="21" count="25" type="stmt"/>
+        <line num="22" count="13" type="stmt"/>
+        <line num="25" count="25" type="stmt"/>
+        <line num="26" count="13" type="stmt"/>
+        <line num="27" count="13" type="stmt"/>
+        <line num="28" count="13" type="stmt"/>
+        <line num="31" count="13" type="stmt"/>
+        <line num="32" count="13" type="cond" truecount="2" falsecount="0"/>
+        <line num="34" count="13" type="cond" truecount="1" falsecount="1"/>
         <line num="35" count="0" type="stmt"/>
         <line num="38" count="0" type="stmt"/>
-        <line num="40" count="6" type="stmt"/>
-        <line num="44" count="11" type="stmt"/>
+        <line num="40" count="13" type="stmt"/>
+        <line num="44" count="25" type="stmt"/>
         <line num="45" count="0" type="stmt"/>
         <line num="46" count="0" type="stmt"/>
         <line num="48" count="0" type="stmt"/>
-        <line num="51" count="11" type="stmt"/>
+        <line num="51" count="25" type="stmt"/>
         <line num="52" count="0" type="stmt"/>
         <line num="53" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="54" count="0" type="stmt"/>
         <line num="56" count="0" type="stmt"/>
-        <line num="60" count="11" type="stmt"/>
+        <line num="60" count="25" type="stmt"/>
         <line num="67" count="0" type="stmt"/>
       </file>
     </package>
@@ -154,46 +154,214 @@
         <line num="23" count="9" type="stmt"/>
       </file>
     </package>
+    <package name="src.pages.orders">
+      <metrics statements="31" coveredstatements="27" conditionals="16" coveredconditionals="14" methods="10" coveredmethods="9"/>
+      <file name="OrdersList.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/pages/orders/OrdersList.tsx">
+        <metrics statements="31" coveredstatements="27" conditionals="16" coveredconditionals="14" methods="10" coveredmethods="9"/>
+        <line num="7" count="7" type="stmt"/>
+        <line num="8" count="7" type="stmt"/>
+        <line num="9" count="7" type="stmt"/>
+        <line num="10" count="7" type="stmt"/>
+        <line num="11" count="7" type="stmt"/>
+        <line num="13" count="7" type="stmt"/>
+        <line num="14" count="2" type="stmt"/>
+        <line num="17" count="7" type="stmt"/>
+        <line num="18" count="2" type="stmt"/>
+        <line num="19" count="2" type="stmt"/>
+        <line num="20" count="2" type="stmt"/>
+        <line num="21" count="2" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="25" count="2" type="stmt"/>
+        <line num="29" count="7" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="32" count="1" type="stmt"/>
+        <line num="35" count="7" type="stmt"/>
+        <line num="36" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="37" count="1" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="39" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="42" count="0" type="stmt"/>
+        <line num="43" count="0" type="stmt"/>
+        <line num="47" count="7" type="stmt"/>
+        <line num="73" count="10" type="stmt"/>
+        <line num="94" count="1" type="stmt"/>
+        <line num="120" count="1" type="stmt"/>
+        <line num="124" count="0" type="stmt"/>
+      </file>
+    </package>
     <package name="src.pages.products">
-      <metrics statements="36" coveredstatements="25" conditionals="10" coveredconditionals="6" methods="8" coveredmethods="5"/>
+      <metrics statements="37" coveredstatements="23" conditionals="34" coveredconditionals="8" methods="8" coveredmethods="5"/>
       <file name="ProductForm.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/pages/products/ProductForm.tsx">
-        <metrics statements="36" coveredstatements="25" conditionals="10" coveredconditionals="6" methods="8" coveredmethods="5"/>
+        <metrics statements="37" coveredstatements="23" conditionals="34" coveredconditionals="8" methods="8" coveredmethods="5"/>
         <line num="14" count="1" type="stmt"/>
-        <line num="26" count="12" type="stmt"/>
-        <line num="27" count="12" type="stmt"/>
-        <line num="28" count="12" type="stmt"/>
-        <line num="29" count="12" type="stmt"/>
-        <line num="30" count="12" type="stmt"/>
-        <line num="31" count="12" type="stmt"/>
-        <line num="33" count="12" type="stmt"/>
-        <line num="34" count="3" type="stmt"/>
-        <line num="35" count="3" type="cond" truecount="1" falsecount="1"/>
-        <line num="36" count="0" type="stmt"/>
-        <line num="40" count="12" type="stmt"/>
+        <line num="26" count="14" type="stmt"/>
+        <line num="27" count="14" type="stmt"/>
+        <line num="28" count="14" type="stmt"/>
+        <line num="29" count="14" type="stmt"/>
+        <line num="30" count="14" type="stmt"/>
+        <line num="31" count="14" type="stmt"/>
+        <line num="40" count="14" type="stmt"/>
         <line num="41" count="3" type="stmt"/>
-        <line num="42" count="3" type="stmt"/>
-        <line num="43" count="3" type="stmt"/>
-        <line num="45" count="0" type="stmt"/>
-        <line num="49" count="12" type="stmt"/>
-        <line num="50" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="51" count="0" type="stmt"/>
+        <line num="42" count="3" type="cond" truecount="1" falsecount="1"/>
+        <line num="43" count="0" type="stmt"/>
+        <line num="47" count="14" type="stmt"/>
+        <line num="48" count="3" type="stmt"/>
+        <line num="49" count="3" type="stmt"/>
+        <line num="50" count="3" type="stmt"/>
         <line num="52" count="0" type="stmt"/>
-        <line num="55" count="0" type="stmt"/>
+        <line num="56" count="14" type="stmt"/>
+        <line num="57" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="58" count="0" type="stmt"/>
+        <line num="59" count="0" type="stmt"/>
+        <line num="62" count="0" type="stmt"/>
+        <line num="71" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="72" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="74" count="0" type="stmt"/>
+        <line num="78" count="14" type="stmt"/>
+        <line num="79" count="1" type="stmt"/>
+        <line num="80" count="1" type="stmt"/>
+        <line num="87" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="88" count="0" type="stmt"/>
+        <line num="90" count="1" type="stmt"/>
+        <line num="92" count="1" type="stmt"/>
+        <line num="94" count="0" type="stmt"/>
+        <line num="95" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="99" count="14" type="stmt"/>
+        <line num="102" count="0" type="stmt"/>
+        <line num="147" count="16" type="stmt"/>
+        <line num="173" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.pages.settings">
+      <metrics statements="121" coveredstatements="68" conditionals="86" coveredconditionals="47" methods="46" coveredmethods="21"/>
+      <file name="PaymentPage.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/pages/settings/PaymentPage.tsx">
+        <metrics statements="58" coveredstatements="30" conditionals="45" coveredconditionals="23" methods="23" coveredmethods="8"/>
+        <line num="8" count="6" type="stmt"/>
+        <line num="9" count="6" type="stmt"/>
+        <line num="10" count="6" type="stmt"/>
+        <line num="11" count="6" type="stmt"/>
+        <line num="12" count="6" type="stmt"/>
+        <line num="13" count="6" type="stmt"/>
+        <line num="15" count="6" type="stmt"/>
+        <line num="16" count="2" type="stmt"/>
+        <line num="19" count="6" type="stmt"/>
+        <line num="20" count="3" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+        <line num="22" count="3" type="stmt"/>
+        <line num="24" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="25" count="3" type="stmt"/>
+        <line num="27" count="0" type="stmt"/>
+        <line num="28" count="0" type="stmt"/>
+        <line num="30" count="3" type="stmt"/>
+        <line num="34" count="6" type="stmt"/>
+        <line num="35" count="0" type="stmt"/>
+        <line num="36" count="0" type="stmt"/>
+        <line num="37" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="39" count="0" type="stmt"/>
+        <line num="43" count="6" type="stmt"/>
+        <line num="44" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="45" count="0" type="stmt"/>
+        <line num="46" count="0" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="48" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="50" count="0" type="stmt"/>
+        <line num="54" count="6" type="stmt"/>
+        <line num="55" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="56" count="0" type="stmt"/>
         <line num="57" count="0" type="stmt"/>
-        <line num="61" count="12" type="stmt"/>
-        <line num="70" count="12" type="stmt"/>
-        <line num="71" count="1" type="stmt"/>
-        <line num="72" count="1" type="stmt"/>
-        <line num="73" count="1" type="stmt"/>
+        <line num="64" count="0" type="stmt"/>
+        <line num="65" count="0" type="stmt"/>
+        <line num="66" count="0" type="stmt"/>
+        <line num="68" count="0" type="stmt"/>
+        <line num="72" count="6" type="stmt"/>
+        <line num="73" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="74" count="1" type="stmt"/>
+        <line num="75" count="1" type="stmt"/>
         <line num="80" count="1" type="stmt"/>
         <line num="81" count="1" type="stmt"/>
-        <line num="83" count="0" type="stmt"/>
+        <line num="82" count="1" type="stmt"/>
         <line num="84" count="0" type="stmt"/>
-        <line num="86" count="1" type="stmt"/>
-        <line num="90" count="12" type="stmt"/>
-        <line num="93" count="0" type="stmt"/>
-        <line num="139" count="12" type="stmt"/>
-        <line num="165" count="0" type="stmt"/>
+        <line num="88" count="6" type="stmt"/>
+        <line num="104" count="0" type="stmt"/>
+        <line num="137" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="159" count="0" type="stmt"/>
+        <line num="168" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="174" count="0" type="stmt"/>
+        <line num="189" count="1" type="stmt"/>
+        <line num="190" count="1" type="stmt"/>
+        <line num="192" count="0" type="stmt"/>
+        <line num="212" count="0" type="stmt"/>
+        <line num="224" count="0" type="stmt"/>
+        <line num="234" count="0" type="stmt"/>
+        <line num="241" count="0" type="stmt"/>
+      </file>
+      <file name="ShippingPage.tsx" path="/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin/src/pages/settings/ShippingPage.tsx">
+        <metrics statements="63" coveredstatements="38" conditionals="41" coveredconditionals="24" methods="23" coveredmethods="13"/>
+        <line num="7" count="10" type="stmt"/>
+        <line num="8" count="10" type="stmt"/>
+        <line num="9" count="10" type="stmt"/>
+        <line num="10" count="10" type="stmt"/>
+        <line num="11" count="10" type="stmt"/>
+        <line num="12" count="10" type="stmt"/>
+        <line num="13" count="10" type="stmt"/>
+        <line num="15" count="10" type="stmt"/>
+        <line num="16" count="3" type="stmt"/>
+        <line num="19" count="10" type="stmt"/>
+        <line num="20" count="3" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+        <line num="22" count="3" type="stmt"/>
+        <line num="23" count="6" type="stmt"/>
+        <line num="24" count="3" type="stmt"/>
+        <line num="26" count="0" type="stmt"/>
+        <line num="27" count="0" type="stmt"/>
+        <line num="29" count="3" type="stmt"/>
+        <line num="33" count="10" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="35" count="1" type="stmt"/>
+        <line num="36" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="38" count="0" type="stmt"/>
+        <line num="42" count="10" type="stmt"/>
+        <line num="43" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="44" count="0" type="stmt"/>
+        <line num="45" count="0" type="stmt"/>
+        <line num="46" count="0" type="stmt"/>
+        <line num="47" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="49" count="0" type="stmt"/>
+        <line num="53" count="10" type="stmt"/>
+        <line num="54" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="55" count="0" type="stmt"/>
+        <line num="56" count="0" type="stmt"/>
+        <line num="63" count="0" type="stmt"/>
+        <line num="64" count="0" type="stmt"/>
+        <line num="65" count="0" type="stmt"/>
+        <line num="67" count="0" type="stmt"/>
+        <line num="71" count="10" type="stmt"/>
+        <line num="72" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="73" count="0" type="stmt"/>
+        <line num="74" count="0" type="stmt"/>
+        <line num="76" count="1" type="stmt"/>
+        <line num="77" count="1" type="stmt"/>
+        <line num="78" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="81" count="10" type="stmt"/>
+        <line num="82" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="83" count="1" type="stmt"/>
+        <line num="84" count="1" type="stmt"/>
+        <line num="89" count="1" type="stmt"/>
+        <line num="90" count="1" type="stmt"/>
+        <line num="92" count="0" type="stmt"/>
+        <line num="96" count="10" type="stmt"/>
+        <line num="112" count="0" type="stmt"/>
+        <line num="145" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="167" count="1" type="stmt"/>
+        <line num="176" count="1" type="stmt"/>
+        <line num="182" count="0" type="stmt"/>
+        <line num="199" count="1" type="stmt"/>
+        <line num="225" count="0" type="stmt"/>
+        <line num="237" count="0" type="stmt"/>
+        <line num="247" count="0" type="stmt"/>
+        <line num="253" count="0" type="stmt"/>
       </file>
     </package>
     <package name="src.services">

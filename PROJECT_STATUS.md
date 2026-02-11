@@ -43,19 +43,6 @@ Referência detalhada em `TEST_COVERAGE.md`.
 
 ---
 
-## 4. Próximos Passos (Conforme [WORKFLOW.md](WORKFLOW.md))
-
-### Fase 3: Build e Deploy Local (Integrado)
-- [ ] Executar `docker-compose up --build` para validar persistência e containers.
-- [ ] Verificar logs de inicialização de todos os serviços.
-
-### Fase 4: Verificação Visual Sistemática
-- [ ] Walkthrough completo do fluxo de Checkout (Storefront).
-- [ ] Validação final da edição de variantes de produtos (Admin).
-- [ ] Atualizar `RELATORIO_TESTE_VISUAL.md` com novos acertos/falhas.
-
----
-
 ## 5. Histórico de Versões
 - **v0.2.0** (Atual): CRUD de Produtos e Equipe completo, Integração de DTOs backend/frontend.
 - **v0.1.0**: Implementação inicial de Auth e Roles (Admin/Customer).
