@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "productMarketplaces", "images" })
     Page<ProductEntity> findByActiveTrue(Pageable pageable);
 
     @Query("SELECT p FROM ProductEntity p WHERE p.stockQuantity <= 5 AND p.alertEnabled = true")

@@ -36,14 +36,13 @@ public class GlobalExceptionHandler {
                         errors.put(fieldName, errorMessage);
                 });
 
-                ErrorResponse response = ErrorResponse.builder()
-                                .type("about:blank")
-                                .title("Validação Falhou")
-                                .status(HttpStatus.BAD_REQUEST.value())
-                                .detail("Um ou mais campos possuem valores inválidos")
-                                .instance(request.getRequestURI())
-                                .errors(errors)
-                                .build();
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Validação Falhou",
+                                HttpStatus.BAD_REQUEST.value(),
+                                "Um ou mais campos possuem valores inválidos",
+                                request.getRequestURI(),
+                                errors);
 
                 return ResponseEntity.badRequest().body(response);
         }
@@ -57,13 +56,12 @@ public class GlobalExceptionHandler {
                         NotFoundException ex,
                         HttpServletRequest request) {
 
-                ErrorResponse response = ErrorResponse.builder()
-                                .type("about:blank")
-                                .title("Recurso Não Encontrado")
-                                .status(HttpStatus.NOT_FOUND.value())
-                                .detail(ex.getMessage())
-                                .instance(request.getRequestURI())
-                                .build();
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Recurso Não Encontrado",
+                                HttpStatus.NOT_FOUND.value(),
+                                ex.getMessage(),
+                                request.getRequestURI());
 
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -77,13 +75,12 @@ public class GlobalExceptionHandler {
                         DuplicateResourceException ex,
                         HttpServletRequest request) {
 
-                ErrorResponse response = ErrorResponse.builder()
-                                .type("about:blank")
-                                .title("Recurso Duplicado")
-                                .status(HttpStatus.CONFLICT.value())
-                                .detail(ex.getMessage())
-                                .instance(request.getRequestURI())
-                                .build();
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Recurso Duplicado",
+                                HttpStatus.CONFLICT.value(),
+                                ex.getMessage(),
+                                request.getRequestURI());
 
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
@@ -97,13 +94,12 @@ public class GlobalExceptionHandler {
                         ConflictException ex,
                         HttpServletRequest request) {
 
-                ErrorResponse response = ErrorResponse.builder()
-                                .type("about:blank")
-                                .title("Conflito")
-                                .status(HttpStatus.CONFLICT.value())
-                                .detail(ex.getMessage())
-                                .instance(request.getRequestURI())
-                                .build();
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Conflito",
+                                HttpStatus.CONFLICT.value(),
+                                ex.getMessage(),
+                                request.getRequestURI());
 
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
@@ -117,15 +113,52 @@ public class GlobalExceptionHandler {
                         UnauthorizedException ex,
                         HttpServletRequest request) {
 
-                ErrorResponse response = ErrorResponse.builder()
-                                .type("about:blank")
-                                .title("Não Autorizado")
-                                .status(HttpStatus.UNAUTHORIZED.value())
-                                .detail(ex.getMessage())
-                                .instance(request.getRequestURI())
-                                .build();
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Não Autorizado",
+                                HttpStatus.UNAUTHORIZED.value(),
+                                ex.getMessage(),
+                                request.getRequestURI());
 
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        /**
+         * Trata credenciais inválidas.
+         * Retorna 401 Unauthorized.
+         */
+        @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+        public ResponseEntity<ErrorResponse> handleBadCredentials(
+                        org.springframework.security.authentication.BadCredentialsException ex,
+                        HttpServletRequest request) {
+
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Credenciais Inválidas",
+                                HttpStatus.UNAUTHORIZED.value(),
+                                "Usuário ou senha incorretos",
+                                request.getRequestURI());
+
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        /**
+         * Trata argumentos inválidos (IllegalArgumentException).
+         * Retorna 400 Bad Request.
+         */
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<ErrorResponse> handleIllegalArgument(
+                        IllegalArgumentException ex,
+                        HttpServletRequest request) {
+
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Requisição Inválida",
+                                HttpStatus.BAD_REQUEST.value(),
+                                ex.getMessage(),
+                                request.getRequestURI());
+
+                return ResponseEntity.badRequest().body(response);
         }
 
         /**
@@ -137,13 +170,12 @@ public class GlobalExceptionHandler {
                         BusinessException ex,
                         HttpServletRequest request) {
 
-                ErrorResponse response = ErrorResponse.builder()
-                                .type("about:blank")
-                                .title("Regra de Negócio")
-                                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
-                                .detail(ex.getMessage())
-                                .instance(request.getRequestURI())
-                                .build();
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Regra de Negócio",
+                                HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                                ex.getMessage(),
+                                request.getRequestURI());
 
                 return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
         }
@@ -157,13 +189,12 @@ public class GlobalExceptionHandler {
                         Exception ex,
                         HttpServletRequest request) {
 
-                ErrorResponse response = ErrorResponse.builder()
-                                .type("about:blank")
-                                .title("Erro Interno do Servidor")
-                                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                                .detail("Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.")
-                                .instance(request.getRequestURI())
-                                .build();
+                ErrorResponse response = new ErrorResponse(
+                                "about:blank",
+                                "Erro Interno do Servidor",
+                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.",
+                                request.getRequestURI());
 
                 // Log do erro para debug (em produção, usar logger apropriado)
                 ex.printStackTrace();

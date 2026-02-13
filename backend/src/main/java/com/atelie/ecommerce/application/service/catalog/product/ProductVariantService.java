@@ -20,9 +20,9 @@ public class ProductVariantService {
     private final ProductVariantRepository variantRepository;
     private final GtinGeneratorService gtinGenerator;
 
-    public ProductVariantService(ProductRepository productRepository, 
-                                 ProductVariantRepository variantRepository,
-                                 GtinGeneratorService gtinGenerator) {
+    public ProductVariantService(ProductRepository productRepository,
+            ProductVariantRepository variantRepository,
+            GtinGeneratorService gtinGenerator) {
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.gtinGenerator = gtinGenerator;
@@ -38,19 +38,18 @@ public class ProductVariantService {
         }
 
         // Gera GTIN automático se não vier no request
-        String gtin = (request.gtin() == null || request.gtin().isBlank()) 
-                ? gtinGenerator.generateInternalEan13() 
+        String gtin = (request.gtin() == null || request.gtin().isBlank())
+                ? gtinGenerator.generateInternalEan13()
                 : request.gtin();
 
-        ProductVariantEntity variant = ProductVariantEntity.builder()
-                .product(product)
-                .sku(request.sku())
-                .gtin(gtin)
-                .price(request.price()) // Pode ser null (usa do pai)
-                .stockQuantity(request.initialStock())
-                .attributesJson(request.attributesJson()) // Ex: {"cor":"azul"}
-                .active(true)
-                .build();
+        ProductVariantEntity variant = new ProductVariantEntity(
+                product,
+                request.sku(),
+                gtin,
+                request.price(),
+                request.initialStock(),
+                request.attributesJson(),
+                true);
 
         return variantRepository.save(variant);
     }

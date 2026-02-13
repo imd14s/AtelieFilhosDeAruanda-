@@ -68,7 +68,8 @@ public class ProductControllerTest {
                 categoryId,
                 new java.util.ArrayList<>(), // media
                 new java.util.ArrayList<>(), // variants
-                true // active
+                true, // active
+                new java.util.ArrayList<>() // marketplaceIds
         );
         mockMvc.perform(post("/api/products")
                 .contentType(MediaType.APPLICATION_JSON)

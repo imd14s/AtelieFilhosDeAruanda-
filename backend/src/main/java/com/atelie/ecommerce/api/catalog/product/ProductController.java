@@ -79,6 +79,10 @@ public class ProductController {
             product.setImages(imageUrls);
         }
 
+        if (request.marketplaceIds() != null) {
+            product.setMarketplaceIds(request.marketplaceIds());
+        }
+
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
         product.setActive(request.active() != null ? request.active() : true);
@@ -97,13 +101,14 @@ public class ProductController {
                     e.printStackTrace();
                 }
 
-                return com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity.builder()
-                        .sku(v.sku())
-                        .price(v.price())
-                        .stockQuantity(v.stock())
-                        .active(true)
-                        .attributesJson(attrsJson)
-                        .build();
+                return new com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity(
+                        null,
+                        v.sku(),
+                        null,
+                        v.price(),
+                        v.stock(),
+                        attrsJson,
+                        true);
             }).toList();
         }
 

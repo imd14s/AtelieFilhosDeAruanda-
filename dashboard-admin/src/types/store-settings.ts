@@ -1,4 +1,4 @@
-export type ServiceType = 'SHIPPING' | 'PAYMENT';
+export type ServiceType = 'SHIPPING' | 'PAYMENT' | 'MARKETPLACE';
 
 export interface AdminServiceProvider {
     id: string;

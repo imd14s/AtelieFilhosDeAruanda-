@@ -14,51 +14,89 @@ import java.util.Map;
  * 
  * Usado por todos os endpoints para retornar erros de forma consistente.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ErrorResponse {
 
-    /**
-     * URI que identifica o tipo de problema.
-     * Exemplo: "about:blank" para erros genéricos
-     */
     private String type;
-
-    /**
-     * Título curto e legível do problema.
-     * Exemplo: "Validação Falhou"
-     */
     private String title;
-
-    /**
-     * Código de status HTTP.
-     * Exemplo: 400, 404, 409, 500
-     */
     private int status;
-
-    /**
-     * Explicação detalhada do problema.
-     * Exemplo: "O campo 'nome' é obrigatório"
-     */
     private String detail;
-
-    /**
-     * URI da requisição que causou o erro.
-     * Exemplo: "/api/categories"
-     */
     private String instance;
-
-    /**
-     * Timestamp do erro.
-     */
-    @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
-
-    /**
-     * Mapa de erros de validação (campo -> mensagem).
-     * Usado para erros 400 com múltiplos campos inválidos.
-     */
+    private LocalDateTime timestamp;
     private Map<String, String> errors;
+
+    public ErrorResponse() {
+        this.timestamp = LocalDateTime.now();
+    }
+
+    public ErrorResponse(String type, String title, int status, String detail, String instance) {
+        this.type = type;
+        this.title = title;
+        this.status = status;
+        this.detail = detail;
+        this.instance = instance;
+        this.timestamp = LocalDateTime.now();
+    }
+
+    public ErrorResponse(String type, String title, int status, String detail, String instance,
+            Map<String, String> errors) {
+        this(type, title, status, detail, instance);
+        this.errors = errors;
+    }
+
+    // Getters and Setters
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public String getDetail() {
+        return detail;
+    }
+
+    public void setDetail(String detail) {
+        this.detail = detail;
+    }
+
+    public String getInstance() {
+        return instance;
+    }
+
+    public void setInstance(String instance) {
+        this.instance = instance;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Map<String, String> getErrors() {
+        return errors;
+    }
+
+    public void setErrors(Map<String, String> errors) {
+        this.errors = errors;
+    }
 }

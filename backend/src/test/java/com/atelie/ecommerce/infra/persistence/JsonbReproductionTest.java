@@ -41,12 +41,14 @@ public class JsonbReproductionTest {
         productRepository.save(product);
 
         // Save Variant with JSONB
-        ProductVariantEntity variant = new ProductVariantEntity();
-        variant.setProduct(product);
-        variant.setSku("SKU-123");
-        variant.setStockQuantity(10);
-        variant.setAttributesJson("{\"color\": \"red\"}"); // JSON content
-        variant.setActive(true);
+        ProductVariantEntity variant = new ProductVariantEntity(
+                product,
+                "SKU-123",
+                null,
+                null,
+                10,
+                "{\"color\": \"red\"}",
+                true);
 
         variantRepository.save(variant);
     }

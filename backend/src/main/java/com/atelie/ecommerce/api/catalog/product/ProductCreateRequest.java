@@ -12,18 +12,19 @@ import java.util.UUID;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ProductCreateRequest(
-        @JsonProperty("title") String name,
-        String description,
-        BigDecimal price,
-        @JsonProperty("stock") Integer stockQuantity,
-        @JsonProperty("category") UUID categoryId,
-        List<ProductMediaItem> media,
-        List<ProductVariantRequest> variants,
-        Boolean active) {
-    public record ProductMediaItem(String url, String type, Boolean isMain) {
-    }
+                @JsonProperty("title") String name,
+                String description,
+                BigDecimal price,
+                @JsonProperty("stock") Integer stockQuantity,
+                @JsonProperty("category") UUID categoryId,
+                List<ProductMediaItem> media,
+                List<ProductVariantRequest> variants,
+                Boolean active,
+                @JsonProperty("marketplaceIds") List<UUID> marketplaceIds) {
+        public record ProductMediaItem(String url, String type, Boolean isMain) {
+        }
 
-    public record ProductVariantRequest(String sku, BigDecimal price, Integer stock,
-            java.util.Map<String, String> attributes) {
-    }
+        public record ProductVariantRequest(String sku, BigDecimal price, Integer stock,
+                        java.util.Map<String, String> attributes) {
+        }
 }

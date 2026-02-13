@@ -33,7 +33,56 @@ public class ProductIntegrationEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public ProductIntegrationEntity(ProductEntity product, String integrationType, String externalId, String skuExternal) {
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public ProductEntity getProduct() {
+        return product;
+    }
+
+    public void setProduct(ProductEntity product) {
+        this.product = product;
+    }
+
+    public String getIntegrationType() {
+        return integrationType;
+    }
+
+    public void setIntegrationType(String integrationType) {
+        this.integrationType = integrationType;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    public String getSkuExternal() {
+        return skuExternal;
+    }
+
+    public void setSkuExternal(String skuExternal) {
+        this.skuExternal = skuExternal;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public ProductIntegrationEntity(ProductEntity product, String integrationType, String externalId,
+            String skuExternal) {
         this.product = product;
         this.integrationType = integrationType;
         this.externalId = externalId;

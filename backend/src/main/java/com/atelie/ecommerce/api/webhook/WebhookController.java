@@ -17,29 +17,35 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/webhooks")
-@Slf4j
 public class WebhookController {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(WebhookController.class);
 
     private final OrderService orderService;
     private final OrderRepository orderRepository;
     private final InvoiceService invoiceService;
+    private final com.atelie.ecommerce.application.integration.MarketplaceCoreService marketplaceCoreService;
 
     // CORREÇÃO: Sem default value. Deve vir do ambiente obrigatoriamente.
     @Value("${WEBHOOK_SECRET}")
     private String webhookSecret;
 
-    public WebhookController(OrderService orderService, OrderRepository orderRepository, InvoiceService invoiceService) {
+    public WebhookController(OrderService orderService, OrderRepository orderRepository,
+            InvoiceService invoiceService,
+            com.atelie.ecommerce.application.integration.MarketplaceCoreService marketplaceCoreService) {
         this.orderService = orderService;
         this.orderRepository = orderRepository;
         this.invoiceService = invoiceService;
+        this.marketplaceCoreService = marketplaceCoreService;
     }
 
     @PostMapping("/mercadopago")
     public ResponseEntity<?> handleMercadoPago(
             @RequestBody Map<String, Object> payload,
             @RequestHeader(value = "X-Webhook-Token", required = false) String token) {
-        
-        // Fail-safe: Se a injeção falhar silenciosamente (raro, mas possível), loga erro crítico.
+
+        // Fail-safe: Se a injeção falhar silenciosamente (raro, mas possível), loga
+        // erro crítico.
         if (webhookSecret == null || webhookSecret.isBlank()) {
             log.error("VIOLAÇÃO DE CONTRATO: WEBHOOK_SECRET não foi injetada pelo ambiente.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Configuration Error");
@@ -62,10 +68,11 @@ public class WebhookController {
         if (payload.containsKey("external_reference")) {
             orderIdStr = (String) payload.get("external_reference");
         } else if (payload.containsKey("order_id")) {
-             orderIdStr = payload.get("order_id").toString();
+            orderIdStr = payload.get("order_id").toString();
         }
 
-        if (orderIdStr == null) return ResponseEntity.ok().build();
+        if (orderIdStr == null)
+            return ResponseEntity.ok().build();
 
         try {
             UUID orderId = UUID.fromString(orderIdStr);
@@ -76,14 +83,14 @@ public class WebhookController {
                 orderService.approveOrder(orderId);
                 invoiceService.emitInvoiceForOrder(orderId);
                 log.info("Processo de NFe iniciado para pedido {}", orderId);
-            } 
-            else if ("rejected".equalsIgnoreCase(statusStr) || "cancelled".equalsIgnoreCase(statusStr)) {
+            } else if ("rejected".equalsIgnoreCase(statusStr) || "cancelled".equalsIgnoreCase(statusStr)) {
                 orderService.cancelOrder(orderId, "Pagamento " + statusStr);
             }
 
         } catch (Exception e) {
             log.error("Erro processando webhook ref {}", orderIdStr, e);
-            if (e instanceof SecurityException) return ResponseEntity.badRequest().body(e.getMessage());
+            if (e instanceof SecurityException)
+                return ResponseEntity.badRequest().body(e.getMessage());
             return ResponseEntity.ok().build();
         }
 
@@ -99,6 +106,20 @@ public class WebhookController {
             if (paidAmount.compareTo(order.getTotalAmount()) < 0) {
                 throw new SecurityException("Valor pago menor que o total");
             }
+        }
+    }
+
+    @PostMapping("/marketplace/{provider}")
+    public ResponseEntity<?> handleMarketplaceWebhook(
+            @PathVariable String provider,
+            @RequestBody Map<String, Object> payload) {
+        log.info("Recebido webhook de marketplace para o provedor {}: {}", provider, payload);
+        try {
+            marketplaceCoreService.handleWebhook(provider, payload);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Erro processando webhook do marketplace {}", provider, e);
+            return ResponseEntity.ok().build(); // Retorna 200 para evitar retentativas infinitas se for erro de lógica
         }
     }
 }

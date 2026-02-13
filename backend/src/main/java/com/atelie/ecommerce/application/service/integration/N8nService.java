@@ -8,8 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-@lombok.extern.slf4j.Slf4j
 public class N8nService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(N8nService.class);
 
     private final RestTemplate restTemplate;
     private final DynamicConfigService configService;
@@ -23,12 +24,14 @@ public class N8nService {
     }
 
     public boolean isAutomationEnabled() {
-        if (!configService.containsKey(N8N_ENABLED_KEY)) return false;
+        if (!configService.containsKey(N8N_ENABLED_KEY))
+            return false;
         return configService.requireBoolean(N8N_ENABLED_KEY);
     }
 
     public void sendLowStockAlert(String productName, Integer currentStock, int threshold) {
-        if (!isAutomationEnabled()) return;
+        if (!isAutomationEnabled())
+            return;
 
         try {
             String url = configService.requireString(N8N_URL_KEY);

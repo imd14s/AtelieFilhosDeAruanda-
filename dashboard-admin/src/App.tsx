@@ -15,6 +15,7 @@ import { CouponList } from './pages/marketing/CouponList';
 import { AbandonedCartPage } from './pages/marketing/AbandonedCartPage';
 import { ProductForm } from './pages/products/ProductForm';
 import { AutomationsPage } from './pages/marketing/AutomationsPage';
+import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 import { CategoriesPage } from './pages/categories/CategoriesPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -45,6 +46,7 @@ function AppRoutes() {
         <Route path="/marketing/coupons" element={<CouponList />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
         <Route path="/automations" element={<AutomationsPage />} />
+        <Route path="/settings/integrations" element={<IntegrationsPage />} />
       </Route>
     </Routes>
   );

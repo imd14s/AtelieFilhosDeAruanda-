@@ -18,32 +18,50 @@ import java.util.UUID;
 
 import com.atelie.ecommerce.api.config.DynamicConfigService;
 import com.atelie.ecommerce.api.common.exception.BusinessException;
+import com.atelie.ecommerce.application.integration.MarketplaceIntegrationFactory;
+import com.atelie.ecommerce.application.integration.IMarketplaceAdapter;
+import com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity;
+import com.atelie.ecommerce.infrastructure.persistence.integration.repository.MarketplaceIntegrationRepository;
+import lombok.extern.slf4j.Slf4j; // Add logging
+
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.math.BigDecimal;
 
 @Service
 public class ProductService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ProductService.class);
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductVariantRepository variantRepository; // New dependency
     private final GtinGeneratorService gtinGenerator; // New dependency
+    private final com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository providerRepository;
     private final DynamicConfigService configService;
     private final ApplicationEventPublisher eventPublisher;
+    private final MarketplaceIntegrationFactory marketplaceFactory;
+    private final MarketplaceIntegrationRepository marketplaceRepository;
 
     public ProductService(ProductRepository productRepository,
             CategoryRepository categoryRepository,
             ProductVariantRepository variantRepository,
             GtinGeneratorService gtinGenerator,
+            com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository providerRepository,
             DynamicConfigService configService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            MarketplaceIntegrationFactory marketplaceFactory,
+            MarketplaceIntegrationRepository marketplaceRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.variantRepository = variantRepository;
         this.gtinGenerator = gtinGenerator;
+        this.providerRepository = providerRepository;
         this.configService = configService;
         this.eventPublisher = eventPublisher;
+        this.marketplaceFactory = marketplaceFactory;
+        this.marketplaceRepository = marketplaceRepository;
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +85,13 @@ public class ProductService {
         boolean isNew = product.getId() == null;
         if (isNew) {
             product.setId(UUID.randomUUID());
+        }
+
+        // Handle Marketplaces (Create)
+        if (product.getMarketplaceIds() != null) {
+            java.util.Set<com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity> providers = new java.util.HashSet<>(
+                    providerRepository.findAllById(product.getMarketplaceIds()));
+            product.setMarketplaces(providers);
         }
 
         ProductEntity saved = productRepository.save(product);
@@ -96,6 +121,7 @@ public class ProductService {
         }
 
         eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), isNew));
+        syncMarketplaces(saved);
         return saved;
     }
 
@@ -106,15 +132,14 @@ public class ProductService {
     }
 
     private void createDefaultVariant(ProductEntity product) {
-        ProductVariantEntity defaultVariant = ProductVariantEntity.builder()
-                .product(product)
-                .sku("SKU-" + product.getId().toString().substring(0, 8).toUpperCase())
-                .gtin(gtinGenerator.generateInternalEan13())
-                .price(null)
-                .stockQuantity(product.getStockQuantity() != null ? product.getStockQuantity() : 0)
-                .active(true)
-                .attributesJson("{\"default\": true}")
-                .build();
+        ProductVariantEntity defaultVariant = new ProductVariantEntity(
+                product,
+                "SKU-" + product.getId().toString().substring(0, 8).toUpperCase(),
+                gtinGenerator.generateInternalEan13(),
+                null,
+                product.getStockQuantity() != null ? product.getStockQuantity() : 0,
+                "{\"default\": true}",
+                true);
 
         variantRepository.save(defaultVariant);
     }
@@ -132,9 +157,24 @@ public class ProductService {
             existing.setImages(details.getImages());
         }
 
+        // Handle Category Update
+        if (details.getCategoryId() != null) {
+            CategoryEntity category = categoryRepository.findById(details.getCategoryId())
+                    .orElseThrow(() -> new NotFoundException("Categoria não encontrada: " + details.getCategoryId()));
+            existing.setCategory(category);
+        }
+
+        // Handle Marketplaces (Update)
+        if (details.getMarketplaceIds() != null) {
+            java.util.Set<com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity> providers = new java.util.HashSet<>(
+                    providerRepository.findAllById(details.getMarketplaceIds()));
+            existing.setMarketplaces(providers);
+        }
+
         existing.setUpdatedAt(java.time.LocalDateTime.now());
         ProductEntity saved = productRepository.save(existing);
         eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), false));
+        syncMarketplaces(saved);
         return saved;
     }
 
@@ -175,5 +215,35 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Page<ProductEntity> searchProducts(String query, Pageable pageable) {
         return productRepository.findByNameContainingIgnoreCase(query, pageable);
+    }
+
+    private void syncMarketplaces(ProductEntity product) {
+        if (product.getMarketplaces() == null || product.getMarketplaces().isEmpty()) {
+            return;
+        }
+
+        for (com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity provider : product
+                .getMarketplaces()) {
+            try {
+                Optional<MarketplaceIntegrationEntity> integrationOpt = marketplaceRepository
+                        .findByProvider(provider.getCode().toLowerCase());
+
+                if (integrationOpt.isPresent()) {
+                    MarketplaceIntegrationEntity integration = integrationOpt.get();
+                    if (integration.isActive()) {
+                        marketplaceFactory.getAdapter(integration.getProvider())
+                                .ifPresent(adapter -> adapter.exportProduct(product, integration));
+                    }
+                } else {
+                    // Assuming 'log' is defined elsewhere, e.g., private static final Logger log =
+                    // LoggerFactory.getLogger(ProductService.class);
+                    // If not, this line will cause a compilation error.
+                    log.warn("No integration record found for provider {}", provider.getCode());
+                }
+            } catch (Exception e) {
+                // Assuming 'log' is defined elsewhere
+                log.error("Error syncing to marketplace {}", provider.getCode(), e);
+            }
+        }
     }
 }

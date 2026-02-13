@@ -40,84 +40,89 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class OrderControllerIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private OrderRepository orderRepository;
+        @Autowired
+        private OrderRepository orderRepository;
 
-    @Autowired
-    private ProductRepository productRepository;
+        @Autowired
+        private ProductRepository productRepository;
 
-    @Autowired
-    private ProductVariantRepository variantRepository;
+        @Autowired
+        private ProductVariantRepository variantRepository;
 
-    @Autowired
-    private InventoryRepository inventoryRepository;
+        @Autowired
+        private InventoryRepository inventoryRepository;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    private ProductEntity product;
-    private ProductVariantEntity variant;
+        private ProductEntity product;
+        private ProductVariantEntity variant;
 
-    @BeforeEach
-    void setUp() {
-        orderRepository.deleteAll();
-        inventoryRepository.deleteAll(); // Assuming specific method or standard JPA
-        variantRepository.deleteAll();
-        productRepository.deleteAll();
+        @BeforeEach
+        void setUp() {
+                orderRepository.deleteAll();
+                inventoryRepository.deleteAll(); // Assuming specific method or standard JPA
+                variantRepository.deleteAll();
+                productRepository.deleteAll();
 
-        product = ProductEntity.builder()
-                .name("Test Product")
-                .description("Desc")
-                .price(new BigDecimal("100.00"))
-                .active(true)
-                .build();
-        productRepository.save(product);
+                product = new ProductEntity(
+                                null,
+                                "Test Product",
+                                "Desc",
+                                new BigDecimal("100.00"),
+                                null,
+                                null,
+                                true);
+                product.setActive(true);
+                productRepository.save(product);
 
-        variant = ProductVariantEntity.builder()
-                .product(product)
-                .sku("SKU-123")
-                .price(new BigDecimal("100.00"))
-                .active(true)
-                .build();
-        variantRepository.save(variant);
+                variant = new ProductVariantEntity(
+                                product,
+                                "SKU-123",
+                                null,
+                                new BigDecimal("100.00"),
+                                10,
+                                null,
+                                true);
+                variantRepository.save(variant);
 
-        // Initial stock
-        InventoryMovementEntity initialStock = new InventoryMovementEntity();
-        initialStock.setVariantId(variant.getId());
-        initialStock.setType(MovementType.IN);
-        initialStock.setQuantity(10);
-        initialStock.setProduct(product);
-        initialStock.setReason("Initial");
-        inventoryRepository.save(initialStock);
-    }
+                // Initial stock
+                InventoryMovementEntity initialStock = new InventoryMovementEntity();
+                initialStock.setVariantId(variant.getId());
+                initialStock.setType(MovementType.IN);
+                initialStock.setQuantity(10);
+                initialStock.setProduct(product);
+                initialStock.setReason("Initial");
+                inventoryRepository.save(initialStock);
+        }
 
-    @Test
-    @WithMockUser
-    void createOrder_ValidRequest_ShouldSucceed() throws Exception {
-        CreateOrderItemRequest itemReq = new CreateOrderItemRequest(product.getId(), variant.getId(), 2);
-        CreateOrderRequest request = new CreateOrderRequest(
-                "SITE",
-                "ORDER-EXT-001",
-                "Customer A",
-                List.of(itemReq));
+        @Test
+        @WithMockUser
+        void createOrder_ValidRequest_ShouldSucceed() throws Exception {
+                CreateOrderItemRequest itemReq = new CreateOrderItemRequest(product.getId(), variant.getId(), 2);
+                CreateOrderRequest request = new CreateOrderRequest(
+                                "SITE",
+                                "ORDER-EXT-001",
+                                "Customer A",
+                                List.of(itemReq));
 
-        mockMvc.perform(post("/api/orders")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.totalAmount").value(200.0));
+                mockMvc.perform(post("/api/orders")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.status").value("PENDING"))
+                                .andExpect(jsonPath("$.totalAmount").value(200.0));
 
-        List<OrderEntity> orders = orderRepository.findAll();
-        assertThat(orders).hasSize(1);
-        OrderEntity order = orders.get(0);
-        assertThat(order.getItems()).hasSize(1);
+                List<OrderEntity> orders = orderRepository.findAll();
+                assertThat(orders).hasSize(1);
+                OrderEntity order = orders.get(0);
+                assertThat(order.getItems()).hasSize(1);
 
-        // Verify Inventory Deduction
-        int stock = inventoryRepository.auditCalculatedStockByVariant(variant.getId());
-        assertThat(stock).isEqualTo(8); // 10 - 2
-    }
+                // Verify Inventory Deduction
+                int stock = inventoryRepository.auditCalculatedStockByVariant(variant.getId());
+                assertThat(stock).isEqualTo(8); // 10 - 2
+        }
 }

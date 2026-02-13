@@ -10,10 +10,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "product_variants")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class ProductVariantEntity {
 
     @Id
@@ -54,6 +50,101 @@ public class ProductVariantEntity {
             this.stockQuantity = 0;
         if (this.active == null)
             this.active = true;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // Explicit getters to resolve build issues
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Integer getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public ProductEntity getProduct() {
+        return product;
+    }
+
+    public void setProduct(ProductEntity product) {
+        this.product = product;
+    }
+
+    public String getAttributesJson() {
+        return attributesJson;
+    }
+
+    public void setAttributesJson(String attributesJson) {
+        this.attributesJson = attributesJson;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getGtin() {
+        return gtin;
+    }
+
+    public void setGtin(String gtin) {
+        this.gtin = gtin;
+    }
+
+    // Manual constructor for builder fallback
+    public ProductVariantEntity(ProductEntity product, String sku, String gtin, BigDecimal price, Integer stockQuantity,
+            String attributesJson, Boolean active) {
+        this.product = product;
+        this.sku = sku;
+        this.gtin = gtin;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
+        this.attributesJson = attributesJson;
+        this.active = active;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

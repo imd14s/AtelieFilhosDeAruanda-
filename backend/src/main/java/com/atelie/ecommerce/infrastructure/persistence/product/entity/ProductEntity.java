@@ -13,14 +13,28 @@ import java.util.ArrayList;
 
 @Entity
 @Table(name = "products")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ProductEntity {
+    public ProductEntity() {
+        this.images = new ArrayList<>();
+        this.marketplaces = new java.util.HashSet<>();
+    }
+
+    public ProductEntity(UUID id, String name, String description, BigDecimal price, Integer stockQuantity,
+            CategoryEntity category, Boolean active) {
+        this();
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
+        this.category = category;
+        this.active = active;
+    }
+
     @Id
     private UUID id;
 
+    @JsonProperty("title")
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -28,8 +42,13 @@ public class ProductEntity {
 
     private BigDecimal price;
 
+    @JsonProperty("stock")
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
+
+    @Transient
+    @JsonProperty("category")
+    private UUID categoryId;
 
     // Suporte a lista de imagens
     @ElementCollection(fetch = FetchType.EAGER)
@@ -39,6 +58,34 @@ public class ProductEntity {
 
     @OneToMany(mappedBy = "product", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "product_marketplaces", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "provider_id"))
+    private java.util.Set<com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity> marketplaces;
+
+    // Campo transiente para facilitar updates via JSON sem DTO específico
+    @Transient
+    @JsonProperty("marketplaceIds")
+    private List<UUID> marketplaceIds;
+
+    public List<UUID> getMarketplaceIds() {
+        return marketplaceIds;
+    }
+
+    public void setMarketplaceIds(List<UUID> marketplaceIds) {
+        this.marketplaceIds = marketplaceIds;
+    }
+
+    // Helper para preencher marketplaceIds ao ler do banco (opcional, para
+    // serialização)
+    @PostLoad
+    public void fillMarketplaceIds() {
+        if (marketplaces != null) {
+            this.marketplaceIds = marketplaces.stream()
+                    .map(com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity::getId)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+    }
 
     @Column(name = "active")
     private Boolean active;
@@ -74,7 +121,12 @@ public class ProductEntity {
     // Método auxiliar exigido pelo ProductManagementController
     @JsonProperty("category")
     public UUID getCategoryId() {
-        return category != null ? category.getId() : null;
+        return categoryId != null ? categoryId : (category != null ? category.getId() : null);
+    }
+
+    @JsonProperty("category")
+    public void setCategoryId(UUID categoryId) {
+        this.categoryId = categoryId;
     }
 
     @Column(unique = true)
@@ -121,5 +173,127 @@ public class ProductEntity {
                 this.slug = safeName + "-" + suffix;
             }
         }
+    }
+
+    // Explicit getters/setters for build compatibility
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    @JsonProperty("title")
+    public String getName() {
+        return name;
+    }
+
+    @JsonProperty("title")
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    @JsonProperty("stock")
+    public Integer getStockQuantity() {
+        return stockQuantity;
+    }
+
+    @JsonProperty("stock")
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    // image_url uses explicit methods getImageUrl/setImageUrl already for single
+    // string compatibility
+    // but we should expose the list too
+    public List<String> getImages() {
+        return images;
+    }
+
+    public void setImages(List<String> images) {
+        this.images = images;
+    }
+
+    public List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> getVariants() {
+        return variants;
+    }
+
+    public void setVariants(
+            List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants) {
+        this.variants = variants;
+    }
+
+    public java.util.Set<com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity> getMarketplaces() {
+        return marketplaces;
+    }
+
+    public void setMarketplaces(
+            java.util.Set<com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity> marketplaces) {
+        this.marketplaces = marketplaces;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public Boolean getAlertEnabled() {
+        return alertEnabled;
+    }
+
+    public void setAlertEnabled(Boolean alertEnabled) {
+        this.alertEnabled = alertEnabled;
+    }
+
+    public CategoryEntity getCategory() {
+        return category;
+    }
+
+    public void setCategory(CategoryEntity category) {
+        this.category = category;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
     }
 }

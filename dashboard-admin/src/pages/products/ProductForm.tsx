@@ -10,6 +10,8 @@ import { MediaGallery } from '../../components/products/MediaGallery';
 import { ChevronLeft, Save, Plus, Wand2 } from 'lucide-react';
 import type { CreateProductDTO, ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
+import type { AdminServiceProvider } from '../../types/store-settings';
+import { AdminProviderService } from '../../services/AdminProviderService';
 
 
 const schema = z.object({
@@ -18,7 +20,9 @@ const schema = z.object({
   price: z.number().min(0, 'Preço deve ser positivo'),
   stock: z.number().min(0, 'Estoque deve ser positivo'),
   category: z.string().min(1, 'Categoria obrigatória'),
+
   tenantId: z.string(),
+  marketplaceIds: z.array(z.string()).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -29,6 +33,8 @@ export function ProductForm() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [marketplaces, setMarketplaces] = useState<AdminServiceProvider[]>([]);
+  const [selectedMarketplaces, setSelectedMarketplaces] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
@@ -43,10 +49,20 @@ export function ProductForm() {
 
   useEffect(() => {
     loadCategories();
+    loadMarketplaces();
     if (id) {
       loadProduct();
     }
   }, [id]);
+
+  const loadMarketplaces = async () => {
+    try {
+      const data = await AdminProviderService.listProviders();
+      setMarketplaces(data.filter(p => p.serviceType === 'MARKETPLACE' && p.enabled));
+    } catch (error) {
+      console.error('Erro ao carregar marketplaces', error);
+    }
+  };
 
   const loadCategories = async () => {
     try {
@@ -67,10 +83,12 @@ export function ProductForm() {
         price: product.price || 0,
         stock: product.stock !== undefined ? product.stock : (product as any).stockQuantity || 0,
         category: (product as any).categoryId || product.category || '',
-        tenantId: product.tenantId || '1'
+        tenantId: product.tenantId || '1',
+        marketplaceIds: product.marketplaceIds || []
       });
       if (product.variants) setVariants(product.variants);
       if (product.media) setMedia(product.media);
+      if (product.marketplaceIds) setSelectedMarketplaces(product.marketplaceIds);
     } catch (error) {
       console.error('Error loading product', error);
     }
@@ -118,7 +136,9 @@ export function ProductForm() {
         ...data,
         active: true,
         variants,
-        media
+
+        media,
+        marketplaceIds: selectedMarketplaces
       };
 
       if (id) {
@@ -212,6 +232,35 @@ export function ProductForm() {
           </div>
         </div>
 
+
+        {/* Marketplaces */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="font-semibold text-lg text-gray-800 border-b pb-2 mb-4">Canais de Venda</h2>
+          <div className="space-y-3">
+            {marketplaces.length === 0 && <p className="text-sm text-gray-500">Nenhum canal de venda configurado.</p>}
+            {marketplaces.map(mp => (
+              <label key={mp.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedMarketplaces.includes(mp.id)}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setSelectedMarketplaces(prev => [...prev, mp.id]);
+                    } else {
+                      setSelectedMarketplaces(prev => prev.filter(id => id !== mp.id));
+                    }
+                  }}
+                  className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                />
+                <div>
+                  <span className="font-medium text-gray-900">{mp.name}</span>
+                  <p className="text-xs text-gray-500">{mp.code}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
         {/* Gerenciamento de Mídia */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="font-semibold text-lg text-gray-800 border-b pb-2 mb-4">Mídia & Imagens</h2>
@@ -242,45 +291,47 @@ export function ProductForm() {
             {isSubmitting ? 'Salvando...' : 'Salvar Produto'}
           </button>
         </div>
-      </form>
+      </form >
 
       {/* Modal de Criação de Categoria */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Nova Categoria</h3>
-            <input
-              type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="Nome da categoria"
-              className="w-full p-2 border rounded-lg mb-4"
-              autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
-            />
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCategoryModal(false);
-                  setNewCategoryName('');
-                }}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateCategory}
-                disabled={isCreatingCategory || !newCategoryName.trim()}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {isCreatingCategory ? 'Criando...' : 'Criar'}
-              </button>
+      {
+        showCategoryModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4">Nova Categoria</h3>
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Nome da categoria"
+                className="w-full p-2 border rounded-lg mb-4"
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCategoryModal(false);
+                    setNewCategoryName('');
+                  }}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateCategory}
+                  disabled={isCreatingCategory || !newCategoryName.trim()}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {isCreatingCategory ? 'Criando...' : 'Criar'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

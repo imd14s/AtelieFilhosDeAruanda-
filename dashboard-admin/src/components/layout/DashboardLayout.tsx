@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight, Plus, Tag } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight, Plus, Tag, Plug } from 'lucide-react';
 import clsx from 'clsx';
-import { StoreSelector } from './StoreSelector';
+
 
 interface NavItem {
   icon: any;
@@ -51,6 +51,7 @@ export function DashboardLayout() {
       label: 'Configurações',
       children: [
         { icon: Settings, label: 'Gerais', path: '/configs' },
+        { icon: Plug, label: 'Integrações', path: '/settings/integrations' },
         { icon: Users, label: 'Equipe', path: '/settings/team' },
         { icon: Shield, label: 'Auditoria', path: '/settings/audit' },
         { icon: Truck, label: 'Frete', path: '/settings/shipping' },
@@ -114,9 +115,7 @@ export function DashboardLayout() {
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md flex flex-col flex-shrink-0">
-        <div className="p-4 border-b">
-          <StoreSelector />
-        </div>
+
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map(item => renderNavItem(item))}

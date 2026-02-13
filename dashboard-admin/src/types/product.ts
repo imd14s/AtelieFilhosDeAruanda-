@@ -44,6 +44,8 @@ export interface Product {
     variants: ProductVariant[];
     media: ProductMedia[];
 
+    marketplaceIds?: string[]; // IDs dos marketplaces associados
+
     dimensions?: ProductDimensions;
     seo?: ProductSEO;
 

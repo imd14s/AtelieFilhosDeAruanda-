@@ -76,7 +76,9 @@ public class ProductControllerIntegrationTest {
                 category.getId(),
                 List.of(new ProductCreateRequest.ProductMediaItem("image1.jpg", "IMAGE", true)),
                 List.of(), // variants
-                true);
+                true, // active
+                List.of() // marketplaceIds
+        );
 
         mockMvc.perform(post("/api/products")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -95,12 +97,17 @@ public class ProductControllerIntegrationTest {
                 MediaType.IMAGE_JPEG_VALUE,
                 "fake image content".getBytes());
 
-        given(mediaStorageService.storeImage(any())).willReturn("stored-image.jpg");
+        com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetEntity mockAsset = new com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetEntity();
+        mockAsset.setId(1L);
+        mockAsset.setStorageKey("stored-image.jpg");
+
+        given(mediaStorageService.upload(any(), any(), any(Boolean.class))).willReturn(mockAsset);
 
         mockMvc.perform(multipart("/api/products/upload-image")
                 .file(file))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("stored-image.jpg")));
+                .andExpect(jsonPath("$.id").value(mockAsset.getId().toString()))
+                .andExpect(jsonPath("$.url").value("/api/media/public/" + mockAsset.getId()));
     }
 
     @Test
@@ -141,7 +148,7 @@ public class ProductControllerIntegrationTest {
         mockMvc.perform(get("/api/products")
                 .param("categoryId", category.getId().toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("Category Product"));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name").value("Category Product"));
     }
 }

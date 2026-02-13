@@ -44,6 +44,68 @@ public class ServiceRoutingRuleEntity {
     private LocalDateTime updatedAt;
 
     // BLINDAGEM: Garante que tanto isEnabled() quanto getEnabled() existam
-    public boolean isEnabled() { return enabled; }
-    public boolean getEnabled() { return enabled; }
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public boolean getEnabled() {
+        return enabled;
+    }
+
+    // Explicit getters for build compatibility
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public ServiceType getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(ServiceType serviceType) {
+        this.serviceType = serviceType;
+    }
+
+    public String getProviderCode() {
+        return providerCode;
+    }
+
+    public void setProviderCode(String providerCode) {
+        this.providerCode = providerCode;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
+    public String getMatchJson() {
+        return matchJson;
+    }
+
+    public void setMatchJson(String matchJson) {
+        this.matchJson = matchJson;
+    }
+
+    public String getBehaviorJson() {
+        return behaviorJson;
+    }
+
+    public void setBehaviorJson(String behaviorJson) {
+        this.behaviorJson = behaviorJson;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

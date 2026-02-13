@@ -34,4 +34,45 @@ public class FeatureFlagEntity {
     public void prePersist() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    // Manual Getters/Setters for robustness
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getFlagKey() {
+        return flagKey;
+    }
+
+    public void setFlagKey(String flagKey) {
+        this.flagKey = flagKey;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getValueJson() {
+        return valueJson;
+    }
+
+    public void setValueJson(String valueJson) {
+        this.valueJson = valueJson;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
