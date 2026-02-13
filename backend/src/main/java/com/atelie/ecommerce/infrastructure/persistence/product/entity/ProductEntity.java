@@ -51,15 +51,15 @@ public class ProductEntity {
     private UUID categoryId;
 
     // Suporte a lista de imagens
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_url")
     private List<String> images;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "product_marketplaces", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "provider_id"))
     private java.util.Set<com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity> marketplaces;
 

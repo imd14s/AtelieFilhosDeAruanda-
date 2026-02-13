@@ -16,6 +16,9 @@ public class ProductVariantEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    public ProductVariantEntity() {
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     @JsonIgnore
