@@ -63,3 +63,4 @@ Atualizado em: 04/02/2026
 2.  **Criação de Configuração**: ✅ Corrigido (Validação no `AdminConfigController`).
 3.  **Multi-Tenancy**: ✅ Implementado `TenantFilter` para capturar header.
 4.  **Categorias e Mídia**: ✅ Corrigido (`DELETE /categories` segura e Upload retornando ID string).
+5.  **Sistema de Auditoria**: ✅ Implementado (Backend API e Serviços de Auditoria).
