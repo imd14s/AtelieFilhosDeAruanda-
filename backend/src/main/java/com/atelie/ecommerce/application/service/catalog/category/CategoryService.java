@@ -46,6 +46,11 @@ public class CategoryService {
         if (!repository.existsById(id)) {
             throw new com.atelie.ecommerce.api.common.exception.NotFoundException("Categoria não encontrada.");
         }
-        repository.deleteById(id);
+        try {
+            repository.deleteById(id);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new com.atelie.ecommerce.api.common.exception.DuplicateResourceException(
+                    "Não é possível excluir a categoria pois existem produtos associados a ela.");
+        }
     }
 }

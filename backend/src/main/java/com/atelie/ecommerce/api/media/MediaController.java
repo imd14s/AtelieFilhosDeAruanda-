@@ -29,10 +29,11 @@ public class MediaController {
         var saved = media.upload(file, category, isPublic);
         var url = "/api/media/public/" + saved.getId();
         return ResponseEntity
-                .ok(new MediaResponse(saved.getId(), url, saved.getType().name(), saved.getOriginalFilename()));
+                .ok(new MediaResponse(String.valueOf(saved.getId()), url, saved.getType().name(),
+                        saved.getOriginalFilename()));
     }
 
-    public record MediaResponse(Long id, String url, String type, String filename) {
+    public record MediaResponse(String id, String url, String type, String filename) {
     }
 
     @GetMapping("/public/{id}")
