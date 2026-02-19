@@ -1,5 +1,5 @@
 -- Extensão para UUIDs (Postgres)
-${PGCRYPTO_EXTENSION}
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 1. Usuários e Autenticação
 CREATE TABLE users (
@@ -10,7 +10,9 @@ CREATE TABLE users (
     role VARCHAR(50) NOT NULL DEFAULT 'USER',
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    email_verified BOOLEAN DEFAULT FALSE, -- V7
+    verification_code VARCHAR(100) -- V7
 );
 CREATE INDEX idx_users_email ON users(email);
 
@@ -18,7 +20,9 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE TABLE categories (
     id UUID PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
-    active BOOLEAN NOT NULL
+    active BOOLEAN NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- V11
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- V11
 );
 
 CREATE TABLE products (
@@ -34,9 +38,11 @@ CREATE TABLE products (
     stock_quantity INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    slug VARCHAR(255), -- V6
     CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 CREATE INDEX idx_products_attributes ON products USING GIN (attributes);
+CREATE UNIQUE INDEX idx_products_slug ON products(slug); -- V6
 
 CREATE TABLE product_images (
     product_id UUID NOT NULL,
@@ -56,6 +62,7 @@ CREATE TABLE product_variants (
     attributes_json JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    image_url VARCHAR(500), -- V12
     CONSTRAINT fk_variant_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX ux_product_variant_gtin ON product_variants(gtin) WHERE gtin IS NOT NULL;
@@ -97,7 +104,8 @@ CREATE TABLE orders (
     customer_email VARCHAR(255),
     total_amount DECIMAL(19, 2) NOT NULL,
     version BIGINT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- V5
 );
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_external ON orders(external_id);
@@ -111,6 +119,7 @@ CREATE TABLE order_items (
     quantity INTEGER NOT NULL,
     unit_price DECIMAL(19, 2) NOT NULL,
     total_price DECIMAL(38, 2) NOT NULL DEFAULT 0,
+    product_name VARCHAR(255), -- V10
     CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id),
     CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES products(id),
     CONSTRAINT fk_order_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id)
@@ -143,14 +152,22 @@ CREATE TABLE IF NOT EXISTS media_assets (
 CREATE INDEX IF NOT EXISTS idx_media_assets_type ON media_assets(type);
 CREATE INDEX IF NOT EXISTS idx_media_assets_public ON media_assets(is_public);
 
--- 6. Tabela de Configuração do Sistema (Dynamic Config)
+-- 6. Configurações e Feature Flags
 CREATE TABLE IF NOT EXISTS system_config (
     config_key VARCHAR(100) PRIMARY KEY,
     config_value VARCHAR(255),
     config_json JSONB
 );
 
--- 7. Service Routing Rules e Providers (Logística e Integrações)
+CREATE TABLE feature_flags ( -- V2
+    id          UUID PRIMARY KEY,
+    flag_key    VARCHAR(100) NOT NULL UNIQUE,
+    enabled     BOOLEAN DEFAULT false,
+    value_json  TEXT,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. Service Providers e Routing
 CREATE TABLE service_routing_rules (
     id UUID PRIMARY KEY,
     service_type VARCHAR(40) NOT NULL,
@@ -176,7 +193,6 @@ CREATE TABLE service_providers (
     CONSTRAINT ux_service_providers_type_code UNIQUE (service_type, code)
 );
 
--- CORREÇÃO: version alterado de BIGINT para INTEGER para casar com Java (Integer)
 CREATE TABLE service_provider_configs (
     id UUID PRIMARY KEY,
     provider_id UUID NOT NULL,
@@ -188,3 +204,84 @@ CREATE TABLE service_provider_configs (
     updated_at TIMESTAMP NOT NULL,
     CONSTRAINT fk_provider_config FOREIGN KEY (provider_id) REFERENCES service_providers(id)
 );
+
+-- 8. Shipping, Payment, Marketing (V6)
+CREATE TABLE shipping_providers (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    enabled BOOLEAN DEFAULT FALSE,
+    config JSONB,
+    rules JSONB,
+    headers JSONB,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE payment_providers (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    enabled BOOLEAN DEFAULT FALSE,
+    config JSONB,
+    installments JSONB,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE coupons (
+    id UUID PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    type VARCHAR(20) NOT NULL, 
+    value NUMERIC(19, 2) NOT NULL,
+    start_date TIMESTAMP WITHOUT TIME ZONE,
+    end_date TIMESTAMP WITHOUT TIME ZONE,
+    usage_limit INTEGER,
+    used_count INTEGER DEFAULT 0,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE abandoned_cart_configs (
+    id UUID PRIMARY KEY,
+    enabled BOOLEAN DEFAULT FALSE,
+    triggers JSONB, 
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+-- 9. Marketplace Integrations (V8, V9)
+CREATE TABLE IF NOT EXISTS product_marketplaces ( -- V8
+    product_id UUID NOT NULL,
+    provider_id UUID NOT NULL,
+    PRIMARY KEY (product_id, provider_id),
+    CONSTRAINT fk_product_marketplaces_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    CONSTRAINT fk_product_marketplaces_provider FOREIGN KEY (provider_id) REFERENCES service_providers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE marketplace_integrations ( -- V9
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider VARCHAR(50) NOT NULL UNIQUE,
+    encrypted_credentials JSONB,
+    auth_payload JSONB,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_marketplace_integrations_provider ON marketplace_integrations(provider);
+
+-- 10. Audit Logs (V10)
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY,
+    action VARCHAR(50) NOT NULL,
+    resource VARCHAR(50) NOT NULL,
+    resource_id VARCHAR(255),
+    details TEXT,
+    performed_by_user_id VARCHAR(255),
+    performed_by_user_name VARCHAR(255),
+    performed_by_user_email VARCHAR(255),
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    tenant_id VARCHAR(255)
+);
+CREATE INDEX idx_audit_logs_resource ON audit_logs(resource);
+CREATE INDEX idx_audit_logs_resource_id ON audit_logs(resource_id);
+CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp);
+CREATE INDEX idx_audit_logs_performed_by ON audit_logs(performed_by_user_id);
