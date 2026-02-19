@@ -196,6 +196,15 @@ public class MercadoLivreAdapter implements IMarketplaceAdapter {
     }
 
     @Override
+    public List<ProductEntity> fetchProducts(MarketplaceIntegrationEntity integration) {
+        log.info("Fetching products from Mercado Livre for integration {}", integration.getId());
+        // Implementação real exigiria paginação na API /users/{user_id}/items/search
+        // e depois detalhamento de cada item. Por enquanto, retornamos lista vazia ou
+        // simulada para manter a consistência da interface.
+        return Collections.emptyList();
+    }
+
+    @Override
     public void testConnection(Map<String, String> credentials) {
         String appId = credentials.get("appId");
         String clientSecret = credentials.get("clientSecret");

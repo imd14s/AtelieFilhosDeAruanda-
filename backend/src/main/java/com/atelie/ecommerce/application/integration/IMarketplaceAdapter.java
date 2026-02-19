@@ -46,4 +46,9 @@ public interface IMarketplaceAdapter {
      * Deve lançar exceção se as credenciais forem inválidas.
      */
     void testConnection(Map<String, String> credentials);
+
+    /**
+     * Busca produtos no marketplace.
+     */
+    List<ProductEntity> fetchProducts(MarketplaceIntegrationEntity integration);
 }

@@ -29,11 +29,12 @@ export function IntegrationsPage() {
     // New state for available providers
     const [availableProviders, setAvailableProviders] = useState<ServiceProvider[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [syncing, setSyncing] = useState<Record<string, boolean>>({});
 
     // Hardcoded icons/metadata for display purposes (could be moved to backend or config)
     const providerMetadata: Record<string, { icon: string }> = {
         'mercadolivre': { icon: 'https://http2.mlstatic.com/frontend-assets/ui-navigation/5.21.3/mercadolibre/favicon.svg' },
-        'tiktok': { icon: 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhty_lp_vbo/ljhwZthlaukjlkulzlp/tiktok-logo.png' }
+        'tiktok': { icon: 'https://upload.wikimedia.org/wikipedia/en/a/a9/TikTok_logo.svg' }
     };
 
     useEffect(() => {
@@ -117,6 +118,20 @@ export function IntegrationsPage() {
         setIsAddModalOpen(false);
     };
 
+    const handleSync = async (providerCode: string) => {
+        setSyncing(prev => ({ ...prev, [providerCode]: true }));
+        try {
+            const { count } = await ChannelIntegrationService.syncProducts(providerCode);
+            alert(`${count} produtos sincronizados com sucesso!`);
+            // Could re-load data here if sync affects status
+        } catch (error) {
+            console.error('Failed to sync products', error);
+            alert('Falha ao sincronizar produtos. Verifique se a integração está ativa.');
+        } finally {
+            setSyncing(prev => ({ ...prev, [providerCode]: false }));
+        }
+    };
+
     if (loading) return (
         <div className="p-8 flex items-center justify-center min-h-[400px]">
             <div className="flex flex-col items-center gap-4">
@@ -191,10 +206,24 @@ export function IntegrationsPage() {
                                 </button>
                                 {status?.configured && !status.active && (
                                     <button
-                                        onClick={() => handleSaveAndAuth} // Reuse save logic to triggering auth flow if needed, or open modal
+                                        onClick={() => handleSaveAndAuth()}
                                         className="w-full py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
                                     >
                                         <ExternalLink size={18} /> Autenticar Conta
+                                    </button>
+                                )}
+                                {status?.active && (
+                                    <button
+                                        onClick={() => handleSync(provider.code)}
+                                        disabled={syncing[provider.code]}
+                                        className="w-full py-3.5 bg-green-600 text-white rounded-2xl text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {syncing[provider.code] ? (
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                            <CheckCircle2 size={18} />
+                                        )}
+                                        Sincronizar Produtos
                                     </button>
                                 )}
                             </div>

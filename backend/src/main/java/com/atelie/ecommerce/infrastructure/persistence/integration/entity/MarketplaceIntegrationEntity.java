@@ -2,6 +2,8 @@ package com.atelie.ecommerce.infrastructure.persistence.integration.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -23,10 +25,10 @@ public class MarketplaceIntegrationEntity {
     @Column(nullable = false, unique = true)
     private String provider;
 
-    @Column(name = "encrypted_credentials", columnDefinition = "jsonb")
+    @Column(name = "encrypted_credentials")
     private String encryptedCredentials;
 
-    @Column(name = "auth_payload", columnDefinition = "jsonb")
+    @Column(name = "auth_payload")
     private String authPayload;
 
     @Column(name = "is_active")

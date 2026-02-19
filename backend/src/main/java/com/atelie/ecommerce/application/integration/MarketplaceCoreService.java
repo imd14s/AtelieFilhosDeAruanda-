@@ -10,6 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.HashSet;
+import java.util.Set;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
 
 @Service
 public class MarketplaceCoreService {
@@ -20,15 +29,24 @@ public class MarketplaceCoreService {
     private final MarketplaceIntegrationRepository repository;
     private final EncryptionUtility encryptionUtility;
     private final ObjectMapper objectMapper;
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final ServiceProviderJpaRepository providerRepository;
 
     public MarketplaceCoreService(MarketplaceIntegrationFactory factory,
             MarketplaceIntegrationRepository repository,
             EncryptionUtility encryptionUtility,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            ProductRepository productRepository,
+            CategoryRepository categoryRepository,
+            ServiceProviderJpaRepository providerRepository) {
         this.factory = factory;
         this.repository = repository;
         this.encryptionUtility = encryptionUtility;
         this.objectMapper = objectMapper;
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+        this.providerRepository = providerRepository;
     }
 
     @Transactional
@@ -154,6 +172,61 @@ public class MarketplaceCoreService {
         for (MarketplaceIntegrationEntity integration : integrations) {
             adapter.handleWebhook(integration, payload);
         }
+    }
+
+    @Transactional
+    public int syncProducts(String provider) {
+        log.info("Starting product sync for provider: {}", provider);
+
+        MarketplaceIntegrationEntity integration = repository.findByProvider(provider)
+                .orElseThrow(() -> new RuntimeException("Integration not configured for " + provider));
+
+        if (!integration.isActive()) {
+            throw new RuntimeException("Integration is not active for " + provider);
+        }
+
+        IMarketplaceAdapter adapter = factory.getAdapter(provider)
+                .orElseThrow(() -> new RuntimeException("Adapter not found for " + provider));
+
+        // Busca produtos no marketplace (TikTok Shop no caso)
+        List<ProductEntity> remoteProducts = adapter.fetchProducts(integration);
+
+        // Identifica o provedor "Ecommerce" para marcar o canal
+        // (driver_key='ecommerce')
+        ServiceProviderEntity ecommerceProvider = providerRepository.findByCode("LOJA_VIRTUAL")
+                .orElseThrow(() -> new RuntimeException(
+                        "Provedor Ecommerce não encontrado no sistema. Verifique o seed data."));
+
+        // Busca uma categoria padrão se não houver
+        CategoryEntity defaultCategory = categoryRepository.findAll().stream()
+                .filter(CategoryEntity::getActive)
+                .findFirst()
+                .orElseThrow(
+                        () -> new RuntimeException("Nenhuma categoria ativa encontrada para vincular os produtos."));
+
+        int count = 0;
+        for (ProductEntity remote : remoteProducts) {
+            // Verifica se o produto já existe pelo nome (Heurística simples para o teste)
+            // Em produção buscaríamos por external_id na tabela de links
+            if (productRepository.findByNameContainingIgnoreCase(remote.getName(),
+                    org.springframework.data.domain.Pageable.unpaged()).isEmpty()) {
+                remote.setCategory(defaultCategory);
+                remote.setActive(true);
+
+                // Marca como Ecommerce (Dashboard 'ecommerce' check)
+                Set<ServiceProviderEntity> platforms = new HashSet<>();
+                platforms.add(ecommerceProvider);
+                remote.setMarketplaces(platforms);
+
+                ProductEntity saved = productRepository.save(remote);
+                log.info("Synced and saved product: {} (ID: {})", saved.getName(), saved.getId());
+                count++;
+            } else {
+                log.info("Product already sync'd or exists: {}", remote.getName());
+            }
+        }
+
+        return count;
     }
 
     /**

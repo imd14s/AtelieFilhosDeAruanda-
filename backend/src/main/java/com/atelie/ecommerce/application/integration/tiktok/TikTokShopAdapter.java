@@ -120,6 +120,36 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
         }
     }
 
+    @Override
+    public List<ProductEntity> fetchProducts(MarketplaceIntegrationEntity integration) {
+        log.info("Fetching products from TikTok Shop for integration {}", integration.getId());
+
+        // Simulação de busca de produtos do TikTok Shop
+        // Em uma implementação real, faríamos a chamada à API correspondente
+        List<ProductEntity> products = new ArrayList<>();
+
+        ProductEntity p1 = new ProductEntity();
+        p1.setName("TikTok Product 1");
+        p1.setDescription("Description for TikTok Product 1");
+        p1.setPrice(new java.math.BigDecimal("99.90"));
+        p1.setStockQuantity(50);
+        p1.setImageUrl("https://placehold.co/600x400/000000/FFFFFF?text=TikTok+P1");
+        // Usamos MarketplaceIds transiente para sinalizar origem se necessário,
+        // ou salvamos o ID externo no ProductIntegrationEntity depois.
+        products.add(p1);
+
+        ProductEntity p2 = new ProductEntity();
+        p2.setName("TikTok Product 2");
+        p2.setDescription("Description for TikTok Product 2");
+        p2.setPrice(new java.math.BigDecimal("149.90"));
+        p2.setStockQuantity(20);
+        p2.setImageUrl("https://placehold.co/600x400/000000/FFFFFF?text=TikTok+P2");
+        products.add(p2);
+
+        log.info("Fetched {} products from TikTok Shop", products.size());
+        return products;
+    }
+
     /**
      * Gera a assinatura HMAC-SHA256 necessária para o TikTok Shop.
      */

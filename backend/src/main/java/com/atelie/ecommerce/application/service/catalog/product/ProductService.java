@@ -144,6 +144,12 @@ public class ProductService {
         variantRepository.save(defaultVariant);
     }
 
+    // Legacy support for calls without variants
+    @Transactional
+    public ProductEntity updateProduct(UUID id, ProductEntity details) {
+        return updateProduct(id, details, null);
+    }
+
     @Transactional
     public ProductEntity updateProduct(UUID id, ProductEntity details, List<ProductVariantEntity> variants) {
         ProductEntity existing = findById(id);

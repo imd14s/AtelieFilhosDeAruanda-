@@ -80,4 +80,12 @@ public class IntegrationsController {
         coreService.testConnection(provider, credentials);
         return ResponseEntity.ok(Map.of("message", "Conexão testada com sucesso para " + provider));
     }
+
+    @PostMapping("/{provider}/sync")
+    public ResponseEntity<Map<String, Object>> syncProducts(@PathVariable String provider) {
+        int count = coreService.syncProducts(provider);
+        return ResponseEntity.ok(Map.of(
+                "message", "Sincronização concluída com sucesso",
+                "count", count));
+    }
 }

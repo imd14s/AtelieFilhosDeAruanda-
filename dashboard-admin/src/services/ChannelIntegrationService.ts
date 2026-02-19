@@ -26,5 +26,10 @@ export const ChannelIntegrationService = {
     async getAvailableProviders() {
         const response = await api.get('/admin/providers');
         return response.data;
+    },
+
+    async syncProducts(provider: string) {
+        const response = await api.post(`/integrations/${provider}/sync`);
+        return response.data;
     }
 };

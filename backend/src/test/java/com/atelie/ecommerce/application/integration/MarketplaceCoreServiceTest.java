@@ -34,13 +34,23 @@ class MarketplaceCoreServiceTest {
     @Mock
     private IMarketplaceAdapter mockAdapter;
 
+    @Mock
+    private com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository productRepository;
+
+    @Mock
+    private com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository categoryRepository;
+
+    @Mock
+    private com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository providerRepository;
+
     private MarketplaceCoreService coreService;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        coreService = new MarketplaceCoreService(factory, repository, encryptionUtility, objectMapper);
+        coreService = new MarketplaceCoreService(factory, repository, encryptionUtility, objectMapper,
+                productRepository, categoryRepository, providerRepository);
     }
 
     @Test

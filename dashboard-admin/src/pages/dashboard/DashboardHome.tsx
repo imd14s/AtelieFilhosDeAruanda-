@@ -65,10 +65,10 @@ export function DashboardHome() {
 
             {/* Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
                     <h3 className="font-semibold text-gray-800 mb-4">Vendas por Dia</h3>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-64 w-full">
+                        <ResponsiveContainer width="99%" height="100%">
                             <LineChart data={metrics.salesByDate}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="date" axisLine={false} tickLine={false} />
@@ -80,10 +80,10 @@ export function DashboardHome() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
                     <h3 className="font-semibold text-gray-800 mb-4">Top Produtos</h3>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-64 w-full">
+                        <ResponsiveContainer width="99%" height="100%">
                             <BarChart data={metrics.topProducts} layout="vertical">
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                                 <XAxis type="number" hide />
