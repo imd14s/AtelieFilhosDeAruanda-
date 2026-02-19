@@ -38,6 +38,9 @@ public class ProductVariantEntity {
     @Column(name = "attributes_json", columnDefinition = "jsonb")
     private String attributesJson;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Column(nullable = false)
     private Boolean active;
 

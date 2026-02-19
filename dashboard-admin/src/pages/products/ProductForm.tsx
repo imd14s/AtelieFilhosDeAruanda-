@@ -58,7 +58,24 @@ export function ProductForm() {
   const loadMarketplaces = async () => {
     try {
       const data = await AdminProviderService.listProviders();
-      setMarketplaces(data.filter(p => p.serviceType === 'MARKETPLACE' && p.enabled));
+      const dbMarketplaces = data.filter(p => p.serviceType === 'MARKETPLACE' && p.enabled);
+
+      const internalStore: AdminServiceProvider = {
+        id: 'store-site', // ID fixo para a Loja Virtual
+        serviceType: 'MARKETPLACE',
+        code: 'LOJA_VIRTUAL',
+        name: 'Loja Virtual (Site)',
+        enabled: true,
+        priority: 0,
+        healthEnabled: true
+      };
+
+      setMarketplaces([internalStore, ...dbMarketplaces]);
+
+      // Se for novo produto, já vem marcado a Loja Virtual
+      if (!id) {
+        setSelectedMarketplaces(prev => [...prev, 'store-site']);
+      }
     } catch (error) {
       console.error('Erro ao carregar marketplaces', error);
     }
@@ -88,7 +105,18 @@ export function ProductForm() {
       });
       if (product.variants) setVariants(product.variants);
       if (product.media) setMedia(product.media);
-      if (product.marketplaceIds) setSelectedMarketplaces(product.marketplaceIds);
+
+      // Ensure store-site is selected if it was saved (or legacy products might need migration, 
+      // but for now we assume if it's in marketplaceIds it's selected)
+      // If product has no marketplaceIds (legacy), maybe default to store-site? 
+      // User didn't specify, but usually yes.
+      if (product.marketplaceIds && product.marketplaceIds.length > 0) {
+        setSelectedMarketplaces(product.marketplaceIds);
+      } else {
+        // Default for existing products without config? safely add store-site?
+        // Let's stick to what's in DB. If empty, it's empty.
+        setSelectedMarketplaces([]);
+      }
     } catch (error) {
       console.error('Error loading product', error);
     }
@@ -118,11 +146,15 @@ export function ProductForm() {
     setIsGeneratingAI(true);
     try {
       const description = await ProductService.generateDescription(title);
+      if (!description) throw new Error('Descrição vazia retornada.');
       setValue('description', description);
     } catch (error: any) {
       console.error('Erro IA:', error);
-      // Check for specifics if possible, or just generic error with config prompt
-      if (confirm('Erro ao gerar descrição (Verifique se o Token OpenAI está configurado em Configurações). Deseja ir para configurações agora?')) {
+      // Improve error message visibility
+      // If backend returns 400 or 500 with message "OpenAI Key not configured"
+      const msg = error.response?.data?.message || error.message || 'Erro desconhecido.';
+
+      if (confirm(`Erro ao gerar descrição: ${msg}\n\nVerifique se o Token OpenAI está configurado em Configurações.\nDeseja ir para configurações agora?`)) {
         navigate('/configs');
       }
     } finally {

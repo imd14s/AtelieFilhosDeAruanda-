@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload, CloudLightning, Loader2, Image as ImageIcon } from 'lucide-react';
 import type { ProductVariant } from '../../types/product';
+import { MediaService } from '../../services/MediaService';
 
 interface VariantsManagerProps {
     variants: ProductVariant[];
@@ -8,12 +9,29 @@ interface VariantsManagerProps {
 }
 
 export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
+    const [isUploading, setIsUploading] = useState(false);
     const [newVariant, setNewVariant] = useState<Partial<ProductVariant>>({
         sku: '',
         price: 0,
         stock: 0,
-        attributes: { size: '', color: '' }
+        attributes: { size: '', color: '' },
+        imageUrl: ''
     });
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setIsUploading(true);
+            try {
+                const response = await MediaService.upload(e.target.files[0], () => { });
+                setNewVariant(prev => ({ ...prev, imageUrl: response.url }));
+            } catch (error) {
+                console.error('Upload failed', error);
+                alert('Erro ao fazer upload da imagem da variante.');
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
 
     const handleAdd = () => {
         if (!newVariant.sku) return;
@@ -24,14 +42,23 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
             price: newVariant.price || 0,
             stock: newVariant.stock || 0,
             attributes: { ...newVariant.attributes },
+            imageUrl: newVariant.imageUrl
         };
 
         onChange([...variants, variant]);
-        setNewVariant({ sku: '', price: 0, stock: 0, attributes: { size: '', color: '' } });
+        setNewVariant({ sku: '', price: 0, stock: 0, attributes: { size: '', color: '' }, imageUrl: '' });
     };
 
     const removeVariant = (id: string) => {
         onChange(variants.filter(v => v.id !== id));
+    };
+
+    const getImageUrl = (url?: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        const cleanBase = apiUrl.replace(/\/api$/, '');
+        return `${cleanBase}${url}`;
     };
 
     return (
@@ -39,7 +66,18 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
             <h3 className="font-semibold text-gray-700">Variantes do Produto</h3>
 
             {/* Form de Adição Rápida */}
-            <div className="grid grid-cols-5 gap-2 items-end">
+            <div className="grid grid-cols-6 gap-2 items-end">
+                <div className="col-span-1">
+                    <label className="text-xs text-gray-500 mb-1 block">Imagem</label>
+                    <label className={`border border-dashed border-gray-300 rounded h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {newVariant.imageUrl ? (
+                            <img src={getImageUrl(newVariant.imageUrl)} alt="Preview" className="h-full w-full object-cover rounded" />
+                        ) : (
+                            isUploading ? <Loader2 size={16} className="animate-spin text-gray-400" /> : <Upload size={16} className="text-gray-400" />
+                        )}
+                        <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
+                    </label>
+                </div>
                 <div>
                     <label className="text-xs text-gray-500">SKU</label>
                     <input
@@ -86,7 +124,7 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
                 <button
                     type="button"
                     onClick={handleAdd}
-                    className="bg-indigo-600 text-white p-2 rounded flex items-center justify-center hover:bg-indigo-700"
+                    className="bg-indigo-600 text-white p-2 h-10 w-full rounded flex items-center justify-center hover:bg-indigo-700"
                 >
                     <Plus size={20} />
                 </button>
@@ -96,7 +134,14 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
             <div className="bg-white rounded border divide-y">
                 {variants.map(variant => (
                     <div key={variant.id} className="p-3 flex items-center justify-between text-sm">
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 items-center">
+                            {variant.imageUrl ? (
+                                <img src={getImageUrl(variant.imageUrl)} alt="Variant" className="w-8 h-8 rounded object-cover border" />
+                            ) : (
+                                <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center border text-gray-400">
+                                    <ImageIcon size={14} />
+                                </div>
+                            )}
                             <span className="font-mono bg-gray-100 px-2 rounded">{variant.sku}</span>
                             <span className="text-gray-600">
                                 {variant.attributes.size} / {variant.attributes.color}

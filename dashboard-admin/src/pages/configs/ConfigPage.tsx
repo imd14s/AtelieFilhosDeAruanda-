@@ -9,9 +9,8 @@ export function ConfigPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Form State
-    const [key, setKey] = useState('');
-    const [value, setValue] = useState('');
-    const [description, setDescription] = useState('');
+    const [configKey, setConfigKey] = useState('');
+    const [configValue, setConfigValue] = useState('');
 
     useEffect(() => {
         loadConfigs();
@@ -33,7 +32,7 @@ export function ConfigPage() {
         if (!confirm(`Tem certeza que deseja remover a configuração ${keyToDelete}?`)) return;
         try {
             await ConfigService.delete(keyToDelete);
-            setConfigs(configs.filter(c => c.key !== keyToDelete));
+            setConfigs(configs.filter(c => c.configKey !== keyToDelete));
         } catch (error) {
             alert('Erro ao deletar (ver console)');
             console.error(error);
@@ -43,10 +42,10 @@ export function ConfigPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await ConfigService.upsert({ key, value, description });
+            await ConfigService.upsert({ configKey, configValue });
             await loadConfigs(); // Reload to get potential server-side formatting
             setIsModalOpen(false);
-            setKey(''); setValue(''); setDescription('');
+            setConfigKey(''); setConfigValue('');
         } catch (error) {
             alert('Erro ao salvar (ver console)');
             console.error(error);
@@ -78,23 +77,21 @@ export function ConfigPage() {
                             <tr>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Chave (Key)</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Valor (Value)</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Descrição</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600 text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {configs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="p-12 text-center text-gray-500">
+                                    <td colSpan={3} className="p-12 text-center text-gray-500">
                                         <p className="mb-4">Nenhuma configuração encontrada.</p>
                                         <button
                                             onClick={async () => {
                                                 if (!confirm('Deseja criar as configurações padrão (Ex: OPENAI_API_TOKEN)?')) return;
                                                 try {
                                                     await ConfigService.upsert({
-                                                        key: 'OPENAI_API_TOKEN',
-                                                        value: 'sk-placeholder',
-                                                        description: 'Token da API da OpenAI'
+                                                        configKey: 'OPENAI_API_TOKEN',
+                                                        configValue: 'sk-placeholder'
                                                     });
                                                     loadConfigs();
                                                 } catch (e) { alert('Erro ao criar defaults') }
@@ -107,13 +104,12 @@ export function ConfigPage() {
                                 </tr>
                             ) : (
                                 configs.map((config) => (
-                                    <tr key={config.key} className="hover:bg-gray-50 transition">
-                                        <td className="p-4 font-mono text-sm font-bold text-indigo-600">{config.key}</td>
-                                        <td className="p-4 font-mono text-sm text-gray-700 bg-gray-50 rounded select-all">{config.value}</td>
-                                        <td className="p-4 text-sm text-gray-500">{config.description || '-'}</td>
+                                    <tr key={config.configKey} className="hover:bg-gray-50 transition">
+                                        <td className="p-4 font-mono text-sm font-bold text-indigo-600">{config.configKey}</td>
+                                        <td className="p-4 font-mono text-sm text-gray-700 bg-gray-50 rounded select-all">{config.configValue}</td>
                                         <td className="p-4 text-right">
                                             <button
-                                                onClick={() => handleDelete(config.key)}
+                                                onClick={() => handleDelete(config.configKey)}
                                                 className="text-gray-400 hover:text-red-600 transition"
                                                 title="Remover Configuração"
                                             >
@@ -138,15 +134,11 @@ export function ConfigPage() {
                         <form onSubmit={handleSave} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Chave (Key)</label>
-                                <input autoFocus required className="w-full border rounded p-2 font-mono uppercase" placeholder="EX: SITE_MAINTENANCE" value={key} onChange={e => setKey(e.target.value.toUpperCase())} />
+                                <input autoFocus required className="w-full border rounded p-2 font-mono uppercase" placeholder="EX: SITE_MAINTENANCE" value={configKey} onChange={e => setConfigKey(e.target.value.toUpperCase())} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Valor</label>
-                                <input required className="w-full border rounded p-2" placeholder="true / false / 123" value={value} onChange={e => setValue(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Descrição</label>
-                                <input className="w-full border rounded p-2" placeholder="Opcional" value={description} onChange={e => setDescription(e.target.value)} />
+                                <input required className="w-full border rounded p-2" placeholder="true / false / 123" value={configValue} onChange={e => setConfigValue(e.target.value)} />
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>

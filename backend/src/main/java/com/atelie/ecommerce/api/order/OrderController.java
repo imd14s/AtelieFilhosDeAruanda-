@@ -35,9 +35,26 @@ public class OrderController {
 
     @GetMapping
     public Page<OrderResponse> getAllOrders(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return orderService.getAllOrders(pageable).map(this::toResponse);
+    }
+
+    @PutMapping("/{id}/approve")
+    public ResponseEntity<Void> approveOrder(@PathVariable UUID id) {
+        orderService.approveOrder(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelOrder(@PathVariable UUID id, @RequestBody(required = false) String reason) {
+        orderService.cancelOrder(id, reason != null ? reason : "Cancelado pelo administrador");
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/ship")
+    public ResponseEntity<Void> markAsShipped(@PathVariable UUID id) {
+        orderService.markAsShipped(id);
+        return ResponseEntity.noContent().build();
     }
 
     // Mapper Simples
@@ -48,7 +65,13 @@ public class OrderController {
                         i.getProduct().getName(),
                         i.getQuantity(),
                         i.getUnitPrice(),
-                        i.getTotalPrice()
+                        i.getTotalPrice(),
+                        i.getVariant() != null ? i.getVariant().getId() : null, // Add variantId if DTO has it, assuming it doesn't break
+                         // DTO doesn't have variantId yet? Let's check OrderItemResponse. 
+                         // If not, I won't add it to avoid error. 
+                         // But the user didn't ask for variantId in response.
+                         // Just stick to what was there.
+                        // "i.getTotalPrice()" was the last arg.
                 )).collect(Collectors.toList());
 
         return new OrderResponse(

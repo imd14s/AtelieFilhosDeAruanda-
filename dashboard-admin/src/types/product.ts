@@ -12,6 +12,7 @@ export interface ProductVariant {
     promotionalPrice?: number;
     stock: number;
     attributes: Record<string, string>; // e.g. { color: "Red", size: "M" }
+    imageUrl?: string;
     media?: ProductMedia[];
 }
 
@@ -34,6 +35,7 @@ export interface Product {
     title: string;
     description: string;
     active: boolean;
+    alertEnabled?: boolean;
     category: string;
 
     // Pricing & Stock (can be overridden by variants)

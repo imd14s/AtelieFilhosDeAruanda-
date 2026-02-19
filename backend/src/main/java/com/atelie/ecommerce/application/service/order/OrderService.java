@@ -27,19 +27,18 @@ import java.util.UUID;
 @Service
 public class OrderService {
 
-    private final OrderRepository orderRepository;
-    private final ProductRepository productRepository;
-    private final ProductVariantRepository variantRepository;
-    private final InventoryService inventoryService;
+    private final com.atelie.ecommerce.application.service.audit.AuditService auditService;
 
     public OrderService(OrderRepository orderRepository,
-                        ProductRepository productRepository,
-                        ProductVariantRepository variantRepository,
-                        InventoryService inventoryService) {
+            ProductRepository productRepository,
+            ProductVariantRepository variantRepository,
+            InventoryService inventoryService,
+            com.atelie.ecommerce.application.service.audit.AuditService auditService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.inventoryService = inventoryService;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -51,7 +50,7 @@ public class OrderService {
         order.setCustomerName(request.customerName());
         order.setStatus(OrderStatus.PENDING.name());
         order.setCreatedAt(Instant.now());
-        
+
         List<OrderItemEntity> items = new ArrayList<>();
         BigDecimal totalOrder = BigDecimal.ZERO;
 
@@ -71,7 +70,7 @@ public class OrderService {
                 // Captura o ID em variável final para usar na lambda
                 final UUID lookupId = targetVariantId;
                 variant = variantRepository.findById(targetVariantId)
-                    .orElseThrow(() -> new NotFoundException("Variante não encontrada: " + lookupId));
+                        .orElseThrow(() -> new NotFoundException("Variante não encontrada: " + lookupId));
             } else {
                 // Fallback: Tenta achar a variante default criada na migração
                 var variants = variantRepository.findByProductId(product.getId());
@@ -89,8 +88,7 @@ public class OrderService {
                     MovementType.OUT,
                     itemReq.quantity(),
                     "Sale Order " + order.getId(),
-                    order.getId().toString()
-            );
+                    order.getId().toString());
 
             // Preço: Usa o da variante se existir, senão usa do produto pai
             BigDecimal finalPrice = (variant.getPrice() != null) ? variant.getPrice() : product.getPrice();
@@ -105,45 +103,88 @@ public class OrderService {
             itemEntity.setQuantity(itemReq.quantity());
             itemEntity.setUnitPrice(finalPrice);
             itemEntity.setTotalPrice(itemTotal);
-            
+
             items.add(itemEntity);
         }
 
         order.setTotalAmount(totalOrder);
         order.setItems(items);
-        return orderRepository.save(order);
+        OrderEntity saved = orderRepository.save(order);
+
+        auditService.log(
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.CREATE,
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
+                saved.getId().toString(),
+                "Order created via " + request.source() + " for " + request.customerName());
+
+        return saved;
     }
-    
+
     @Transactional
     public void approveOrder(UUID orderId) {
         OrderEntity order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
-        
+                .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+
         if (!OrderStatus.PENDING.name().equals(order.getStatus())) {
-             throw new IllegalStateException("Pedido não está pendente");
+            throw new IllegalStateException("Pedido não está pendente");
         }
         order.setStatus(OrderStatus.PAID.name());
         orderRepository.save(order);
+
+        auditService.log(
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.UPDATE,
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
+                orderId.toString(),
+                "Order approved (PAID)");
     }
-    
+
+    @Transactional
+    public void markAsShipped(UUID orderId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+
+        // Permite enviar se estiver PAGO. (Poderia permitir PENDENTE se for manual, mas
+        // vamos forçar fluxo correto)
+        if (!OrderStatus.PAID.name().equals(order.getStatus())) {
+            throw new IllegalStateException("Pedido precisa estar PAGO para ser enviado");
+        }
+        order.setStatus(OrderStatus.SHIPPED.name());
+        orderRepository.save(order);
+
+        auditService.log(
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.UPDATE,
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
+                orderId.toString(),
+                "Order marked as SHIPPED");
+    }
+
     @Transactional
     public void cancelOrder(UUID orderId, String reason) {
         OrderEntity order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
-            
-        // Se já foi pago ou enviado, lógica de estorno seria necessária (simplificado aqui)
-        if (OrderStatus.CANCELED.name().equals(order.getStatus())) return;
+                .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+
+        // Se já foi pago ou enviado, lógica de estorno seria necessária (simplificado
+        // aqui)
+        if (OrderStatus.CANCELED.name().equals(order.getStatus()))
+            return;
 
         // Estorno de estoque
         for (OrderItemEntity item : order.getItems()) {
-             UUID variantId = item.getVariant() != null ? item.getVariant().getId() : null;
-             if (variantId != null) {
-                 inventoryService.addMovement(variantId, MovementType.IN, item.getQuantity(), "Order Cancelled: " + reason, orderId.toString());
-             }
+            UUID variantId = item.getVariant() != null ? item.getVariant().getId() : null;
+            if (variantId != null) {
+                inventoryService.addMovement(variantId, MovementType.IN, item.getQuantity(),
+                        "Order Cancelled: " + reason, orderId.toString());
+            }
         }
 
         order.setStatus(OrderStatus.CANCELED.name());
         orderRepository.save(order);
+
+        auditService.log(
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.UPDATE,
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
+                orderId.toString(),
+                "Order canceled. Reason: " + reason);
     }
 
     public Page<OrderEntity> getAllOrders(Pageable pageable) {

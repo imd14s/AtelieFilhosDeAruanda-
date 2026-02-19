@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { OrderService } from '../../services/OrderService';
 import type { Order } from '../../types/order';
-import { Ban } from 'lucide-react';
+import { Ban, CheckCircle, Truck } from 'lucide-react';
 
 export function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -41,6 +41,27 @@ export function OrdersPage() {
         } catch (error) {
             console.error('Failed to cancel order', error);
             alert('Erro ao cancelar pedido. Verifique o console.');
+        }
+    };
+
+    const handleApproveClick = async (id: string) => {
+        try {
+            await OrderService.approve(id);
+            setOrders(orders.map(o => o.id === id ? { ...o, status: 'PAID' } : o));
+        } catch (error) {
+            console.error('Failed to approve order', error);
+            alert('Erro ao aprovar pedido.');
+        }
+    };
+
+    const handleShipClick = async (id: string) => {
+        if (!confirm('Confirma o envio deste pedido?')) return;
+        try {
+            await OrderService.ship(id);
+            setOrders(orders.map(o => o.id === id ? { ...o, status: 'SHIPPED' } : o));
+        } catch (error) {
+            console.error('Failed to ship order', error);
+            alert('Erro ao enviar pedido.');
         }
     };
 
@@ -88,11 +109,31 @@ export function OrdersPage() {
                                     <td className="p-4 text-sm text-gray-500">
                                         {new Date(order.createdAt).toLocaleDateString()}
                                     </td>
-                                    <td className="p-4 text-right">
-                                        {order.status !== 'CANCELED' && (
+                                    <td className="p-4 text-right flex justify-end gap-2">
+                                        {order.status === 'PENDING' && (
+                                            <button
+                                                onClick={() => handleApproveClick(order.id)}
+                                                className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
+                                                title="Aprovar Pedido"
+                                            >
+                                                <CheckCircle size={18} />
+                                                <span className="text-xs font-semibold">Aprovar</span>
+                                            </button>
+                                        )}
+                                        {order.status === 'PAID' && (
+                                            <button
+                                                onClick={() => handleShipClick(order.id)}
+                                                className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
+                                                title="Marcar como Enviado"
+                                            >
+                                                <Truck size={18} />
+                                                <span className="text-xs font-semibold">Enviar</span>
+                                            </button>
+                                        )}
+                                        {order.status !== 'CANCELED' && order.status !== 'SHIPPED' && order.status !== 'DELIVERED' && (
                                             <button
                                                 onClick={() => handleCancelClick(order.id)}
-                                                className="text-red-500 hover:text-red-700 transition flex items-center gap-1 justify-end w-full"
+                                                className="text-red-500 hover:text-red-700 transition flex items-center gap-1"
                                                 title="Cancelar Pedido"
                                             >
                                                 <Ban size={18} />

@@ -20,6 +20,7 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
 
             for (const file of e.target.files) {
                 try {
+                    const isVideo = file.type.startsWith('video/');
                     // Backend now returns { id: "...", url: "..." }
                     const response = await MediaService.upload(file, (progress) => {
                         setUploadProgress(progress);
@@ -28,12 +29,12 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                     newMediaItems.push({
                         id: response.id,
                         url: response.url, // Use the URL returned by backend
-                        type: 'IMAGE',
-                        isMain: media.length === 0 // Primeira vira capa
+                        type: isVideo ? 'VIDEO' : 'IMAGE',
+                        isMain: media.length === 0 && !isVideo // Primeira imagem vira capa (vídeo não)
                     });
                 } catch (err) {
                     console.error("Upload failed", err);
-                    alert("Erro ao fazer upload da imagem."); // Feedback pro usuário
+                    alert("Erro ao fazer upload da mídia."); // Feedback pro usuário
                 }
             }
 
@@ -83,45 +84,57 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                     ) : (
                         <div className="text-center w-full px-4">
                             <Upload className="text-gray-400 mb-2 mx-auto" />
-                            <span className="text-sm text-gray-500 block">Adicionar Fotos</span>
+                            <span className="text-sm text-gray-500 block">Adicionar Mídia</span>
                         </div>
                     )}
-                    <input type="file" multiple className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
+                    <input type="file" multiple className="hidden" accept="image/*,video/*" onChange={handleUpload} disabled={isUploading} />
                 </label>
 
                 {/* Media List */}
                 {media.map(item => (
-                    <div key={item.id} className="relative group rounded-lg overflow-hidden border h-40">
-                        <img
-                            src={getImageUrl(item.url)}
-                            alt="Media Preview"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Erro+Imagem';
-                            }}
-                        />
+                    <div key={item.id} className="relative group rounded-lg overflow-hidden border h-40 bg-gray-100">
+                        {item.type === 'VIDEO' || item.url.endsWith('.mp4') || item.url.endsWith('.webm') ? (
+                            <video
+                                src={getImageUrl(item.url)}
+                                className="w-full h-full object-cover"
+                                controls
+                            />
+                        ) : (
+                            <img
+                                src={getImageUrl(item.url)}
+                                alt="Media Preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=Erro+Imagem';
+                                }}
+                            />
+                        )}
 
                         {/* Overlay Actions */}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2 pointer-events-none group-hover:pointer-events-auto">
                             <div className="flex justify-end">
-                                <button onClick={() => removeMedia(item.id)} className="text-white hover:text-red-400">
+                                <button onClick={() => removeMedia(item.id)} className="text-white hover:text-red-400 z-10">
                                     <X size={16} />
                                 </button>
                             </div>
                             <div className="flex gap-2">
-                                <button
-                                    onClick={() => setMain(item.id)}
-                                    className={`text-xs px-2 py-1 rounded ${item.isMain ? 'bg-indigo-600 text-white' : 'bg-white/20 text-white hover:bg-white/40'}`}
-                                >
-                                    {item.isMain ? 'Capa' : 'Definir Capa'}
-                                </button>
-                                <button
-                                    onClick={() => handleMagicRemoveBg(item.id)}
-                                    title="Remover Fundo (IA)"
-                                    className="bg-purple-600 text-white p-1 rounded hover:bg-purple-700"
-                                >
-                                    <Wand2 size={14} />
-                                </button>
+                                {item.type === 'IMAGE' && (
+                                    <>
+                                        <button
+                                            onClick={() => setMain(item.id)}
+                                            className={`text-xs px-2 py-1 rounded ${item.isMain ? 'bg-indigo-600 text-white' : 'bg-white/20 text-white hover:bg-white/40'}`}
+                                        >
+                                            {item.isMain ? 'Capa' : 'Definir Capa'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleMagicRemoveBg(item.id)}
+                                            title="Remover Fundo (IA)"
+                                            className="bg-purple-600 text-white p-1 rounded hover:bg-purple-700"
+                                        >
+                                            <Wand2 size={14} />
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>

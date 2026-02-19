@@ -129,8 +129,21 @@ export function ProductsPage() {
                   <tr key={product.id} className="hover:bg-gray-50 transition">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
-                          <Package size={20} />
+                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 overflow-hidden border border-gray-100">
+                          {product.media && product.media.length > 0 ? (
+                            <img
+                              src={product.media.find(m => m.isMain)?.url || product.media[0].url}
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).parentElement!.classList.add('bg-gray-200');
+                                (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22v-10"/></svg>';
+                              }}
+                            />
+                          ) : (
+                            <Package size={20} />
+                          )}
                         </div>
                         <div>
                           <p className="font-medium text-gray-800">{product.title}</p>
@@ -153,10 +166,10 @@ export function ProductsPage() {
                     <td className="p-4 text-right flex justify-end gap-2">
                       <button
                         onClick={() => handleToggleAlert(product.id)}
-                        className="text-gray-400 hover:text-yellow-600 transition"
-                        title="Alternar Alerta de Estoque"
+                        className={`transition ${product.alertEnabled ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-300 hover:text-gray-500'}`}
+                        title={product.alertEnabled ? "Alerta de Estoque Ativo" : "Ativar Alerta de Estoque"}
                       >
-                        <Bell size={18} />
+                        <Bell size={18} fill={product.alertEnabled ? "currentColor" : "none"} />
                       </button>
                       <button
                         onClick={() => handleEdit(product.id)}
