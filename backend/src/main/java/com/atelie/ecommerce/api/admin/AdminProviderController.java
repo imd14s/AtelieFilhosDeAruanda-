@@ -23,16 +23,20 @@ public class AdminProviderController {
     }
 
     @GetMapping
-    public List<ServiceProviderEntity> list() {
+    public List<ServiceProviderEntity> list(@RequestParam(required = false) Boolean enabled) {
+        if (enabled != null) {
+            return repository.findByEnabledOrderByPriorityAsc(enabled);
+        }
         return repository.findAll();
     }
 
     @PostMapping
     public ResponseEntity<ServiceProviderEntity> create(@RequestBody ServiceProviderEntity entity) {
-        if (entity.getId() == null) entity.setId(UUID.randomUUID());
+        if (entity.getId() == null)
+            entity.setId(UUID.randomUUID());
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
-        
+
         ServiceProviderEntity saved = repository.save(entity);
         gateway.refresh(); // Limpa cache
         return ResponseEntity.ok(saved);
@@ -41,21 +45,21 @@ public class AdminProviderController {
     @PutMapping("/{id}")
     public ResponseEntity<ServiceProviderEntity> update(@PathVariable UUID id, @RequestBody ServiceProviderEntity dto) {
         return repository.findById(id)
-            .map(existing -> {
-                existing.setName(dto.getName());
-                existing.setServiceType(dto.getServiceType());
-                existing.setCode(dto.getCode());
-                existing.setPriority(dto.getPriority());
-                existing.setDriverKey(dto.getDriverKey());
-                existing.setHealthEnabled(dto.isHealthEnabled());
-                existing.setEnabled(dto.isEnabled());
-                existing.setUpdatedAt(LocalDateTime.now());
-                
-                ServiceProviderEntity saved = repository.save(existing);
-                gateway.refresh(); // Limpa cache
-                return ResponseEntity.ok(saved);
-            })
-            .orElse(ResponseEntity.notFound().build());
+                .map(existing -> {
+                    existing.setName(dto.getName());
+                    existing.setServiceType(dto.getServiceType());
+                    existing.setCode(dto.getCode());
+                    existing.setPriority(dto.getPriority());
+                    existing.setDriverKey(dto.getDriverKey());
+                    existing.setHealthEnabled(dto.isHealthEnabled());
+                    existing.setEnabled(dto.isEnabled());
+                    existing.setUpdatedAt(LocalDateTime.now());
+
+                    ServiceProviderEntity saved = repository.save(existing);
+                    gateway.refresh(); // Limpa cache
+                    return ResponseEntity.ok(saved);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/toggle")
@@ -64,7 +68,7 @@ public class AdminProviderController {
                 .map(provider -> {
                     provider.setEnabled(enabled);
                     provider.setUpdatedAt(LocalDateTime.now());
-                    
+
                     ServiceProviderEntity saved = repository.save(provider);
                     gateway.refresh(); // Limpa cache
                     return ResponseEntity.ok(saved);

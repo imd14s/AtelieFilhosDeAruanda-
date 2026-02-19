@@ -24,12 +24,19 @@ const MOCK_LOGS: AuditLog[] = [
 ];
 
 export const AuditService = {
-    getAll: async (): Promise<AuditLog[]> => {
+    getAll: async (params?: {
+        action?: string;
+        resource?: string;
+        performedBy?: string;
+        startDate?: string;
+        endDate?: string;
+    }): Promise<AuditLog[]> => {
         try {
-            const { data } = await api.get<AuditLog[]>('/admin/audit-logs');
+            const { data } = await api.get<AuditLog[]>('/admin/audit-logs', { params });
             return data;
-        } catch {
-            return MOCK_LOGS;
+        } catch (error) {
+            console.error('Erro ao buscar logs:', error);
+            throw error;
         }
     }
 };

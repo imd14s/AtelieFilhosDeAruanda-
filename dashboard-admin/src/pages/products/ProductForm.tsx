@@ -61,10 +61,10 @@ export function ProductForm() {
       const dbMarketplaces = data.filter(p => p.serviceType === 'MARKETPLACE' && p.enabled);
 
       const internalStore: AdminServiceProvider = {
-        id: 'store-site', // ID fixo para a Loja Virtual
+        id: 'store-site', // ID fixo para o Ecommerce
         serviceType: 'MARKETPLACE',
         code: 'LOJA_VIRTUAL',
-        name: 'Loja Virtual (Site)',
+        name: 'Ecommerce',
         enabled: true,
         priority: 0,
         healthEnabled: true
@@ -72,7 +72,7 @@ export function ProductForm() {
 
       setMarketplaces([internalStore, ...dbMarketplaces]);
 
-      // Se for novo produto, já vem marcado a Loja Virtual
+      // Se for novo produto, já vem marcado o Ecommerce
       if (!id) {
         setSelectedMarketplaces(prev => [...prev, 'store-site']);
       }
@@ -282,12 +282,9 @@ export function ProductForm() {
                       setSelectedMarketplaces(prev => prev.filter(id => id !== mp.id));
                     }
                   }}
-                  className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                  className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
                 />
-                <div>
-                  <span className="font-medium text-gray-900">{mp.name}</span>
-                  <p className="text-xs text-gray-500">{mp.code}</p>
-                </div>
+                <span className="text-sm font-medium text-gray-700">{mp.name}</span>
               </label>
             ))}
           </div>

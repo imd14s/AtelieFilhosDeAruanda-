@@ -5,16 +5,24 @@ import type { AuditLog } from '../../types/audit';
 export function AuditLogPage() {
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filterAction, setFilterAction] = useState('');
 
     useEffect(() => {
         loadLogs();
-    }, []);
+    }, [filterAction]);
 
     const loadLogs = async () => {
         setLoading(true);
-        const data = await AuditService.getAll();
-        setLogs(data);
-        setLoading(false);
+        try {
+            const data = await AuditService.getAll({
+                action: filterAction || undefined
+            });
+            setLogs(data);
+        } catch (error) {
+            console.error('Failed to load logs', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -22,7 +30,20 @@ export function AuditLogPage() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Auditoria (Logs)</h1>
-                    <p className="text-gray-500">Histórico de ações e segurança</p>
+                    <p className="text-gray-500">Histórico de ações e segurança (Retenção 90 dias)</p>
+                </div>
+                <div className="flex gap-2">
+                    <select
+                        value={filterAction}
+                        onChange={(e) => setFilterAction(e.target.value)}
+                        className="p-2 border rounded-lg bg-white text-sm"
+                    >
+                        <option value="">Todas as Ações</option>
+                        <option value="CREATE">Criar</option>
+                        <option value="UPDATE">Atualizar</option>
+                        <option value="DELETE">Deletar</option>
+                        <option value="LOGIN">Login</option>
+                    </select>
                 </div>
             </div>
 

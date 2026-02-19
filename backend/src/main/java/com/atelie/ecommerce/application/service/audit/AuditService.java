@@ -6,20 +6,35 @@ import com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditLogEnti
 import com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource;
 import com.atelie.ecommerce.infrastructure.security.UserPrincipal;
 import com.atelie.ecommerce.infrastructure.tenant.TenantContext;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class AuditService {
 
-    private final AuditLogRepository repository;
+    private final AuditLogRepository auditLogRepository;
 
-    public AuditService(AuditLogRepository repository) {
-        this.repository = repository;
+    public AuditService(AuditLogRepository auditLogRepository) {
+        this.auditLogRepository = auditLogRepository;
+    }
+
+    /**
+     * Retenção de logs: Deleta registros mais antigos que 90 dias.
+     * Roda todo dia à meia-noite.
+     */
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void cleanupOldLogs() {
+        LocalDateTime limitDate = LocalDateTime.now().minusDays(90);
+        long deletedCount = auditLogRepository.deleteByTimestampBefore(limitDate);
+        System.out.println(">>> AUDIT CLEANUP: Deletados " + deletedCount + " logs mais antigos que 90 dias.");
     }
 
     public void log(AuditAction action, AuditResource resource, String resourceId, String details) {

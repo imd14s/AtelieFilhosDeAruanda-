@@ -145,7 +145,7 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductEntity updateProduct(UUID id, ProductEntity details) {
+    public ProductEntity updateProduct(UUID id, ProductEntity details, List<ProductVariantEntity> variants) {
         ProductEntity existing = findById(id);
 
         existing.setName(details.getName());
@@ -172,8 +172,8 @@ public class ProductService {
         }
 
         // Handle Variants Update
-        if (details.getVariants() != null) {
-            updateVariants(existing, details.getVariants());
+        if (variants != null) {
+            updateVariants(existing, variants);
         }
 
         existing.setUpdatedAt(java.time.LocalDateTime.now());

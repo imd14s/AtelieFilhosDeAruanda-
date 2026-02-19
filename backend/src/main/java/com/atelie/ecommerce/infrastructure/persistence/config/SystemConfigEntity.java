@@ -12,6 +12,7 @@ import lombok.*;
 public class SystemConfigEntity {
     @Id
     @Column(name = "config_key")
+    @com.fasterxml.jackson.annotation.JsonProperty("configKey")
     private String configKey;
 
     @Column(name = "config_value")

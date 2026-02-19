@@ -137,12 +137,51 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductEntity> update(@PathVariable UUID id, @RequestBody ProductEntity productDetails) {
-        try {
-            return ResponseEntity.ok(productService.updateProduct(id, productDetails));
-        } catch (com.atelie.ecommerce.api.common.exception.NotFoundException e) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<ProductEntity> update(@PathVariable UUID id, @RequestBody ProductCreateRequest request) {
+        ProductEntity existing = productRepository.findById(id)
+                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
+                        "Produto não encontrado"));
+
+        existing.setName(request.name());
+        existing.setDescription(request.description());
+        existing.setPrice(request.price());
+        existing.setStockQuantity(request.stockQuantity());
+
+        if (request.media() != null) {
+            existing.setImages(request.media().stream().map(ProductCreateRequest.ProductMediaItem::url).toList());
         }
+
+        if (request.marketplaceIds() != null) {
+            existing.setMarketplaceIds(request.marketplaceIds());
+        }
+
+        if (request.categoryId() != null) {
+            existing.setCategoryId(request.categoryId());
+        }
+
+        List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants = null;
+        if (request.variants() != null) {
+            variants = request.variants().stream().map(v -> {
+                var variant = new com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity();
+                variant.setId(v.id());
+                variant.setSku(v.sku());
+                variant.setPrice(v.price());
+                variant.setStockQuantity(v.stock());
+                variant.setImageUrl(v.imageUrl());
+                try {
+                    if (v.attributes() != null) {
+                        variant.setAttributesJson(new com.fasterxml.jackson.databind.ObjectMapper()
+                                .writeValueAsString(v.attributes()));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                variant.setActive(true);
+                return variant;
+            }).toList();
+        }
+
+        return ResponseEntity.ok(productService.updateProduct(id, existing, variants));
     }
 
     @PutMapping("/{id}/toggle-alert")
@@ -159,7 +198,8 @@ public class ProductController {
     public ResponseEntity<?> generateDescription(@RequestBody java.util.Map<String, String> payload) {
         String title = payload.get("title");
         if (title == null || title.isBlank())
-            return ResponseEntity.badRequest().body("Title required");
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("error", "O título é obrigatório para gerar a descrição."));
 
         try {
             String desc = productService.generateDescription(title);
@@ -167,7 +207,8 @@ public class ProductController {
         } catch (com.atelie.ecommerce.api.common.exception.BusinessException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(java.util.Map.of("error", "Erro interno"));
+            return ResponseEntity.internalServerError()
+                    .body(java.util.Map.of("error", "Erro ao processar requisição de IA."));
         }
     }
 

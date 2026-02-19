@@ -26,5 +26,9 @@ export const OrderService = {
 
     approve: async (id: string) => {
         return await api.put(`/orders/${id}/approve`);
+    },
+
+    delivered: async (id: string) => {
+        return await api.put(`/orders/${id}/delivered`);
     }
 };

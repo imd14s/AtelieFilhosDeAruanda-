@@ -45,87 +45,9 @@ export const storeService = {
       // Falha graciosa conforme PROJECT_SKILLS, usando mock data
       const categoryFilter = filters.categoryId || filters.category;
       return MOCK_PRODUCTS.filter(p => !categoryFilter || p.category === categoryFilter);
-    }
-  },
-
-  /**
-   * Busca detalhes de um produto específico por ID.
-   */
-  getProductById: async (id) => {
-    try {
-      const response = await api.get(`/products/${id}`);
-      return response.data;
-    } catch (error) {
-      console.warn(`[storeService] Produto ${id} não encontrado na API, buscando no Mock...`);
-      const product = MOCK_PRODUCTS.find(p => String(p.id) === String(id));
-      if (product) return product;
-      throw error;
-    }
-  },
-
-  /**
-   * Busca produto por slug (SEO-friendly URL).
-   * Usa o endpoint GET /api/products?slug=product-slug
-   */
-  getProductBySlug: async (slug) => {
-    try {
-      const response = await api.get('/products', {
-        params: { slug },
-        headers: TENANT_HEADER
-      });
-
-      // Backend retorna array, pegamos o primeiro resultado
-      const products = response.data?.content || (Array.isArray(response.data) ? response.data : []);
-      if (products.length > 0) return products[0];
-
-      throw new Error(`Produto com slug '${slug}' não encontrado`);
-    } catch (error) {
-      console.warn(`[storeService] Produto com slug '${slug}' não encontrado na API, buscando no Mock...`);
-      const product = MOCK_PRODUCTS.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === slug);
-      if (product) return product;
-      throw error;
-    }
-  },
-
-  // --- CHECKOUT & FRETE ---
-  /**
-   * Calcula as opções de frete para um CEP e itens específicos.
-   */
-  calculateShipping: async (cep, items) => {
-    try {
-      const response = await api.post('/checkout/calculate-shipping', {
-        cep,
-        items: items.map(i => ({ id: i.id, quantity: i.quantity }))
-      }, { headers: TENANT_HEADER });
-
-      return Array.isArray(response.data) ? response.data : [];
-    } catch (error) {
-      console.error("[storeService] Erro ao calcular frete:", error);
-      return [];
-    }
-  },
-
-  /**
-   * Cria um novo pedido no backend.
-   */
-  createOrder: async (orderData) => {
-    try {
-      const response = await api.post('/checkout/process', orderData, {
-        headers: TENANT_HEADER
-      });
-      return response.data;
-    } catch (error) {
-      console.error("[storeService] Erro ao processar checkout:", error);
-      console.warn("[storeService] Falha na API de checkout, retornando sucesso simulado.");
-      // Retorna um sucesso simulado para não bloquear o fluxo do usuário
-      return {
-        success: true,
-        orderId: `MOCK_ORDER_${Date.now()}`,
-        message: "Pedido criado com sucesso (simulado).",
-        total: orderData.total || 0
-      };
-    }
-  },
+    };
+  }
+},
 
   // --- CATEGORIAS ---
 
@@ -144,17 +66,17 @@ export const storeService = {
     }
   },
 
-  // --- CARRINHO (Gerenciamento Local) ---
-  cart: {
-    get: () => {
-      try {
-        const cart = localStorage.getItem('cart');
-        return cart ? JSON.parse(cart) : { items: [] };
-      } catch (e) {
-        console.error("[storeService] Erro ao ler carrinho do localStorage", e);
-        return { items: [] };
-      }
-    },
+    // --- CARRINHO (Gerenciamento Local) ---
+    cart: {
+  get: () => {
+    try {
+      const cart = localStorage.getItem('cart');
+      return cart ? JSON.parse(cart) : { items: [] };
+    } catch (e) {
+      console.error("[storeService] Erro ao ler carrinho do localStorage", e);
+      return { items: [] };
+    }
+  },
 
     add: (product, quantity = 1) => {
       if (!product || !product.id) return;
@@ -178,35 +100,35 @@ export const storeService = {
       window.dispatchEvent(new Event('cart-updated'));
     },
 
-    remove: (productId) => {
-      const cart = storeService.cart.get();
-      cart.items = cart.items.filter(item => item.id !== productId);
-      localStorage.setItem('cart', JSON.stringify(cart));
-      window.dispatchEvent(new Event('cart-updated'));
-    },
+      remove: (productId) => {
+        const cart = storeService.cart.get();
+        cart.items = cart.items.filter(item => item.id !== productId);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('cart-updated'));
+      },
 
-    clear: () => {
-      localStorage.removeItem('cart');
-      window.dispatchEvent(new Event('cart-updated'));
+        clear: () => {
+          localStorage.removeItem('cart');
+          window.dispatchEvent(new Event('cart-updated'));
+        }
+},
+
+// --- AUTENTICAÇÃO ---
+auth: {
+  login: async (email, password) => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      if (response.data?.token) {
+        localStorage.setItem('auth_token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user || { email }));
+        return response.data.user || { email };
+      }
+      throw new Error("Resposta de login inválida");
+    } catch (error) {
+      console.error("[storeService] Erro no login:", error);
+      throw error; // Repassa o erro para o componente UI tratar
     }
   },
-
-  // --- AUTENTICAÇÃO ---
-  auth: {
-    login: async (email, password) => {
-      try {
-        const response = await api.post('/auth/login', { email, password });
-        if (response.data?.token) {
-          localStorage.setItem('auth_token', response.data.token);
-          localStorage.setItem('user', JSON.stringify(response.data.user || { email }));
-          return response.data.user || { email };
-        }
-        throw new Error("Resposta de login inválida");
-      } catch (error) {
-        console.error("[storeService] Erro no login:", error);
-        throw error; // Repassa o erro para o componente UI tratar
-      }
-    },
 
     logout: () => {
       localStorage.removeItem('auth_token');
@@ -214,16 +136,16 @@ export const storeService = {
       window.location.href = '/'; // Redirecionamento limpo
     },
 
-    getUser: () => {
-      try {
-        const userStr = localStorage.getItem('user');
-        return userStr ? JSON.parse(userStr) : null;
-      } catch (e) {
-        return null;
-      }
-    },
+      getUser: () => {
+        try {
+          const userStr = localStorage.getItem('user');
+          return userStr ? JSON.parse(userStr) : null;
+        } catch (e) {
+          return null;
+        }
+      },
 
-    isAuthenticated: () => !!localStorage.getItem('auth_token')
-  }
+        isAuthenticated: () => !!localStorage.getItem('auth_token')
+}
 };
 

@@ -4,14 +4,21 @@ import type { Product, CreateProductDTO } from '../types/product';
 export const ProductService = {
   getAll: async (): Promise<Product[]> => {
     const { data } = await api.get<any>('/products');
-    // Se vier paginado (Spring Page), retorna o content. Se vier array direto, retorna data.
     const content = Array.isArray(data) ? data : (data.content || []);
 
-    // Map backend 'name' to frontend 'title' to ensure list displays correctly
     return content.map((p: any) => ({
       ...p,
       title: p.name || p.title || 'Sem Título',
-      stock: p.stockQuantity !== undefined ? p.stockQuantity : p.stock
+      stock: p.stockQuantity !== undefined ? p.stockQuantity : (p.stock || 0),
+      media: (p.images || []).map((url: string, index: number) => {
+        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
+        return {
+          id: `temp-${index}-${p.id}`,
+          url: url,
+          type: isVideo ? 'VIDEO' : 'IMAGE',
+          isMain: index === 0
+        };
+      })
     }));
   },
 
@@ -33,12 +40,15 @@ export const ProductService = {
       })),
 
       // Map simple string[] images to full ProductMedia[]
-      media: (data.images || []).map((url: string, index: number) => ({
-        id: crypto.randomUUID(), // Generate temp ID for frontend key
-        url: url,
-        type: 'IMAGE',
-        isMain: index === 0
-      }))
+      media: (data.images || []).map((url: string, index: number) => {
+        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
+        return {
+          id: crypto.randomUUID(), // Generate temp ID for frontend key
+          url: url,
+          type: isVideo ? 'VIDEO' : 'IMAGE',
+          isMain: index === 0 && !isVideo
+        };
+      })
     };
 
     return product;

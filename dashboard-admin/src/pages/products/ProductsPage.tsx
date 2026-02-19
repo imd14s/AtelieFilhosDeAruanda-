@@ -2,9 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductService } from '../../services/ProductService';
 import type { Product } from '../../types/product';
-import { Package, Plus, Search, Edit, Trash2, Bell } from 'lucide-react';
+import { Package, Plus, Search, Edit, Trash2, Bell, AlertTriangle } from 'lucide-react';
 
 export function ProductsPage() {
+  const getImageUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+    const cleanBase = apiUrl.replace(/\/api$/, '');
+    return `${cleanBase}${url}`;
+  };
   // Inicializa com array vazio para evitar erro no primeiro render
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,7 +139,7 @@ export function ProductsPage() {
                         <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 overflow-hidden border border-gray-100">
                           {product.media && product.media.length > 0 ? (
                             <img
-                              src={product.media.find(m => m.isMain)?.url || product.media[0].url}
+                              src={getImageUrl(product.media.find(m => m.isMain)?.url || product.media[0].url)}
                               alt={product.title}
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -155,10 +162,18 @@ export function ProductsPage() {
                       {product.price ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price) : 'R$ 0,00'}
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${(product.stock || 0) < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                        }`}>
-                        {product.stock || 0} un
-                      </span>
+                      {product.stock <= 0 ? (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                          Sem Estoque
+                        </span>
+                      ) : (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${(product.stock || 0) < 10
+                            ? (product.alertEnabled ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-amber-100 text-amber-700')
+                            : 'bg-green-100 text-green-700'
+                          }`}>
+                          {product.stock || 0} un
+                        </span>
+                      )}
                     </td>
                     <td className="p-4">
                       <span className={`inline-block w-2 h-2 rounded-full ${product.active ? 'bg-green-500' : 'bg-gray-300'}`} />

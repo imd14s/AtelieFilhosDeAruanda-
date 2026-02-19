@@ -27,6 +27,10 @@ import java.util.UUID;
 @Service
 public class OrderService {
 
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
+    private final ProductVariantRepository variantRepository;
+    private final InventoryService inventoryService;
     private final com.atelie.ecommerce.application.service.audit.AuditService auditService;
 
     public OrderService(OrderRepository orderRepository,
@@ -156,6 +160,24 @@ public class OrderService {
                 com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
                 orderId.toString(),
                 "Order marked as SHIPPED");
+    }
+
+    @Transactional
+    public void markAsDelivered(UUID orderId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+
+        if (!OrderStatus.SHIPPED.name().equals(order.getStatus())) {
+            throw new IllegalStateException("Pedido precisa estar ENVIADO para ser marcado como entregue");
+        }
+        order.setStatus(OrderStatus.DELIVERED.name());
+        orderRepository.save(order);
+
+        auditService.log(
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.UPDATE,
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
+                orderId.toString(),
+                "Order marked as DELIVERED (Finalized)");
     }
 
     @Transactional

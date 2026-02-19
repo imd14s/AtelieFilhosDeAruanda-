@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -54,7 +55,13 @@ public class OrderController {
     @PutMapping("/{id}/ship")
     public ResponseEntity<Void> markAsShipped(@PathVariable UUID id) {
         orderService.markAsShipped(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/delivered")
+    public ResponseEntity<Void> markAsDelivered(@PathVariable UUID id) {
+        orderService.markAsDelivered(id);
+        return ResponseEntity.ok().build();
     }
 
     // Mapper Simples
@@ -66,12 +73,12 @@ public class OrderController {
                         i.getQuantity(),
                         i.getUnitPrice(),
                         i.getTotalPrice(),
-                        i.getVariant() != null ? i.getVariant().getId() : null, // Add variantId if DTO has it, assuming it doesn't break
-                         // DTO doesn't have variantId yet? Let's check OrderItemResponse. 
-                         // If not, I won't add it to avoid error. 
-                         // But the user didn't ask for variantId in response.
-                         // Just stick to what was there.
-                        // "i.getTotalPrice()" was the last arg.
+                        i.getVariant() != null ? i.getVariant().getId() : null
+                // DTO doesn't have variantId yet? Let's check OrderItemResponse.
+                // If not, I won't add it to avoid error.
+                // But the user didn't ask for variantId in response.
+                // Just stick to what was there.
+                // "i.getTotalPrice()" was the last arg.
                 )).collect(Collectors.toList());
 
         return new OrderResponse(
@@ -82,7 +89,6 @@ public class OrderController {
                 entity.getCustomerName(),
                 entity.getTotalAmount(),
                 entity.getCreatedAt().atZone(java.time.ZoneId.of("UTC")).toLocalDateTime(),
-                items
-        );
+                items);
     }
 }

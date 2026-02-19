@@ -27,7 +27,15 @@ public class MediaController {
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "public", defaultValue = "false") boolean isPublic) {
         var saved = media.upload(file, category, isPublic);
-        var url = "/api/media/public/" + saved.getId();
+
+        // Append extension to URL so frontend can detect type
+        String ext = "";
+        String original = saved.getOriginalFilename();
+        if (original != null && original.contains(".")) {
+            ext = original.substring(original.lastIndexOf("."));
+        }
+
+        var url = "/api/media/public/" + saved.getId() + ext;
         return ResponseEntity
                 .ok(new MediaResponse(String.valueOf(saved.getId()), url, saved.getType().name(),
                         saved.getOriginalFilename()));
@@ -36,8 +44,21 @@ public class MediaController {
     public record MediaResponse(String id, String url, String type, String filename) {
     }
 
-    @GetMapping("/public/{id}")
-    public ResponseEntity<Resource> downloadPublic(@PathVariable("id") long id) {
+    // Capture everything after /public/ as "filename" (including ID and extension)
+    @GetMapping("/public/{filename:.+}")
+    public ResponseEntity<Resource> downloadPublic(@PathVariable("filename") String filename) {
+        // Extract ID from filename (e.g. "123.mp4" -> 123)
+        long id;
+        try {
+            String idStr = filename;
+            if (idStr.contains(".")) {
+                idStr = idStr.substring(0, idStr.lastIndexOf("."));
+            }
+            id = Long.parseLong(idStr);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.notFound().build();
+        }
+
         Optional<Resource> opt = media.loadPublic(id);
         if (opt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -45,7 +66,7 @@ public class MediaController {
 
         Resource resource = opt.get();
 
-        String filename = resource.getFilename() != null ? resource.getFilename() : "file";
+        String resourceFilename = resource.getFilename() != null ? resource.getFilename() : "file";
         String contentType = "application/octet-stream";
         long sizeBytes = -1L;
 
@@ -66,7 +87,7 @@ public class MediaController {
         }
 
         ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resourceFilename + "\"")
                 .contentType(MediaType.parseMediaType(contentType));
 
         if (sizeBytes >= 0) {

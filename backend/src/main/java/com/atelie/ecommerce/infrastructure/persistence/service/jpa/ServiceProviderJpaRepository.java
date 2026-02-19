@@ -14,6 +14,8 @@ public interface ServiceProviderJpaRepository extends JpaRepository<ServiceProvi
 
     List<ServiceProviderEntity> findByServiceTypeAndEnabledOrderByPriorityAsc(ServiceType serviceType, boolean enabled);
 
+    List<ServiceProviderEntity> findByEnabledOrderByPriorityAsc(boolean enabled);
+
     // RESTAURADO: Necessário para o JpaServiceProviderConfigGateway
     Optional<ServiceProviderEntity> findByCode(String code);
 }

@@ -7,6 +7,7 @@ ON CONFLICT (name) DO NOTHING;
 -- 2. Providers (Drivers)
 -- Inclui Shipping, Payment e Marketplaces (V3 + V8)
 INSERT INTO service_providers (id, service_type, code, name, enabled, priority, driver_key, health_enabled, created_at, updated_at) VALUES
+('1ec58c1e-8e5b-4e1a-8c1e-58c1e8e5b4e1', 'MARKETPLACE', 'LOJA_VIRTUAL', 'Ecommerce', true, 0, 'ecommerce', true, NOW(), NOW()),
 (gen_random_uuid(), 'SHIPPING', 'J3', 'J3 Transportadora', true, 10, 'shipping.j3', true, NOW(), NOW()),
 (gen_random_uuid(), 'SHIPPING', 'FLAT', 'Frete Fixo', true, 90, 'shipping.flat_rate', false, NOW(), NOW()),
 (gen_random_uuid(), 'SHIPPING', 'LOGGI_WEBHOOK', 'Loggi API', false, 20, 'universal.shipping.webhook', true, NOW(), NOW()),

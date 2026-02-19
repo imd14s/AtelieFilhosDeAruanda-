@@ -101,7 +101,9 @@ export function OrdersPage() {
                                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-100 text-green-700' :
                                             order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
                                                 order.status === 'CANCELED' ? 'bg-red-100 text-red-700' :
-                                                    'bg-gray-100 text-gray-700'
+                                                    order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-700' :
+                                                        order.status === 'DELIVERED' ? 'bg-indigo-100 text-indigo-700' :
+                                                            'bg-gray-100 text-gray-700'
                                             }`}>
                                             {order.status}
                                         </span>
@@ -128,6 +130,24 @@ export function OrdersPage() {
                                             >
                                                 <Truck size={18} />
                                                 <span className="text-xs font-semibold">Enviar</span>
+                                            </button>
+                                        )}
+                                        {order.status === 'SHIPPED' && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm('Deseja marcar como ENTREGUE?')) return;
+                                                    try {
+                                                        await OrderService.delivered(order.id);
+                                                        setOrders(orders.map(o => o.id === order.id ? { ...o, status: 'DELIVERED' } : o));
+                                                    } catch (err) {
+                                                        alert('Erro ao finalizar pedido');
+                                                    }
+                                                }}
+                                                className="text-green-600 hover:text-green-800 transition flex items-center gap-1"
+                                                title="Finalizar Pedido"
+                                            >
+                                                <CheckCircle size={18} />
+                                                <span className="text-xs font-semibold">Finalizar</span>
                                             </button>
                                         )}
                                         {order.status !== 'CANCELED' && order.status !== 'SHIPPED' && order.status !== 'DELIVERED' && (
