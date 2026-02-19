@@ -27,7 +27,10 @@ public class AdminConfigController {
     }
 
     @PostMapping
-    public ResponseEntity<SystemConfigEntity> upsert(@RequestBody SystemConfigEntity dto) {
+    public ResponseEntity<?> upsert(@RequestBody SystemConfigEntity dto) {
+        if (dto.getConfigKey() == null || dto.getConfigKey().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("configKey is required");
+        }
         SystemConfigEntity saved = repository.save(dto);
         eventPublisher.publishEvent(new EntityChangedEvent(this, "SYSTEM_CONFIG"));
         return ResponseEntity.ok(saved);

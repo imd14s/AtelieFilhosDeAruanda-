@@ -102,4 +102,14 @@ public class InventoryMovementEntity {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    @PrePersist
+    protected void onCreate() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }
