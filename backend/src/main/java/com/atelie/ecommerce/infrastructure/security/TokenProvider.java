@@ -42,16 +42,21 @@ public class TokenProvider {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
 
         List<String> roles = authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .toList();
+                .map(GrantedAuthority::getAuthority)
+                .toList();
 
-        return Jwts.builder()
-            .setSubject(userPrincipal.getUsername())
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-            .claim(rolesClaim, roles)
-            .signWith(key, SignatureAlgorithm.HS256)
-            .compact();
+        var builder = Jwts.builder()
+                .setSubject(userPrincipal.getUsername())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                .claim(rolesClaim, roles);
+
+        if (userPrincipal instanceof UserPrincipal up) {
+            builder.claim("uid", up.getId());
+            builder.claim("name", up.getName());
+        }
+
+        return builder.signWith(key, SignatureAlgorithm.HS256).compact();
     }
 
     public String getUsernameFromToken(String token) {
@@ -62,7 +67,8 @@ public class TokenProvider {
         Claims claims = getAllClaims(token);
         Object raw = claims.get(rolesClaim);
 
-        if (raw == null) return List.of();
+        if (raw == null)
+            return List.of();
 
         if (raw instanceof List<?>) {
             return ((List<?>) raw).stream().map(String::valueOf).toList();
@@ -85,13 +91,13 @@ public class TokenProvider {
 
     private Claims getAllClaims(String token) {
         return Jwts.parserBuilder()
-            .setSigningKey(key)
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
-    private <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
+    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = getAllClaims(token);
         return claimsResolver.apply(claims);
     }

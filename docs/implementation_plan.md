@@ -68,4 +68,6 @@ Este documento detalha o roteiro para transformar o Dashboard Admin atual em uma
 - `RichTextEditor`: Para descrições e e-mails.
 
 ## ⚠️ Dependências Críticas do Backend
-Para que o Frontend funcione, o Backend precisa suportar a arquitetura Multi-tenant (Schema isolado ou discriminator column) e expor os endpoints detalhados no arquivo `backend_specs.md`.
+- [x] Backend suporta validação de Multi-tenant (Header `X-Tenant-ID`).
+- [x] Endpoints críticos (Cancelamento, Config, Categoria) corrigidos.
+- [ ] Implementação de Isolamento de Dados (Discriminator/Schema) pendente.

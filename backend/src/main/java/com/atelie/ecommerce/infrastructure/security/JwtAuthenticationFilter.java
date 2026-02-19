@@ -70,7 +70,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .map(SimpleGrantedAuthority::new)
                             .toList();
 
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username,
+                    String uid = tokenProvider.getClaimFromToken(token, claims -> claims.get("uid", String.class));
+                    String name = tokenProvider.getClaimFromToken(token, claims -> claims.get("name", String.class));
+
+                    UserDetails principal;
+                    if (uid != null && name != null) {
+                        principal = UserPrincipal.create(uid, name, username, authorities);
+                    } else {
+                        principal = new org.springframework.security.core.userdetails.User(username, "", authorities);
+                    }
+
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(principal,
                             null, authorities);
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

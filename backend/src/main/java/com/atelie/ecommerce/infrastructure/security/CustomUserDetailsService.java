@@ -25,16 +25,13 @@ public class CustomUserDetailsService implements UserDetailsService {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        // CORREÇÃO: Converte a role do banco (ex: "ADMIN") para Authority ("ROLE_ADMIN")
+        // CORREÇÃO: Converte a role do banco (ex: "ADMIN") para Authority
+        // ("ROLE_ADMIN")
         String roleName = user.getRole() == null ? "USER" : user.getRole().toUpperCase();
         if (!roleName.startsWith("ROLE_")) {
             roleName = "ROLE_" + roleName;
         }
 
-        return new User(
-            user.getEmail(), 
-            user.getPassword(), 
-            List.of(new SimpleGrantedAuthority(roleName))
-        );
+        return UserPrincipal.create(user);
     }
 }
