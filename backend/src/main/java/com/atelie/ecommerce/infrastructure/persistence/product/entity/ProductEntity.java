@@ -56,7 +56,7 @@ public class ProductEntity {
     @Column(name = "image_url")
     private List<String> images;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants;
 
     @ManyToMany(fetch = FetchType.LAZY)

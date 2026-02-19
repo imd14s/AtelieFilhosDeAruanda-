@@ -101,7 +101,7 @@ public class ProductController {
                     e.printStackTrace();
                 }
 
-                return new com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity(
+                var variant = new com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity(
                         null,
                         v.sku(),
                         null,
@@ -109,6 +109,8 @@ public class ProductController {
                         v.stock(),
                         attrsJson,
                         true);
+                variant.setImageUrl(v.imageUrl());
+                return variant;
             }).toList();
         }
 

@@ -84,11 +84,38 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                     ) : (
                         <div className="text-center w-full px-4">
                             <Upload className="text-gray-400 mb-2 mx-auto" />
-                            <span className="text-sm text-gray-500 block">Adicionar Mídia</span>
+                            <span className="text-sm text-gray-500 block">Upload Arquivo</span>
                         </div>
                     )}
                     <input type="file" multiple className="hidden" accept="image/*,video/*" onChange={handleUpload} disabled={isUploading} />
                 </label>
+
+                {/* Video Link Input */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 hover:border-indigo-500 hover:bg-indigo-50 transition p-2">
+                    <Wand2 className="text-gray-400 mb-2 mx-auto" />
+                    <span className="text-sm text-gray-500 block mb-2">Link de Vídeo</span>
+                    <input
+                        type="text"
+                        placeholder="http://... (mp4/webm)"
+                        className="w-full text-xs p-1 border rounded mb-1"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const url = (e.target as HTMLInputElement).value;
+                                if (url) {
+                                    onChange([...media, {
+                                        id: crypto.randomUUID(),
+                                        url: url,
+                                        type: 'VIDEO',
+                                        isMain: false
+                                    }]);
+                                    (e.target as HTMLInputElement).value = '';
+                                }
+                            }
+                        }}
+                    />
+                    <span className="text-[10px] text-gray-400">Enter para adicionar</span>
+                </div>
 
                 {/* Media List */}
                 {media.map(item => (

@@ -141,6 +141,14 @@ public class ProductVariantEntity {
         this.gtin = gtin;
     }
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     // Manual constructor for builder fallback
     public ProductVariantEntity(ProductEntity product, String sku, String gtin, BigDecimal price, Integer stockQuantity,
             String attributesJson, Boolean active) {

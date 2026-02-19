@@ -25,6 +25,6 @@ public record ProductCreateRequest(
         }
 
         public record ProductVariantRequest(String sku, BigDecimal price, Integer stock,
-                        java.util.Map<String, String> attributes) {
+                        java.util.Map<String, String> attributes, String imageUrl) {
         }
 }

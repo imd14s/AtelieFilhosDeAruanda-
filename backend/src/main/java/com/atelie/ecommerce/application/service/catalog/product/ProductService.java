@@ -171,11 +171,70 @@ public class ProductService {
             existing.setMarketplaces(providers);
         }
 
+        // Handle Variants Update
+        if (details.getVariants() != null) {
+            updateVariants(existing, details.getVariants());
+        }
+
         existing.setUpdatedAt(java.time.LocalDateTime.now());
         ProductEntity saved = productRepository.save(existing);
         eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), false));
         syncMarketplaces(saved);
         return saved;
+    }
+
+    private void updateVariants(ProductEntity existing, List<ProductVariantEntity> newVariants) {
+        java.util.Map<UUID, ProductVariantEntity> existingMap = existing.getVariants().stream()
+                .collect(java.util.stream.Collectors.toMap(ProductVariantEntity::getId, v -> v));
+
+        java.util.List<ProductVariantEntity> toAdd = new ArrayList<>();
+        java.util.List<UUID> toKeep = new ArrayList<>();
+
+        for (ProductVariantEntity v : newVariants) {
+            if (v.getId() != null && existingMap.containsKey(v.getId())) {
+                // Update existing
+                ProductVariantEntity existingVariant = existingMap.get(v.getId());
+                existingVariant.setSku(v.getSku());
+                existingVariant.setPrice(v.getPrice());
+                existingVariant.setStockQuantity(v.getStockQuantity());
+                existingVariant.setAttributesJson(v.getAttributesJson());
+                existingVariant.setImageUrl(v.getImageUrl());
+                existingVariant.setActive(v.getActive());
+                existingVariant.setUpdatedAt(java.time.LocalDateTime.now());
+                toKeep.add(v.getId());
+            } else {
+                // New variant
+                v.setProduct(existing);
+                if (v.getId() == null) {
+                    v.setId(UUID.randomUUID());
+                }
+                if (v.getCreatedAt() == null) {
+                    v.setCreatedAt(java.time.LocalDateTime.now());
+                }
+                v.setUpdatedAt(java.time.LocalDateTime.now());
+
+                // Ensure defaults for new variants
+                if (v.getStockQuantity() == null)
+                    v.setStockQuantity(0);
+                if (v.getActive() == null)
+                    v.setActive(true);
+                if (v.getSku() == null || v.getSku().isBlank()) {
+                    v.setSku("SKU-" + existing.getId().toString().substring(0, 8).toUpperCase() + "-"
+                            + java.util.UUID.randomUUID().toString().substring(0, 4));
+                }
+                if (v.getGtin() == null) {
+                    v.setGtin(gtinGenerator.generateInternalEan13());
+                }
+
+                toAdd.add(v);
+            }
+        }
+
+        // Remove those not in toKeep
+        existing.getVariants().removeIf(v -> !toKeep.contains(v.getId()));
+
+        // Add new
+        existing.getVariants().addAll(toAdd);
     }
 
     @Transactional
