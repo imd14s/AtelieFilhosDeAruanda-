@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> {
+    long deleteByTimestampBefore(java.time.Instant timestamp);
 }

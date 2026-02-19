@@ -32,7 +32,7 @@ public class AuditService {
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void cleanupOldLogs() {
-        LocalDateTime limitDate = LocalDateTime.now().minusDays(90);
+        java.time.Instant limitDate = java.time.Instant.now().minus(90, java.time.temporal.ChronoUnit.DAYS);
         long deletedCount = auditLogRepository.deleteByTimestampBefore(limitDate);
         System.out.println(">>> AUDIT CLEANUP: Deletados " + deletedCount + " logs mais antigos que 90 dias.");
     }
@@ -61,10 +61,10 @@ public class AuditService {
                 .timestamp(Instant.now())
                 .build();
 
-        repository.save(log);
+        auditLogRepository.save(log);
     }
 
     public List<AuditLogEntity> findAll() {
-        return repository.findAll(); // In a real app, this should be paginated
+        return auditLogRepository.findAll(); // In a real app, this should be paginated
     }
 }

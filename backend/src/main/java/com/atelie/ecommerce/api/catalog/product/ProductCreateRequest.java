@@ -24,7 +24,7 @@ public record ProductCreateRequest(
         public record ProductMediaItem(String url, String type, Boolean isMain) {
         }
 
-        public record ProductVariantRequest(String sku, BigDecimal price, Integer stock,
+        public record ProductVariantRequest(UUID id, String sku, BigDecimal price, Integer stock,
                         java.util.Map<String, String> attributes, String imageUrl) {
         }
 }
