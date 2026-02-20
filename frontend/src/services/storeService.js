@@ -8,13 +8,6 @@ import api from './api';
 // Header de Tenant para multi-loja (conforme especificações de integração)
 const TENANT_HEADER = { 'X-Tenant-ID': 'atelie-aruanda' };
 
-// Mock de produtos para fallback em caso de erro na API
-const MOCK_PRODUCTS = [
-  { id: 1, name: 'Vela de Sete Linhas', price: 45.90, category: 'velas', images: ['/images/velas.png'], stockQuantity: 10, description: 'Vela artesanal ritualizada para proteção e equilíbrio.' },
-  { id: 2, name: 'Guia de Proteção Oxalá', price: 89.00, category: 'guias', images: ['/images/guias.png'], stockQuantity: 5, description: 'Guia confeccionada com sementes e cristais selecionados.' },
-  { id: 3, name: 'Banho de Ervas Sagradas', price: 29.90, category: 'ervas', images: ['/images/ervas.png'], stockQuantity: 15, description: 'Mix de ervas naturais para limpeza espiritual.' },
-  { id: 4, name: 'Incenso de Breu Branco', price: 15.00, category: 'ervas', images: ['/images/ervas.png'], stockQuantity: 20, description: 'Incenso natural de resina pura colhida na Amazônia.' },
-];
 
 export const storeService = {
   // --- PRODUTOS ---
@@ -45,10 +38,22 @@ export const storeService = {
       return response.data?.content || (Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("[storeService] Erro ao buscar produtos:", error);
-      console.warn('API indisponível, usando dados mockados para demonstração.');
-      // Falha graciosa conforme PROJECT_SKILLS, usando mock data
-      const categoryFilter = filters.categoryId || filters.category;
-      return MOCK_PRODUCTS.filter(p => !categoryFilter || p.category === categoryFilter);
+      throw error;
+    }
+  },
+
+  /**
+   * Busca os detalhes de um produto específico pelo ID.
+   */
+  getProductById: async (id) => {
+    try {
+      const response = await api.get(`/products/${id}`, {
+        headers: TENANT_HEADER
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`[storeService] Erro ao buscar produto ${id}:`, error);
+      throw error;
     }
   },
 

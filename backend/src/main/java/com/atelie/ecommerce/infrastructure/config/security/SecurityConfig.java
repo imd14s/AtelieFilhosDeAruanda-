@@ -140,7 +140,8 @@ public class SecurityConfig {
             config.setAllowedOrigins(allowedOrigins);
         } else {
             // fallback DEV seguro (se você esquecer de setar ENV em dev)
-            config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+            config.setAllowedOrigins(
+                    List.of("http://localhost:3000", "http://localhost:3001", "http://localhost:5173"));
         }
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
