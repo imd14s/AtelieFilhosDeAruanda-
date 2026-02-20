@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 @Service
 public class ProductVariantService {
@@ -33,8 +34,22 @@ public class ProductVariantService {
         ProductEntity product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Produto pai não encontrado"));
 
-        if (variantRepository.existsBySku(request.sku())) {
-            throw new ConflictException("SKU já existe: " + request.sku());
+        // Gera SKU automático se não vier
+        String sku = (request.sku() == null || request.sku().isBlank())
+                ? "SKU-" + product.getId().toString().substring(0, 8).toUpperCase() + "-"
+                        + UUID.randomUUID().toString().substring(0, 4)
+                : request.sku();
+
+        if (variantRepository.existsBySku(sku)) {
+            // Se foi gerado automático e colidiu, tenta mais uma vez ou falha (improvável
+            // com UUID part)
+            // Se foi fornecido, é erro de conflito real.
+            if (request.sku() != null && !request.sku().isBlank()) {
+                throw new ConflictException("SKU já existe: " + sku);
+            }
+            // Regenerate once more to be safe? Or just proceed (low collision prob)
+            sku = "SKU-" + product.getId().toString().substring(0, 8).toUpperCase() + "-"
+                    + UUID.randomUUID().toString().substring(0, 4);
         }
 
         // Gera GTIN automático se não vier no request
@@ -42,12 +57,20 @@ public class ProductVariantService {
                 ? gtinGenerator.generateInternalEan13()
                 : request.gtin();
 
+        // Stock default 0
+        Integer stock = request.initialStock() != null ? request.initialStock() : 0;
+
+        // Price default to product price
+        BigDecimal price = (request.price() != null && request.price().compareTo(BigDecimal.ZERO) > 0)
+                ? request.price()
+                : product.getPrice();
+
         ProductVariantEntity variant = new ProductVariantEntity(
                 product,
-                request.sku(),
+                sku,
                 gtin,
-                request.price(),
-                request.initialStock(),
+                price,
+                stock,
                 request.attributesJson(),
                 true);
 

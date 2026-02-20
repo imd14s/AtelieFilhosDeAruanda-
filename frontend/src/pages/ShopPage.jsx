@@ -20,10 +20,16 @@ const ShopPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Map frontend sort keys to backend Sort format (property,direction)
+        let mappedSort = sortFilter;
+        if (sortFilter === 'newest') mappedSort = 'createdAt,desc';
+        else if (sortFilter === 'price_asc') mappedSort = 'price,asc';
+        else if (sortFilter === 'price_desc') mappedSort = 'price,desc';
+
         const [prodData, catData] = await Promise.all([
           storeService.getProducts({
             category: categoryFilter,
-            sort: sortFilter
+            sort: mappedSort
           }),
           storeService.getCategories()
         ]);

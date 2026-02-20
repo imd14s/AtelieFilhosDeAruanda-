@@ -6,16 +6,14 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 
 public record CreateVariantRequest(
-    @NotBlank(message = "SKU é obrigatório")
-    String sku,
-    
-    String gtin, // Opcional (gera automático se nulo)
-    
-    BigDecimal price, // Opcional
-    
-    @NotNull
-    @PositiveOrZero
-    Integer initialStock,
-    
-    String attributesJson // JSON String: '{"tamanho": "M"}'
-) {}
+        String sku, // Opcional (gera automático se nulo)
+
+        String gtin, // Opcional (gera automático se nulo)
+
+        BigDecimal price, // Opcional
+
+        @PositiveOrZero Integer initialStock,
+
+        String attributesJson // JSON String: '{"tamanho": "M"}'
+) {
+}

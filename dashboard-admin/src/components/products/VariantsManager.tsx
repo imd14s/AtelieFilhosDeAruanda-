@@ -34,7 +34,7 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
     };
 
     const handleAdd = () => {
-        if (!newVariant.sku) return;
+        // SKU is no longer mandatory here, backend will generate it
 
         const variant: ProductVariant = {
             id: crypto.randomUUID(),
@@ -67,25 +67,16 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
 
             {/* Form de Adição Rápida */}
             <div className="grid grid-cols-6 gap-2 items-end">
-                <div className="col-span-1 flex flex-col gap-1">
-                    <label className="text-xs text-gray-500">Imagem</label>
-                    <div className="flex gap-1">
-                        <label className={`border border-dashed border-gray-300 rounded h-10 w-10 flex-shrink-0 flex items-center justify-center cursor-pointer hover:bg-gray-100 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                            {newVariant.imageUrl ? (
-                                <img src={getImageUrl(newVariant.imageUrl)} alt="Preview" className="h-full w-full object-cover rounded" />
-                            ) : (
-                                isUploading ? <Loader2 size={16} className="animate-spin text-gray-400" /> : <Upload size={16} className="text-gray-400" />
-                            )}
-                            <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="http://..."
-                            className="flex-1 h-10 p-1 text-xs border rounded"
-                            value={newVariant.imageUrl || ''}
-                            onChange={(e) => setNewVariant({ ...newVariant, imageUrl: e.target.value })}
-                        />
-                    </div>
+                <div>
+                    <label className="text-xs text-gray-500 block mb-1">Imagem</label>
+                    <label className={`border border-dashed border-gray-300 rounded h-[38px] w-full flex items-center justify-center cursor-pointer hover:bg-gray-100 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {newVariant.imageUrl ? (
+                            <img src={getImageUrl(newVariant.imageUrl)} alt="Preview" className="h-full w-full object-cover rounded" />
+                        ) : (
+                            isUploading ? <Loader2 size={16} className="animate-spin text-gray-400" /> : <Upload size={16} className="text-gray-400" />
+                        )}
+                        <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
+                    </label>
                 </div>
                 <div>
                     <label className="text-xs text-gray-500">SKU</label>
@@ -151,11 +142,15 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
                                     <ImageIcon size={14} />
                                 </div>
                             )}
-                            <span className="font-mono bg-gray-100 px-2 rounded">{variant.sku}</span>
-                            <span className="text-gray-600">
-                                {variant.attributes.size} / {variant.attributes.color}
+                            <span className="font-mono bg-gray-100 px-2 rounded">
+                                {variant.sku || 'SKU Auto-gerado'}
                             </span>
-                            <span className="font-medium">R$ {variant.price.toFixed(2)}</span>
+                            <span className="text-gray-600">
+                                {[variant.attributes?.size, variant.attributes?.color].filter(Boolean).join(' / ') || 'Sem atributos'}
+                            </span>
+                            <span className="font-medium">
+                                {variant.price > 0 ? `R$ ${variant.price.toFixed(2)}` : 'Preço Base'}
+                            </span>
                         </div>
                         <button
                             onClick={() => removeVariant(variant.id)}

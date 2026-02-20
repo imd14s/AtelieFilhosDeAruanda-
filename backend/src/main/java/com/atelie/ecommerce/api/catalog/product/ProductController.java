@@ -34,12 +34,17 @@ public class ProductController {
             @RequestParam(required = false) String slug,
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) String q,
+            @RequestParam(required = false) String marketplace,
             org.springframework.data.domain.Pageable pageable) {
 
         if (slug != null) {
             return productRepository.findBySlug(slug)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
+        }
+
+        if (marketplace != null && !marketplace.isBlank()) {
+            return ResponseEntity.ok(productRepository.findByMarketplaces_CodeAndActiveTrue(marketplace, pageable));
         }
 
         if (categoryId != null) {

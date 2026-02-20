@@ -60,21 +60,14 @@ export function ProductForm() {
       const data = await AdminProviderService.listProviders();
       const dbMarketplaces = data.filter(p => p.serviceType === 'MARKETPLACE' && p.enabled);
 
-      const internalStore: AdminServiceProvider = {
-        id: '1ec58c1e-8e5b-4e1a-8c1e-58c1e8e5b4e1', // ID fixo para o Ecommerce (conforme migration V2)
-        serviceType: 'MARKETPLACE',
-        code: 'LOJA_VIRTUAL',
-        name: 'Ecommerce',
-        enabled: true,
-        priority: 0,
-        healthEnabled: true
-      };
+      setMarketplaces(dbMarketplaces);
 
-      setMarketplaces([internalStore, ...dbMarketplaces]);
-
-      // Se for novo produto, já vem marcado o Ecommerce
+      // Se for novo produto, tenta marcar o Ecommerce vindo do banco
       if (!id) {
-        setSelectedMarketplaces(prev => [...prev, 'store-site']);
+        const ecommerce = dbMarketplaces.find(p => p.code === 'LOJA_VIRTUAL');
+        if (ecommerce) {
+          setSelectedMarketplaces([ecommerce.id]);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar marketplaces', error);

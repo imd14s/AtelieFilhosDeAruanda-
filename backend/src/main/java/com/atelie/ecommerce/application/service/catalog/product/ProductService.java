@@ -89,9 +89,18 @@ public class ProductService {
 
         // Handle Marketplaces (Create)
         if (product.getMarketplaceIds() != null) {
-            java.util.Set<com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity> providers = new java.util.HashSet<>(
-                    providerRepository.findAllById(product.getMarketplaceIds()));
-            product.setMarketplaces(providers);
+            if (!product.getMarketplaceIds().isEmpty()) {
+                java.util.Set<com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity> providers = new java.util.HashSet<>(
+                        providerRepository.findAllById(product.getMarketplaceIds()));
+                product.setMarketplaces(providers);
+            } else {
+                product.setMarketplaces(java.util.Collections.emptySet());
+            }
+        } else {
+            // Default to LOJA_VIRTUAL
+            providerRepository.findByCode("LOJA_VIRTUAL").ifPresent(provider -> {
+                product.setMarketplaces(java.util.Set.of(provider));
+            });
         }
 
         ProductEntity saved = productRepository.save(product);
@@ -108,10 +117,9 @@ public class ProductService {
                     variant.setGtin(gtinGenerator.generateInternalEan13());
                 }
                 // Ensure defaults
-                if (variant.getStockQuantity() == null)
-                    variant.setStockQuantity(0);
-                if (variant.getActive() == null)
-                    variant.setActive(true);
+                if (variant.getPrice() == null || variant.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                    variant.setPrice(saved.getPrice());
+                }
 
                 variantRepository.save(variant);
             }
@@ -201,7 +209,12 @@ public class ProductService {
                 // Update existing
                 ProductVariantEntity existingVariant = existingMap.get(v.getId());
                 existingVariant.setSku(v.getSku());
-                existingVariant.setPrice(v.getPrice());
+                // Handle price inheritance for existing variants if updated to 0/null
+                if (v.getPrice() == null || v.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                    existingVariant.setPrice(existing.getPrice());
+                } else {
+                    existingVariant.setPrice(v.getPrice());
+                }
                 existingVariant.setStockQuantity(v.getStockQuantity());
                 existingVariant.setAttributesJson(v.getAttributesJson());
                 existingVariant.setImageUrl(v.getImageUrl());
@@ -230,6 +243,9 @@ public class ProductService {
                 }
                 if (v.getGtin() == null) {
                     v.setGtin(gtinGenerator.generateInternalEan13());
+                }
+                if (v.getPrice() == null || v.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                    v.setPrice(existing.getPrice());
                 }
 
                 toAdd.add(v);

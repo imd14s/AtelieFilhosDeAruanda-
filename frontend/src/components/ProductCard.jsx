@@ -35,7 +35,7 @@ const ProductCard = ({ product }) => {
       <Link to={`/produto/${product.id}`} className="relative aspect-[4/5] overflow-hidden bg-[#f0f0f0]">
         <img
           src={imageUrl}
-          alt={product.name}
+          alt={product.title || product.name}
           onError={(e) => { e.target.src = '/images/default.png'; }}
           className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
         />
@@ -53,7 +53,7 @@ const ProductCard = ({ product }) => {
 
         <Link to={`/produto/${product.id}`}>
           <h3 className="font-playfair text-lg text-[var(--azul-profundo)] mb-2 line-clamp-2 group-hover:text-[var(--dourado-suave)] transition-colors h-14 flex items-center justify-center">
-            {product.name}
+            {product.title || product.name}
           </h3>
         </Link>
 

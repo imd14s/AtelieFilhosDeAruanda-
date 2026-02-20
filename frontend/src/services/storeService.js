@@ -32,6 +32,10 @@ export const storeService = {
       if (filters.sort) params.append('sort', filters.sort);
       if (filters.search) params.append('q', filters.search);
 
+      // Default to LOJA_VIRTUAL if no specific marketplace requested (storefront logic)
+      if (!filters.marketplace) params.append('marketplace', 'LOJA_VIRTUAL');
+      else params.append('marketplace', filters.marketplace);
+
       const response = await api.get('/products', {
         params,
         headers: TENANT_HEADER
@@ -45,9 +49,8 @@ export const storeService = {
       // Falha graciosa conforme PROJECT_SKILLS, usando mock data
       const categoryFilter = filters.categoryId || filters.category;
       return MOCK_PRODUCTS.filter(p => !categoryFilter || p.category === categoryFilter);
-    };
-  }
-},
+    }
+  },
 
   // --- CATEGORIAS ---
 
@@ -66,17 +69,17 @@ export const storeService = {
     }
   },
 
-    // --- CARRINHO (Gerenciamento Local) ---
-    cart: {
-  get: () => {
-    try {
-      const cart = localStorage.getItem('cart');
-      return cart ? JSON.parse(cart) : { items: [] };
-    } catch (e) {
-      console.error("[storeService] Erro ao ler carrinho do localStorage", e);
-      return { items: [] };
-    }
-  },
+  // --- CARRINHO (Gerenciamento Local) ---
+  cart: {
+    get: () => {
+      try {
+        const cart = localStorage.getItem('cart');
+        return cart ? JSON.parse(cart) : { items: [] };
+      } catch (e) {
+        console.error("[storeService] Erro ao ler carrinho do localStorage", e);
+        return { items: [] };
+      }
+    },
 
     add: (product, quantity = 1) => {
       if (!product || !product.id) return;
@@ -89,7 +92,7 @@ export const storeService = {
       } else {
         cart.items.push({
           id: product.id,
-          name: product.name,
+          name: product.title || product.name,
           price: product.price,
           image: product.images?.[0] || '',
           quantity: quantity
@@ -100,35 +103,35 @@ export const storeService = {
       window.dispatchEvent(new Event('cart-updated'));
     },
 
-      remove: (productId) => {
-        const cart = storeService.cart.get();
-        cart.items = cart.items.filter(item => item.id !== productId);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        window.dispatchEvent(new Event('cart-updated'));
-      },
+    remove: (productId) => {
+      const cart = storeService.cart.get();
+      cart.items = cart.items.filter(item => item.id !== productId);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cart-updated'));
+    },
 
-        clear: () => {
-          localStorage.removeItem('cart');
-          window.dispatchEvent(new Event('cart-updated'));
-        }
-},
-
-// --- AUTENTICAÇÃO ---
-auth: {
-  login: async (email, password) => {
-    try {
-      const response = await api.post('/auth/login', { email, password });
-      if (response.data?.token) {
-        localStorage.setItem('auth_token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user || { email }));
-        return response.data.user || { email };
-      }
-      throw new Error("Resposta de login inválida");
-    } catch (error) {
-      console.error("[storeService] Erro no login:", error);
-      throw error; // Repassa o erro para o componente UI tratar
+    clear: () => {
+      localStorage.removeItem('cart');
+      window.dispatchEvent(new Event('cart-updated'));
     }
   },
+
+  // --- AUTENTICAÇÃO ---
+  auth: {
+    login: async (email, password) => {
+      try {
+        const response = await api.post('/auth/login', { email, password });
+        if (response.data?.token) {
+          localStorage.setItem('auth_token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.user || { email }));
+          return response.data.user || { email };
+        }
+        throw new Error("Resposta de login inválida");
+      } catch (error) {
+        console.error("[storeService] Erro no login:", error);
+        throw error; // Repassa o erro para o componente UI tratar
+      }
+    },
 
     logout: () => {
       localStorage.removeItem('auth_token');
@@ -136,16 +139,15 @@ auth: {
       window.location.href = '/'; // Redirecionamento limpo
     },
 
-      getUser: () => {
-        try {
-          const userStr = localStorage.getItem('user');
-          return userStr ? JSON.parse(userStr) : null;
-        } catch (e) {
-          return null;
-        }
-      },
+    getUser: () => {
+      try {
+        const userStr = localStorage.getItem('user');
+        return userStr ? JSON.parse(userStr) : null;
+      } catch (e) {
+        return null;
+      }
+    },
 
-        isAuthenticated: () => !!localStorage.getItem('auth_token')
-}
+    isAuthenticated: () => !!localStorage.getItem('auth_token')
+  }
 };
-
