@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { storeService } from '../services/storeService'; // Nova importação
 import { ShoppingBag, Check, Loader2 } from 'lucide-react';
+import { getImageUrl } from '../utils/imageUtils';
 
 const ProductCard = ({ product }) => {
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ const ProductCard = ({ product }) => {
   }).format(product.price || 0);
 
   const isOutOfStock = product.stockQuantity <= 0;
-  const imageUrl = product.images?.[0] || '/images/default.png';
+  const imageUrl = getImageUrl(product.images?.[0]);
 
   return (
     <div className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 rounded-sm">

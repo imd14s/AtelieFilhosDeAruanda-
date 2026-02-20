@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { storeService } from '../services/storeService';
 import SEO from '../components/SEO';
 import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft } from 'lucide-react';
+import { getImageUrl } from '../utils/imageUtils';
 
 const ProductPage = () => {
   const { id } = useParams();
@@ -61,7 +62,7 @@ const ProductPage = () => {
           <div className="flex-1 space-y-4">
             <div className="aspect-[4/5] bg-white overflow-hidden shadow-sm">
               <img
-                src={product.images?.[0] || '/images/default.png'}
+                src={getImageUrl(product.images?.[0])}
                 alt={product.name}
                 onError={(e) => { e.target.src = '/images/default.png'; }}
                 className="w-full h-full object-cover"
@@ -71,7 +72,7 @@ const ProductPage = () => {
               {product.images?.slice(1).map((img, i) => (
                 <div key={i} className="aspect-square bg-white overflow-hidden shadow-sm opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
                   <img
-                    src={img}
+                    src={getImageUrl(img)}
                     alt=""
                     onError={(e) => { e.target.src = '/images/default.png'; }}
                     className="w-full h-full object-cover"

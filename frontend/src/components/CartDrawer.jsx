@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Trash2, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 import { storeService } from '../services/storeService';
+import { getImageUrl } from '../utils/imageUtils';
 
 const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex gap-4 group">
                     <div className="w-20 h-24 bg-white flex-shrink-0 overflow-hidden">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" onError={(e) => { e.target.src = '/images/default.png'; }} />
                     </div>
                     <div className="flex-1 flex flex-col">
                       <h3 className="font-playfair text-[#0f2A44] text-sm mb-1">{item.name}</h3>
