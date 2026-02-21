@@ -160,6 +160,11 @@ const ProductPage = () => {
     }));
   };
 
+  // Reseta quantidade ao trocar de variante (evita selecionar mais do que o novo estoque)
+  useEffect(() => {
+    setQuantity(1);
+  }, [currentVariant?.id]);
+
   const handleAddToCart = () => {
     if (!product || isOutOfStock) return;
 
@@ -267,7 +272,7 @@ const ProductPage = () => {
         {/* Breadcrumb / Botão Voltar */}
         <div className="mb-8">
           <Link
-            to="/shop"
+            to="/store"
             className="group flex items-center gap-2 text-[10px] uppercase tracking-widest text-gray-400 hover:text-[var(--azul-profundo)] transition-all"
           >
             <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
@@ -500,10 +505,30 @@ const ProductPage = () => {
                 <div className="flex items-center gap-2">
                   <span className="font-lato text-sm text-[var(--azul-profundo)]">Quantidade: <b>{quantity} {quantity > 1 ? 'unidades' : 'unidade'}</b></span>
                   <div className="flex flex-col border-l border-gray-200 pl-2">
-                    <button onClick={() => setQuantity(quantity + 1)} className="text-[var(--azul-claro)] hover:text-[var(--azul-profundo)]"><ChevronLeft size={14} className="rotate-90" /></button>
-                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-[var(--azul-claro)] hover:text-[var(--azul-profundo)]"><ChevronLeft size={14} className="-rotate-90" /></button>
+                    {/* Incrementa apenas até o limite do stock disponível */}
+                    <button
+                      onClick={() => setQuantity(Math.min(displayStock || 1, quantity + 1))}
+                      disabled={quantity >= (displayStock || 1)}
+                      className="text-[var(--azul-claro)] hover:text-[var(--azul-profundo)] disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft size={14} className="rotate-90" />
+                    </button>
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
+                      className="text-[var(--azul-claro)] hover:text-[var(--azul-profundo)] disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft size={14} className="-rotate-90" />
+                    </button>
                   </div>
-                  <span className="text-gray-400 text-xs ml-2">({displayStock > 0 ? `+${displayStock} disponíveis` : 'Sem estoque'})</span>
+                  {/* Mostra quanto resta disponível após a seleção atual */}
+                  {displayStock > 0 ? (
+                    <span className="text-gray-400 text-xs ml-2">
+                      ({Math.max(0, displayStock - quantity)} disponíve{displayStock - quantity === 1 ? 'l' : 'is'})
+                    </span>
+                  ) : (
+                    <span className="text-red-400 text-xs ml-2">Sem estoque</span>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-3">
