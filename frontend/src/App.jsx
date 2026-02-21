@@ -23,6 +23,7 @@ import QuestionsPage from "./pages/QuestionsPage";
 import HistoryPage from "./pages/HistoryPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import BenefitsPage from "./pages/BenefitsPage";
+import AtelieSubscribePage from "./pages/AtelieSubscribePage";
 import UserLayout from "./pages/UserLayout";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -46,6 +47,7 @@ function App() {
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/termos" element={<TermsOfUsePage />} />
             <Route path="/contato" element={<ContactPage />} />
+            <Route path="/assinaturas" element={<AtelieSubscribePage />} />
 
             {/* Rotas Dinâmicas usando ID do Java */}
 

@@ -43,6 +43,9 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "mp_customer_id")
+    private String mpCustomerId;
+
     // --- CONSTRUTOR DE COMPATIBILIDADE (Resgate) ---
     // Necessário para AuthService e AdminBootstrap funcionarem sem refatoração
     // profunda

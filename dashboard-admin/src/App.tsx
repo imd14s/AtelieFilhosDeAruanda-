@@ -18,6 +18,7 @@ import { ProductForm } from './pages/products/ProductForm';
 import { AutomationsPage } from './pages/marketing/AutomationsPage';
 import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 import { CategoriesPage } from './pages/categories/CategoriesPage';
+import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 const PrivateRoute = () => {
@@ -47,6 +48,7 @@ function AppRoutes() {
         <Route path="/marketing/coupons" element={<CouponList />} />
         <Route path="/marketing/campaigns" element={<CampaignsPage />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
+        <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
         <Route path="/automations" element={<AutomationsPage />} />
         <Route path="/settings/integrations" element={<IntegrationsPage />} />
       </Route>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight, Plus, Tag, Plug } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat } from 'lucide-react';
 import clsx from 'clsx';
 
 
@@ -46,6 +46,11 @@ export function DashboardLayout() {
         { icon: Ticket, label: 'Cupons', path: '/marketing/coupons' },
         { icon: Mail, label: 'Recuperação', path: '/marketing/abandoned-cart' },
       ]
+    },
+    {
+      icon: Repeat,
+      label: 'Assinaturas',
+      path: '/subscriptions'
     },
     {
       icon: Settings,

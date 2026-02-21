@@ -41,6 +41,33 @@ public class OrderEntity {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "shipping_street")
+    private String shippingStreet;
+
+    @Column(name = "shipping_number")
+    private String shippingNumber;
+
+    @Column(name = "shipping_complement")
+    private String shippingComplement;
+
+    @Column(name = "shipping_neighborhood")
+    private String shippingNeighborhood;
+
+    @Column(name = "shipping_city")
+    private String shippingCity;
+
+    @Column(name = "shipping_state", length = 2)
+    private String shippingState;
+
+    @Column(name = "shipping_zip_code", length = 10)
+    private String shippingZipCode;
+
+    @Column(name = "shipping_cost")
+    private BigDecimal shippingCost;
+
+    @Column(name = "shipping_provider")
+    private String shippingProvider;
+
     public OrderEntity() {
     }
 

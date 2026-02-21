@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PackageOpen, Clock, Settings, Search, ChevronDown, PackageCheck } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useOutletContext, Link } from 'react-router-dom';
-import api from '../services/api';
+import subscriptionService from '../services/subscriptionService';
 
 // MOCK_SUBSCRIPTIONS removed in favor of real API data
 
@@ -20,9 +20,9 @@ const SubscriptionsPage = () => {
     }, [user]);
 
     const fetchSubscriptions = () => {
-        api.get(`/product-subscriptions/user/${user.id}`)
-            .then(res => {
-                setSubscriptions(res.data);
+        subscriptionService.getUserSubscriptions()
+            .then(data => {
+                setSubscriptions(data);
                 setLoading(false);
             })
             .catch(err => {

@@ -5,7 +5,8 @@ import java.util.Map;
 
 public final class DriverConfigReader {
 
-    private DriverConfigReader() {}
+    private DriverConfigReader() {
+    }
 
     public static BigDecimal requireBigDecimal(Map<String, Object> config, String key) {
         Object v = config.get(key);
@@ -21,9 +22,18 @@ public final class DriverConfigReader {
 
     public static String optionalString(Map<String, Object> config, String key, String defaultValue) {
         Object v = config.get(key);
-        if (v == null) return defaultValue;
+        if (v == null)
+            return defaultValue;
         String s = String.valueOf(v);
         return s == null ? defaultValue : s;
+    }
+
+    public static String requireString(Map<String, Object> config, String key) {
+        Object v = config.get(key);
+        if (v == null) {
+            throw new IllegalArgumentException("Config obrigatória ausente: '" + key + "'");
+        }
+        return String.valueOf(v);
     }
 
     public static String requireNonBlank(String value, String fieldName) {
@@ -37,7 +47,8 @@ public final class DriverConfigReader {
         if (value == null) {
             throw new IllegalArgumentException("Campo obrigatório ausente: '" + fieldName + "'");
         }
-        if (value instanceof BigDecimal bd) return bd;
+        if (value instanceof BigDecimal bd)
+            return bd;
         try {
             return new BigDecimal(String.valueOf(value));
         } catch (Exception e) {
