@@ -23,4 +23,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
     java.util.List<OrderEntity> findByCreatedAtAfter(java.time.Instant date);
 
     java.util.Optional<OrderEntity> findByExternalIdAndSource(String externalId, String source);
+
+    @Query("SELECT COUNT(o) > 0 FROM OrderEntity o JOIN o.items i WHERE o.user.id = :userId AND o.status = 'DELIVERED' AND i.product.id = :productId")
+    boolean existsByUserIdAndStatusAndProductId(UUID userId, String status, UUID productId);
 }

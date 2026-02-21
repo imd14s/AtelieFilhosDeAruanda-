@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { storeService } from '../services/storeService'; // Nova importação
+import { storeService } from '../services/storeService';
 import { ShoppingBag, Check, Loader2 } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
 
@@ -12,33 +12,50 @@ const ProductCard = ({ product }) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simula um delay pequeno para feedback visual
     setTimeout(() => {
       storeService.cart.add(product, 1);
       setAdded(true);
       setLoading(false);
-
       setTimeout(() => setAdded(false), 2000);
     }, 300);
   };
 
-  // Formatação de preço (agora direta, sem estrutura aninhada do Wix)
-  const priceFormatted = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(product.price || 0);
-
   const isOutOfStock = product.stockQuantity <= 0;
   const imageUrl = getImageUrl(product.images?.[0]);
 
+  // Calculate discount
+  const originalPrice = product.originalPrice || product.price;
+  const currentPrice = product.price;
+  const hasDiscount = originalPrice > currentPrice;
+  const discountPercentage = product.discountPercentage || (hasDiscount
+    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+    : 0);
+
+  const priceFormatted = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(currentPrice || 0);
+
+  const originalPriceFormatted = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(originalPrice || 0);
+
   return (
-    <div className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 rounded-sm">
-      <Link to={`/produto/${product.id}`} className="relative aspect-[4/5] overflow-hidden bg-[#f0f0f0]">
+    <div className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 rounded-sm border border-gray-100 max-w-[280px] mx-auto w-full">
+      {/* Badge de Desconto */}
+      {hasDiscount && (
+        <div className="absolute top-2 left-2 z-10 bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm">
+          {discountPercentage}% OFF
+        </div>
+      )}
+
+      <Link to={`/produto/${product.id}`} className="relative aspect-square overflow-hidden bg-gray-50">
         <img
           src={imageUrl}
           alt={product.title || product.name}
           onError={(e) => { e.target.src = '/images/default.png'; }}
-          className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+          className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
         />
         {isOutOfStock && (
           <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
@@ -47,14 +64,10 @@ const ProductCard = ({ product }) => {
         )}
       </Link>
 
-      <div className="flex flex-col flex-1 p-4 text-center">
-        <p className="font-lato text-[9px] uppercase tracking-[0.2em] text-[var(--dourado-suave)] mb-1">
-          Ateliê Aruanda
-        </p>
-
-        <Link to={`/produto/${product.id}`}>
+      <div className="p-3 flex flex-col flex-1">
+        <Link to={`/produto/${product.id}`} className="mb-2">
           <h3
-            className="font-playfair text-lg leading-snug text-[var(--azul-profundo)] mb-2 line-clamp-2 group-hover:text-[var(--dourado-suave)] transition-colors min-h-[3.5rem] w-full break-words"
+            className="font-playfair text-sm leading-tight text-[var(--azul-profundo)] line-clamp-2 min-h-[2.5rem] hover:text-[var(--dourado-suave)] transition-colors"
             title={product.title || product.name}
           >
             {product.title || product.name}
@@ -62,28 +75,35 @@ const ProductCard = ({ product }) => {
         </Link>
 
         <div className="mt-auto">
-          <p className="font-lato text-sm font-bold text-[var(--azul-profundo)] mb-4">
-            {priceFormatted}
-          </p>
+          <div className="flex flex-col mb-3">
+            {hasDiscount && (
+              <span className="text-[10px] text-gray-400 line-through">
+                {originalPriceFormatted}
+              </span>
+            )}
+            <span className="font-lato text-base font-bold text-[var(--azul-profundo)]">
+              {priceFormatted}
+            </span>
+          </div>
 
           <button
             onClick={handleAddToCart}
             disabled={loading || isOutOfStock}
-            className={`w-full flex items-center justify-center gap-2 py-3 px-4 font-lato text-[11px] uppercase tracking-[0.2em] transition-all duration-300 rounded-sm ${isOutOfStock
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : added
-                ? 'bg-green-700 text-white'
-                : 'bg-[var(--azul-profundo)] text-white hover:bg-[var(--dourado-suave)]'
+            className={`w-full flex items-center justify-center gap-2 py-2 px-3 font-lato text-[10px] uppercase tracking-wider transition-all duration-300 rounded-sm ${isOutOfStock
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : added
+                  ? 'bg-green-700 text-white'
+                  : 'bg-[var(--azul-profundo)] text-white hover:bg-[var(--dourado-suave)]'
               }`}
           >
             {loading ? (
-              <Loader2 size={16} className="animate-spin" />
+              <Loader2 size={14} className="animate-spin" />
             ) : added ? (
-              <><Check size={16} /> Na Sacola</>
+              <><Check size={14} /> Na Sacola</>
             ) : isOutOfStock ? (
               'Indisponível'
             ) : (
-              <><ShoppingBag size={16} /> Comprar</>
+              <><ShoppingBag size={14} /> Comprar</>
             )}
           </button>
         </div>

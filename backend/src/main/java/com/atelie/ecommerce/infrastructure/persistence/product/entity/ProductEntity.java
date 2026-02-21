@@ -50,6 +50,20 @@ public class ProductEntity {
     private Integer stockQuantity;
 
     @Transient
+    @JsonProperty("discountPercentage")
+    private Integer discountPercentage;
+
+    public Integer getDiscountPercentage() {
+        if (price != null && originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal discount = originalPrice.subtract(price);
+            return discount.multiply(new BigDecimal("100"))
+                    .divide(originalPrice, 0, java.math.RoundingMode.HALF_UP)
+                    .intValue();
+        }
+        return null;
+    }
+
+    @Transient
     @JsonProperty("category")
     private UUID categoryId;
 

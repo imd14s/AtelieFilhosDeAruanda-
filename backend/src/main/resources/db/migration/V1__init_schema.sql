@@ -106,6 +106,7 @@ CREATE UNIQUE INDEX ux_inventory_idempotency ON inventory_movements (variant_id,
 -- 4. Pedidos e Faturamento
 CREATE TABLE orders (
     id UUID PRIMARY KEY,
+    user_id UUID,
     status VARCHAR(20) NOT NULL,
     source VARCHAR(50) NOT NULL,
     external_id VARCHAR(255) NOT NULL,
@@ -114,7 +115,8 @@ CREATE TABLE orders (
     total_amount DECIMAL(19, 2) NOT NULL,
     version BIGINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- V5
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- V5
+    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_external ON orders(external_id);
@@ -304,3 +306,28 @@ CREATE TABLE configuracoes_ia (
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 12. Reviews and Ratings
+CREATE TABLE reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment VARCHAR(300),
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    ai_moderation_score NUMERIC(3,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_reviews_product FOREIGN KEY (product_id) REFERENCES products(id)
+);
+CREATE INDEX idx_reviews_product ON reviews(product_id);
+CREATE INDEX idx_reviews_status ON reviews(status);
+
+CREATE TABLE review_media (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    review_id UUID NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    type VARCHAR(20) NOT NULL, -- IMAGE, VIDEO
+    CONSTRAINT fk_review_media_review FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_review_media_review ON review_media(review_id);

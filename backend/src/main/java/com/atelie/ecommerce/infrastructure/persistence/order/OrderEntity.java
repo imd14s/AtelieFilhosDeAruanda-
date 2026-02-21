@@ -17,14 +17,18 @@ public class OrderEntity {
     @Column(name = "customer_name")
     private String customerName;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity user;
+
     private String status;
-    
+
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
     // Campos exigidos pelo código legado
     private String source; // Ex: "SITE", "MERCADO_LIVRE"
-    
+
     @Column(name = "external_id")
     private String externalId;
 
@@ -37,48 +41,94 @@ public class OrderEntity {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-    public OrderEntity() {}
+    public OrderEntity() {
+    }
 
     // Getters e Setters Completos
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getCustomerName() {
+        return customerName;
+    }
 
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
 
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
+    public String getStatus() {
+        return status;
+    }
 
-    public String getExternalId() { return externalId; }
-    public void setExternalId(String externalId) { this.externalId = externalId; }
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-    public List<OrderItemEntity> getItems() { return items; }
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    public List<OrderItemEntity> getItems() {
+        return items;
+    }
+
     public void setItems(List<OrderItemEntity> items) {
         this.items = items;
         if (items != null) {
             items.forEach(item -> item.setOrder(this));
         }
     }
+
     public void addItem(OrderItemEntity item) {
         items.add(item);
         item.setOrder(this);
     }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     @PrePersist
     protected void onCreate() {
-        if (createdAt == null) createdAt = Instant.now();
+        if (createdAt == null)
+            createdAt = Instant.now();
         updatedAt = Instant.now();
     }
 

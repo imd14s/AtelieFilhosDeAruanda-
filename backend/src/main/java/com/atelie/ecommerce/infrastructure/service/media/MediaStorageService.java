@@ -10,6 +10,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.Instant;
@@ -102,9 +104,23 @@ public class MediaStorageService {
         if (file.getSize() > maxUploadBytes) {
             throw new IllegalArgumentException("File exceeds MAX_UPLOAD_MB");
         }
+
+        // Bypass validation for ADMINS as requested: "dashboard-admin ... não precisa
+        // de validação"
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return;
+        }
+
         String ct = file.getContentType();
         if (ct == null || !allowedImageMime.contains(ct)) {
-            throw new IllegalArgumentException("Invalid mime type. Allowed: " + allowedImageMime);
+            // Se for vídeo e o tipo mime começar com video/, permitimos se estiver na lista
+            // ou se for um fallback seguro
+            // Mas aqui seguimos estritamente a lista do ENV para segurança, que agora
+            // inclui videos.
+            throw new IllegalArgumentException(
+                    "Tipo de arquivo não permitido: " + ct + ". Permitidos: " + allowedImageMime);
         }
     }
 

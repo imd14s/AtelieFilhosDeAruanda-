@@ -9,7 +9,7 @@ export JWT_EXPIRATION_MS=86400000
 export WEBHOOK_SECRET=dev_secret_webhook_123
 export UPLOAD_DIR=uploads
 export MAX_UPLOAD_MB=50
-export ALLOWED_IMAGE_MIME=image/png,image/jpeg,video/mp4
+export ALLOWED_IMAGE_MIME=image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime
 export ADMIN_EMAIL=admin@atelie.com
 export ADMIN_PASSWORD=ECautomation@3009
 

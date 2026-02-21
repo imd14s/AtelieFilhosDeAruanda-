@@ -143,6 +143,105 @@ public class GeminiIntegrationService {
         }
     }
 
+    public Map<String, Object> moderateReview(String comment, List<Map<String, String>> media) {
+        AiConfigEntity geminiConfig = aiConfigService.getGeminiConfig();
+        String key = geminiConfig.getApiKey();
+        if (key == null || key.isBlank()) {
+            throw new BusinessException("Chave da API do Gemini não configurada.");
+        }
+
+        StringBuilder prompt = new StringBuilder(
+                "Analise a seguinte avaliação de produto. Verifique se há conteúdo impróprio (nudez, violência, discurso de ódio, spam ou ofensas).\n");
+        prompt.append(
+                "Retorne APENAS um JSON com as chaves 'safe' (boolean), 'score' (number 0-1) e 'reason' (string).\n\n");
+        prompt.append("Comentário: ").append(comment);
+
+        List<Object> parts = new java.util.ArrayList<>();
+        Map<String, Object> textPart = new HashMap<>();
+        textPart.put("text", prompt.toString());
+        parts.add(textPart);
+
+        if (media != null) {
+            for (Map<String, String> m : media) {
+                if ("IMAGE".equals(m.get("type"))) {
+                    try {
+                        String imageUrl = m.get("url");
+                        String idStr = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+                        long mediaId = Long.parseLong(idStr);
+                        Optional<Resource> resourceOpt = mediaStorageService.loadPublic(mediaId);
+
+                        if (resourceOpt.isPresent()) {
+                            Resource resource = resourceOpt.get();
+                            byte[] bytes = Files.readAllBytes(resource.getFile().toPath());
+                            String base64Image = Base64.getEncoder().encodeToString(bytes);
+
+                            Map<String, Object> inlineData = new HashMap<>();
+                            inlineData.put("mimeType", getMimeType(resource.getFilename()));
+                            inlineData.put("data", base64Image);
+
+                            Map<String, Object> imagePart = new HashMap<>();
+                            imagePart.put("inlineData", inlineData);
+                            parts.add(imagePart);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Erro ao carregar imagem para moderação: " + e.getMessage());
+                    }
+                }
+            }
+        }
+
+        return callGeminiMultiPartApi(key, parts);
+    }
+
+    private String getMimeType(String filename) {
+        if (filename == null)
+            return "image/jpeg";
+        if (filename.toLowerCase().endsWith(".png"))
+            return "image/png";
+        if (filename.toLowerCase().endsWith(".webp"))
+            return "image/webp";
+        return "image/jpeg";
+    }
+
+    private Map<String, Object> callGeminiMultiPartApi(String apiKey, List<Object> parts) {
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="
+                + apiKey;
+
+        try {
+            Map<String, Object> content = new HashMap<>();
+            content.put("parts", parts);
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("contents", List.of(content));
+
+            Map<String, Object> generationConfig = new HashMap<>();
+            generationConfig.put("responseMimeType", "application/json");
+            requestBody.put("generationConfig", generationConfig);
+
+            String responseRaw = restClient.post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode root = objectMapper.readTree(responseRaw);
+            String text = root.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText();
+            JsonNode resultJson = objectMapper.readTree(text);
+
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("safe", resultJson.path("safe").asBoolean(true));
+            resultMap.put("score", new BigDecimal(resultJson.path("score").asText("1.0")));
+            resultMap.put("reason", resultJson.path("reason").asText(""));
+
+            return resultMap;
+
+        } catch (Exception e) {
+            System.err.println("Erro na moderação Gemini: " + e.getMessage());
+            return Map.of("safe", true, "score", BigDecimal.ONE, "reason", ""); // Default to safe if IA fails
+        }
+    }
+
     private String titleIfBlank(String t) {
         return t != null && !t.isBlank() ? t : "";
     }
