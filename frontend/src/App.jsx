@@ -9,6 +9,11 @@ import ProductPage from "./pages/ProductPage";
 import AboutPage from "./pages/AboutPage";
 import EthicsPage from "./pages/EthicsPage";
 import ShopPage from "./pages/ShopPage";
+import ContactPage from "./pages/ContactPage";
+import ShippingPolicyPage from "./pages/ShippingPolicyPage";
+import ReturnsPolicyPage from "./pages/ReturnsPolicyPage";
+import FAQPage from "./pages/FAQPage";
+import TermsOfUsePage from "./pages/TermsOfUsePage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
@@ -35,6 +40,11 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/ethics" element={<EthicsPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/politicas-de-envio" element={<ShippingPolicyPage />} />
+            <Route path="/trocas-e-devolucoes" element={<ReturnsPolicyPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/termos" element={<TermsOfUsePage />} />
+            <Route path="/contato" element={<ContactPage />} />
 
             {/* Rotas Dinâmicas usando ID do Java */}
 

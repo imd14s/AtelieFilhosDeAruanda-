@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Facebook, Mail, Phone, MapPin, Heart, Send, Loader2 } from 'lucide-react';
+import { Instagram, Mail, Phone, MapPin, Heart, Send, Loader2, Video, Youtube, ShoppingBag } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -84,9 +84,9 @@ const Footer = () => {
             <h3 className="font-playfair text-lg mb-6 border-b border-[var(--dourado-suave)]/30 pb-2 inline-block">Suporte</h3>
             <ul className="space-y-3 font-lato text-sm text-[var(--branco-off-white)]/70">
               <li><Link to="/ethics" className="hover:text-[var(--dourado-suave)] transition-colors">Ética & Valores</Link></li>
-              <li><Link to="/" className="hover:text-[var(--dourado-suave)] transition-colors">Políticas de Envio</Link></li>
-              <li><Link to="/" className="hover:text-[var(--dourado-suave)] transition-colors">Trocas e Devoluções</Link></li>
-              <li><Link to="/" className="hover:text-[var(--dourado-suave)] transition-colors">Perguntas Frequentes</Link></li>
+              <li><Link to="/politicas-de-envio" className="hover:text-[var(--dourado-suave)] transition-colors">Políticas de Envio</Link></li>
+              <li><Link to="/trocas-e-devolucoes" className="hover:text-[var(--dourado-suave)] transition-colors">Trocas e Devoluções</Link></li>
+              <li><Link to="/faq" className="hover:text-[var(--dourado-suave)] transition-colors">Perguntas Frequentes</Link></li>
               <li><Link to="/termos" className="hover:text-[var(--dourado-suave)] transition-colors">Termos de Uso</Link></li>
             </ul>
           </div>
@@ -96,29 +96,37 @@ const Footer = () => {
             <div>
               <h3 className="font-playfair text-lg mb-6 border-b border-[var(--dourado-suave)]/30 pb-2 inline-block">Contato</h3>
               <ul className="space-y-4 font-lato text-sm text-[var(--branco-off-white)]/70">
-                <li className="flex items-start gap-3">
-                  <MapPin size={18} className="text-[var(--dourado-suave)] shrink-0" />
-                  <span>São Paulo, SP - Atendimento Online</span>
+                <li className="flex items-start gap-4">
+                  <Phone size={18} className="text-[var(--dourado-suave)] shrink-0 mt-0.5" />
+                  <div className="flex flex-col space-y-1">
+                    <span>(11) 96321-2172</span>
+                    <span>(11) 95348-2232</span>
+                  </div>
                 </li>
-                <li className="flex items-center gap-3">
-                  <Phone size={18} className="text-[var(--dourado-suave)] shrink-0" />
-                  <span>(11) 99999-9999</span>
-                </li>
-                <li className="flex items-center gap-3">
+                <li className="flex items-center gap-4">
                   <Mail size={18} className="text-[var(--dourado-suave)] shrink-0" />
-                  <span>contato@filhosdearuanda.com.br</span>
+                  <span>mundodearuanda@gmail.com</span>
                 </li>
               </ul>
             </div>
 
             {/* Redes Sociais com Hover */}
-            <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-[var(--dourado-suave)] hover:border-[var(--dourado-suave)] transition-all duration-300 group">
-                <Instagram size={18} className="group-hover:text-[var(--azul-profundo)]" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-[var(--dourado-suave)] hover:border-[var(--dourado-suave)] transition-all duration-300 group">
-                <Facebook size={18} className="group-hover:text-[var(--azul-profundo)]" />
-              </a>
+            <div>
+              <p className="font-lato text-[10px] uppercase tracking-widest text-[var(--dourado-suave)] mb-4">REDES SOCIAIS</p>
+              <div className="flex gap-4">
+                <a href="https://www.instagram.com/atelie_filhosdearuanda/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-[var(--dourado-suave)] hover:border-[var(--dourado-suave)] transition-all duration-300 group">
+                  <Instagram size={18} className="group-hover:text-[var(--azul-profundo)]" />
+                </a>
+                <a href="https://www.tiktok.com/@atelie_filhos_de_aruanda" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-[var(--dourado-suave)] hover:border-[var(--dourado-suave)] transition-all duration-300 group">
+                  <Video size={18} className="group-hover:text-[var(--azul-profundo)]" />
+                </a>
+                <a href="https://www.youtube.com/@MundodeAruanda" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-[var(--dourado-suave)] hover:border-[var(--dourado-suave)] transition-all duration-300 group">
+                  <Youtube size={18} className="group-hover:text-[var(--azul-profundo)]" />
+                </a>
+                <a href="https://www.mercadolivre.com.br/pagina/umbandaaxe777" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-[var(--dourado-suave)] hover:border-[var(--dourado-suave)] transition-all duration-300 group">
+                  <ShoppingBag size={18} className="group-hover:text-[var(--azul-profundo)]" />
+                </a>
+              </div>
             </div>
           </div>
 
@@ -126,8 +134,8 @@ const Footer = () => {
 
         {/* Rodapé Inferior */}
         <div className="border-t border-[var(--branco-off-white)]/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="font-lato text-[10px] text-[var(--branco-off-white)]/30 uppercase tracking-[0.2em] text-center md:text-left">
-            © {currentYear} Ateliê Filhos de Aruanda. CNPJ: 00.000.000/0001-00
+          <p className="font-lato text-[11px] text-[var(--branco-off-white)]/30 tracking-[0.1em] text-center md:text-left">
+            © 2026 ATELIÊ FILHOS DE ARUANDA. CNPJ: 36.720.385/0001-09
           </p>
 
           <div className="flex items-center gap-1 font-lato text-[10px] text-[var(--branco-off-white)]/30 uppercase tracking-widest">
