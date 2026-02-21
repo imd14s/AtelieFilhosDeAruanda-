@@ -4,7 +4,7 @@ import ReviewSummary from './ReviewSummary';
 import { storeService } from '../services/storeService';
 import { getImageUrl } from '../utils/imageUtils';
 
-const ReviewSection = ({ productId }) => {
+const ReviewSection = ({ productId, onReviewAdded, onReviewsLoaded }) => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -14,7 +14,7 @@ const ReviewSection = ({ productId }) => {
             try {
                 // Mock data para desenvolvimento UI
                 // Substituir por: const data = await storeService.getReviews(productId);
-                setReviews([
+                const mockReviews = [
                     {
                         id: '1',
                         user: { name: 'Maria Silva' },
@@ -34,12 +34,15 @@ const ReviewSection = ({ productId }) => {
                     {
                         id: '3',
                         user: { name: 'Ana Oliveira' },
-                        rating: 5,
+                        rating: 4,
                         comment: 'Produto excedeu as expectativas. O acabamento em couro é impecável e as cores são vibrantes.',
                         createdAt: '2025-02-05T09:15:00Z',
                         media: []
                     }
-                ]);
+                ];
+                setReviews(mockReviews);
+                // Notifica o pai com as reviews carregadas para ele calcular a média
+                onReviewsLoaded?.(mockReviews);
             } catch (err) {
                 console.error("Failed to load reviews", err);
             } finally {

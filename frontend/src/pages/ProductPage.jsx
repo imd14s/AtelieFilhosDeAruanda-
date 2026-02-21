@@ -148,6 +148,18 @@ const ProductPage = () => {
     });
   };
 
+  // Calcula média a partir das reviews carregadas (mock ou reais)
+  const handleReviewsLoaded = (loadedReviews) => {
+    if (!loadedReviews?.length) return;
+    const total = loadedReviews.length;
+    const avg = loadedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / total;
+    setProduct(prev => ({
+      ...prev,
+      totalReviews: total,
+      averageRating: parseFloat(avg.toFixed(1))
+    }));
+  };
+
   const handleAddToCart = () => {
     if (!product || isOutOfStock) return;
 
@@ -583,6 +595,7 @@ const ProductPage = () => {
             <ReviewSection
               productId={id}
               onReviewAdded={handleReviewAdded}
+              onReviewsLoaded={handleReviewsLoaded}
             />
           </section>
         </div>
