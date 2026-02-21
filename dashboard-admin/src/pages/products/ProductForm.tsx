@@ -60,10 +60,6 @@ export function ProductForm() {
     resolver: zodResolver(schema),
     defaultValues: {
       tenantId: '1',
-      weight: 0,
-      height: 0,
-      width: 0,
-      length: 0,
     }
   });
 
@@ -79,9 +75,21 @@ export function ProductForm() {
     if (id) {
       loadProduct();
     } else {
-      reset();
+      // Limpa TODO o estado ao criar novo produto
+      reset({
+        title: '',
+        description: '',
+        category: '',
+        tenantId: '1',
+        marketplaceIds: [],
+      });
       setVariants([]);
       setCurrentMedia([]);
+      setAllMedia([]);
+      setSelectedMarketplaces([]);
+      setEditingVariantId(null);
+      setNewCategoryName(null);
+      setVariantInput({ color: '', size: '', sku: '', originalPrice: '', price: '', stock: '' });
     }
   }, [id]);
 
@@ -121,10 +129,10 @@ export function ProductForm() {
         category: (product as any).categoryId || product.category || '',
         tenantId: product.tenantId || '1',
         marketplaceIds: product.marketplaceIds || [],
-        weight: (product as any).weight || product.dimensions?.weight || 0,
-        height: (product as any).height || product.dimensions?.height || 0,
-        width: (product as any).width || product.dimensions?.width || 0,
-        length: (product as any).length || product.dimensions?.length || 0,
+        weight: (product as any).weight || product.dimensions?.weight || undefined,
+        height: (product as any).height || product.dimensions?.height || undefined,
+        width: (product as any).width || product.dimensions?.width || undefined,
+        length: (product as any).length || product.dimensions?.length || undefined,
       });
       if (product.variants) setVariants(product.variants);
       if (product.media) {

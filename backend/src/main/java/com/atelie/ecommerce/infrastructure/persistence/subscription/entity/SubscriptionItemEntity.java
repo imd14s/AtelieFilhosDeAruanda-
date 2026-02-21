@@ -1,7 +1,6 @@
 package com.atelie.ecommerce.infrastructure.persistence.subscription.entity;
 
-import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
-import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -18,17 +17,18 @@ public class SubscriptionItemEntity {
     @Id
     private UUID id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_id", nullable = false)
     private SubscriptionEntity subscription;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
-    private ProductEntity product;
+    private com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity product;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id")
-    private ProductVariantEntity variant;
+    private com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductVariantEntity variant;
 
     @Column(nullable = false)
     private Integer quantity;

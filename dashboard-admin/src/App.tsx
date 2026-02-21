@@ -15,11 +15,15 @@ import { CouponList } from './pages/marketing/CouponList';
 import { CampaignsPage } from './pages/marketing/CampaignsPage';
 import { AbandonedCartPage } from './pages/marketing/AbandonedCartPage';
 import { ProductForm } from './pages/products/ProductForm';
+import { StockAlertPage } from './pages/settings/StockAlertPage';
 import { AutomationsPage } from './pages/marketing/AutomationsPage';
 import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 import { CategoriesPage } from './pages/categories/CategoriesPage';
 import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
+
+console.log('App initialization - Routes loaded');
+
 
 const PrivateRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -45,6 +49,7 @@ function AppRoutes() {
         <Route path="/settings/audit" element={<AuditLogPage />} />
         <Route path="/settings/shipping" element={<ShippingPage />} />
         <Route path="/settings/payment" element={<PaymentPage />} />
+        <Route path="/settings/stock-alerts" element={<StockAlertPage />} />
         <Route path="/marketing/coupons" element={<CouponList />} />
         <Route path="/marketing/campaigns" element={<CampaignsPage />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />

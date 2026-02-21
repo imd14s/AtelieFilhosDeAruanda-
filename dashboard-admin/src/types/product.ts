@@ -12,7 +12,7 @@ export interface ProductVariant {
     promotionalPrice?: number;
     originalPrice?: number;
     stock: number;
-    attributes: Record<string, string>; // e.g. { color: "Red", size: "M" }
+    attributes: Record<string, string>;
     imageUrl?: string;
     media?: ProductMedia[];
 }
@@ -25,10 +25,10 @@ export interface ProductSEO {
 }
 
 export interface ProductDimensions {
-    weight: number; // in grams
-    width: number; // in cm
-    height: number; // in cm
-    length: number; // in cm
+    weight: number;
+    width: number;
+    height: number;
+    length: number;
 }
 
 export interface Product {
@@ -38,21 +38,15 @@ export interface Product {
     active: boolean;
     alertEnabled?: boolean;
     category: string;
-
-    // Pricing & Stock (can be overridden by variants)
     price: number;
     promotionalPrice?: number;
     originalPrice?: number;
     stock: number;
-
     variants: ProductVariant[];
     media: ProductMedia[];
-
-    marketplaceIds?: string[]; // IDs dos marketplaces associados
-
+    marketplaceIds?: string[];
     dimensions?: ProductDimensions;
     seo?: ProductSEO;
-
     tenantId: string;
     createdAt: string;
     updatedAt: string;

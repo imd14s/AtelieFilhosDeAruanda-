@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import clsx from 'clsx';
+
+const {
+  LayoutDashboard, ShoppingBag, Settings, LogOut, Package,
+  Zap, Users, Shield, Truck, CreditCard, Ticket, Mail,
+  ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X, Bell
+} = Icons;
+
+console.log('Icons loaded:', { Bell: !!Bell });
 
 
 interface NavItem {
@@ -65,6 +73,7 @@ export function DashboardLayout() {
         { icon: Shield, label: 'Auditoria', path: '/settings/audit' },
         { icon: Truck, label: 'Frete', path: '/settings/shipping' },
         { icon: CreditCard, label: 'Pagamentos', path: '/settings/payment' },
+        { icon: Bell, label: 'Alerta de Estoque', path: '/settings/stock-alerts' },
       ]
     },
   ];

@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.infrastructure.persistence.subscription.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ public class SubscriptionFrequencyRuleEntity {
     @Id
     private UUID id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", nullable = false)
     private SubscriptionPlanEntity plan;

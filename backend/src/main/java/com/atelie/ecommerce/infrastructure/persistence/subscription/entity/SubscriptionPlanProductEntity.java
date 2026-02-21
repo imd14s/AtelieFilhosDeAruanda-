@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.infrastructure.persistence.subscription.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,6 +17,7 @@ public class SubscriptionPlanProductEntity {
     @EmbeddedId
     private SubscriptionPlanProductId id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("planId")
     @JoinColumn(name = "plan_id")

@@ -16,6 +16,8 @@ export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [stockSort, setStockSort] = useState<'none' | 'asc' | 'desc'>('none');
+  const [stockFilter, setStockFilter] = useState<'all' | 'out' | 'low'>('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,18 +45,25 @@ export function ProductsPage() {
   };
 
   const handleToggleAlert = async (id: string) => {
+    // Update otimista: altera o estado local imediatamente
+    setProducts(prev => prev.map(p =>
+      p.id === id ? { ...p, alertEnabled: !p.alertEnabled } : p
+    ));
+
     try {
       await ProductService.toggleAlert(id);
-      await loadProducts();
-      alert('Alerta de estoque atualizado com sucesso!');
+      // Não recarregamos a lista para evitar mudança de ordenação e flicker
     } catch (error: any) {
+      // Reverte o estado em caso de erro
+      setProducts(prev => prev.map(p =>
+        p.id === id ? { ...p, alertEnabled: !p.alertEnabled } : p
+      ));
+
       console.error('Erro ao atualizar alerta', error);
       if (error.response?.status === 404) {
-        alert('Funcionalidade não implementada na API ou produto não encontrado.');
-      } else if (error.response?.status === 500) {
-        alert('Erro de configuração no servidor. Verifique se as variáveis de ambiente estão corretas.');
+        alert('Produto não encontrado ou funcionalidade indisponível.');
       } else {
-        alert('Erro ao atualizar alerta: ' + (error.message || 'Erro desconhecido.'));
+        alert('Erro ao atualizar alerta. Tente novamente.');
       }
     }
   };
@@ -77,9 +86,21 @@ export function ProductsPage() {
   // Garante que products é um array antes de filtrar
   const safeProducts = Array.isArray(products) ? products : [];
 
-  const filteredProducts = safeProducts.filter(p =>
-    p.title ? p.title.toLowerCase().includes(searchTerm.toLowerCase()) : false
-  );
+  const filteredProducts = safeProducts
+    .filter(p => {
+      const matchesSearch = p.title ? p.title.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+      const matchesStockFilter =
+        stockFilter === 'all' ? true :
+          stockFilter === 'out' ? (p.stock <= 0) :
+            stockFilter === 'low' ? (p.stock > 0 && p.stock < 10) : true;
+
+      return matchesSearch && matchesStockFilter;
+    })
+    .sort((a, b) => {
+      if (stockSort === 'asc') return (a.stock || 0) - (b.stock || 0);
+      if (stockSort === 'desc') return (b.stock || 0) - (a.stock || 0);
+      return 0;
+    });
 
   return (
     <div className="space-y-6">
@@ -97,7 +118,7 @@ export function ProductsPage() {
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input
@@ -107,6 +128,28 @@ export function ProductsPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+
+        <div className="flex gap-4">
+          <select
+            className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm text-gray-700 font-medium"
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value as any)}
+          >
+            <option value="all">📦 Todos os Estoques</option>
+            <option value="out">🚫 Sem Estoque</option>
+            <option value="low">⚠️ Estoque Baixo (&lt;10)</option>
+          </select>
+
+          <select
+            className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm text-gray-700 font-medium"
+            value={stockSort}
+            onChange={(e) => setStockSort(e.target.value as any)}
+          >
+            <option value="none">⇅ Ordenação Padrão</option>
+            <option value="asc">📉 Estoque: Menor primeiro</option>
+            <option value="desc">📈 Estoque: Maior primeiro</option>
+          </select>
         </div>
       </div>
 
