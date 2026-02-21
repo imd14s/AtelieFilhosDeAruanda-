@@ -1,5 +1,5 @@
 -- Tipos de Planos de Assinatura
-CREATE TABLE subscription_plans (
+CREATE TABLE IF NOT EXISTS subscription_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type VARCHAR(20) NOT NULL, -- FIXED (Tipo 1), CUSTOM (Tipo 2)
     name VARCHAR(100) NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE subscription_plans (
 );
 
 -- Regras de Frequência e Desconto
-CREATE TABLE subscription_frequency_rules (
+CREATE TABLE IF NOT EXISTS subscription_frequency_rules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     plan_id UUID NOT NULL,
     frequency VARCHAR(20) NOT NULL, -- WEEKLY, BIWEEKLY, MONTHLY
@@ -22,7 +22,7 @@ CREATE TABLE subscription_frequency_rules (
 );
 
 -- Produtos permitidos em um plano fixo (Tipo 1)
-CREATE TABLE subscription_plan_products (
+CREATE TABLE IF NOT EXISTS subscription_plan_products (
     plan_id UUID NOT NULL,
     product_id UUID NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
@@ -34,7 +34,7 @@ CREATE TABLE subscription_plan_products (
 -- Recriar a tabela de assinaturas ativa para o novo modelo
 DROP TABLE IF EXISTS product_subscriptions;
 
-CREATE TABLE subscriptions (
+CREATE TABLE IF NOT EXISTS subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     plan_id UUID NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE subscriptions (
 );
 
 -- Itens de uma assinatura customizada (Tipo 2)
-CREATE TABLE subscription_items (
+CREATE TABLE IF NOT EXISTS subscription_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     subscription_id UUID NOT NULL,
     product_id UUID NOT NULL,

@@ -28,7 +28,7 @@ public class SubscriptionItemEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id")
-    private com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductVariantEntity variant;
+    private com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity variant;
 
     @Column(nullable = false)
     private Integer quantity;

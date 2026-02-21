@@ -2,6 +2,8 @@ package com.atelie.ecommerce.api.marketing;
 
 import com.atelie.ecommerce.application.service.marketing.EmailSignatureService;
 import com.atelie.ecommerce.domain.marketing.model.EmailSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +14,7 @@ import java.util.UUID;
 @RequestMapping("/api/marketing/signatures")
 public class EmailSignatureController {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmailSignatureController.class);
     private final EmailSignatureService service;
 
     public EmailSignatureController(EmailSignatureService service) {
@@ -20,12 +23,22 @@ public class EmailSignatureController {
 
     @PostMapping
     public ResponseEntity<EmailSignature> save(@RequestBody EmailSignature signature) {
-        return ResponseEntity.ok(service.save(signature));
+        try {
+            return ResponseEntity.ok(service.save(signature));
+        } catch (Exception e) {
+            logger.error("Erro ao salvar assinatura", e);
+            throw e;
+        }
     }
 
     @GetMapping
     public ResponseEntity<List<EmailSignature>> listAll() {
-        return ResponseEntity.ok(service.findAll());
+        try {
+            return ResponseEntity.ok(service.findAll());
+        } catch (Exception e) {
+            logger.error("Erro ao listar assinaturas", e);
+            throw e;
+        }
     }
 
     @GetMapping("/{id}")

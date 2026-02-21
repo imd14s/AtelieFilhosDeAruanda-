@@ -5,7 +5,7 @@ import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
 import com.atelie.ecommerce.domain.marketing.model.Subscription;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.CouponRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
-import com.atelie.ecommerce.infrastructure.persistence.marketing.SubscriptionRepository;
+import com.atelie.ecommerce.infrastructure.persistence.marketing.MarketingSubscriptionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,11 +22,11 @@ public class SubscriptionService {
 
     private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
-    private final SubscriptionRepository subscriptionRepository;
+    private final MarketingSubscriptionRepository subscriptionRepository;
     private final CouponRepository couponRepository;
     private final EmailQueueRepository emailQueueRepository;
 
-    public SubscriptionService(SubscriptionRepository subscriptionRepository,
+    public SubscriptionService(MarketingSubscriptionRepository subscriptionRepository,
             CouponRepository couponRepository,
             EmailQueueRepository emailQueueRepository) {
         this.subscriptionRepository = subscriptionRepository;

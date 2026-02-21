@@ -52,6 +52,7 @@ public class StorefrontIntegrationTest {
                 org.mockito.Mockito
                                 .when(shippingService.quote(org.mockito.ArgumentMatchers.any(),
                                                 org.mockito.ArgumentMatchers.any(),
+                                                org.mockito.ArgumentMatchers.any(),
                                                 org.mockito.ArgumentMatchers.any()))
                                 .thenReturn(mockResponse);
 

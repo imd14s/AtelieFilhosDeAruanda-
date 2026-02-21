@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
+public interface MarketingSubscriptionRepository extends JpaRepository<Subscription, UUID> {
     List<Subscription> findByStatusAndNextBillingAtLessThanEqual(Subscription.SubscriptionStatus status,
             LocalDateTime now);
 

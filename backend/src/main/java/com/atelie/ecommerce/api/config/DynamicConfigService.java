@@ -60,6 +60,11 @@ public class DynamicConfigService {
         return cache.containsKey(key);
     }
 
+    public String get(String key, String defaultValue) {
+        String val = cache.get(key);
+        return val != null ? val : defaultValue;
+    }
+
     public long getLong(String key, int defaultValue) {
         String val = getString(key);
         if (val == null)

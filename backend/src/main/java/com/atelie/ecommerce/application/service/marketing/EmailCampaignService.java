@@ -2,6 +2,7 @@ package com.atelie.ecommerce.application.service.marketing;
 
 import com.atelie.ecommerce.domain.marketing.model.EmailCampaign;
 import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
+import com.atelie.ecommerce.domain.marketing.model.EmailSignature;
 import com.atelie.ecommerce.domain.marketing.model.NewsletterSubscriber;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailCampaignRepository;
