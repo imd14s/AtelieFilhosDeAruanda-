@@ -14,6 +14,7 @@ import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import ReviewsPage from "./pages/ReviewsPage";
+import QuestionsPage from "./pages/QuestionsPage";
 import UserLayout from "./pages/UserLayout";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -44,6 +45,7 @@ function App() {
               <Route path="compras" element={<OrdersPage />} />
               <Route path="assinaturas" element={<SubscriptionsPage />} />
               <Route path="opinioes" element={<ReviewsPage />} />
+              <Route path="perguntas" element={<QuestionsPage />} />
             </Route>
 
             {/* Rota 404 */}
