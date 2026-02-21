@@ -23,6 +23,15 @@ export const ChannelIntegrationService = {
         return response.data;
     },
 
+    async createProvider(providerData: { name: string, code: string, serviceType: string, driverKey: string, active: boolean }) {
+        const response = await api.post('/admin/providers', providerData);
+        return response.data;
+    },
+
+    async deleteProvider(id: string) {
+        await api.delete(`/admin/providers/${id}`);
+    },
+
     async getAvailableProviders() {
         const response = await api.get('/admin/providers');
         return response.data;

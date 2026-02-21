@@ -75,4 +75,14 @@ public class AdminProviderController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        if (!repository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        repository.deleteById(id);
+        gateway.refresh(); // Limpa cache
+        return ResponseEntity.noContent().build();
+    }
 }

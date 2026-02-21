@@ -31,11 +31,11 @@ export function IntegrationsPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [syncing, setSyncing] = useState<Record<string, boolean>>({});
 
-    // Hardcoded icons/metadata for display purposes (could be moved to backend or config)
-    const providerMetadata: Record<string, { icon: string }> = {
-        'mercadolivre': { icon: 'https://http2.mlstatic.com/frontend-assets/ui-navigation/5.21.3/mercadolibre/favicon.svg' },
-        'tiktok': { icon: 'https://upload.wikimedia.org/wikipedia/en/a/a9/TikTok_logo.svg' }
-    };
+    const PREDEFINED_CHANNELS = [
+        { name: 'Mercado Livre', code: 'mercadolivre', icon: 'https://http2.mlstatic.com/frontend-assets/ui-navigation/5.21.3/mercadolibre/favicon.svg', needsAuth: true },
+        { name: 'TikTok Shop', code: 'tiktok', icon: 'https://upload.wikimedia.org/wikipedia/en/a/a9/TikTok_logo.svg', needsAuth: true },
+        { name: 'Loja Virtual', code: 'LOJA_VIRTUAL', icon: '/logo.png', needsAuth: false }
+    ];
 
     useEffect(() => {
         loadData();
@@ -44,12 +44,9 @@ export function IntegrationsPage() {
     const loadData = async () => {
         setLoading(true);
         try {
-            // 1. Fetch available drivers from backend
             const providers = await ChannelIntegrationService.getAvailableProviders();
             setAvailableProviders(providers);
 
-            // 2. Fetch status for each provider
-            // We only care about MARKETPLACE type providers
             const marketplaceProviders = providers.filter((p: ServiceProvider) => p.serviceType === 'MARKETPLACE');
 
             const results = await Promise.all(marketplaceProviders.map((m: ServiceProvider) => ChannelIntegrationService.getStatus(m.code)));
@@ -57,6 +54,13 @@ export function IntegrationsPage() {
             results.forEach(status => {
                 newStatuses[status.provider] = status;
             });
+
+            // Make sure Loja Virtual is always "connected" if it is in the available providers list
+            const lojaVirtual = marketplaceProviders.find((p: ServiceProvider) => p.code === 'LOJA_VIRTUAL');
+            if (lojaVirtual) {
+                newStatuses['LOJA_VIRTUAL'] = { provider: 'LOJA_VIRTUAL', active: true, configured: true };
+            }
+
             setStatuses(newStatuses);
         } catch (error) {
             console.error('Failed to load data', error);
@@ -95,6 +99,20 @@ export function IntegrationsPage() {
         if (!selectedProvider) return;
         setSaving(true);
         try {
+            const definedChannel = PREDEFINED_CHANNELS.find(p => p.code === selectedProvider);
+            if (!definedChannel) return;
+
+            const exists = availableProviders.find(p => p.code === selectedProvider);
+            if (!exists) {
+                await ChannelIntegrationService.createProvider({
+                    name: definedChannel.name,
+                    code: definedChannel.code,
+                    serviceType: 'MARKETPLACE',
+                    driverKey: definedChannel.code.toLowerCase(),
+                    active: true
+                });
+            }
+
             // 1. Salvar Credenciais
             await ChannelIntegrationService.saveCredentials(selectedProvider, { appId, appSecret });
 
@@ -111,11 +129,43 @@ export function IntegrationsPage() {
         }
     };
 
-    const handleAddChannel = (providerCode: string) => {
-        // In this simplified flow, adding a channel just opens the configuration for it
-        // The backend status check will determine if it's "connected" or not
-        handleConfigure(providerCode);
+    const handleAddChannel = async (providerCode: string) => {
+        const channel = PREDEFINED_CHANNELS.find(c => c.code === providerCode);
+        if (!channel) return;
+
+        if (!channel.needsAuth) {
+            // Loja Virtual - just add directly
+            try {
+                const exists = availableProviders.find(p => p.code === providerCode);
+                if (!exists) {
+                    await ChannelIntegrationService.createProvider({
+                        name: channel.name,
+                        code: channel.code,
+                        serviceType: 'MARKETPLACE',
+                        driverKey: channel.code.toLowerCase(),
+                        active: true
+                    });
+                }
+                alert(`${channel.name} conectada com sucesso!`);
+                loadData();
+            } catch (error) {
+                alert(`Erro ao adicionar ${channel.name}.`);
+            }
+        } else {
+            handleConfigure(providerCode);
+        }
         setIsAddModalOpen(false);
+    };
+
+    const handleDisconnect = async (providerId: string, providerName: string) => {
+        if (!window.confirm(`Tem certeza que deseja desconectar o canal ${providerName}?`)) return;
+        try {
+            await ChannelIntegrationService.deleteProvider(providerId);
+            alert(`${providerName} foi desconectado.`);
+            loadData();
+        } catch (error) {
+            alert('Erro ao desconectar o canal.');
+        }
     };
 
     const handleSync = async (providerCode: string) => {
@@ -141,8 +191,7 @@ export function IntegrationsPage() {
         </div>
     );
 
-    // Filter providers to show only those involved in our filtered view or all configured + available
-    // For now, let's just show all MARKETPLACE providers returned by the backend
+    // Connect providers to show: those in DB
     const marketplaceProviders = availableProviders.filter(p => p.serviceType === 'MARKETPLACE');
 
     return (
@@ -169,11 +218,8 @@ export function IntegrationsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {marketplaceProviders.map(provider => {
                     const status = statuses[provider.code];
-                    // Only show if it's configured or active? Or show all?
-                    // Request says: "adiciona nas configuração a opção de adicionar Canais de Venda"
-                    // implies we might only show active ones here, but for now let's show all
-
-                    const icon = providerMetadata[provider.code]?.icon || 'https://cdn-icons-png.flaticon.com/512/1006/1006771.png'; // Default icon
+                    const preDef = PREDEFINED_CHANNELS.find(p => p.code === provider.code);
+                    const icon = preDef?.icon || 'https://cdn-icons-png.flaticon.com/512/1006/1006771.png';
 
                     return (
                         <div key={provider.id} className="group bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-xl hover:border-indigo-100 transition-all duration-300">
@@ -198,34 +244,45 @@ export function IntegrationsPage() {
                             </p>
 
                             <div className="space-y-4">
-                                <button
-                                    onClick={() => handleConfigure(provider.code)}
-                                    className="w-full py-3.5 bg-white border-2 border-gray-100 rounded-2xl text-sm font-bold text-gray-700 hover:border-indigo-200 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Settings size={18} /> {status?.configured ? 'Reconfigurar' : 'Configurar Canal'}
-                                </button>
-                                {status?.configured && !status.active && (
-                                    <button
-                                        onClick={() => handleSaveAndAuth()}
-                                        className="w-full py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <ExternalLink size={18} /> Autenticar Conta
-                                    </button>
-                                )}
-                                {status?.active && (
-                                    <button
-                                        onClick={() => handleSync(provider.code)}
-                                        disabled={syncing[provider.code]}
-                                        className="w-full py-3.5 bg-green-600 text-white rounded-2xl text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                    >
-                                        {syncing[provider.code] ? (
-                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        ) : (
-                                            <CheckCircle2 size={18} />
+                                {preDef?.needsAuth ? (
+                                    <>
+                                        <button
+                                            onClick={() => handleConfigure(provider.code)}
+                                            className="w-full py-3.5 bg-white border-2 border-gray-100 rounded-2xl text-sm font-bold text-gray-700 hover:border-indigo-200 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Settings size={18} /> {status?.configured ? 'Reconfigurar' : 'Configurar Canal'}
+                                        </button>
+                                        {status?.configured && !status.active && (
+                                            <button
+                                                onClick={() => handleSaveAndAuth()}
+                                                className="w-full py-3.5 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <ExternalLink size={18} /> Autenticar Conta
+                                            </button>
                                         )}
-                                        Sincronizar Produtos
-                                    </button>
-                                )}
+                                        {status?.active && (
+                                            <button
+                                                onClick={() => handleSync(provider.code)}
+                                                disabled={syncing[provider.code]}
+                                                className="w-full py-3.5 bg-green-600 text-white rounded-2xl text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                            >
+                                                {syncing[provider.code] ? (
+                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                ) : (
+                                                    <CheckCircle2 size={18} />
+                                                )}
+                                                Sincronizar Produtos
+                                            </button>
+                                        )}
+                                    </>
+                                ) : null}
+
+                                <button
+                                    onClick={() => handleDisconnect(provider.id, provider.name)}
+                                    className="w-full py-3.5 bg-red-50 text-red-600 rounded-2xl text-sm font-bold hover:bg-red-100 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <XCircle size={18} /> Desconectar
+                                </button>
                             </div>
                         </div>
                     );
@@ -254,25 +311,32 @@ export function IntegrationsPage() {
                         </div>
                         <div className="p-8 max-h-[60vh] overflow-y-auto">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {marketplaceProviders.map(provider => (
-                                    <button
-                                        key={provider.id}
-                                        onClick={() => handleAddChannel(provider.code)}
-                                        className="group p-4 rounded-2xl border-2 border-gray-100 hover:border-indigo-600 hover:bg-indigo-50/30 transition-all text-left flex items-center gap-4"
-                                    >
-                                        <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center p-2 group-hover:scale-110 transition-transform">
-                                            <img
-                                                src={providerMetadata[provider.code]?.icon || 'https://cdn-icons-png.flaticon.com/512/1006/1006771.png'}
-                                                alt={provider.name}
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-gray-900 group-hover:text-indigo-700">{provider.name}</h4>
-                                            <p className="text-xs text-gray-500">Marketplace</p>
-                                        </div>
-                                    </button>
-                                ))}
+                                {PREDEFINED_CHANNELS.map(channel => {
+                                    const isAdded = availableProviders.some(p => p.code === channel.code);
+                                    return (
+                                        <button
+                                            key={channel.code}
+                                            disabled={isAdded}
+                                            onClick={() => handleAddChannel(channel.code)}
+                                            className={`group p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${isAdded ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed' : 'border-gray-100 hover:border-indigo-600 hover:bg-indigo-50/30'}`}
+                                        >
+                                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center p-2 group-hover:scale-110 transition-transform">
+                                                <img
+                                                    src={channel.icon}
+                                                    alt={channel.name}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-gray-900 group-hover:text-indigo-700">
+                                                    {channel.name}
+                                                    {isAdded && <span className="ml-2 text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Adicionado</span>}
+                                                </h4>
+                                                <p className="text-xs text-gray-500">Marketplace</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -287,13 +351,13 @@ export function IntegrationsPage() {
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100">
                                     <img
-                                        src={providerMetadata[selectedProvider]?.icon}
+                                        src={PREDEFINED_CHANNELS.find(p => p.code === selectedProvider)?.icon}
                                         className="w-8 h-8 object-contain"
                                         alt="Marketplace"
                                     />
                                 </div>
                                 <div>
-                                    <h3 className="font-extrabold text-2xl text-gray-900">{availableProviders.find(p => p.code === selectedProvider)?.name}</h3>
+                                    <h3 className="font-extrabold text-2xl text-gray-900">{PREDEFINED_CHANNELS.find(p => p.code === selectedProvider)?.name}</h3>
                                     <p className="text-sm text-gray-500">Configuração de Credenciais</p>
                                 </div>
                             </div>
