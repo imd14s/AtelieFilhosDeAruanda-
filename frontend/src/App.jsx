@@ -18,6 +18,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
+import SavedCardsPage from "./pages/SavedCardsPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import QuestionsPage from "./pages/QuestionsPage";
 import HistoryPage from "./pages/HistoryPage";
@@ -60,6 +61,7 @@ function App() {
               <Route path="compras" element={<OrdersPage />} />
               <Route path="beneficios" element={<BenefitsPage />} />
               <Route path="assinaturas" element={<SubscriptionsPage />} />
+              <Route path="cartoes" element={<SavedCardsPage />} />
               <Route path="opinioes" element={<ReviewsPage />} />
               <Route path="perguntas" element={<QuestionsPage />} />
               <Route path="historico" element={<HistoryPage />} />

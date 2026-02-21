@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { Menu, ShoppingBag, Tag, Megaphone, DollarSign, Star, FileText, User, Users, Settings, ChevronDown, MessageCircle } from 'lucide-react';
+import { Menu, ShoppingBag, Tag, Megaphone, DollarSign, Star, FileText, User, Users, Settings, ChevronDown, MessageCircle, CreditCard } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const UserLayout = () => {
@@ -31,6 +31,7 @@ const UserLayout = () => {
         { label: 'Cupons e Benefícios', icon: Tag, path: '/perfil/beneficios' },
         { label: 'Opiniões', icon: MessageCircle, path: '/perfil/opinioes' },
         { label: 'Assinaturas', icon: Star, path: '/perfil/assinaturas' },
+        { label: 'Cartões', icon: CreditCard, path: '/perfil/cartoes' },
         { label: 'Meu perfil', icon: User, path: '/perfil', exact: true },
         { label: 'Configurações', icon: Settings, path: '#', hasSub: true },
     ];
