@@ -59,6 +59,12 @@ export function ProductForm() {
     }
   });
 
+  const CHANNEL_ICONS: Record<string, string> = {
+    'mercadolivre': 'https://http2.mlstatic.com/frontend-assets/ui-navigation/5.21.3/mercadolibre/favicon.svg',
+    'tiktok': 'https://upload.wikimedia.org/wikipedia/en/a/a9/TikTok_logo.svg',
+    'LOJA_VIRTUAL': '/logo.png'
+  };
+
   useEffect(() => {
     loadCategories();
     loadMarketplaces();
@@ -487,7 +493,7 @@ export function ProductForm() {
           <div className="space-y-3">
             {marketplaces.length === 0 && <p className="text-sm text-gray-500">Nenhum canal de venda configurado.</p>}
             {marketplaces.map(mp => (
-              <label key={mp.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <label key={mp.id} className="flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-all">
                 <input
                   type="checkbox"
                   checked={selectedMarketplaces.includes(mp.id)}
@@ -498,9 +504,16 @@ export function ProductForm() {
                       setSelectedMarketplaces(prev => prev.filter(id => id !== mp.id));
                     }
                   }}
-                  className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                  className="w-5 h-5 text-indigo-600 rounded-lg border-gray-300 focus:ring-indigo-500"
                 />
-                <span className="text-sm font-medium text-gray-700">{mp.name}</span>
+                <div className="w-8 h-8 flex items-center justify-center p-1 bg-white rounded-lg border border-gray-100">
+                  <img
+                    src={CHANNEL_ICONS[mp.code] || '/logo.png'}
+                    alt={mp.name}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="text-sm font-semibold text-gray-700">{mp.name}</span>
               </label>
             ))}
           </div>

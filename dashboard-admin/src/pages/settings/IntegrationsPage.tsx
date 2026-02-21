@@ -109,7 +109,8 @@ export function IntegrationsPage() {
                     code: definedChannel.code,
                     serviceType: 'MARKETPLACE',
                     driverKey: definedChannel.code.toLowerCase(),
-                    active: true
+                    active: true,
+                    enabled: true
                 });
             }
 
@@ -143,7 +144,8 @@ export function IntegrationsPage() {
                         code: channel.code,
                         serviceType: 'MARKETPLACE',
                         driverKey: channel.code.toLowerCase(),
-                        active: true
+                        active: true,
+                        enabled: true
                     });
                 }
                 alert(`${channel.name} conectada com sucesso!`);
