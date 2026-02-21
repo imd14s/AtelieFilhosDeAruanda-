@@ -8,6 +8,7 @@ import com.atelie.ecommerce.api.common.exception.ConflictException;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 import com.atelie.ecommerce.infrastructure.security.TokenProvider;
+import com.atelie.ecommerce.infrastructure.security.UserPrincipal;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -128,65 +129,62 @@ public class AuthService {
     }
 
     @Transactional
-    @SuppressWarnings("unchecked")
     public String googleLogin(GoogleLoginRequest request) {
-        String email = null;
-        String name = null;
+        // Log para diagnóstico
+        System.out.println("[AuthService] Google Login recebido: " + request);
 
-        // 1) Valida o accessToken com a API do Google
-        if (request.getAccessToken() != null && !request.getAccessToken().isBlank()) {
+        // Prioridade: usa os dados já validados pelo frontend via Google /userinfo
+        String email = request.getEmail();
+        String name = request.getName();
+
+        // Fallback secundário: tenta validar via tokeninfo do Google (opcional)
+        if ((email == null || email.isBlank()) && request.getAccessToken() != null) {
             try {
                 RestTemplate rest = new RestTemplate();
                 String url = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=" + request.getAccessToken();
+                @SuppressWarnings("unchecked")
                 ResponseEntity<Map> resp = rest.getForEntity(url, Map.class);
-
                 if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
-                    Map<String, Object> body = resp.getBody();
-                    // Verifica se o token pertence à nossa aplicação (opcional mas recomendado)
-                    email = (String) body.get("email");
-                    name = request.getName() != null ? request.getName() : (String) body.get("name");
+                    email = (String) resp.getBody().get("email");
+                    if (name == null)
+                        name = (String) resp.getBody().get("name");
                 }
             } catch (Exception e) {
-                // Log e continua com os dados do request (caso de ambiente sem internet)
-                System.err.println("[AuthService] Aviso: falha ao validar token Google: " + e.getMessage());
+                System.err.println("[AuthService] Falha ao chamar tokeninfo: " + e.getMessage());
             }
         }
 
-        // 2) Fallback: usa email/name do request (o frontend já validou via /userinfo)
-        if (email == null && request.getEmail() != null && !request.getEmail().isBlank()) {
-            email = request.getEmail();
-            name = request.getName();
-        }
-
-        if (email == null) {
+        if (email == null || email.isBlank()) {
             throw new IllegalArgumentException(
-                    "Não foi possível identificar o usuário Google. Token inválido ou expirado.");
+                    "Email Google não informado. Verifique o payload enviado.");
         }
 
         final String resolvedEmail = email;
         final String resolvedName = name != null ? name : "Usuário Google";
 
-        // 3) Busca ou cria o usuário por e-mail
+        // Busca ou cria o usuário por e-mail
         UserEntity user = userRepository.findByEmail(resolvedEmail).orElseGet(() -> {
             UserEntity newUser = new UserEntity(
                     resolvedName,
                     resolvedEmail,
-                    passwordEncoder.encode("GOOGLE_OAUTH_" + UUID.randomUUID()), // senha inutilizável
+                    passwordEncoder.encode("GOOGLE_OAUTH_" + UUID.randomUUID()),
                     "CUSTOMER");
             newUser.setEmailVerified(true);
             newUser.setActive(true);
             return userRepository.save(newUser);
         });
 
-        // Atualiza o nome caso tenha mudado no Google
+        // Atualiza o nome se mudou no Google
         if (name != null && !name.equals(user.getName())) {
             user.setName(name);
             userRepository.save(user);
         }
 
-        // 4) Gera nosso JWT (pré-autenticado — confiamos no Google)
+        // Gera JWT do sistema usando UserPrincipal (TokenProvider espera UserDetails,
+        // não String)
+        UserPrincipal principal = UserPrincipal.create(user);
         Authentication auth = new UsernamePasswordAuthenticationToken(
-                resolvedEmail, null, Collections.emptyList());
+                principal, null, principal.getAuthorities());
         return tokenProvider.generateToken(auth);
     }
 

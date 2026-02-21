@@ -13,13 +13,20 @@ import App from './App.jsx'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
+const AppTree = () => (
+  <HelmetProvider>
+    <App />
+  </HelmetProvider>
+);
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <HelmetProvider>
+    {GOOGLE_CLIENT_ID ? (
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <App />
+        <AppTree />
       </GoogleOAuthProvider>
-    </HelmetProvider>
+    ) : (
+      <AppTree />
+    )}
   </StrictMode>,
 )
-
