@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { Menu, ShoppingBag, Tag, Megaphone, DollarSign, Star, FileText, User, Users, Settings, ChevronDown } from 'lucide-react';
+import { Menu, ShoppingBag, Tag, Megaphone, DollarSign, Star, FileText, User, Users, Settings, ChevronDown, MessageCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const UserLayout = () => {
@@ -28,6 +28,7 @@ const UserLayout = () => {
 
     const navItems = [
         { label: 'Compras', icon: ShoppingBag, path: '/perfil/compras', hasSub: true },
+        { label: 'Opiniões', icon: MessageCircle, path: '/perfil/opinioes' },
         { label: 'Vendas', icon: Tag, path: '#', hasSub: true },
         { label: 'Marketing', icon: Megaphone, path: '#', hasSub: true },
         { label: 'Empréstimos', icon: DollarSign, path: '#' },

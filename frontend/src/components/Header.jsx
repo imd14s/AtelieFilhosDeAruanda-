@@ -121,7 +121,7 @@ const Header = () => {
                     <Link to="/perfil/compras" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Compras</Link>
                     <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Histórico</Link>
                     <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Perguntas</Link>
-                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Opiniões</Link>
+                    <Link to="/perfil/opinioes" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Opiniões</Link>
 
                     <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Empréstimos</Link>
                     <Link to="/perfil/assinaturas" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Assinaturas</Link>
