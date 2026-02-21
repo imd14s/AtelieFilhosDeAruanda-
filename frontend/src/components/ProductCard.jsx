@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { storeService } from '../services/storeService';
 import { ShoppingBag, Check, Loader2, Heart } from 'lucide-react';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, CheckCircle2, XCircle, Repeat, Package, Settings2, Percent } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle2, XCircle, Repeat, Package, Settings2, Percent } from 'lucide-react';
 import { subscriptionService } from '../../services/subscriptionService';
-import { productService } from '../../services/productService';
+import { ProductService } from '../../services/ProductService';
 import clsx from 'clsx';
 
 export function SubscriptionPlansPage() {
@@ -29,7 +29,7 @@ export function SubscriptionPlansPage() {
 
     const fetchProducts = async () => {
         try {
-            const data = await productService.getProducts();
+            const data = await ProductService.getAll();
             setAvailableProducts(data);
         } catch (error) {
             console.error('Erro ao buscar produtos:', error);
