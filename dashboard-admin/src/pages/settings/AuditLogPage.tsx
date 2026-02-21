@@ -19,7 +19,7 @@ export function AuditLogPage() {
             });
             setLogs(data);
         } catch (error) {
-            console.error('Failed to load logs', error);
+            console.error('Erro ao carregar logs', error);
         } finally {
             setLoading(false);
         }

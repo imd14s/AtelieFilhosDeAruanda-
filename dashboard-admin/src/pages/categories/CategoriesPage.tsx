@@ -22,7 +22,7 @@ export function CategoriesPage() {
             const data = await CategoryService.getAll();
             setCategories(data);
         } catch (error) {
-            console.error('Failed to load categories', error);
+            console.error('Erro ao carregar categorias', error);
         } finally {
             setLoading(false);
         }

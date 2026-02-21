@@ -9,7 +9,7 @@ import { VariantsManager } from '../../components/products/VariantsManager';
 import { MediaGallery } from '../../components/products/MediaGallery';
 import { CreatableCategorySelect } from '../../components/products/CreatableCategorySelect';
 import { ChevronLeft, Save, Plus, Wand2 } from 'lucide-react';
-import type { CreateProductDTO, ProductMedia, ProductVariant } from '../../types/product';
+import type { ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { AdminProviderService } from '../../services/AdminProviderService';
@@ -20,6 +20,10 @@ const schema = z.object({
   category: z.string().min(1, 'Categoria obrigatória'),
   tenantId: z.string(),
   marketplaceIds: z.array(z.string()).optional(),
+  weight: z.number().optional(),
+  height: z.number().optional(),
+  width: z.number().optional(),
+  length: z.number().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -55,7 +59,11 @@ export function ProductForm() {
   const { register, handleSubmit, reset, setValue, getValues, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      tenantId: '1'
+      tenantId: '1',
+      weight: 0,
+      height: 0,
+      width: 0,
+      length: 0,
     }
   });
 
@@ -112,7 +120,11 @@ export function ProductForm() {
         description: product.description || '',
         category: (product as any).categoryId || product.category || '',
         tenantId: product.tenantId || '1',
-        marketplaceIds: product.marketplaceIds || []
+        marketplaceIds: product.marketplaceIds || [],
+        weight: (product as any).weight || product.dimensions?.weight || 0,
+        height: (product as any).height || product.dimensions?.height || 0,
+        width: (product as any).width || product.dimensions?.width || 0,
+        length: (product as any).length || product.dimensions?.length || 0,
       });
       if (product.variants) setVariants(product.variants);
       if (product.media) {
@@ -123,7 +135,7 @@ export function ProductForm() {
       }
       if (product.marketplaceIds) setSelectedMarketplaces(product.marketplaceIds);
     } catch (error) {
-      console.error('Error loading product', error);
+      console.error('Erro ao carregar produto', error);
     }
   };
 
@@ -303,16 +315,20 @@ export function ProductForm() {
       const baseOriginalPrice = variants.length > 0 ? variants[0].originalPrice : undefined;
       const baseStock = variants.reduce((acc, curr) => acc + curr.stock, 0);
 
-      const payload: CreateProductDTO = {
+      const payload: any = {
         ...data,
         category: finalCategoryId,
-        price: basePrice, // Overriding generic input with real values
+        price: basePrice,
         originalPrice: baseOriginalPrice,
         stock: baseStock,
         active: true,
         variants,
         media: sortedMedia,
-        marketplaceIds: selectedMarketplaces
+        marketplaceIds: selectedMarketplaces,
+        weight: data.weight || 0,
+        height: data.height || 0,
+        width: data.width || 0,
+        length: data.length || 0,
       };
 
       if (id) {
@@ -487,7 +503,55 @@ export function ProductForm() {
 
         </div>
 
-        {/* Canais de Vendas (Mantido Original) */}
+        {/* Peso e Dimensões — necessário para cálculo de frete */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <h2 className="font-semibold text-lg text-gray-800 border-b pb-2">Peso e Dimensões</h2>
+          <p className="text-sm text-gray-500">Necessário para o cálculo de frete. Informe os valores da embalagem pronta para envio.</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Peso (g)</label>
+              <input
+                type="number"
+                step="1"
+                {...register('weight', { valueAsNumber: true })}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                placeholder="Ex: 300"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Altura (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                {...register('height', { valueAsNumber: true })}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                placeholder="Ex: 10"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Largura (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                {...register('width', { valueAsNumber: true })}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                placeholder="Ex: 20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                {...register('length', { valueAsNumber: true })}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                placeholder="Ex: 30"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Canais de Vendas */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="font-semibold text-lg text-gray-800 border-b pb-2 mb-4">Canais de Venda</h2>
           <div className="space-y-3">

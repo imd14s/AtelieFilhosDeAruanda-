@@ -5,15 +5,12 @@ export interface UploadResponse {
     url: string;
 }
 
-
-
 export const MediaService = {
     upload: async (file: File, onProgress?: (progress: number) => void): Promise<UploadResponse> => {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('public', 'true'); // Garante que a imagem seja acessível publicamente
+        formData.append('public', 'true');
 
-        // Assumindo endpoint realista conforme padrão
         const { data } = await api.post<UploadResponse>('/media/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             onUploadProgress: (progressEvent) => {
@@ -27,15 +24,10 @@ export const MediaService = {
     },
 
     removeBackground: async (_mediaId: string): Promise<string> => {
-        console.warn('Using Mock AI Remove Background');
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        // Retorna uma imagem com "fundo removido" (mock)
-        return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?bg=removed';
+        throw new Error('COMING_SOON');
     },
 
     generateMockup: async (_mediaId: string, _modelId: string): Promise<string> => {
-        console.warn('Using Mock AI Mockup Generation');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return 'https://images.unsplash.com/photo-1542272617-08f086302542?mockup=generated';
+        throw new Error('COMING_SOON');
     }
 };

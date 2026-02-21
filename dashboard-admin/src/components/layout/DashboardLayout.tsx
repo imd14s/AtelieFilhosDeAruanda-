@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Settings, LogOut, Package, Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X } from 'lucide-react';
 import clsx from 'clsx';
 
 
@@ -15,6 +15,7 @@ interface NavItem {
 export function DashboardLayout() {
   const { logout } = useAuth();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     'Produtos': true,
     'Configurações': true,
@@ -24,6 +25,8 @@ export function DashboardLayout() {
   const toggleExpand = (label: string) => {
     setExpanded(prev => ({ ...prev, [label]: !prev[label] }));
   };
+
+  const closeSidebar = () => setSidebarOpen(false);
 
   const navItems: NavItem[] = [
     { icon: LayoutDashboard, label: 'Resumo', path: '/' },
@@ -71,7 +74,6 @@ export function DashboardLayout() {
 
     if (item.children) {
       const isExpanded = expanded[item.label];
-      // Check if any child is active to highlight parent
       const isChildActive = item.children.some(child => child.path && location.pathname.startsWith(child.path));
 
       return (
@@ -104,6 +106,7 @@ export function DashboardLayout() {
       <Link
         key={item.path}
         to={item.path!}
+        onClick={closeSidebar}
         className={clsx(
           "flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors",
           isActive
@@ -117,29 +120,76 @@ export function DashboardLayout() {
     );
   };
 
+  const sidebarContent = (
+    <>
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {navItems.map(item => renderNavItem(item))}
+      </nav>
+
+      <div className="p-4 border-t">
+        <button
+          onClick={logout}
+          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+        >
+          <LogOut className="w-5 h-5 mr-3" />
+          Sair
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md flex flex-col flex-shrink-0">
+      {/* Mobile Header */}
+      <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b shadow-sm flex items-center justify-between px-4 h-14 md:hidden">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+          aria-label="Abrir menu"
+        >
+          <Menu size={24} />
+        </button>
+        <span className="font-semibold text-gray-800">Painel Admin</span>
+        <div className="w-10" /> {/* Spacer para centralizar título */}
+      </div>
 
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={closeSidebar}
+        />
+      )}
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map(item => renderNavItem(item))}
-        </nav>
+      {/* Sidebar Desktop — sempre visível em md+ */}
+      <aside className="hidden md:flex md:w-64 bg-white shadow-md flex-col flex-shrink-0">
+        {sidebarContent}
+      </aside>
 
-        <div className="p-4 border-t">
+      {/* Mobile Drawer */}
+      <aside
+        className={clsx(
+          "fixed inset-y-0 left-0 w-72 bg-white shadow-xl flex flex-col z-50 transition-transform duration-300 md:hidden",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Mobile close button */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <span className="font-semibold text-gray-800">Menu</span>
           <button
-            onClick={logout}
-            className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+            onClick={closeSidebar}
+            className="p-1 rounded-lg text-gray-500 hover:bg-gray-100 transition"
+            aria-label="Fechar menu"
           >
-            <LogOut className="w-5 h-5 mr-3" />
-            Sair
+            <X size={20} />
           </button>
         </div>
+
+        {sidebarContent}
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-8">
+      <main className="flex-1 overflow-auto p-4 pt-18 md:p-8 md:pt-8">
         <div className="max-w-7xl mx-auto">
           <Outlet />
         </div>

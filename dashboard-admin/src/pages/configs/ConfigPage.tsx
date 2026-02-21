@@ -22,7 +22,7 @@ export function ConfigPage() {
             const data = await ConfigService.getAll();
             setConfigs(data);
         } catch (error) {
-            console.error('Failed to load configs', error);
+            console.error('Erro ao carregar configurações', error);
         } finally {
             setLoading(false);
         }
@@ -34,7 +34,7 @@ export function ConfigPage() {
             await ConfigService.delete(keyToDelete);
             setConfigs(configs.filter(c => c.configKey !== keyToDelete));
         } catch (error) {
-            alert('Erro ao deletar (ver console)');
+            alert('Não foi possível excluir esta configuração. Tente novamente.');
             console.error(error);
         }
     }
@@ -47,7 +47,7 @@ export function ConfigPage() {
             setIsModalOpen(false);
             setConfigKey(''); setConfigValue('');
         } catch (error) {
-            alert('Erro ao salvar (ver console)');
+            alert('Não foi possível salvar. Tente novamente.');
             console.error(error);
         }
     }

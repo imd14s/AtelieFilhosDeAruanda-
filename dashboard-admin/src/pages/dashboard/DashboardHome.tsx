@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AnalyticsService, type DashboardMetrics } from '../../services/AnalyticsService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, ShoppingBag, Package, TrendingUp } from 'lucide-react';
+import { DollarSign, ShoppingBag, Package, TrendingUp, AlertTriangle } from 'lucide-react';
 
 export function DashboardHome() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -48,6 +48,16 @@ export function DashboardHome() {
                 </select>
             </div>
 
+            {/* Aviso de dados indisponíveis */}
+            {!metrics.available && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                    <p className="text-sm text-yellow-800">
+                        <strong>Sem dados no período selecionado.</strong> Os dados aparecerão aqui assim que houver vendas e pedidos registrados na sua loja.
+                    </p>
+                </div>
+            )}
+
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {cards.map((card, index) => (
@@ -65,34 +75,52 @@ export function DashboardHome() {
 
             {/* Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[340px]">
                     <h3 className="font-semibold text-gray-800 mb-4">Vendas por Dia</h3>
-                    <div className="h-64 w-full">
-                        <ResponsiveContainer width="99%" height="100%">
-                            <LineChart data={metrics.salesByDate}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                                <YAxis axisLine={false} tickLine={false} />
-                                <Tooltip />
-                                <Line type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={2} dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {metrics.salesByDate.length > 0 ? (
+                        <div className="h-64 w-full">
+                            <ResponsiveContainer width="99%" height="100%" minWidth={0}>
+                                <LineChart data={metrics.salesByDate}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} />
+                                    <YAxis axisLine={false} tickLine={false} />
+                                    <Tooltip />
+                                    <Line type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={2} dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <div className="h-64 flex items-center justify-center text-gray-400">
+                            <div className="text-center">
+                                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+                                <p className="text-sm">Nenhuma venda registrada neste período</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[340px]">
                     <h3 className="font-semibold text-gray-800 mb-4">Top Produtos</h3>
-                    <div className="h-64 w-full">
-                        <ResponsiveContainer width="99%" height="100%">
-                            <BarChart data={metrics.topProducts} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} />
-                                <Tooltip />
-                                <Bar dataKey="quantity" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {metrics.topProducts.length > 0 ? (
+                        <div className="h-64 w-full">
+                            <ResponsiveContainer width="99%" height="100%" minWidth={0}>
+                                <BarChart data={metrics.topProducts} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} />
+                                    <Tooltip />
+                                    <Bar dataKey="quantity" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <div className="h-64 flex items-center justify-center text-gray-400">
+                            <div className="text-center">
+                                <Package className="w-12 h-12 mx-auto mb-3 text-gray-200" />
+                                <p className="text-sm">Nenhum produto vendido neste período</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

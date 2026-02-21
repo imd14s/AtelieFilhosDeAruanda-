@@ -63,7 +63,7 @@ export function IntegrationsPage() {
 
             setStatuses(newStatuses);
         } catch (error) {
-            console.error('Failed to load data', error);
+            console.error('Erro ao carregar dados', error);
         } finally {
             setLoading(false);
         }
@@ -177,7 +177,7 @@ export function IntegrationsPage() {
             alert(`${count} produtos sincronizados com sucesso!`);
             // Could re-load data here if sync affects status
         } catch (error) {
-            console.error('Failed to sync products', error);
+            console.error('Erro ao sincronizar produtos', error);
             alert('Falha ao sincronizar produtos. Verifique se a integração está ativa.');
         } finally {
             setSyncing(prev => ({ ...prev, [providerCode]: false }));

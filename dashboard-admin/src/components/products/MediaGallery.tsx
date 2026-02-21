@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Upload, X, Wand2 } from 'lucide-react';
 import { MediaService } from '../../services/MediaService';
+import { ComingSoonModal } from '../ui/ComingSoonModal';
 import type { ProductMedia } from '../../types/product';
 
 interface MediaGalleryProps {
@@ -11,6 +12,7 @@ interface MediaGalleryProps {
 export function MediaGallery({ media, onChange }: MediaGalleryProps) {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [showComingSoon, setShowComingSoon] = useState(false);
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -54,10 +56,8 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
         onChange(media.map(m => ({ ...m, isMain: m.id === id })));
     };
 
-    const handleMagicRemoveBg = async (id: string) => {
-        // Exemplo de integração futura com botão de IA
-        const newUrl = await MediaService.removeBackground(id);
-        onChange(media.map(m => m.id === id ? { ...m, url: newUrl } : m));
+    const handleMagicRemoveBg = async (_id: string) => {
+        setShowComingSoon(true);
     };
 
     const getImageUrl = (url: string) => {
@@ -143,6 +143,13 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                     </div>
                 ))}
             </div>
+
+            <ComingSoonModal
+                isOpen={showComingSoon}
+                onClose={() => setShowComingSoon(false)}
+                title="Remoção de Fundo com IA"
+                message="Essa funcionalidade será liberada em uma atualização futura. Em breve você poderá remover o fundo das suas imagens com apenas um clique!"
+            />
         </div>
     );
 }

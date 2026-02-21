@@ -20,7 +20,7 @@ export function CouponList() {
             const data = await MarketingService.getCoupons();
             setCoupons(data);
         } catch (error) {
-            console.error('Failed to load coupons', error);
+            console.error('Erro ao carregar cupons', error);
         } finally {
             setLoading(false);
         }

@@ -20,7 +20,7 @@ export function TeamPage() {
             const data = await UserService.getAll();
             setUsers(data);
         } catch (error) {
-            console.error('Failed to load users', error);
+            console.error('Erro ao carregar usuários', error);
         } finally {
             setLoading(false);
         }
@@ -38,7 +38,7 @@ export function TeamPage() {
             await UserService.delete(id);
             loadUsers();
         } catch (error) {
-            console.error('Failed to delete user', error);
+            console.error('Erro ao excluir usuário', error);
             alert('Erro ao excluir usuário.');
         }
     };
@@ -56,7 +56,7 @@ export function TeamPage() {
             setIsEditMode(false);
             loadUsers();
         } catch (error) {
-            console.error('Failed to save user', error);
+            console.error('Erro ao salvar usuário', error);
             alert(`Erro ao ${isEditMode ? 'atualizar' : 'criar'} usuário.`);
         }
     };
