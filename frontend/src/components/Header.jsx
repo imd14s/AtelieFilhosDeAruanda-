@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, User, Menu, X, LogOut } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut, ChevronDown, ChevronRight } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { storeService } from '../services/storeService'; // Nova importação
 import CartDrawer from './CartDrawer';
@@ -83,11 +83,13 @@ const Header = () => {
           <div className="flex items-center justify-end gap-2 md:gap-6 md:w-1/3">
             <div className="hidden md:flex items-center gap-5 text-[var(--azul-profundo)]">
               {user ? (
-                <div className="flex items-center gap-3 border-r pr-5 border-[var(--azul-profundo)]/10">
-                  <Link to="/perfil" className="flex items-center gap-3 group transition-all">
+                <div className="relative group border-r pr-5 border-[var(--azul-profundo)]/10 flex items-center h-full">
+                  <div className="flex items-center gap-3 cursor-pointer py-4">
                     <div className="text-right">
                       <p className="font-lato text-[9px] uppercase tracking-widest text-[var(--dourado-suave)] group-hover:text-[var(--azul-profundo)] transition-colors">Axé</p>
-                      <p className="font-playfair text-xs font-bold leading-none group-hover:text-[#C9A24D] transition-colors line-clamp-1 max-w-[100px]">{user.name || 'Membro'}</p>
+                      <p className="font-playfair text-xs font-bold leading-none group-hover:text-[#C9A24D] transition-colors line-clamp-1 max-w-[100px] flex items-center gap-1">
+                        {user.name || 'Membro'} <ChevronDown size={14} className="opacity-50" />
+                      </p>
                     </div>
                     {user.photoURL ? (
                       <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-[var(--dourado-suave)] shadow-sm" />
@@ -96,10 +98,46 @@ const Header = () => {
                         {user.name ? user.name.charAt(0).toUpperCase() : 'M'}
                       </div>
                     )}
-                  </Link>
-                  <button onClick={handleLogout} title="Sair" className="text-[var(--azul-profundo)]/40 hover:text-red-800 transition-colors ml-2">
-                    <LogOut size={16} />
-                  </button>
+                  </div>
+
+                  {/* Dropdown Menu Meli Style */}
+                  <div className="absolute top-full right-5 mt-[-8px] w-72 bg-white rounded-md shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+                      {user.photoURL ? (
+                        <img src={user.photoURL} alt={user.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-xl">
+                          {user.name ? user.name.charAt(0).toUpperCase() : 'M'}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold text-gray-800 text-base">{user.name}</p>
+                        <Link to="/perfil" className="text-sm text-blue-500 hover:text-blue-600 flex items-center">
+                          Meu perfil <ChevronRight size={14} className="ml-1" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    <Link to="/perfil/compras" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Compras</Link>
+                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Histórico</Link>
+                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Perguntas</Link>
+                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Opiniões</Link>
+
+                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Empréstimos</Link>
+                    <Link to="/perfil/assinaturas" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Assinaturas</Link>
+                    <Link to="#" className="flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                      Ateliê Play <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">GRÁTIS</span>
+                    </Link>
+                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Faturamento</Link>
+
+                    <Link to="#" className="flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">
+                      Afiliados e criadores <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-widest">GANHE $</span>
+                    </Link>
+
+                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Vender</Link>
+
+                    <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors rounded-b-md">Sair</button>
+                  </div>
                 </div>
               ) : (
                 <button onClick={() => setIsAuthOpen(true)} className="flex items-center gap-2 hover:text-[var(--dourado-suave)] transition-all">

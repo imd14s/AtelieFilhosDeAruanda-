@@ -11,6 +11,9 @@ import EthicsPage from "./pages/EthicsPage";
 import ShopPage from "./pages/ShopPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
+import OrdersPage from "./pages/OrdersPage";
+import SubscriptionsPage from "./pages/SubscriptionsPage";
+import UserLayout from "./pages/UserLayout";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -33,7 +36,13 @@ function App() {
 
             <Route path="/categoria/:slug" element={<CategoryPage />} />
             <Route path="/produto/:id" element={<ProductPage />} />
-            <Route path="/perfil" element={<ProfilePage />} />
+
+            {/* Rotas de Conta do Usuário */}
+            <Route path="/perfil" element={<UserLayout />}>
+              <Route index element={<ProfilePage />} />
+              <Route path="compras" element={<OrdersPage />} />
+              <Route path="assinaturas" element={<SubscriptionsPage />} />
+            </Route>
 
             {/* Rota 404 */}
             <Route
