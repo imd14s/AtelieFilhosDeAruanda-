@@ -16,6 +16,7 @@ import SubscriptionsPage from "./pages/SubscriptionsPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import QuestionsPage from "./pages/QuestionsPage";
 import HistoryPage from "./pages/HistoryPage";
+import FavoritesPage from "./pages/FavoritesPage";
 import UserLayout from "./pages/UserLayout";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -48,6 +49,7 @@ function App() {
               <Route path="opinioes" element={<ReviewsPage />} />
               <Route path="perguntas" element={<QuestionsPage />} />
               <Route path="historico" element={<HistoryPage />} />
+              <Route path="favoritos" element={<FavoritesPage />} />
             </Route>
 
             {/* Rota 404 */}

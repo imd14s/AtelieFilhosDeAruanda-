@@ -29,13 +29,8 @@ const UserLayout = () => {
     const navItems = [
         { label: 'Compras', icon: ShoppingBag, path: '/perfil/compras', hasSub: true },
         { label: 'Opiniões', icon: MessageCircle, path: '/perfil/opinioes' },
-        { label: 'Vendas', icon: Tag, path: '#', hasSub: true },
-        { label: 'Marketing', icon: Megaphone, path: '#', hasSub: true },
-        { label: 'Empréstimos', icon: DollarSign, path: '#' },
         { label: 'Assinaturas', icon: Star, path: '/perfil/assinaturas' },
-        { label: 'Faturamento', icon: FileText, path: '#', hasSub: true },
         { label: 'Meu perfil', icon: User, path: '/perfil', exact: true },
-        { label: 'Afiliados e criadores', icon: Users, path: '#' },
         { label: 'Configurações', icon: Settings, path: '#', hasSub: true },
     ];
 

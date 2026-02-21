@@ -121,20 +121,10 @@ const Header = () => {
                     <Link to="/perfil/compras" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Compras</Link>
                     <Link to="/perfil/historico" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Histórico</Link>
                     <Link to="/perfil/perguntas" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Perguntas</Link>
-                    <Link to="/perfil/opinioes" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Opiniões</Link>
+                    <Link to="/perfil/opinioes" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Opiniões</Link>
+                    <Link to="/perfil/favoritos" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Favoritos</Link>
 
-                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Empréstimos</Link>
-                    <Link to="/perfil/assinaturas" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Assinaturas</Link>
-                    <Link to="#" className="flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                      Ateliê Play <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">GRÁTIS</span>
-                    </Link>
-                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Faturamento</Link>
-
-                    <Link to="#" className="flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">
-                      Afiliados e criadores <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-widest">GANHE $</span>
-                    </Link>
-
-                    <Link to="#" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Vender</Link>
+                    <Link to="/perfil/assinaturas" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">Assinaturas</Link>
 
                     <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors rounded-b-md">Sair</button>
                   </div>
