@@ -4,13 +4,18 @@ import { AdminProviderService } from '../../services/AdminProviderService';
 import { MercadoPagoForm } from './components/MercadoPagoForm';
 import type { AdminServiceProvider, MercadoPagoConfig } from '../../types/store-settings';
 
+const RECOMMENDED_PAYMENT_PROVIDERS = [
+    { name: 'Mercado Pago', code: 'MERCADO_PAGO', driverKey: 'payment.mercadopago', icon: '🔵', desc: 'Cartão de Crédito, PIX e Boleto' },
+    { name: 'PIX Direto', code: 'PIX_NATIVO', driverKey: 'payment.pix', icon: '💎', desc: 'Transferência instantânea sem taxas MP' },
+];
+
 export function PaymentPage() {
     const [providers, setProviders] = useState<AdminServiceProvider[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingProvider, setEditingProvider] = useState<AdminServiceProvider | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newProvider, setNewProvider] = useState({ name: '', code: '' });
+    const [newProvider, setNewProvider] = useState({ name: '', code: '', driverKey: '' });
 
     useEffect(() => {
         loadData();
@@ -52,7 +57,7 @@ export function PaymentPage() {
     };
 
     const handleAddProvider = async () => {
-        if (!newProvider.name || !newProvider.code) return;
+        if (!newProvider.name || !newProvider.code || !newProvider.driverKey) return;
         try {
             await AdminProviderService.createProvider({
                 ...newProvider,
@@ -62,7 +67,7 @@ export function PaymentPage() {
                 healthEnabled: true
             });
             setIsAddModalOpen(false);
-            setNewProvider({ name: '', code: '' });
+            setNewProvider({ name: '', code: '', driverKey: '' });
             loadData();
         } catch (err) {
             alert('Erro ao criar provedor.');
@@ -213,27 +218,61 @@ export function PaymentPage() {
                                 <X size={20} />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold text-gray-600">Nome Amigável</label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: Mercado Pago - Principal"
-                                    className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                                    value={newProvider.name}
-                                    onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
-                                />
+                        <div className="p-6 space-y-6">
+                            <div className="grid grid-cols-1 gap-3">
+                                {RECOMMENDED_PAYMENT_PROVIDERS.map(p => (
+                                    <button
+                                        key={p.code}
+                                        onClick={() => setNewProvider({ name: p.name, code: p.code, driverKey: p.driverKey })}
+                                        className={`p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${newProvider.code === p.code
+                                            ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold'
+                                            : 'border-gray-100 hover:border-blue-200 bg-gray-50'
+                                            }`}
+                                    >
+                                        <span className="text-3xl">{p.icon}</span>
+                                        <div>
+                                            <div className="text-[14px]">{p.name}</div>
+                                            <div className="text-[10px] opacity-60 font-medium">{p.desc}</div>
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold text-gray-600">Código (Slug)</label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: MERCADO_PAGO"
-                                    className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono"
-                                    value={newProvider.code}
-                                    onChange={e => setNewProvider({ ...newProvider, code: e.target.value.toUpperCase() })}
-                                />
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest">Deve corresponder ao driver no backend</p>
+
+                            <div className="space-y-4 pt-4 border-t border-dashed">
+                                <div className="space-y-1">
+                                    <label className="text-sm font-semibold text-gray-600">Nome Amigável</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: Mercado Pago - Principal"
+                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newProvider.name}
+                                        onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-semibold text-gray-600">Código de Serviço</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: MERCADO_PAGO"
+                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono"
+                                        value={newProvider.code}
+                                        onChange={e => {
+                                            const code = e.target.value.toUpperCase();
+                                            const driverKey = code === 'MERCADO_PAGO' ? 'payment.mercadopago' : `payment.${code.toLowerCase()}`;
+                                            setNewProvider({ ...newProvider, code, driverKey });
+                                        }}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-semibold text-gray-600">Driver Key</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: payment.mercadopago"
+                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                                        value={newProvider.driverKey}
+                                        onChange={e => setNewProvider({ ...newProvider, driverKey: e.target.value })}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <div className="p-6 bg-gray-50 flex gap-3">
@@ -245,10 +284,10 @@ export function PaymentPage() {
                             </button>
                             <button
                                 onClick={handleAddProvider}
-                                disabled={!newProvider.name || !newProvider.code}
+                                disabled={!newProvider.name || !newProvider.code || !newProvider.driverKey}
                                 className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-100 transition active:scale-95"
                             >
-                                Criar Provedor
+                                Ativar Provedor
                             </button>
                         </div>
                     </div>

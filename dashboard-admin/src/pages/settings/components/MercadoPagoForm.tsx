@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Globe, Webhook, Zap, CreditCard, User, Settings, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, Globe, Webhook, Zap, CreditCard, User, Settings, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Check } from 'lucide-react';
 import type { MercadoPagoConfig } from '../../../types/store-settings';
 
 interface Props {
@@ -60,7 +60,7 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
         }
     });
 
-    const [activeSection, setActiveSection] = useState<string | null>('id');
+    const [activeSection, setActiveSection] = useState<string | null>('creds');
 
     const toggleSection = (id: string) => setActiveSection(activeSection === id ? null : id);
 
@@ -84,198 +84,115 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
 
     return (
         <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            {/* 1. Identification */}
-            <SectionHeader id="id" icon={Globe} title="1. Identificação" desc="Dados gerais do conector" />
-            {activeSection === 'id' && (
-                <div className="p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-4 border-b">
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-600">Nome do Conector</label>
-                        <input
-                            type="text"
-                            className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={config.identification.name}
-                            onChange={e => setConfig({ ...config, identification: { ...config.identification, name: e.target.value } })}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-600">Moeda & Mercado</label>
-                        <div className="flex gap-2">
-                            <select
-                                className="w-1/2 border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                value={config.identification.currency}
-                                onChange={e => setConfig({ ...config, identification: { ...config.identification, currency: e.target.value as any } })}
-                            >
-                                <option value="BRL">BRL (Real)</option>
-                                <option value="USD">USD (Dólar)</option>
-                            </select>
-                            <input
-                                type="text"
-                                placeholder="Mercado (ex: BR)"
-                                className="w-1/2 border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase"
-                                value={config.identification.market}
-                                onChange={e => setConfig({ ...config, identification: { ...config.identification, market: e.target.value } })}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 2. Credentials */}
-            <SectionHeader id="creds" icon={Shield} title="2. Credenciais" desc="Chaves de API para Produção" />
+            {/* 1. Credenciais - O mais importante */}
+            <SectionHeader id="creds" icon={Shield} title="1. Chaves de Integração" desc="Insira suas credenciais do Mercado Pago" />
             {activeSection === 'creds' && (
                 <div className="p-6 bg-white space-y-4 border-b">
+                    <div className="bg-blue-50 p-4 rounded-xl flex gap-3 items-start border border-blue-100">
+                        <AlertCircle size={20} className="text-blue-500 shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-700 leading-relaxed">
+                            Você encontra estas chaves no seu **Painel do Mercado Pago** em
+                            Configurações {' > '} Credenciais de Produção.
+                        </p>
+                    </div>
                     <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-600">Access Token <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-bold text-gray-700">Access Token (Chave Secreta)</label>
                         <input
                             type="password"
-                            className="w-full border p-2 rounded-lg font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full border p-3 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 outline-none"
                             placeholder="APP_USR-..."
                             value={config.credentials.accessToken}
                             onChange={e => setConfig({ ...config, credentials: { ...config.credentials, accessToken: e.target.value } })}
                         />
-                        <p className="text-[10px] text-gray-400">Usado pelo backend para processar pagamentos.</p>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-600">Public Key <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-bold text-gray-700">Public Key (Chave Pública)</label>
                         <input
                             type="text"
-                            className="w-full border p-2 rounded-lg font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full border p-3 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 outline-none"
                             placeholder="APP_USR-..."
                             value={config.credentials.publicKey}
                             onChange={e => setConfig({ ...config, credentials: { ...config.credentials, publicKey: e.target.value } })}
                         />
-                        <p className="text-[10px] text-gray-400">Usada no frontend para tokenização segura.</p>
                     </div>
                 </div>
             )}
 
-            {/* 3. Webhooks */}
-            <SectionHeader id="web" icon={Webhook} title="3. Webhooks" desc="Notificações em tempo real" />
-            {activeSection === 'web' && (
-                <div className="p-6 bg-white space-y-4 border-b">
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-600">URL do Webhook</label>
-                        <input
-                            type="text"
-                            className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={config.webhooks.url}
-                            onChange={e => setConfig({ ...config, webhooks: { ...config.webhooks, url: e.target.value } })}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-600">Secret de Assinatura</label>
-                        <input
-                            type="password"
-                            className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={config.webhooks.secret}
-                            onChange={e => setConfig({ ...config, webhooks: { ...config.webhooks, secret: e.target.value } })}
-                        />
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                        <input
-                            type="checkbox"
-                            checked={config.webhooks.validateSignature}
-                            onChange={e => setConfig({ ...config, webhooks: { ...config.webhooks, validateSignature: e.target.checked } })}
-                        />
-                        <span className="text-sm text-gray-600">Ativar validação por assinatura</span>
-                    </div>
-                </div>
-            )}
-
-            {/* 4. Discovery & Methods */}
-            <SectionHeader id="methods" icon={Zap} title="4. Métodos & Descoberta" desc="Configurações por meio de pagamento" />
+            {/* 2. Métodos de Pagamento */}
+            <SectionHeader id="methods" icon={Zap} title="2. O que aceitar na loja?" desc="Ative ou desative as opções de pagamento" />
             {activeSection === 'methods' && (
                 <div className="p-6 bg-white space-y-6 border-b">
-                    <button className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed rounded-lg text-blue-600 font-semibold hover:bg-blue-50 transition">
-                        <RefreshCw size={16} /> Sincronizar métodos disponíveis (API/v1)
-                    </button>
-
-                    {/* Cartão */}
-                    <div className="border rounded-xl p-4 space-y-4">
-                        <div className="flex justify-between items-center border-b pb-2">
-                            <div className="flex items-center gap-2">
-                                <CreditCard size={18} className="text-blue-500" />
-                                <h5 className="font-bold text-gray-700">Cartão (Brick / Transparente)</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Pix */}
+                        <div className={`p-5 rounded-2xl border-2 transition-all cursor-pointer ${config.methods.enabled.pix.active ? 'border-green-500 bg-green-50' : 'border-gray-100 bg-gray-50'}`}
+                            onClick={() => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, active: !config.methods.enabled.pix.active } } } })}
+                        >
+                            <div className="flex justify-between items-center mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-green-500 italic font-black">PIX</div>
+                                    <span className="font-bold text-gray-800">Aceitar PIX</span>
+                                </div>
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${config.methods.enabled.pix.active ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+                                    {config.methods.enabled.pix.active && <Check size={14} className="text-white" />}
+                                </div>
                             </div>
-                            <input
-                                type="checkbox"
-                                checked={config.methods.enabled.card.active}
-                                onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, active: e.target.checked } } } })}
-                            />
+                            <p className="text-[11px] text-gray-500">Liberação instantânea do pedido após o pagamento.</p>
                         </div>
-                        {config.methods.enabled.card.active && (
+
+                        {/* Cartão */}
+                        <div className={`p-5 rounded-2xl border-2 transition-all cursor-pointer ${config.methods.enabled.card.active ? 'border-blue-500 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}
+                            onClick={() => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, active: !config.methods.enabled.card.active } } } })}
+                        >
+                            <div className="flex justify-between items-center mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-500">
+                                        <CreditCard size={20} />
+                                    </div>
+                                    <span className="font-bold text-gray-800">Aceitar Cartão</span>
+                                </div>
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${config.methods.enabled.card.active ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                                    {config.methods.enabled.card.active && <Check size={14} className="text-white" />}
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-gray-500">Parcelamento em até {config.methods.enabled.card.maxInstallments}x.</p>
+                        </div>
+                    </div>
+
+                    {config.methods.enabled.card.active && (
+                        <div className="bg-gray-50 p-4 rounded-xl space-y-3 border">
+                            <h5 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Configurações de Parcelamento</h5>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs text-gray-500">Máx. Parcelas</label>
-                                    <input type="number" className="w-full border p-1 rounded" value={config.methods.enabled.card.maxInstallments} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, maxInstallments: Number(e.target.value) } } } })} />
+                                    <label className="text-xs font-medium text-gray-600 block mb-1">Máx. Parcelas</label>
+                                    <select className="w-full border p-2 rounded-lg" value={config.methods.enabled.card.maxInstallments} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, maxInstallments: Number(e.target.value) } } } })}>
+                                        {[1, 2, 3, 4, 5, 6, 10, 12].map(n => <option key={n} value={n}>{n}x</option>)}
+                                    </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500">Sem juros até</label>
-                                    <input type="number" className="w-full border p-1 rounded" value={config.methods.enabled.card.interestFree} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, interestFree: Number(e.target.value) } } } })} />
+                                    <label className="text-xs font-medium text-gray-600 block mb-1">Sem juros até</label>
+                                    <select className="w-full border p-2 rounded-lg" value={config.methods.enabled.card.interestFree} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, interestFree: Number(e.target.value) } } } })}>
+                                        {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}x</option>)}
+                                    </select>
                                 </div>
                             </div>
-                        )}
-                    </div>
-
-                    {/* Pix */}
-                    <div className="border rounded-xl p-4 space-y-4">
-                        <div className="flex justify-between items-center border-b pb-2">
-                            <div className="flex items-center gap-2">
-                                <Zap size={18} className="text-green-500" />
-                                <h5 className="font-bold text-gray-700">PIX (Nativo Mercado Pago)</h5>
-                            </div>
-                            <input
-                                type="checkbox"
-                                checked={config.methods.enabled.pix.active}
-                                onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, active: e.target.checked } } } })}
-                            />
                         </div>
-                        {config.methods.enabled.pix.active && (
-                            <div>
-                                <label className="text-xs text-gray-500">Expiração (minutos)</label>
-                                <input type="number" className="w-full border p-1 rounded" value={config.methods.enabled.pix.expirationMinutes} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, expirationMinutes: Number(e.target.value) } } } })} />
-                            </div>
-                        )}
-                    </div>
+                    )}
                 </div>
             )}
 
-            {/* 5. Global Rules */}
-            <SectionHeader id="config" icon={Settings} title="5. Regras Globais" desc="Idempotência e Comportamento" />
-            {activeSection === 'config' && (
-                <div className="p-6 bg-white space-y-4 border-b">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Idempotência habilitada</span>
-                        <input
-                            type="checkbox"
-                            checked={config.globalRules.idempotency}
-                            onChange={e => setConfig({ ...config, globalRules: { ...config.globalRules, idempotency: e.target.checked } })}
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-sm text-gray-500">Estratégia</label>
-                        <select className="w-full border p-2 rounded-lg" value={config.globalRules.strategy}>
-                            <option value="uuid_per_attempt">uuid_per_attempt (Recomendado)</option>
-                        </select>
-                    </div>
-                </div>
-            )}
-
-            {/* 6. Payer Data */}
-            <SectionHeader id="payer" icon={User} title="6. Dados do Pagador" desc="Campos exigidos no seu Checkout" />
-            {activeSection === 'payer' && (
-                <div className="p-6 bg-white space-y-4 border-b">
-                    <div className="space-y-1">
-                        <label className="text-sm text-gray-500">Documento (CPF/CNPJ)</label>
-                        <select
-                            className="w-full border p-2 rounded-lg"
-                            value={config.payerData.document}
-                            onChange={e => setConfig({ ...config, payerData: { ...config.payerData, document: e.target.value as any } })}
-                        >
-                            <option value="required">Obrigatório</option>
-                            <option value="optional">Opcional</option>
-                            <option value="none">Não solicitar</option>
-                        </select>
+            {/* 3. Configurações Avançadas (Escondidas por padrão) */}
+            <SectionHeader id="advanced" icon={Settings} title="3. Configurações Técnicas" desc="Webhooks e Identificação (Opcional)" />
+            {activeSection === 'advanced' && (
+                <div className="p-6 bg-white space-y-6 border-b">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-500">Nome Amigável</label>
+                            <input type="text" className="w-full border p-2 rounded-lg text-sm" value={config.identification.name} onChange={e => setConfig({ ...config, identification: { ...config.identification, name: e.target.value } })} />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-gray-500">URL de Notificação (Webhook)</label>
+                            <input type="text" className="w-full border p-2 rounded-lg text-sm" placeholder="https://..." value={config.webhooks.url} onChange={e => setConfig({ ...config, webhooks: { ...config.webhooks, url: e.target.value } })} />
+                        </div>
                     </div>
                 </div>
             )}
