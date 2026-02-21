@@ -54,6 +54,7 @@ export function DashboardLayout() {
       label: 'Marketing',
       children: [
         { icon: Mail, label: 'Campanhas', path: '/marketing/campaigns' },
+        { icon: Users, label: 'Assinantes', path: '/marketing/subscribers' },
         { icon: Ticket, label: 'Cupons', path: '/marketing/coupons' },
         { icon: Mail, label: 'Recuperação', path: '/marketing/abandoned-cart' },
       ]
@@ -69,6 +70,7 @@ export function DashboardLayout() {
       children: [
         { icon: Zap, label: 'IA', path: '/settings/ai' },
         { icon: Plug, label: 'Integrações', path: '/settings/integrations' },
+        { icon: Users, label: 'Usuários (LGPD)', path: '/settings/users' },
         { icon: Users, label: 'Equipe', path: '/settings/team' },
         { icon: Shield, label: 'Auditoria', path: '/settings/audit' },
         { icon: Truck, label: 'Frete', path: '/settings/shipping' },

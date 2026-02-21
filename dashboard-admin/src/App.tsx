@@ -20,6 +20,8 @@ import { AutomationsPage } from './pages/marketing/AutomationsPage';
 import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 import { CategoriesPage } from './pages/categories/CategoriesPage';
 import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage';
+import { SubscribersPage } from './pages/marketing/SubscribersPage';
+import { UsersPage } from './pages/settings/UsersPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 console.log('App initialization - Routes loaded');
@@ -52,9 +54,11 @@ function AppRoutes() {
         <Route path="/settings/stock-alerts" element={<StockAlertPage />} />
         <Route path="/marketing/coupons" element={<CouponList />} />
         <Route path="/marketing/campaigns" element={<CampaignsPage />} />
+        <Route path="/marketing/subscribers" element={<SubscribersPage />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
         <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
         <Route path="/automations" element={<AutomationsPage />} />
+        <Route path="/settings/users" element={<UsersPage />} />
         <Route path="/settings/integrations" element={<IntegrationsPage />} />
       </Route>
     </Routes>

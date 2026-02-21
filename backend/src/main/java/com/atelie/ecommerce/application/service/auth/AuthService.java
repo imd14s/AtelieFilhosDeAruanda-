@@ -31,6 +31,7 @@ public class AuthService {
     private final TokenProvider tokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final EmailQueueRepository emailQueueRepository;
 
     private final com.atelie.ecommerce.application.service.audit.AuditService auditService;
 
@@ -38,41 +39,39 @@ public class AuthService {
             TokenProvider tokenProvider,
             PasswordEncoder passwordEncoder,
             UserRepository userRepository,
+            EmailQueueRepository emailQueueRepository,
             com.atelie.ecommerce.application.service.audit.AuditService auditService) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
+        this.emailQueueRepository = emailQueueRepository;
         this.auditService = auditService;
     }
 
     public String login(LoginRequest request) {
+        UserEntity user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
+                        "Usuário não encontrado."));
+
+        if (!user.getEmailVerified()) {
+            throw new com.atelie.ecommerce.api.common.exception.BusinessException(
+                    "Por favor, verifique seu e-mail antes de realizar o login.");
+        }
+
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         String token = tokenProvider.generateToken(auth);
 
-        // Audit logic could strictly fail if user details are missing, but here we
-        // expect them present
         try {
-            // We need to manually set the context because the request thread (controller)
-            // might not have it populated from the token yet (since we just generated it).
-            // Actually, 'auth' variable HAS the principal.
-            // But AuditService looks at SecurityContextHolder.
-            // So we set it temporarily or pass info to AuditService.
-            // Ideally AuditService should accept 'UserPrincipal' as argument too.
-            // But for now, let's just set the security context if it's empty, or just rely
-            // on 'auth' being passed?
-            // No, AuditService.log() gets from Context.
-            // Let's set context momentarily.
             SecurityContextHolder.getContext().setAuthentication(auth);
             auditService.log(
                     com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.LOGIN,
                     com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.USER,
-                    request.getEmail(), // Resource ID is email for login
+                    request.getEmail(),
                     "Login realizado com sucesso via email/senha");
         } catch (Exception e) {
-            // Do not fail login if audit fails
             System.err.println("Failed to audit login: " + e.getMessage());
         }
 
@@ -98,8 +97,14 @@ public class AuthService {
 
         userRepository.save(newUser);
 
-        // Simulating Email Sending
-        System.out.println(">>> EMAIL SIMULATOR: Send verification code " + code + " to " + request.getEmail());
+        // REAL Email Queue sending
+        EmailQueue email = new EmailQueue();
+        email.setRecipient(request.getEmail());
+        email.setSubject("Verifique seu e-mail - Ateliê Filhos de Aruanda");
+        email.setContent("<h1>Bem-vindo!</h1><p>Seu código de verificação é: <strong>" + code + "</strong></p>");
+        email.setType("VERIFICATION");
+        email.setPriority(EmailQueue.EmailPriority.HIGH);
+        emailQueueRepository.save(email);
     }
 
     @Transactional

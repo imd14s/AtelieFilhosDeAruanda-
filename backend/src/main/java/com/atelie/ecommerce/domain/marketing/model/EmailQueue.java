@@ -49,6 +49,9 @@ public class EmailQueue {
     @Column(name = "last_error")
     private String lastError;
 
+    @Column(name = "campaign_id")
+    private UUID campaignId;
+
     public enum EmailPriority {
         LOW, MEDIUM, HIGH
     }

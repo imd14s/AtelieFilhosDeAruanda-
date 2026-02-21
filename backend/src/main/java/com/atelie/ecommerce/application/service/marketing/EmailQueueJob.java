@@ -2,30 +2,37 @@ package com.atelie.ecommerce.application.service.marketing;
 
 import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
+import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailCampaignRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class EmailQueueJob {
 
     private static final Logger log = LoggerFactory.getLogger(EmailQueueJob.class);
-    private static final int DAILY_LIMIT = 450; // Targeted for Gmail 500 limit
+    private static final int DAILY_LIMIT = 450;
     private static final int BATCH_SIZE = 20;
 
     private final EmailQueueRepository emailQueueRepository;
     private final EmailService emailService;
+    private final EmailCampaignRepository campaignRepository;
 
-    public EmailQueueJob(EmailQueueRepository emailQueueRepository, EmailService emailService) {
+    public EmailQueueJob(EmailQueueRepository emailQueueRepository, EmailService emailService,
+            EmailCampaignRepository campaignRepository) {
         this.emailQueueRepository = emailQueueRepository;
         this.emailService = emailService;
+        this.campaignRepository = campaignRepository;
     }
 
-    @Scheduled(fixedDelay = 60000) // Runs every minute
+    @Scheduled(fixedDelay = 60000)
+    @Transactional
     public void processQueue() {
         LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         long sentToday = emailQueueRepository.countByStatusAndSentAtAfter(EmailQueue.EmailStatus.SENT, today);
@@ -44,15 +51,19 @@ public class EmailQueueJob {
             return;
         }
 
-        log.info("Processing {} emails from queue. Daily quota used: {}/{}", Math.min(pendingEmails.size(), limit),
-                sentToday, DAILY_LIMIT);
+        int count = Math.min(pendingEmails.size(), limit);
+        log.info("Processing {} emails from queue. Daily quota used: {}/{}", count, sentToday, DAILY_LIMIT);
 
-        for (int i = 0; i < Math.min(pendingEmails.size(), limit); i++) {
+        for (int i = 0; i < count; i++) {
             EmailQueue email = pendingEmails.get(i);
             try {
                 emailService.sendEmail(email);
                 email.setStatus(EmailQueue.EmailStatus.SENT);
                 email.setSentAt(LocalDateTime.now());
+
+                if (email.getCampaignId() != null) {
+                    updateCampaignProgress(email.getCampaignId());
+                }
             } catch (Exception e) {
                 log.error("Failed to send email to {}: {}", email.getRecipient(), e.getMessage());
                 email.setRetryCount(email.getRetryCount() + 1);
@@ -63,12 +74,25 @@ public class EmailQueueJob {
             }
             emailQueueRepository.save(email);
 
-            // Small delay to avoid triggering spam filters (throttling)
+            // Small delay to avoid triggering spam filters
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
+                break;
             }
         }
+    }
+
+    private void updateCampaignProgress(UUID campaignId) {
+        campaignRepository.findById(campaignId).ifPresent(campaign -> {
+            long totalSent = emailQueueRepository.countByCampaignIdAndStatus(campaignId, EmailQueue.EmailStatus.SENT);
+            campaign.setSentCount((int) totalSent);
+
+            if (totalSent >= campaign.getTotalRecipients()) {
+                campaign.setStatus(com.atelie.ecommerce.domain.marketing.model.EmailCampaign.CampaignStatus.COMPLETED);
+            }
+            campaignRepository.save(campaign);
+        });
     }
 }
