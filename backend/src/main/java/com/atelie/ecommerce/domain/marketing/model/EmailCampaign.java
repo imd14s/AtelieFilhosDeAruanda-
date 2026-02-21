@@ -39,6 +39,9 @@ public class EmailCampaign {
     @Column(name = "audience")
     private String audience; // ALL_CUSTOMERS, NEWSLETTER_SUBSCRIBERS, TEST
 
+    @Column(name = "signature_id")
+    private UUID signatureId;
+
     @Column(name = "scheduled_at")
     private LocalDateTime scheduledAt;
 

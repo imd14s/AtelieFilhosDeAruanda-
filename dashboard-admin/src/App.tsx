@@ -21,6 +21,7 @@ import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 import { CategoriesPage } from './pages/categories/CategoriesPage';
 import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage';
 import { SubscribersPage } from './pages/marketing/SubscribersPage';
+import { SignaturesPage } from './pages/marketing/SignaturesPage';
 import { UsersPage } from './pages/settings/UsersPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="/marketing/coupons" element={<CouponList />} />
         <Route path="/marketing/campaigns" element={<CampaignsPage />} />
         <Route path="/marketing/subscribers" element={<SubscribersPage />} />
+        <Route path="/marketing/signatures" element={<SignaturesPage />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
         <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
         <Route path="/automations" element={<AutomationsPage />} />

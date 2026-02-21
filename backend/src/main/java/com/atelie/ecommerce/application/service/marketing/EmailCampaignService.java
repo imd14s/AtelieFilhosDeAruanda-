@@ -21,15 +21,18 @@ public class EmailCampaignService {
     private final EmailQueueRepository emailQueueRepository;
     private final NewsletterSubscriberRepository subscriberRepository;
     private final UserRepository userRepository;
+    private final EmailSignatureService signatureService;
 
     public EmailCampaignService(EmailCampaignRepository campaignRepository,
             EmailQueueRepository emailQueueRepository,
             NewsletterSubscriberRepository subscriberRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            EmailSignatureService signatureService) {
         this.campaignRepository = campaignRepository;
         this.emailQueueRepository = emailQueueRepository;
         this.subscriberRepository = subscriberRepository;
         this.userRepository = userRepository;
+        this.signatureService = signatureService;
     }
 
     @Transactional
@@ -66,12 +69,28 @@ public class EmailCampaignService {
         campaign.setStatus(EmailCampaign.CampaignStatus.SENDING);
         campaignRepository.save(campaign);
 
+        // Fetch signature if present
+        String signatureHtml = "";
+        if (campaign.getSignatureId() != null) {
+            try {
+                EmailSignature sig = signatureService.findById(campaign.getSignatureId());
+                signatureHtml = signatureService.generateHtml(sig);
+            } catch (Exception e) {
+                // Ignore if signature not found, or use a default
+            }
+        }
+
+        String finalContent = campaign.getContent();
+        if (!signatureHtml.isEmpty()) {
+            finalContent += "<br><br>" + signatureHtml;
+        }
+
         // Enqueue emails
         for (String recipient : recipients) {
             EmailQueue email = new EmailQueue();
             email.setRecipient(recipient);
             email.setSubject(campaign.getSubject());
-            email.setContent(campaign.getContent());
+            email.setContent(finalContent);
             email.setCampaignId(campaignId);
             email.setType("CAMPAIGN");
             email.setStatus(EmailQueue.EmailStatus.PENDING);

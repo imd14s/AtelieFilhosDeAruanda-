@@ -4,6 +4,7 @@ import { api } from '../../api/axios';
 
 export function CampaignsPage() {
     const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [signatures, setSignatures] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -12,11 +13,12 @@ export function CampaignsPage() {
         subject: '',
         audience: 'NEWSLETTER_SUBSCRIBERS',
         content: '',
-        signature: 'Atenciosamente,\nEquipe Ateliê Filhos de Aruanda'
+        signatureId: ''
     });
 
     useEffect(() => {
         loadCampaigns();
+        loadSignatures();
         const interval = setInterval(loadCampaigns, 600000); // 10 minutes auto-refresh
         return () => clearInterval(interval);
     }, []);
@@ -32,14 +34,25 @@ export function CampaignsPage() {
         }
     };
 
+    const loadSignatures = async () => {
+        try {
+            const { data } = await api.get('/marketing/signatures');
+            setSignatures(data);
+            if (data.length > 0) {
+                setNewCampaign(prev => ({ ...prev, signatureId: data[0].id }));
+            }
+        } catch (error) {
+            console.error('Erro ao carregar assinaturas', error);
+        }
+    };
+
     const handleCreateCampaign = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const fullContent = `${newCampaign.content}\n\n--\n${newCampaign.signature}`;
             const { data } = await api.post('/marketing/campaigns', {
                 ...newCampaign,
-                content: fullContent
+                signatureId: newCampaign.signatureId || null
             });
 
             // Start the campaign immediately after creation
@@ -51,7 +64,7 @@ export function CampaignsPage() {
                 subject: '',
                 audience: 'NEWSLETTER_SUBSCRIBERS',
                 content: '',
-                signature: 'Atenciosamente,\nEquipe Ateliê Filhos de Aruanda'
+                signatureId: signatures.length > 0 ? signatures[0].id : ''
             });
             loadCampaigns();
             alert('Campanha criada e iniciada com sucesso!');
@@ -146,29 +159,34 @@ export function CampaignsPage() {
                                 </div>
 
                                 <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Assinatura</label>
+                                    <select
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={newCampaign.signatureId}
+                                        onChange={e => setNewCampaign({ ...newCampaign, signatureId: e.target.value })}
+                                    >
+                                        <option value="">Sem assinatura</option>
+                                        {signatures.map(sig => (
+                                            <option key={sig.id} value={sig.id}>{sig.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Conteúdo da Mensagem</label>
                                     <textarea
-                                        rows={6}
+                                        rows={8}
                                         required
                                         placeholder="Escreva sua mensagem aqui..."
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-gray-50"
                                         value={newCampaign.content}
                                         onChange={e => setNewCampaign({ ...newCampaign, content: e.target.value })}
                                     />
                                 </div>
 
-                                <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                                    <label className="block text-sm font-semibold text-indigo-900 mb-1 flex items-center gap-1">
-                                        Assinatura do E-mail
-                                    </label>
-                                    <textarea
-                                        rows={3}
-                                        className="w-full px-4 py-2 bg-white border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm"
-                                        value={newCampaign.signature}
-                                        onChange={e => setNewCampaign({ ...newCampaign, signature: e.target.value })}
-                                    />
-                                    <p className="text-[10px] text-indigo-600 mt-1">* A assinatura será anexada ao final de cada e-mail.</p>
-                                </div>
+                                <p className="text-[10px] text-gray-400 italic">
+                                    * A assinatura selecionada acima será anexada automaticamente ao final do e-mail no momento do envio.
+                                </p>
                             </div>
 
                             <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
