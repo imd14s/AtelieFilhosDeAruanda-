@@ -25,8 +25,13 @@ const Header = () => {
 
   useEffect(() => {
     initHeader();
+    const handleOpenAuth = () => setIsAuthOpen(true);
     window.addEventListener('cart-updated', initHeader);
-    return () => window.removeEventListener('cart-updated', initHeader);
+    window.addEventListener('open-auth-modal', handleOpenAuth);
+    return () => {
+      window.removeEventListener('cart-updated', initHeader);
+      window.removeEventListener('open-auth-modal', handleOpenAuth);
+    };
   }, [location.pathname]);
 
   const cartQuantity = cart?.items?.reduce((acc, item) => acc + (item.quantity || 0), 0) || 0;

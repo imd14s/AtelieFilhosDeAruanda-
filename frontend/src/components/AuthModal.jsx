@@ -76,15 +76,17 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleGoogleMock = async () => {
+  const handleGoogleLogin = async () => {
     setLoading(true);
+    setError('');
     try {
-      // Mock token
-      await authService.googleLogin("mock_google_token_" + Date.now());
-      handleClose();
+      await authService.googleLogin();
+      onClose();
+      // Recarregar a página ou atualizar o estado global
       window.location.reload();
     } catch (err) {
-      setError("Erro no login com Google.");
+      setError('Falha ao entrar com Google. Tente novamente.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -162,7 +164,7 @@ const AuthModal = ({ isOpen, onClose }) => {
 
               <button
                 type="button"
-                onClick={handleGoogleMock}
+                onClick={handleGoogleLogin}
                 disabled={loading}
                 className="w-full bg-white border border-gray-300 text-gray-700 py-3 font-lato text-xs uppercase tracking-[0.1em] hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
               >

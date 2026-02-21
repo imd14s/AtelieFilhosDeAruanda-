@@ -1,4 +1,6 @@
 import api from './api';
+import { auth, googleProvider } from './firebaseConfig';
+import { signInWithPopup } from 'firebase/auth';
 
 export const authService = {
     register: async (userData) => {
@@ -20,12 +22,28 @@ export const authService = {
         return response.data;
     },
 
-    googleLogin: async (idToken) => {
-        const response = await api.post('/auth/google', { idToken });
-        if (response.data.token) {
-            localStorage.setItem('auth_token', response.data.token);
+    googleLogin: async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const idToken = await result.user.getIdToken();
+
+            // Enviar o token para o backend persistir ou validar
+            const response = await api.post('/auth/google', { idToken });
+
+            if (response.data.token) {
+                localStorage.setItem('auth_token', response.data.token);
+                // Salvar dados do usuário do Firebase ou do Backend
+                localStorage.setItem('user', JSON.stringify({
+                    name: result.user.displayName,
+                    email: result.user.email,
+                    photoURL: result.user.photoURL
+                }));
+            }
+            return response.data;
+        } catch (error) {
+            console.error("[authService] Erro no Google Login:", error);
+            throw error;
         }
-        return response.data;
     },
 
     logout: () => {

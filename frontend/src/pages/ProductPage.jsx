@@ -5,6 +5,7 @@ import SEO from '../components/SEO';
 import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2 } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
 import ReviewSection from '../components/ReviewSection';
+import ProductCard from '../components/ProductCard';
 
 const ProductPage = () => {
   const { id } = useParams();
@@ -12,6 +13,8 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
 
   const [mainMedia, setMainMedia] = useState(null);
   const [selectedOptions, setSelectedOptions] = useState({});
@@ -42,6 +45,17 @@ const ProductPage = () => {
               if (firstActiveVariant.imageUrl) setMainMedia(firstActiveVariant.imageUrl);
             } catch (e) { console.error("Error parsing variant attributes", e); }
           }
+        }
+
+        // Buscar recomendações
+        if (data?.categoryId) {
+          setLoadingRecs(true);
+          try {
+            const recs = await storeService.getProducts({ categoryId: data.categoryId });
+            // Filtrar o próprio produto e limitar a 4
+            setRecommendations(recs.filter(r => r.id !== id).slice(0, 4));
+          } catch (e) { console.error("Error fetching recommendations", e); }
+          setLoadingRecs(false);
         }
       } catch (err) {
         console.error("Failed to load product", err);
@@ -108,7 +122,20 @@ const ProductPage = () => {
       price: displayPrice,
       images: currentVariant?.imageUrl ? [currentVariant.imageUrl] : product.images
     };
+    const handleReviewAdded = (newReview) => {
+      // Atualização Otimista
+      setProduct(prev => {
+        const newTotal = (prev.totalReviews || 0) + 1;
+        const currentAvg = prev.averageRating || 4.6;
+        const newAvg = ((currentAvg * (prev.totalReviews || 1)) + newReview.rating) / newTotal;
 
+        return {
+          ...prev,
+          totalReviews: newTotal,
+          averageRating: parseFloat(newAvg.toFixed(1))
+        };
+      });
+    };
     storeService.cart.add(cartProduct, quantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);
@@ -212,14 +239,22 @@ const ProductPage = () => {
 
           {/* Mídia Seção (Esquerda) */}
           <div className="flex flex-row gap-4 flex-1">
-            {/* Thumbnails Verticais */}
-            {product.images?.length > 1 && (
+            {/* Thumbnails Verticais (Filtrados por Variante se Cor selecionada) */}
+            {(product.images?.length > 1 || product.variants?.length > 0) && (
               <div className="hidden md:flex flex-col gap-3 w-20 shrink-0">
-                {product.images.map((img, i) => (
+                {(product.variants && selectedOptions['Cor']
+                  ? product.variants.filter(v => {
+                    try {
+                      const attrs = JSON.parse(v.attributesJson || '{}');
+                      return attrs['Cor'] === selectedOptions['Cor'] && v.imageUrl;
+                    } catch (e) { return false; }
+                  }).map(v => v.imageUrl)
+                  : product.images || []
+                ).map((img, i, arr) => (
                   <div
                     key={i}
                     onClick={() => setMainMedia(img)}
-                    className={`aspect-square bg-white overflow-hidden shadow-sm transition-all cursor-pointer relative rounded-sm ${mainMedia === img ? 'ring-2 ring-[var(--dourado-suave)]' : 'opacity-60 hover:opacity-100'}`}
+                    className={`aspect-square bg-white overflow-hidden shadow-sm transition-all cursor-pointer relative rounded-sm ${mainMedia === img ? 'ring-2 ring-[var(--azul-profundo)]' : 'opacity-60 hover:opacity-100'}`}
                   >
                     {renderMedia(img, false)}
                     {isVideo(img) && (
@@ -282,26 +317,40 @@ const ProductPage = () => {
           {/* Info do Produto (Direita) */}
           <div className="flex-1 flex flex-col pt-4 lg:pt-0">
             <div className="space-y-6">
-              <div className="space-y-2">
-                <span className="font-lato text-[11px] uppercase tracking-[0.4em] text-[var(--dourado-suave)] block">Coleção Sagrada</span>
-                <h1 className="font-playfair text-3xl md:text-5xl text-[var(--azul-profundo)] leading-snug">{product.name}</h1>
+              <div className="space-y-4">
+                <h1 className="font-playfair text-3xl md:text-[40px] text-[var(--azul-profundo)] leading-tight font-medium">{product.name}</h1>
 
-                <div className="flex items-center gap-4 mt-4">
-                  <div className="flex flex-col">
-                    {hasDiscount && (
-                      <span className="font-lato text-sm text-gray-400 line-through">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(originalPrice || 0)}
-                      </span>
-                    )}
-                    <span className="font-lato text-3xl text-[var(--dourado-suave)] font-bold">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayPrice || 0)}
-                    </span>
+                {/* Estrelas e Qtd Avaliações conforme mockup */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-lato text-gray-500">{product.averageRating || '4.6'}</span>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg key={star} className={`w-4 h-4 ${star <= Math.round(product.averageRating || 4.6) ? 'text-blue-500 fill-blue-500' : 'text-gray-300'}`} viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
                   </div>
+                  <span className="text-sm font-lato text-gray-400">({product.totalReviews || '20752'})</span>
+                </div>
+
+                <div className="flex flex-col gap-1 mt-6">
                   {hasDiscount && (
-                    <span className="bg-green-600 text-white px-3 py-1 rounded-sm font-lato text-xs font-bold shadow-sm">
-                      {discountPercentage}% OFF
+                    <span className="font-lato text-gray-400 line-through text-lg">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(originalPrice || 0)}
                     </span>
                   )}
+                  <div className="flex items-baseline gap-3">
+                    <span className="font-lato text-[44px] text-[var(--azul-profundo)] font-bold leading-none">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayPrice || 0)}
+                    </span>
+                    {hasDiscount && (
+                      <span className="text-green-600 font-bold font-lato text-lg">
+                        {discountPercentage}% OFF
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-lato text-[var(--azul-profundo)]">12x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayPrice / 12)}</span>
+                  <button className="text-[var(--azul-claro)] text-sm font-lato hover:underline text-left mt-1">Ver os meios de pagamento</button>
                 </div>
 
                 {displayStock <= 5 && displayStock > 0 && (
@@ -358,27 +407,46 @@ const ProductPage = () => {
                 </div>
               )}
 
-              {/* Quantidade e Comprar */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <div className="flex items-center justify-between border border-gray-200 w-full sm:w-32 bg-white rounded-sm h-14">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 h-full hover:bg-gray-50 text-[var(--azul-profundo)]">-</button>
-                  <span className="font-lato text-[var(--azul-profundo)]">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className="px-4 h-full hover:bg-gray-50 text-[var(--azul-profundo)]">+</button>
+              {/* Quantidade e Comprar - Botões Duplos conforme Mockup */}
+              <div className="flex flex-col gap-4 pt-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-lato text-sm text-[var(--azul-profundo)]">Quantidade: <b>{quantity} unidade</b></span>
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-[var(--azul-claro)]"><ChevronLeft size={16} className="-rotate-90" /></button>
+                  <span className="text-gray-400 text-xs">(+50 disponív...</span>
                 </div>
 
-                <button
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                  className={`flex-1 h-14 py-4 px-8 font-lato text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 rounded-sm shadow-sm
-                      ${isOutOfStock
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                      : 'bg-[var(--azul-profundo)] text-white hover:bg-[#1a3a5a] hover:shadow-lg active:scale-[0.98]'
-                    }
-                  `}
-                >
-                  <ShoppingBag size={18} />
-                  {isOutOfStock ? 'Indisponível' : 'Adicionar à Sacola'}
-                </button>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => {
+                      handleAddToCart();
+                      // Redirecionar para checkout (simulado)
+                      window.location.href = '/checkout';
+                    }}
+                    disabled={isOutOfStock}
+                    className={`w-full h-[58px] font-lato text-[20px] font-medium transition-all flex items-center justify-center rounded-[4px] shadow-sm
+                        ${isOutOfStock
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-[#3483fa] text-white hover:bg-[#2968c8] active:scale-[0.99]'
+                      }
+                    `}
+                  >
+                    Comprar agora
+                  </button>
+
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock}
+                    className={`w-full h-[58px] font-lato text-[20px] font-medium transition-all flex items-center justify-center gap-3 rounded-[4px] shadow-sm
+                        ${isOutOfStock
+                        ? 'bg-gray-100/50 text-gray-300 cursor-not-allowed border border-gray-100'
+                        : 'bg-[#e3edfb] text-[#3483fa] hover:bg-[#d0e1f9] active:scale-[0.99]'
+                      }
+                    `}
+                  >
+                    <ShoppingBag size={24} />
+                    Adicionar ao carrinho
+                  </button>
+                </div>
               </div>
 
               {/* Informações Extras */}
@@ -409,21 +477,34 @@ const ProductPage = () => {
             </div>
           </section>
 
-          {/* Placeholder para Produtos Relacionados */}
+          {/* Seção de Produtos Relacionados conforme mockup */}
           <section className="space-y-12">
             <div className="text-center">
-              <h2 className="font-playfair text-3xl text-[var(--azul-profundo)] mb-2 uppercase tracking-[0.2em]">Você também vai amar</h2>
-              <div className="h-1 w-24 bg-[#C9A24D] mx-auto" />
+              <h2 className="font-playfair text-[32px] text-[var(--azul-profundo)] mb-2 uppercase tracking-[0.2em] font-medium">Você também vai amar</h2>
+              <div className="h-[2px] w-24 bg-[#3483fa] mx-auto" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {/* Aqui entrará o componente de listagem de relacionados futuramente */}
-              <p className="col-span-full text-center text-gray-400 font-lato text-xs uppercase tracking-widest">Carregando Recomendações...</p>
-            </div>
+
+            {loadingRecs ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="animate-spin text-[#3483fa]" />
+              </div>
+            ) : recommendations.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {recommendations.map(req => (
+                  <ProductCard key={req.id} product={req} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-gray-400 font-lato text-xs uppercase tracking-widest">Sem recomendações para este item no momento.</p>
+            )}
           </section>
 
           {/* Seção de Avaliações */}
-          <section id="avaliacoes" className="border-t border-[var(--azul-profundo)]/10 pt-24">
-            <ReviewSection productId={product.id} />
+          <section id="reviews" className="space-y-12 bg-white p-8 md:p-12 shadow-sm border border-gray-100 rounded-sm">
+            <ReviewSection
+              productId={id}
+              onReviewAdded={handleReviewAdded}
+            />
           </section>
         </div>
       </div>
