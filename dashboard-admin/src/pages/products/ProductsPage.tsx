@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ProductService } from '../../services/ProductService';
 import type { Product } from '../../types/product';
 import { Package, Plus, Search, Edit, Trash2, Bell } from 'lucide-react';
+import { StockAlertService, type StockAlertSettings } from '../../services/StockAlertService';
+import { calculatePriority, STOCK_COLORS, type ColorPreset } from '../../hooks/useStockAlerts';
+import clsx from 'clsx';
 
 export function ProductsPage() {
   const getImageUrl = (url: string) => {
@@ -18,6 +21,7 @@ export function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [stockSort, setStockSort] = useState<'none' | 'asc' | 'desc'>('none');
   const [stockFilter, setStockFilter] = useState<'all' | 'out' | 'low'>('all');
+  const [alertSettings, setAlertSettings] = useState<StockAlertSettings | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +31,12 @@ export function ProductsPage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await ProductService.getAll();
+      const [data, settings] = await Promise.all([
+        ProductService.getAll(),
+        StockAlertService.getSettings()
+      ]);
+
+      setAlertSettings(settings);
 
       // BLINDAGEM: Verifica se é realmente um array antes de setar
       if (Array.isArray(data)) {
@@ -92,7 +101,7 @@ export function ProductsPage() {
       const matchesStockFilter =
         stockFilter === 'all' ? true :
           stockFilter === 'out' ? (p.stock <= 0) :
-            stockFilter === 'low' ? (p.stock > 0 && p.stock < 10) : true;
+            stockFilter === 'low' ? (p.stock > 0 && p.stock <= (alertSettings?.threshold || 10)) : true;
 
       return matchesSearch && matchesStockFilter;
     })
@@ -221,17 +230,22 @@ export function ProductsPage() {
                     </td>
                     <td className="p-4">
                       {product.stock <= 0 ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-400 uppercase border border-gray-200">
                           Sem Estoque
                         </span>
-                      ) : (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${(product.stock || 0) < 10
-                          ? (product.alertEnabled ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-amber-100 text-amber-700')
-                          : 'bg-green-100 text-green-700'
-                          }`}>
-                          {product.stock || 0} un
-                        </span>
-                      )}
+                      ) : (() => {
+                        const priority = calculatePriority(product.stock || 0, alertSettings);
+                        const preset = priority ? STOCK_COLORS[priority.color as ColorPreset] : null;
+
+                        return (
+                          <span className={clsx(
+                            "px-2 py-1 rounded-full text-xs font-bold transition-all",
+                            preset ? clsx(preset.bg, preset.text, product.alertEnabled && "animate-pulse") : "bg-green-100 text-green-700"
+                          )}>
+                            {product.stock || 0} un
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="p-4">
                       <span className={`inline-block w-2 h-2 rounded-full ${product.active ? 'bg-green-500' : 'bg-gray-300'}`} />

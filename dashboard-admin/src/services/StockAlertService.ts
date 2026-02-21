@@ -16,8 +16,8 @@ const DEFAULT_SETTINGS: StockAlertSettings = {
     threshold: 10,
     messageTemplate: 'O produto {product} atingiu o estoque baixo de {stock} unidades.',
     priorities: [
-        { label: 'Crítico', maxLevel: 5, color: 'text-red-600 bg-red-100' },
-        { label: 'Atenção', maxLevel: 15, color: 'text-amber-600 bg-amber-100' },
+        { label: 'Crítico', maxLevel: 5, color: 'red' },
+        { label: 'Atenção', maxLevel: 15, color: 'amber' },
     ]
 };
 
