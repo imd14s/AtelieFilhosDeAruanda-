@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { storeService } from '../services/storeService';
 import SEO from '../components/SEO';
 import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2 } from 'lucide-react';
@@ -9,6 +9,7 @@ import ProductCard from '../components/ProductCard';
 
 const ProductPage = () => {
   const { id } = useParams();
+  const { user } = useOutletContext();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -33,6 +34,11 @@ const ProductPage = () => {
         setProduct(data);
         if (data?.images?.length > 0) {
           setMainMedia(data.images[0]);
+        }
+
+        // Registrar no histórico de navegação via API se o usuário estiver logado
+        if (user?.id) {
+          storeService.history.add(user.id, data.id);
         }
 
         if (data?.variants?.length > 0) {

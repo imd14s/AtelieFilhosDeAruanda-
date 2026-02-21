@@ -147,6 +147,85 @@ export const storeService = {
     }
   },
 
+  // --- HISTÓRICO DE NAVEGAÇÃO (API) ---
+  history: {
+    get: async (userId) => {
+      if (!userId) return [];
+      try {
+        const response = await api.get(`/history/user/${userId}`, {
+          headers: TENANT_HEADER
+        });
+        // A API retorna uma lista de objetos ProductViewHistoryEntity que contém o objeto 'product'
+        return (response.data || []).map(h => h.product);
+      } catch (e) {
+        console.error("[storeService] Erro ao buscar histórico da API", e);
+        return [];
+      }
+    },
+
+    add: async (userId, productId) => {
+      if (!userId || !productId) return;
+      try {
+        await api.post('/history', { userId, productId }, {
+          headers: TENANT_HEADER
+        });
+      } catch (e) {
+        console.error("[storeService] Erro ao salvar histórico na API", e);
+      }
+    },
+
+    clear: async (userId) => {
+      if (!userId) return;
+      try {
+        await api.delete(`/history/user/${userId}`, {
+          headers: TENANT_HEADER
+        });
+      } catch (e) {
+        console.error("[storeService] Erro ao limpar histórico na API", e);
+      }
+    }
+  },
+
+  // --- FAVORITOS (API) ---
+  favorites: {
+    get: async (userId) => {
+      if (!userId) return [];
+      try {
+        const response = await api.get(`/favorites/user/${userId}`, {
+          headers: TENANT_HEADER
+        });
+        return (response.data || []).map(f => f.product);
+      } catch (e) {
+        console.error("[storeService] Erro ao buscar favoritos da API", e);
+        return [];
+      }
+    },
+
+    toggle: async (userId, productId) => {
+      if (!userId || !productId) return;
+      try {
+        // Primeiro verificamos se já é favorito
+        const current = await storeService.favorites.get(userId);
+        const isFav = current.some(p => p.id === productId);
+
+        if (isFav) {
+          await api.delete('/favorites', {
+            params: { userId, productId },
+            headers: TENANT_HEADER
+          });
+        } else {
+          await api.post('/favorites', { userId, productId }, {
+            headers: TENANT_HEADER
+          });
+        }
+        return !isFav;
+      } catch (e) {
+        console.error("[storeService] Erro ao alternar favorito na API", e);
+        throw e;
+      }
+    }
+  },
+
   // --- AUTENTICAÇÃO ---
   auth: {
     login: async (email, password) => {
@@ -180,5 +259,46 @@ export const storeService = {
     },
 
     isAuthenticated: () => !!localStorage.getItem('auth_token')
+  },
+
+  // --- FRETE ---
+  /**
+   * Calcula as opções de frete para um CEP e lista de itens.
+   */
+  calculateShipping: async (cep, items = []) => {
+    try {
+      const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+      const payload = {
+        cep,
+        subtotal,
+        items: items.map(i => ({ productId: i.id, quantity: i.quantity }))
+      };
+
+      const response = await api.post('/shipping/quote', payload, {
+        headers: TENANT_HEADER
+      });
+
+      // A API retorna ShippingQuoteResponse. Se houver 'options' (Melhor Envio), usamos elas.
+      // Caso contrário, usamos o resultado único mapeado.
+      if (response.data?.options) {
+        return response.data.options.map(opt => ({
+          provider: opt.name,
+          price: opt.price,
+          days: opt.delivery_time,
+          originalPrice: opt.original_price,
+          free: opt.free_shipping
+        }));
+      }
+
+      return [{
+        provider: response.data.provider,
+        price: response.data.cost,
+        days: response.data.estimatedDays || 5,
+        free: response.data.free_shipping
+      }];
+    } catch (error) {
+      console.error("[storeService] Erro ao calcular frete:", error);
+      return [];
+    }
   }
 };

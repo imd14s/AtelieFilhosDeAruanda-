@@ -10,4 +10,6 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, UUID> {
     List<ReviewEntity> findByProductIdAndStatus(UUID productId, String status);
 
     List<ReviewEntity> findByUserIdAndProductId(UUID userId, UUID productId);
+
+    List<ReviewEntity> findByUserId(UUID userId);
 }

@@ -5,6 +5,9 @@ export interface Coupon {
     value: number;
     usageCount: number;
     usageLimit: number;
+    usageLimitPerUser: number;
+    minPurchaseValue: number;
+    ownerId?: string;
     active: boolean;
 }
 
@@ -18,4 +21,4 @@ export interface AbandonedCartSettings {
     triggers?: AbandonedCartTrigger[];
 }
 
-export type CreateCouponDTO = Omit<Coupon, 'id' | 'usageCount' | 'active'>;
+export type CreateCouponDTO = Omit<Coupon, 'id' | 'usageCount' | 'active'> & { active?: boolean };

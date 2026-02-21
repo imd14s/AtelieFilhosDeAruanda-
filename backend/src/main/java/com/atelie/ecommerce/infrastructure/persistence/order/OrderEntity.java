@@ -61,6 +61,14 @@ public class OrderEntity {
         this.customerName = customerName;
     }
 
+    public com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity user) {
+        this.user = user;
+    }
+
     public String getStatus() {
         return status;
     }

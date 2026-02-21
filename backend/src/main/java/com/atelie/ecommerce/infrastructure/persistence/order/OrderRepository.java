@@ -26,4 +26,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
 
     @Query("SELECT COUNT(o) > 0 FROM OrderEntity o JOIN o.items i WHERE o.user.id = :userId AND o.status = :status AND i.product.id = :productId")
     boolean existsByUserIdAndStatusAndProductId(UUID userId, String status, UUID productId);
+
+    java.util.List<OrderEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
 }

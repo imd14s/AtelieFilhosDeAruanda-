@@ -246,10 +246,37 @@ CREATE TABLE coupons (
     start_date TIMESTAMP WITHOUT TIME ZONE,
     end_date TIMESTAMP WITHOUT TIME ZONE,
     usage_limit INTEGER,
+    usage_limit_per_user INTEGER DEFAULT 1,
+    min_purchase_value NUMERIC(19, 2) DEFAULT 0,
+    owner_id UUID,
     used_count INTEGER DEFAULT 0,
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE newsletter_subscribers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    verification_token VARCHAR(255),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    subscribed_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE email_queue (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recipient VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    priority VARCHAR(20) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    type VARCHAR(50),
+    scheduled_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    sent_at TIMESTAMP WITHOUT TIME ZONE,
+    retry_count INTEGER DEFAULT 0,
+    last_error TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE abandoned_cart_configs (
@@ -331,3 +358,57 @@ CREATE TABLE review_media (
     CONSTRAINT fk_review_media_review FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_review_media_review ON review_media(review_id);
+
+-- 13. Perguntas e Respostas
+CREATE TABLE product_questions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    question TEXT NOT NULL,
+    answer TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    answered_at TIMESTAMP,
+    CONSTRAINT fk_questions_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_questions_product FOREIGN KEY (product_id) REFERENCES products(id)
+);
+CREATE INDEX idx_product_questions_product ON product_questions(product_id);
+CREATE INDEX idx_product_questions_user ON product_questions(user_id);
+
+-- 14. Favoritos (Wishlist)
+CREATE TABLE product_favorites (
+    user_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, product_id),
+    CONSTRAINT fk_favorites_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_favorites_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+-- 15. Assinaturas Recorrentes
+CREATE TABLE product_subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    frequency_days INTEGER NOT NULL,
+    next_delivery DATE NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    price NUMERIC(19,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_subs_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_subs_product FOREIGN KEY (product_id) REFERENCES products(id)
+);
+CREATE INDEX idx_product_subscriptions_user ON product_subscriptions(user_id);
+
+-- 16. Histórico de Navegação
+CREATE TABLE product_view_history (
+    user_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, product_id),
+    CONSTRAINT fk_history_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_history_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_product_view_history_user ON product_view_history(user_id);
+

@@ -49,6 +49,11 @@ public class ProductEntity {
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
 
+    private BigDecimal weight;
+    private BigDecimal height;
+    private BigDecimal width;
+    private BigDecimal length;
+
     @Transient
     @JsonProperty("discountPercentage")
     private Integer discountPercentage;
@@ -165,6 +170,14 @@ public class ProductEntity {
             images = new ArrayList<>();
         if (stockQuantity == null)
             stockQuantity = 0;
+        if (weight == null)
+            weight = BigDecimal.ZERO;
+        if (height == null)
+            height = BigDecimal.ZERO;
+        if (width == null)
+            width = BigDecimal.ZERO;
+        if (length == null)
+            length = BigDecimal.ZERO;
 
         generateSlug();
     }
@@ -320,5 +333,37 @@ public class ProductEntity {
 
     public void setSlug(String slug) {
         this.slug = slug;
+    }
+
+    public BigDecimal getWeight() {
+        return weight;
+    }
+
+    public void setWeight(BigDecimal weight) {
+        this.weight = weight;
+    }
+
+    public BigDecimal getHeight() {
+        return height;
+    }
+
+    public void setHeight(BigDecimal height) {
+        this.height = height;
+    }
+
+    public BigDecimal getWidth() {
+        return width;
+    }
+
+    public void setWidth(BigDecimal width) {
+        this.width = width;
+    }
+
+    public BigDecimal getLength() {
+        return length;
+    }
+
+    public void setLength(BigDecimal length) {
+        this.length = length;
     }
 }

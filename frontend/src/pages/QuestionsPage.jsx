@@ -1,40 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, MessageSquare, CornerDownRight } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useOutletContext, Link } from 'react-router-dom';
+import api from '../services/api';
 
-const MOCK_QUESTIONS = [
-    {
-        id: 'q1',
-        productName: 'Kit Energia Firmeza de Exu',
-        image: '/images/default.png',
-        question: 'Olá! Qual o prazo de validade das velas inclusas no kit?',
-        date: '10 de Dezembro de 2025',
-        status: 'ANSWERED',
-        answer: 'Bom dia! As velas têm validade indeterminada desde que mantidas em local seco e fresco. Axé!',
-        answerDate: '10 de Dezembro de 2025'
-    },
-    {
-        id: 'q2',
-        productName: 'Imagem Zé Pelintra Resina 20cm',
-        image: '/images/default.png',
-        question: 'A pintura é resistente a lavagem com água e sabão neutro?',
-        date: '05 de Dezembro de 2025',
-        status: 'PENDING',
-        answer: null,
-        answerDate: null
-    }
-];
+// MOCK_QUESTIONS removed in favor of real API data
 
 const QuestionsPage = () => {
     const { user } = useOutletContext();
     const [searchTerm, setSearchTerm] = useState('');
+    const [questions, setQuestions] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (user?.id) {
+            api.get(`/questions?userId=${user.id}`)
+                .then(res => {
+                    setQuestions(res.data);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error("Error fetching questions:", err);
+                    setLoading(false);
+                });
+        }
+    }, [user]);
 
     if (!user) return null;
 
-    const filteredQuestions = MOCK_QUESTIONS.filter(q =>
-        q.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const filteredQuestions = questions.filter(q =>
+        (q.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         q.question.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (loading) return (
+        <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
     );
 
     return (
@@ -79,11 +81,11 @@ const QuestionsPage = () => {
                                 {/* Cabeçalho do Card (Produto) */}
                                 <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-4">
                                     <div className="w-12 h-12 shrink-0 border border-gray-200 rounded p-1 bg-white">
-                                        <img src={item.image} alt={item.productName} className="w-full h-full object-contain mix-blend-multiply" />
+                                        <img src={item.product?.images?.[0] || '/images/default.png'} alt={item.product?.name} className="w-full h-full object-contain mix-blend-multiply" />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="text-sm font-semibold text-gray-800 line-clamp-1">{item.productName}</h3>
-                                        <Link to="/store" className="text-xs text-blue-500 hover:text-blue-600 transition-colors">Ver anúncio</Link>
+                                        <h3 className="text-sm font-semibold text-gray-800 line-clamp-1">{item.product?.name}</h3>
+                                        <Link to={`/store`} className="text-xs text-blue-500 hover:text-blue-600 transition-colors">Ver anúncio</Link>
                                     </div>
 
                                     {/* Badge Status */}
@@ -105,7 +107,7 @@ const QuestionsPage = () => {
                                         </div>
                                         <div>
                                             <p className="text-gray-800 text-sm mb-1">{item.question}</p>
-                                            <p className="text-xs text-gray-400">{item.date}</p>
+                                            <p className="text-xs text-gray-400">{new Date(item.createdAt).toLocaleDateString('pt-BR')}</p>
                                         </div>
                                     </div>
 
@@ -117,7 +119,7 @@ const QuestionsPage = () => {
                                             </div>
                                             <div>
                                                 <p className="text-gray-700 text-sm mb-1">{item.answer}</p>
-                                                <p className="text-xs text-gray-400">{item.answerDate}</p>
+                                                <p className="text-xs text-gray-400">{new Date(item.answeredAt).toLocaleDateString('pt-BR')}</p>
                                             </div>
                                         </div>
                                     )}

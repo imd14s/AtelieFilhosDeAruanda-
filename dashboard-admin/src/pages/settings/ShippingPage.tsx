@@ -2,15 +2,21 @@ import { useEffect, useState } from 'react';
 import { Truck, AlertCircle, Plus, LayoutGrid, ShieldCheck, Trash2, X, Code, Save } from 'lucide-react';
 import { AdminProviderService } from '../../services/AdminProviderService';
 import type { AdminServiceProvider } from '../../types/store-settings';
+import { MelhorEnvioConfig } from '../../components/shipping/MelhorEnvioConfig';
+
+const RECOMMENDED_PROVIDERS = [
+    { name: 'Melhor Envio', code: 'MELHOR_ENVIO', driverKey: 'shipping.melhorenvio', icon: '📦' },
+    { name: 'Manda Bem', code: 'MANDA_BEM', driverKey: 'shipping.mandabem', icon: '🚚' },
+];
 
 export function ShippingPage() {
     const [providers, setProviders] = useState<AdminServiceProvider[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingProvider, setEditingProvider] = useState<AdminServiceProvider | null>(null);
-    const [configJson, setConfigJson] = useState<string>('');
+    const [configData, setConfigData] = useState<any>({});
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newProvider, setNewProvider] = useState({ name: '', code: '' });
+    const [newProvider, setNewProvider] = useState({ name: '', code: '', driverKey: '' });
 
     useEffect(() => {
         loadData();
@@ -61,7 +67,7 @@ export function ShippingPage() {
                 healthEnabled: true
             });
             setIsAddModalOpen(false);
-            setNewProvider({ name: '', code: '' });
+            setNewProvider({ name: '', code: '', driverKey: '' });
             loadData();
         } catch (err) {
             alert('Erro ao criar provedor.');
@@ -75,7 +81,11 @@ export function ShippingPage() {
         }
         const config = await AdminProviderService.getProviderConfig(provider.id);
         setEditingProvider(provider);
-        setConfigJson(config ? config.configJson : '{}');
+        try {
+            setConfigData(config ? JSON.parse(config.configJson) : {});
+        } catch (e) {
+            setConfigData({});
+        }
     };
 
     const handleSaveConfig = async () => {
@@ -83,7 +93,7 @@ export function ShippingPage() {
         try {
             await AdminProviderService.saveProviderConfig({
                 providerId: editingProvider.id,
-                configJson: configJson,
+                configJson: JSON.stringify(configData),
                 environment: 'PRODUCTION'
             });
             alert('Configuração de frete salva!');
@@ -190,24 +200,34 @@ export function ShippingPage() {
 
                             {editingProvider?.id === provider.id && (
                                 <div className="p-8 pt-0 animate-slide-down space-y-4">
-                                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-3">
-                                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2 tracking-widest">
-                                            <Code size={14} /> Payload de Configuração (JSONB)
-                                        </label>
-                                        <textarea
-                                            value={configJson}
-                                            onChange={(e) => setConfigJson(e.target.value)}
-                                            className="w-full h-48 p-4 font-mono text-sm border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner"
-                                            placeholder='{ "apiKey": "...", "token": "..." }'
+                                    {provider.code === 'MELHOR_ENVIO' ? (
+                                        <MelhorEnvioConfig
+                                            config={configData}
+                                            onChange={setConfigData}
                                         />
-                                        <div className="flex justify-end pt-2">
-                                            <button
-                                                onClick={handleSaveConfig}
-                                                className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-100 transition active:scale-95"
-                                            >
-                                                <Save size={18} /> Salvar Alterações
-                                            </button>
+                                    ) : (
+                                        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-3">
+                                            <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2 tracking-widest">
+                                                <Code size={14} /> Payload de Configuração (JSONB)
+                                            </label>
+                                            <textarea
+                                                value={JSON.stringify(configData, null, 2)}
+                                                onChange={(e) => {
+                                                    try { setConfigData(JSON.parse(e.target.value)); } catch (e) { }
+                                                }}
+                                                className="w-full h-48 p-4 font-mono text-sm border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner"
+                                                placeholder='{ "apiKey": "...", "token": "..." }'
+                                            />
                                         </div>
+                                    )}
+
+                                    <div className="flex justify-end pt-2">
+                                        <button
+                                            onClick={handleSaveConfig}
+                                            className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-100 transition active:scale-95"
+                                        >
+                                            <Save size={18} /> Salvar Alterações
+                                        </button>
                                     </div>
                                 </div>
                             )}
@@ -226,26 +246,61 @@ export function ShippingPage() {
                                 <X size={20} />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold text-gray-600">Nome Transportadora</label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: Melhor Envio"
-                                    className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    value={newProvider.name}
-                                    onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
-                                />
+                        <div className="p-6 space-y-6">
+                            <div className="grid grid-cols-2 gap-3 mb-2">
+                                {RECOMMENDED_PROVIDERS.map(p => (
+                                    <button
+                                        key={p.code}
+                                        onClick={() => setNewProvider({ name: p.name, code: p.code, driverKey: p.driverKey })}
+                                        className={`p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-3 ${newProvider.code === p.code
+                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                            : 'border-gray-100 hover:border-indigo-200 bg-gray-50'
+                                            }`}
+                                    >
+                                        <span className="text-2xl">{p.icon}</span>
+                                        <div>
+                                            <div className="font-bold text-[13px]">{p.name}</div>
+                                            <div className="text-[10px] opacity-70 uppercase tracking-wider font-mono">{p.code}</div>
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-semibold text-gray-600">Código de Serviço</label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: MELHOR_ENVIO"
-                                    className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none uppercase font-mono"
-                                    value={newProvider.code}
-                                    onChange={e => setNewProvider({ ...newProvider, code: e.target.value.toUpperCase() })}
-                                />
+
+                            <div className="space-y-4 pt-4 border-t border-dashed">
+                                <div className="space-y-1">
+                                    <label className="text-sm font-semibold text-gray-600">Nome Transportadora</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: Melhor Envio"
+                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={newProvider.name}
+                                        onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-semibold text-gray-600">Código de Serviço</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: MELHOR_ENVIO"
+                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none uppercase font-mono"
+                                        value={newProvider.code}
+                                        onChange={e => {
+                                            const code = e.target.value.toUpperCase();
+                                            const driverKey = code === 'MELHOR_ENVIO' ? 'shipping.melhorenvio' : code.toLowerCase();
+                                            setNewProvider({ ...newProvider, code, driverKey });
+                                        }}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-semibold text-gray-600">Driver Key</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: shipping.melhorenvio"
+                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono"
+                                        value={newProvider.driverKey}
+                                        onChange={e => setNewProvider({ ...newProvider, driverKey: e.target.value })}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <div className="p-6 bg-gray-50 flex gap-3">

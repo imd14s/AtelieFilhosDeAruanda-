@@ -1,12 +1,33 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { storeService } from '../services/storeService';
-import { ShoppingBag, Check, Loader2 } from 'lucide-react';
+import { ShoppingBag, Check, Loader2, Heart } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, initialIsFavorite = false }) => {
+  const { user } = useOutletContext() || {};
   const [loading, setLoading] = useState(false);
   const [added, setAdded] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [favLoading, setFavLoading] = useState(false);
+
+  const handleToggleFavorite = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      alert("Faça login para favoritar produtos.");
+      return;
+    }
+
+    setFavLoading(true);
+    try {
+      const newState = await storeService.favorites.toggle(user.id, product.id);
+      setIsFavorite(newState);
+    } catch (err) {
+      console.error("Failed to toggle favorite", err);
+    } finally {
+      setFavLoading(false);
+    }
+  };
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -43,12 +64,28 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 rounded-sm border border-gray-100 max-w-[280px] mx-auto w-full">
-      {/* Badge de Desconto */}
       {hasDiscount && (
         <div className="absolute top-2 left-2 z-10 bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm">
           {discountPercentage}% OFF
         </div>
       )}
+
+      {/* Ícone de Favorito */}
+      <button
+        onClick={handleToggleFavorite}
+        disabled={favLoading}
+        className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${isFavorite
+          ? 'bg-white text-red-500 hover:bg-gray-50'
+          : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
+          }`}
+        title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+      >
+        {favLoading ? (
+          <Loader2 size={14} className="animate-spin text-gray-300" />
+        ) : (
+          <Heart size={16} className={isFavorite ? "fill-current" : ""} />
+        )}
+      </button>
 
       <Link to={`/produto/${product.id}`} className="relative aspect-square overflow-hidden bg-gray-50">
         <img
@@ -90,10 +127,10 @@ const ProductCard = ({ product }) => {
             onClick={handleAddToCart}
             disabled={loading || isOutOfStock}
             className={`w-full flex items-center justify-center gap-2 py-2 px-3 font-lato text-[10px] uppercase tracking-wider transition-all duration-300 rounded-sm ${isOutOfStock
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : added
-                  ? 'bg-green-700 text-white'
-                  : 'bg-[var(--azul-profundo)] text-white hover:bg-[var(--dourado-suave)]'
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : added
+                ? 'bg-green-700 text-white'
+                : 'bg-[var(--azul-profundo)] text-white hover:bg-[var(--dourado-suave)]'
               }`}
           >
             {loading ? (

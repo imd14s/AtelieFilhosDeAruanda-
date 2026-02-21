@@ -10,7 +10,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
       TZ: ${TZ}
     ports:
-      - ${DB_PORT}
+      - ${DB_PORT}:${DB_PORT}
     volumes:
       - ecommerce_postgres_data:/var/lib/postgresql/data
     healthcheck:

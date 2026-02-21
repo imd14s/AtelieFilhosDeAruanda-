@@ -1,37 +1,65 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PackageOpen, Clock, Settings, Search, ChevronDown, PackageCheck } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useOutletContext, Link } from 'react-router-dom';
+import api from '../services/api';
 
-const MOCK_SUBSCRIPTIONS = [
-    {
-        id: 'SUB-A1B2',
-        productName: 'Kit Energia Firmeza de Exu - Oferenda Mensal',
-        image: '/images/default.png',
-        frequency: 'A cada 30 dias',
-        nextDelivery: '25 de Dezembro',
-        price: 'R$ 89,90',
-        status: 'ACTIVE',
-        statusText: 'Ativa'
-    },
-    {
-        id: 'SUB-C3D4',
-        productName: 'Velas Palito Branca 100% Parafina - Caixa 50 Un.',
-        image: '/images/default.png',
-        frequency: 'A cada 15 dias',
-        nextDelivery: '12 de Dezembro',
-        price: 'R$ 45,00',
-        status: 'PAUSED',
-        statusText: 'Pausada'
-    }
-];
+// MOCK_SUBSCRIPTIONS removed in favor of real API data
+
 
 const SubscriptionsPage = () => {
     const { user } = useOutletContext();
+    const [subscriptions, setSubscriptions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        if (user?.id) {
+            fetchSubscriptions();
+        }
+    }, [user]);
+
+    const fetchSubscriptions = () => {
+        api.get(`/product-subscriptions/user/${user.id}`)
+            .then(res => {
+                setSubscriptions(res.data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching subscriptions:", err);
+                setLoading(false);
+            });
+    };
+
+    const handleToggleStatus = (sub) => {
+        const newStatus = sub.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+        api.patch(`/product-subscriptions/${sub.id}/status?status=${newStatus}`)
+            .then(() => fetchSubscriptions())
+            .catch(err => console.error("Error updating status:", err));
+    };
 
     if (!user) return null;
 
-    const activeCount = MOCK_SUBSCRIPTIONS.filter(sub => sub.status === 'ACTIVE').length;
+    const filteredSubscriptions = subscriptions.filter(sub =>
+        (sub.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const activeCount = filteredSubscriptions.filter(sub => sub.status === 'ACTIVE').length;
+
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'ACTIVE': return 'Ativa';
+            case 'PAUSED': return 'Pausada';
+            case 'CANCELLED': return 'Cancelada';
+            default: return status;
+        }
+    };
+
+    if (loading) return (
+        <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+    );
 
     return (
         <div className="w-full pb-12 font-lato">
@@ -56,6 +84,8 @@ const SubscriptionsPage = () => {
                         <input
                             type="text"
                             placeholder="Busque por produto assinado..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-full text-sm focus:outline-none focus:border-blue-500 shadow-sm"
                         />
                         <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
@@ -78,35 +108,38 @@ const SubscriptionsPage = () => {
 
                 {/* Lista de Assinaturas */}
                 <div className="space-y-4">
-                    {MOCK_SUBSCRIPTIONS.map(sub => (
+                    {filteredSubscriptions.map(sub => (
                         <div key={sub.id} className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden flex flex-col md:flex-row p-6 gap-6 relative">
 
                             {/* Badges */}
                             <div className="absolute top-4 right-4 flex gap-2">
                                 <span className={`px-2 py-1 text-[10px] uppercase font-bold tracking-wider rounded ${sub.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                                     }`}>
-                                    {sub.statusText}
+                                    {getStatusText(sub.status)}
                                 </span>
                             </div>
 
                             {/* Imagem do Produto */}
                             <div className="w-20 h-20 shrink-0 border border-gray-200 rounded p-1 flex items-center justify-center overflow-hidden">
-                                <img src={sub.image} alt={sub.productName} className="max-w-full max-h-full object-contain" />
+                                <img src={sub.product?.images?.[0] || '/images/default.png'} alt={sub.product?.name} className="max-w-full max-h-full object-contain" />
                             </div>
 
                             {/* Informações da Assinatura */}
                             <div className="flex-1">
-                                <h3 className="text-gray-800 font-semibold text-base mb-1 pr-16">{sub.productName}</h3>
-                                <div className="text-sm font-bold text-gray-900 mb-4">{sub.price} <span className="text-gray-400 font-normal text-xs">/ envio</span></div>
+                                <h3 className="text-gray-800 font-semibold text-base mb-1 pr-16">{sub.product?.name}</h3>
+                                <div className="text-sm font-bold text-gray-900 mb-4">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sub.price)}
+                                    <span className="text-gray-400 font-normal text-xs">/ envio</span>
+                                </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">
                                         <Clock size={16} className="text-gray-400" />
-                                        <span>Frequência: <strong className="text-gray-800">{sub.frequency}</strong></span>
+                                        <span>Frequência: <strong className="text-gray-800">A cada {sub.frequencyDays} dias</strong></span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <PackageOpen size={16} className={sub.status === 'ACTIVE' ? 'text-blue-500' : 'text-gray-400'} />
-                                        <span>Próxima entrega: <strong className={sub.status === 'ACTIVE' ? 'text-blue-600' : 'text-gray-800'}>{sub.nextDelivery}</strong></span>
+                                        <span>Próxima entrega: <strong className={sub.status === 'ACTIVE' ? 'text-blue-600' : 'text-gray-800'}>{new Date(sub.nextDelivery).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}</strong></span>
                                     </div>
                                 </div>
                             </div>
@@ -117,11 +150,17 @@ const SubscriptionsPage = () => {
                                     <Settings size={16} /> Modificar
                                 </button>
                                 {sub.status === 'ACTIVE' ? (
-                                    <button className="w-full py-2 bg-white text-gray-500 border border-gray-200 text-sm font-semibold rounded hover:bg-gray-50 transition-colors">
+                                    <button
+                                        onClick={() => handleToggleStatus(sub)}
+                                        className="w-full py-2 bg-white text-gray-500 border border-gray-200 text-sm font-semibold rounded hover:bg-gray-50 transition-colors"
+                                    >
                                         Pausar
                                     </button>
                                 ) : (
-                                    <button className="w-full py-2 bg-green-500 text-white text-sm font-semibold rounded hover:bg-green-600 transition-colors">
+                                    <button
+                                        onClick={() => handleToggleStatus(sub)}
+                                        className="w-full py-2 bg-green-500 text-white text-sm font-semibold rounded hover:bg-green-600 transition-colors"
+                                    >
                                         Reativar
                                     </button>
                                 )}

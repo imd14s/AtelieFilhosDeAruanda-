@@ -14,7 +14,10 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
         code: '',
         type: 'PERCENTAGE',
         value: 0,
-        usageLimit: 100
+        usageLimit: 100,
+        usageLimitPerUser: 1,
+        minPurchaseValue: 0,
+        ownerId: ''
     });
     const [loading, setLoading] = useState(false);
 
@@ -26,7 +29,10 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                 code: '',
                 type: 'PERCENTAGE',
                 value: 0,
-                usageLimit: 100
+                usageLimit: 100,
+                usageLimitPerUser: 1,
+                minPurchaseValue: 0,
+                ownerId: ''
             });
         }
     }, [initialData, isOpen]);
@@ -99,16 +105,54 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Limite Total</label>
+                            <input
+                                required
+                                type="number"
+                                value={formData.usageLimit || ''}
+                                onChange={(e) => setFormData({ ...formData, usageLimit: parseInt(e.target.value) || 0 })}
+                                placeholder="100"
+                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Limite por Usuário</label>
+                            <input
+                                required
+                                type="number"
+                                value={formData.usageLimitPerUser || ''}
+                                onChange={(e) => setFormData({ ...formData, usageLimitPerUser: parseInt(e.target.value) || 0 })}
+                                placeholder="1"
+                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            />
+                        </div>
+                    </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Limite de Uso</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Valor Mínimo da Compra (R$)</label>
                         <input
                             required
                             type="number"
-                            value={formData.usageLimit || ''}
-                            onChange={(e) => setFormData({ ...formData, usageLimit: parseInt(e.target.value) || 0 })}
-                            placeholder="100"
+                            step="0.01"
+                            value={formData.minPurchaseValue || ''}
+                            onChange={(e) => setFormData({ ...formData, minPurchaseValue: parseFloat(e.target.value) || 0 })}
+                            placeholder="0.00"
                             className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ID do Usuário Dono (Opcional)</label>
+                        <input
+                            type="text"
+                            value={formData.ownerId || ''}
+                            onChange={(e) => setFormData({ ...formData, ownerId: e.target.value })}
+                            placeholder="UUID do usuário para cupom exclusivo"
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                        <p className="text-[10px] text-gray-500 mt-1">Deixe em branco para cupom público.</p>
                     </div>
 
                     <div className="flex gap-3 pt-4">

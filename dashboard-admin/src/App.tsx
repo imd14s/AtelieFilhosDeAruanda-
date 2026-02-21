@@ -12,6 +12,7 @@ import { AuditLogPage } from './pages/settings/AuditLogPage';
 import { ShippingPage } from './pages/settings/ShippingPage';
 import { PaymentPage } from './pages/settings/PaymentPage';
 import { CouponList } from './pages/marketing/CouponList';
+import { CampaignsPage } from './pages/marketing/CampaignsPage';
 import { AbandonedCartPage } from './pages/marketing/AbandonedCartPage';
 import { ProductForm } from './pages/products/ProductForm';
 import { AutomationsPage } from './pages/marketing/AutomationsPage';
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="/settings/shipping" element={<ShippingPage />} />
         <Route path="/settings/payment" element={<PaymentPage />} />
         <Route path="/marketing/coupons" element={<CouponList />} />
+        <Route path="/marketing/campaigns" element={<CampaignsPage />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
         <Route path="/automations" element={<AutomationsPage />} />
         <Route path="/settings/integrations" element={<IntegrationsPage />} />

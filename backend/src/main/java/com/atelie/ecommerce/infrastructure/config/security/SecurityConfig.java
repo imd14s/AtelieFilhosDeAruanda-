@@ -89,9 +89,18 @@ public class SecurityConfig {
                         // Catálogo público
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/questions/product/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
 
                         // Se seu checkout for público:
                         .requestMatchers("/api/shipping/**").permitAll()
+                        .requestMatchers("/api/newsletter/**").permitAll()
+
+                        // Recursos do Usuário (exigem Auth)
+                        .requestMatchers("/api/questions/**").authenticated()
+                        .requestMatchers("/api/reviews/**").authenticated()
+                        .requestMatchers("/api/favorites/**").authenticated()
+                        .requestMatchers("/api/product-subscriptions/**").authenticated()
 
                         // Admin: exige ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

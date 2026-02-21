@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, CreditCard, ShoppingBag, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { storeService } from '../services/storeService';
+import marketingService from '../services/marketingService';
 import SEO from '../components/SEO';
 
 const CheckoutPage = () => {
@@ -12,6 +13,11 @@ const CheckoutPage = () => {
     const [cart, setCart] = useState(storeService.cart.get());
     const [loading, setLoading] = useState(false);
     const [successOrder, setSuccessOrder] = useState(null);
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [couponError, setCouponError] = useState('');
+    const [validatingCoupon, setValidatingCoupon] = useState(false);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     const [formData, setFormData] = useState({
         email: '',
@@ -25,7 +31,27 @@ const CheckoutPage = () => {
     });
 
     const subtotal = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    const total = subtotal + (shippingSelected?.price || 0);
+    const discount = appliedCoupon
+        ? (appliedCoupon.type === 'PERCENTAGE'
+            ? (subtotal * (appliedCoupon.value / 100))
+            : appliedCoupon.value)
+        : 0;
+    const total = subtotal + (shippingSelected?.price || 0) - discount;
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode) return;
+        setValidatingCoupon(true);
+        setCouponError('');
+        try {
+            const result = await marketingService.validateCoupon(couponCode, user.id, subtotal);
+            setAppliedCoupon(result);
+        } catch (err) {
+            setCouponError(err.message || 'Erro ao validar cupom');
+            setAppliedCoupon(null);
+        } finally {
+            setValidatingCoupon(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -219,10 +245,40 @@ const CheckoutPage = () => {
                                         </div>
                                         <span>{shippingSelected ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(shippingSelected.price) : '—'}</span>
                                     </div>
+
+                                    {appliedCoupon && (
+                                        <div className="flex justify-between text-green-600 font-lato text-xs font-bold">
+                                            <span>Desconto ({appliedCoupon.code})</span>
+                                            <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discount)}</span>
+                                        </div>
+                                    )}
+
                                     <div className="flex justify-between text-[#0f2A44] font-lato text-lg font-bold pt-4">
                                         <span>Total</span>
                                         <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}</span>
                                     </div>
+                                </div>
+
+                                {/* Cupom */}
+                                <div className="pt-4 border-t border-[#0f2A44]/5">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="CUPOM DE DESCONTO"
+                                            value={couponCode}
+                                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                            className="flex-1 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-[10px] outline-none focus:border-[var(--dourado-suave)]"
+                                        />
+                                        <button
+                                            onClick={handleApplyCoupon}
+                                            disabled={validatingCoupon || !couponCode}
+                                            className="bg-[var(--azul-profundo)] text-white px-4 py-3 font-lato text-[10px] uppercase tracking-widest hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30"
+                                        >
+                                            {validatingCoupon ? <Loader2 size={14} className="animate-spin" /> : 'Aplicar'}
+                                        </button>
+                                    </div>
+                                    {couponError && <p className="text-[10px] text-red-500 mt-2 font-bold">{couponError}</p>}
+                                    {appliedCoupon && <p className="text-[10px] text-green-600 mt-2 font-bold">✓ Cupom aplicado!</p>}
                                 </div>
 
                                 {!shippingSelected && (

@@ -33,8 +33,19 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<ReviewEntity>> getByProduct(@PathVariable UUID productId) {
+    public ResponseEntity<java.util.List<ReviewEntity>> getByProduct(@PathVariable UUID productId) {
         return ResponseEntity.ok(reviewService.getProductReviews(productId));
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<java.util.List<ReviewEntity>> getByUser(@PathVariable UUID userId) {
+        return ResponseEntity.ok(reviewService.getUserReviews(userId));
+    }
+
+    @GetMapping("/user/{userId}/pending")
+    public ResponseEntity<java.util.List<com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity>> getPending(
+            @PathVariable UUID userId) {
+        return ResponseEntity.ok(reviewService.getPendingReviews(userId));
     }
 
     public record ReviewCreateRequest(
@@ -42,6 +53,6 @@ public class ReviewController {
             UUID productId,
             Integer rating,
             String comment,
-            List<Map<String, String>> media) {
+            java.util.List<Map<String, String>> media) {
     }
 }

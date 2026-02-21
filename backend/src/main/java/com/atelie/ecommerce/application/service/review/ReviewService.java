@@ -3,6 +3,8 @@ package com.atelie.ecommerce.application.service.review;
 import com.atelie.ecommerce.api.common.exception.BusinessException;
 import com.atelie.ecommerce.application.service.ai.GeminiIntegrationService;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
@@ -77,5 +79,35 @@ public class ReviewService {
 
     public List<ReviewEntity> getProductReviews(UUID productId) {
         return reviewRepository.findByProductIdAndStatus(productId, "APPROVED");
+    }
+
+    public List<ReviewEntity> getUserReviews(UUID userId) {
+        return reviewRepository.findByUserId(userId);
+    }
+
+    public List<ProductEntity> getPendingReviews(UUID userId) {
+        // Find all unique products from DELIVERED orders
+        List<OrderEntity> orders = orderRepository.findAll().stream()
+                .filter(o -> o.getUser() != null && o.getUser().getId().equals(userId)
+                        && "DELIVERED".equals(o.getStatus()))
+                .toList();
+
+        List<UUID> purchasedProductIds = orders.stream()
+                .flatMap(o -> o.getItems().stream())
+                .map(i -> i.getProduct().getId())
+                .distinct()
+                .toList();
+
+        // Find reviewed product IDs
+        List<UUID> reviewedProductIds = reviewRepository.findByUserId(userId).stream()
+                .map(r -> r.getProduct().getId())
+                .toList();
+
+        // Filter out reviewed products
+        List<UUID> pendingProductIds = purchasedProductIds.stream()
+                .filter(id -> !reviewedProductIds.contains(id))
+                .toList();
+
+        return productRepository.findAllById(pendingProductIds);
     }
 }

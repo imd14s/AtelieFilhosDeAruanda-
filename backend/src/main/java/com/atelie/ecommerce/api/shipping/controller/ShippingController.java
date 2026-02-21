@@ -22,10 +22,12 @@ public class ShippingController {
 
     @PostMapping("/quote")
     public ResponseEntity<ShippingQuoteResponse> quote(@Valid @RequestBody ShippingQuoteRequest req) {
-        return ResponseEntity.ok(shippingService.quote(req.getCep(), req.getSubtotal(), req.getProvider()));
+        return ResponseEntity
+                .ok(shippingService.quote(req.getCep(), req.getSubtotal(), req.getProvider(), req.getItems()));
     }
 
-    // Endpoint operacional: recarrega cache sem restart (pode depois proteger via auth/admin)
+    // Endpoint operacional: recarrega cache sem restart (pode depois proteger via
+    // auth/admin)
     @PostMapping("/configs/refresh")
     public ResponseEntity<Void> refreshConfigs() {
         dynamicConfigService.refresh();

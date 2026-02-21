@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.api.admin;
 
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,22 +13,28 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/admin")
 public class AdminController {
 
+    private final OrderRepository orderRepository;
+
+    public AdminController(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
+    }
+
     @GetMapping("/tenants")
     public ResponseEntity<?> getTenants() {
-        return ResponseEntity.ok(List.of(
-                Map.of("id", "1", "name", "Filial SP", "active", true),
-                Map.of("id", "2", "name", "Filial RJ", "active", false)));
+        // Since there's no Tenant entity yet, we return an empty list to avoid fake
+        // data.
+        return ResponseEntity.ok(List.of());
     }
 
     @GetMapping("/orders")
     public ResponseEntity<?> getOrders() {
-        // Returns a mock order list to populate the dashboard/orders page
-        return ResponseEntity.ok(List.of(
-                Map.of(
-                        "id", "ORD-001",
-                        "customerName", "João Silva",
-                        "total", 150.00,
-                        "status", "PAID",
-                        "createdAt", LocalDateTime.now().toString())));
+        return ResponseEntity.ok(orderRepository.findAll());
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<?> getSummary() {
+        return ResponseEntity.ok(Map.of(
+                "totalSales", orderRepository.sumTotalSales(),
+                "pendingOrders", orderRepository.countPendingOrders()));
     }
 }

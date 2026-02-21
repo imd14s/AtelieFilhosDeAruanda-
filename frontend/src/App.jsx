@@ -22,6 +22,7 @@ import ReviewsPage from "./pages/ReviewsPage";
 import QuestionsPage from "./pages/QuestionsPage";
 import HistoryPage from "./pages/HistoryPage";
 import FavoritesPage from "./pages/FavoritesPage";
+import BenefitsPage from "./pages/BenefitsPage";
 import UserLayout from "./pages/UserLayout";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -55,6 +56,7 @@ function App() {
             <Route path="/perfil" element={<UserLayout />}>
               <Route index element={<ProfilePage />} />
               <Route path="compras" element={<OrdersPage />} />
+              <Route path="beneficios" element={<BenefitsPage />} />
               <Route path="assinaturas" element={<SubscriptionsPage />} />
               <Route path="opinioes" element={<ReviewsPage />} />
               <Route path="perguntas" element={<QuestionsPage />} />

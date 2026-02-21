@@ -40,6 +40,13 @@ public class OrderController {
         return orderService.getAllOrders(pageable).map(this::toResponse);
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<java.util.List<OrderResponse>> getByUser(@PathVariable UUID userId) {
+        return ResponseEntity.ok(orderService.getUserOrders(userId).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList()));
+    }
+
     @PutMapping("/{id}/approve")
     public ResponseEntity<Void> approveOrder(@PathVariable UUID id) {
         orderService.approveOrder(id);
@@ -88,7 +95,9 @@ public class OrderController {
                 entity.getExternalId(),
                 entity.getCustomerName(),
                 entity.getTotalAmount(),
-                entity.getCreatedAt().atZone(java.time.ZoneId.of("UTC")).toLocalDateTime(),
+                entity.getCreatedAt() != null
+                        ? entity.getCreatedAt().atZone(java.time.ZoneId.of("UTC")).toLocalDateTime()
+                        : java.time.LocalDateTime.now(),
                 items);
     }
 }

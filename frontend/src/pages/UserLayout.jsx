@@ -27,7 +27,8 @@ const UserLayout = () => {
     if (!user) return null;
 
     const navItems = [
-        { label: 'Compras', icon: ShoppingBag, path: '/perfil/compras', hasSub: true },
+        { label: 'Compras', icon: ShoppingBag, path: '/perfil/compras' },
+        { label: 'Cupons e Benefícios', icon: Tag, path: '/perfil/beneficios' },
         { label: 'Opiniões', icon: MessageCircle, path: '/perfil/opinioes' },
         { label: 'Assinaturas', icon: Star, path: '/perfil/assinaturas' },
         { label: 'Meu perfil', icon: User, path: '/perfil', exact: true },

@@ -307,4 +307,8 @@ public class OrderService {
     public Page<OrderEntity> getAllOrders(Pageable pageable) {
         return orderRepository.findAll(pageable);
     }
+
+    public List<OrderEntity> getUserOrders(UUID userId) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
 }

@@ -42,6 +42,7 @@ export function DashboardLayout() {
       icon: Ticket,
       label: 'Marketing',
       children: [
+        { icon: Mail, label: 'Campanhas', path: '/marketing/campaigns' },
         { icon: Ticket, label: 'Cupons', path: '/marketing/coupons' },
         { icon: Mail, label: 'Recuperação', path: '/marketing/abandoned-cart' },
       ]

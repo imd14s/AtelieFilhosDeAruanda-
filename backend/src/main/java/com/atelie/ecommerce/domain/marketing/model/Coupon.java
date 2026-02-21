@@ -38,6 +38,15 @@ public class Coupon {
     @Column(name = "usage_limit")
     private Integer usageLimit;
 
+    @Column(name = "usage_limit_per_user")
+    private Integer usageLimitPerUser;
+
+    @Column(name = "min_purchase_value")
+    private BigDecimal minPurchaseValue;
+
+    @Column(name = "owner_id")
+    private UUID ownerId;
+
     @Column(name = "used_count")
     private Integer usedCount;
 
@@ -63,6 +72,10 @@ public class Coupon {
             active = true;
         if (usedCount == null)
             usedCount = 0;
+        if (usageLimitPerUser == null)
+            usageLimitPerUser = 1;
+        if (minPurchaseValue == null)
+            minPurchaseValue = BigDecimal.ZERO;
     }
 
     @PreUpdate
@@ -133,6 +146,30 @@ public class Coupon {
 
     public void setUsedCount(Integer usedCount) {
         this.usedCount = usedCount;
+    }
+
+    public Integer getUsageLimitPerUser() {
+        return usageLimitPerUser;
+    }
+
+    public void setUsageLimitPerUser(Integer usageLimitPerUser) {
+        this.usageLimitPerUser = usageLimitPerUser;
+    }
+
+    public BigDecimal getMinPurchaseValue() {
+        return minPurchaseValue;
+    }
+
+    public void setMinPurchaseValue(BigDecimal minPurchaseValue) {
+        this.minPurchaseValue = minPurchaseValue;
+    }
+
+    public UUID getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(UUID ownerId) {
+        this.ownerId = ownerId;
     }
 
     public Boolean getActive() {

@@ -1,52 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Heart, HeartOff, MoreVertical } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useOutletContext, Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
+import api from '../services/api';
 
-const MOCK_FAVORITES = [
-    {
-        id: 10,
-        title: 'Kit Energia Firmeza de Exu',
-        price: 89.90,
-        originalPrice: 120.00,
-        discount: 25,
-        rating: 4.8,
-        reviews: 124,
-        image: '/images/default.png',
-        installments: { count: 12, value: 8.99 },
-        shipping: { type: 'free_shipping' }
-    },
-    {
-        id: 11,
-        title: 'Pelúcia Sansão Turma Da Mônical Azul 49cm Antialérgico',
-        price: 85.00,
-        rating: 4.9,
-        reviews: 210,
-        image: '/images/default.png',
-        installments: { count: 12, value: 8.50 },
-        shipping: { type: 'free_shipping' }
-    },
-    {
-        id: 12,
-        title: 'Kit Chimarrão Mate Gaúcho Bomba, Cuia Porongo',
-        price: 150.00,
-        rating: 4.7,
-        reviews: 45,
-        image: '/images/default.png',
-        installments: { count: 12, value: 15.00 }
-    }
-];
+// MOCK_FAVORITES removed in favor of real API data
+
 
 const FavoritesPage = () => {
     const { user } = useOutletContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('favorites'); // 'favorites' or 'lists'
+    const [favorites, setFavorites] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (user?.id) {
+            setLoading(true);
+            storeService.favorites.get(user.id)
+                .then(data => {
+                    setFavorites(data);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error("Error fetching favorites:", err);
+                    setLoading(false);
+                });
+        }
+    }, [user]);
 
     if (!user) return null;
 
-    const filteredFavorites = MOCK_FAVORITES.filter(product =>
-        product.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredFavorites = (favorites || []).filter(product =>
+        (product.title || product.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (loading && activeTab === 'favorites') return (
+        <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
     );
 
     return (
@@ -61,8 +54,8 @@ const FavoritesPage = () => {
                     <button
                         onClick={() => setActiveTab('favorites')}
                         className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'favorites'
-                                ? 'border-blue-500 text-blue-500'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-500 text-blue-500'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Favoritos
@@ -70,8 +63,8 @@ const FavoritesPage = () => {
                     <button
                         onClick={() => setActiveTab('lists')}
                         className={`px-6 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'lists'
-                                ? 'border-blue-500 text-blue-500'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-500 text-blue-500'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Listas

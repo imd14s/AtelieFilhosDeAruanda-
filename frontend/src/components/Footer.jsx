@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Mail, Phone, MapPin, Heart, Send, Loader2, Video, Youtube, ShoppingBag } from 'lucide-react';
+import { Phone, Mail, Instagram, Video, Youtube, ShoppingBag, Heart, Send, Loader2 } from 'lucide-react';
+import marketingService from '../services/marketingService';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [message, setMessage] = useState('');
 
-  // Função para assinar Newsletter diretamente no CRM do Wix
   const handleSubscribe = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Cria um contato ou assina newsletter via Wix
-      // Nota: Depende da permissão de 'Contacts' no seu Client ID Headless
-      console.log("Inscrito:", email);
+      const response = await marketingService.subscribeNewsletter(email);
+      setMessage(response.message);
       setSubscribed(true);
       setEmail('');
     } catch (err) {
       console.error("Erro ao assinar:", err);
+      alert(err.message || "Erro ao assinar newsletter");
     } finally {
       setLoading(false);
     }
@@ -44,7 +45,7 @@ const Footer = () => {
             <div className="pt-2">
               <p className="font-lato text-[10px] uppercase tracking-widest text-[var(--dourado-suave)] mb-3">Receba nosso Axé</p>
               {subscribed ? (
-                <p className="text-xs font-lato text-green-400">Obrigado por se inscrever!</p>
+                <p className="text-xs font-lato text-green-400">{message}</p>
               ) : (
                 <form onSubmit={handleSubscribe} className="relative max-w-[240px]">
                   <input
