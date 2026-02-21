@@ -314,17 +314,21 @@ export function IntegrationsPage() {
 
                             <div className="space-y-5">
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">App ID / Client ID</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
+                                        {selectedProvider === 'tiktok' ? 'App Key' : 'App ID'}
+                                    </label>
                                     <input
                                         type="text"
                                         value={appId}
                                         onChange={e => setAppId(e.target.value)}
-                                        placeholder="Ex: 582910382910"
+                                        placeholder={selectedProvider === 'tiktok' ? 'Ex: 1a2b3c4d5e' : 'Ex: 582910382910'}
                                         className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition-all font-medium"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">App Secret / Client Secret</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
+                                        App Secret
+                                    </label>
                                     <input
                                         type="password"
                                         value={appSecret}
