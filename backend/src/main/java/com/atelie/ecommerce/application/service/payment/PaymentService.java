@@ -1,53 +1,52 @@
 package com.atelie.ecommerce.application.service.payment;
 
-import com.atelie.ecommerce.api.common.util.ReflectionPropertyUtils;
 import com.atelie.ecommerce.api.payment.dto.PaymentResponse;
+import com.atelie.ecommerce.api.serviceengine.ServiceOrchestrator;
+import com.atelie.ecommerce.api.serviceengine.ServiceResult;
 import com.atelie.ecommerce.application.service.payment.dto.CreatePixPaymentRequest;
+import com.atelie.ecommerce.domain.service.model.ServiceType;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class PaymentService {
 
-    /**
-     * Assinatura "fonte da verdade" (já existia no projeto, pelo log anterior).
-     * Retorna PaymentResponse para bater com o PaymentController.
-     */
+    private final ServiceOrchestrator orchestrator;
+
+    public PaymentService(ServiceOrchestrator orchestrator) {
+        this.orchestrator = orchestrator;
+    }
+
     public PaymentResponse createPixPayment(UUID orderId, String customerName, String customerEmail,
             BigDecimal amount) {
-        // Mantém compatível e previsível.
-        // A integração real (MercadoPago etc.) deve ser feita via driver já existente
-        // no projeto.
-        // Aqui nós apenas devolvemos um PaymentResponse instanciável para a API subir.
-        PaymentResponse resp = ReflectionPropertyUtils.instantiate(PaymentResponse.class);
 
-        // Tentativa best-effort de preencher campos comuns sem depender de setters
-        // específicos
-        ReflectionPropertyUtils.trySet(resp, "setOrderId", orderId);
-        ReflectionPropertyUtils.trySet(resp, "setCustomerName", customerName);
-        ReflectionPropertyUtils.trySet(resp, "setCustomerEmail", customerEmail);
-        ReflectionPropertyUtils.trySet(resp, "setAmount", amount);
-        ReflectionPropertyUtils.trySet(resp, "setStatus", "CREATED");
+        Map<String, Object> request = new HashMap<>();
+        request.put("orderId", orderId.toString());
+        request.put("customerName", customerName);
+        request.put("email", customerEmail);
+        request.put("amount", amount);
+        request.put("payment_method", "pix");
 
-        return resp;
+        ServiceResult result = orchestrator.execute(ServiceType.PAYMENT, request, "dev");
+
+        if (!result.success()) {
+            throw new RuntimeException("Falha ao processar pagamento com " + result.providerCode() + ": "
+                    + result.payload().get("message"));
+        }
+
+        return new PaymentResponse(
+                (String) result.payload().getOrDefault("status", "pending"),
+                result.providerCode(),
+                amount,
+                true, // Defaulting to sandbox for dev branch as discussed
+                result.payload());
     }
 
-    /**
-     * Compatibilidade: Controller chama via DTO (CreatePixPaymentRequest).
-     * O DTO no seu projeto NÃO tem getters padrão, então lemos via reflection.
-     */
     public PaymentResponse createPixPayment(CreatePixPaymentRequest req) {
-        if (req == null)
-            throw new IllegalArgumentException("Request cannot be null");
-
-        UUID orderId = ReflectionPropertyUtils.readUUID(req, "orderId", "id", "order_id");
-        String customerName = ReflectionPropertyUtils.tryGetString(req, "customerName", "name", "customer_name");
-        String customerEmail = ReflectionPropertyUtils.tryGetString(req, "customerEmail", "email", "customer_email");
-        BigDecimal amount = ReflectionPropertyUtils.readBigDecimal(req, "amount", "value", "price", "total");
-
-        return createPixPayment(orderId, customerName, customerEmail, amount);
+        return createPixPayment(req.orderId(), "Cliente", req.email(), req.amount());
     }
-
 }

@@ -93,6 +93,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
 
                         // Se seu checkout for público:
+                        .requestMatchers("/api/checkout/**").permitAll()
                         .requestMatchers("/api/shipping/**").permitAll()
                         .requestMatchers("/api/newsletter/**").permitAll()
 
