@@ -1,10 +1,7 @@
 import api from './api';
-import { auth, googleProvider } from './firebaseConfig';
-import { signInWithPopup } from 'firebase/auth';
 
 export const authService = {
     register: async (userData) => {
-        // userData: { name, email, password }
         const response = await api.post('/auth/register', userData);
         return response.data;
     },
@@ -22,31 +19,49 @@ export const authService = {
         return response.data;
     },
 
-    googleLogin: async () => {
+    /**
+     * Login com Google — usa access_token do @react-oauth/google.
+     * O frontend já buscou o userInfo do Google e envia ao backend.
+     * O backend valida via Google's tokeninfo endpoint e cria/autentica o usuário.
+     */
+    googleLoginWithUserInfo: async (userInfo, accessToken) => {
         try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const idToken = await result.user.getIdToken();
-
-            // Enviar o token para o backend persistir ou validar
-            const response = await api.post('/auth/google', { idToken });
+            const response = await api.post('/auth/google', {
+                email: userInfo.email,
+                name: userInfo.name,
+                picture: userInfo.picture,
+                googleId: userInfo.sub,
+                accessToken, // backend valida com https://oauth2.googleapis.com/tokeninfo
+            });
 
             if (response.data.token) {
                 localStorage.setItem('auth_token', response.data.token);
-                // Salvar dados do usuário do Firebase ou do Backend
                 localStorage.setItem('user', JSON.stringify({
-                    name: result.user.displayName,
-                    email: result.user.email,
-                    photoURL: result.user.photoURL
+                    name: userInfo.name,
+                    email: userInfo.email,
+                    photoURL: userInfo.picture || null,
                 }));
             }
             return response.data;
         } catch (error) {
-            console.error("[authService] Erro no Google Login:", error);
+            console.error('[authService] Erro no Google Login:', error);
             throw error;
         }
     },
 
     logout: () => {
         localStorage.removeItem('auth_token');
-    }
+        localStorage.removeItem('user');
+    },
+
+    getUser: () => {
+        try {
+            const userStr = localStorage.getItem('user');
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    isAuthenticated: () => !!localStorage.getItem('auth_token'),
 };
