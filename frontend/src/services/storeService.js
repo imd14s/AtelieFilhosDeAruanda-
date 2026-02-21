@@ -8,6 +8,31 @@ import api from './api';
 // Header de Tenant para multi-loja (conforme especificações de integração)
 const TENANT_HEADER = { 'X-Tenant-ID': 'atelie-aruanda' };
 
+/**
+ * Normaliza o objeto de produto da API para campos usados pelo frontend.
+ * A entidade retorna: title (=name), stock (=stockQuantity), category (UUID)
+ */
+const normalizeProduct = (p) => {
+  if (!p) return p;
+  return {
+    ...p,
+    // Título: API serializa `name` como `title`
+    name: p.title || p.name || '',
+    // Stock: API serializa `stockQuantity` como `stock`
+    stockQuantity: p.stock ?? p.stockQuantity ?? 0,
+    // category: API pode retornar como UUID direto no campo `category`
+    categoryId: p.categoryId || (typeof p.category === 'string' ? p.category : p.category?.id) || null,
+    // averageRating e totalReviews não existem ainda no backend — defaults
+    averageRating: p.averageRating ?? null,
+    totalReviews: p.totalReviews ?? 0,
+    // Normalizar variantes
+    variants: (p.variants || []).map(v => ({
+      ...v,
+      // variant stockQuantity também vem como `stock` às vezes
+      stockQuantity: v.stockQuantity ?? v.stock ?? 0,
+    }))
+  };
+};
 
 export const storeService = {
   // --- PRODUTOS ---
@@ -34,8 +59,9 @@ export const storeService = {
         headers: TENANT_HEADER
       });
 
-      // Padronização: retorna sempre um array
-      return response.data?.content || (Array.isArray(response.data) ? response.data : []);
+      // Padronização: retorna sempre um array normalizado
+      const raw = response.data?.content || (Array.isArray(response.data) ? response.data : []);
+      return raw.map(normalizeProduct);
     } catch (error) {
       console.error("[storeService] Erro ao buscar produtos:", error);
       throw error;
@@ -50,7 +76,7 @@ export const storeService = {
       const response = await api.get(`/products/${id}`, {
         headers: TENANT_HEADER
       });
-      return response.data;
+      return normalizeProduct(response.data);
     } catch (error) {
       console.error(`[storeService] Erro ao buscar produto ${id}:`, error);
       throw error;
