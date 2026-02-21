@@ -7,6 +7,8 @@ import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegratio
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.atelie.ecommerce.application.service.order.OrderService;
+import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.http.*;
@@ -30,13 +32,15 @@ public class MercadoLivreAdapter implements IMarketplaceAdapter {
     private final ObjectMapper objectMapper;
     private final Environment env;
     private final ProductIntegrationRepository integrationRepository;
+    private final OrderService orderService;
 
     public MercadoLivreAdapter(RestTemplate restTemplate, ObjectMapper objectMapper, Environment env,
-            ProductIntegrationRepository integrationRepository) {
+            ProductIntegrationRepository integrationRepository, OrderService orderService) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.env = env;
         this.integrationRepository = integrationRepository;
+        this.orderService = orderService;
     }
 
     private String mlBaseUrl() {
@@ -192,7 +196,110 @@ public class MercadoLivreAdapter implements IMarketplaceAdapter {
     @Override
     public void handleWebhook(MarketplaceIntegrationEntity integration, Map<String, Object> payload) {
         log.info("Recebido webhook do Mercado Livre para integração {}: {}", integration.getId(), payload);
-        // Lógica para processar mudança de status de pedido, etc.
+
+        try {
+            String topic = (String) payload.get("topic");
+            String resource = (String) payload.get("resource");
+
+            if ("orders_v2".equals(topic) && resource != null) {
+                // Remove leading slash if present
+                String orderIdStr = resource.startsWith("/") ? resource.substring(1) : resource;
+                fetchAndProcessOrder(integration, orderIdStr);
+            }
+        } catch (Exception e) {
+            log.error("Erro ao processar webhook do Mercado Livre", e);
+        }
+    }
+
+    private void fetchAndProcessOrder(MarketplaceIntegrationEntity integration, String resourcePath) {
+        if (integration.getAuthPayload() == null) {
+            log.warn("Cannot fetch ML order: No auth payload for integration {}", integration.getId());
+            return;
+        }
+
+        try {
+            JsonNode payloadJson = objectMapper.readTree(integration.getAuthPayload());
+            String token = payloadJson.path("accessToken").asText();
+
+            if (token.isEmpty()) {
+                log.warn("Cannot fetch ML order: Access token is empty");
+                return;
+            }
+
+            String url = mlBaseUrl() + "/" + resourcePath;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(token);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.GET, entity, JsonNode.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                JsonNode orderNode = response.getBody();
+
+                String externalOrderId = orderNode.path("id").asText();
+                String status = mapMlStatusToInternal(orderNode.path("status").asText());
+                String customerName = orderNode.path("buyer").path("nickname").asText();
+                if (orderNode.path("buyer").has("first_name")) {
+                    customerName = orderNode.path("buyer").path("first_name").asText() + " "
+                            + orderNode.path("buyer").path("last_name").asText();
+                }
+
+                java.math.BigDecimal totalAmount = new java.math.BigDecimal(orderNode.path("total_amount").asText());
+
+                List<CreateOrderItemRequest> items = new ArrayList<>();
+                if (orderNode.has("order_items")) {
+                    for (JsonNode itemNode : orderNode.path("order_items")) {
+                        String mlItemId = itemNode.path("item").path("id").asText(); // e.g. MLB123456
+                        int quantity = itemNode.path("quantity").asInt();
+
+                        // Find local product based on ML ID
+                        integrationRepository.findByExternalIdAndIntegrationType(mlItemId, "mercadolivre")
+                                .ifPresentOrElse(link -> {
+                                    // Found corresponding local product
+                                    items.add(new CreateOrderItemRequest(link.getProduct().getId(), null, quantity));
+                                }, () -> {
+                                    log.warn("Product {} not found locally for ML Order {}", mlItemId, externalOrderId);
+                                    // Depending on requirements, we could create a stub product or just skip stock
+                                    // deduction.
+                                    // The OrderService handles null products safely for external orders by creating
+                                    // an empty local item logging it.
+                                    // We need a fake UUID to pass to the request record just to let it through
+                                    // though.
+                                    // For simplicity and safety, if we don't know the product, we skip creating the
+                                    // specific line in local DB
+                                    // or we can just pass a null UUID if the record allows it.
+                                    // Since CreateOrderItemRequest requires UUID, we skip it.
+                                });
+                    }
+                }
+
+                // If no items matched locally, we can still save the order header for financial
+                // tracking,
+                // but stock won't be deducted.
+
+                orderService.processMarketplaceOrder(
+                        "mercadolivre",
+                        externalOrderId,
+                        customerName,
+                        status,
+                        totalAmount,
+                        items);
+
+                log.info("Processado com sucesso pedido MercadoLivre: {}", externalOrderId);
+            }
+        } catch (Exception e) {
+            log.error("Erro ao buscar detalhes do pedido no Mercado Livre: " + resourcePath, e);
+        }
+    }
+
+    private String mapMlStatusToInternal(String mlStatus) {
+        return switch (mlStatus) {
+            case "paid" -> com.atelie.ecommerce.domain.order.OrderStatus.PAID.name();
+            case "cancelled" -> com.atelie.ecommerce.domain.order.OrderStatus.CANCELED.name();
+            case "shipped" -> com.atelie.ecommerce.domain.order.OrderStatus.SHIPPED.name();
+            case "delivered" -> com.atelie.ecommerce.domain.order.OrderStatus.DELIVERED.name();
+            default -> com.atelie.ecommerce.domain.order.OrderStatus.PENDING.name();
+        };
     }
 
     @Override

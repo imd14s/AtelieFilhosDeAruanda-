@@ -21,4 +21,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
     long countByStatusNot(com.atelie.ecommerce.domain.order.OrderStatus status);
 
     java.util.List<OrderEntity> findByCreatedAtAfter(java.time.Instant date);
+
+    java.util.Optional<OrderEntity> findByExternalIdAndSource(String externalId, String source);
 }

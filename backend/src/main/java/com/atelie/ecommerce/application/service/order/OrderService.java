@@ -46,6 +46,101 @@ public class OrderService {
     }
 
     @Transactional
+    public OrderEntity processMarketplaceOrder(String source, String externalId, String customerName, String status,
+            BigDecimal totalAmount, List<CreateOrderItemRequest> items) {
+        // Idempotency check
+        java.util.Optional<OrderEntity> existing = orderRepository.findByExternalIdAndSource(externalId, source);
+        if (existing.isPresent()) {
+            OrderEntity current = existing.get();
+            // Update status if changed, but don't re-process stock
+            if (!current.getStatus().equals(status)) {
+                current.setStatus(status);
+                orderRepository.save(current);
+                auditService.log(
+                        com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.UPDATE,
+                        com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
+                        current.getId().toString(),
+                        "Marketplace Order status updated to " + status);
+            }
+            return current;
+        }
+
+        // New Order
+        OrderEntity order = new OrderEntity();
+        order.setId(UUID.randomUUID());
+        order.setSource(source);
+        order.setExternalId(externalId);
+        order.setCustomerName(customerName);
+        order.setStatus(status);
+        order.setCreatedAt(Instant.now());
+        order.setTotalAmount(totalAmount);
+
+        List<OrderItemEntity> orderItems = new ArrayList<>();
+
+        for (CreateOrderItemRequest itemReq : items) {
+            ProductEntity product = productRepository.findById(itemReq.productId())
+                    .orElse((ProductEntity) null); // Allow missing products for external orders, but log it
+
+            if (product == null) {
+                // If product is not linked locally, create a placeholder item if needed, but we
+                // can't deduct stock
+                org.slf4j.LoggerFactory.getLogger(OrderService.class)
+                        .warn("Product unlinked in ML Order. Skipping stock deduction for ML item.");
+                continue;
+            }
+
+            UUID targetVariantId = itemReq.variantId();
+            ProductVariantEntity variant = null;
+
+            if (targetVariantId != null) {
+                variant = variantRepository.findById(targetVariantId).orElse(null);
+            } else {
+                var variants = variantRepository.findByProductId(product.getId());
+                if (!variants.isEmpty()) {
+                    variant = variants.get(0);
+                    targetVariantId = variant.getId();
+                }
+            }
+
+            if (targetVariantId != null) {
+                // Deduct stock
+                inventoryService.addMovement(
+                        targetVariantId,
+                        MovementType.OUT,
+                        itemReq.quantity(),
+                        "Sale Order " + order.getId() + " (" + source + ")",
+                        order.getId().toString());
+            }
+
+            BigDecimal itemPrice = (variant != null && variant.getPrice() != null) ? variant.getPrice()
+                    : product.getPrice();
+            BigDecimal itemTotal = itemPrice.multiply(new BigDecimal(itemReq.quantity()));
+
+            OrderItemEntity itemEntity = new OrderItemEntity();
+            itemEntity.setId(UUID.randomUUID());
+            itemEntity.setOrder(order);
+            itemEntity.setProduct(product);
+            itemEntity.setVariant(variant);
+            itemEntity.setQuantity(itemReq.quantity());
+            itemEntity.setUnitPrice(itemPrice);
+            itemEntity.setTotalPrice(itemTotal);
+
+            orderItems.add(itemEntity);
+        }
+
+        order.setItems(orderItems);
+        OrderEntity saved = orderRepository.save(order);
+
+        auditService.log(
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.CREATE,
+                com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
+                saved.getId().toString(),
+                "Marketplace Order imported from " + source + " for " + customerName);
+
+        return saved;
+    }
+
+    @Transactional
     public OrderEntity createOrder(CreateOrderRequest request) {
         OrderEntity order = new OrderEntity();
         order.setId(UUID.randomUUID());
