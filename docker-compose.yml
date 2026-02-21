@@ -18,6 +18,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    mem_limit: 512m
+    cpus: "1"
     networks:
       - atelie-network
 
@@ -35,6 +37,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    mem_limit: 1g
+    cpus: "1"
     networks:
       - atelie-network
 
@@ -49,6 +53,8 @@ services:
       - ${DASHBOARD_PORT}
     depends_on:
       - api
+    mem_limit: 512m
+    cpus: "0.5"
     networks:
       - atelie-network
 
@@ -63,6 +69,8 @@ services:
       - ${STORE_PORT}
     depends_on:
       - api
+    mem_limit: 512m
+    cpus: "0.5"
     networks:
       - atelie-network
 

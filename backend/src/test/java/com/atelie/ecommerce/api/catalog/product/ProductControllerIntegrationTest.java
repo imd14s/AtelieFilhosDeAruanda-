@@ -72,6 +72,7 @@ public class ProductControllerIntegrationTest {
                 "Test Product",
                 "Description",
                 new BigDecimal("99.90"),
+                null, // originalPrice
                 10,
                 category.getId(),
                 List.of(new ProductCreateRequest.ProductMediaItem("image1.jpg", "IMAGE", true)),
@@ -85,7 +86,7 @@ public class ProductControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.name").value("Test Product"));
+                .andExpect(jsonPath("$.title").value("Test Product"));
     }
 
     @Test
@@ -130,7 +131,7 @@ public class ProductControllerIntegrationTest {
                 // returns Optional<Product> for slug search?
                 // Checking controller: findBySlug returns Optional, map to ok/notFound. So it
                 // returns single object.
-                .andExpect(jsonPath("$.name").value("Slug Product"));
+                .andExpect(jsonPath("$.title").value("Slug Product"));
     }
 
     @Test
@@ -149,6 +150,6 @@ public class ProductControllerIntegrationTest {
                 .param("categoryId", category.getId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
-                .andExpect(jsonPath("$.content[0].name").value("Category Product"));
+                .andExpect(jsonPath("$.content[0].title").value("Category Product"));
     }
 }

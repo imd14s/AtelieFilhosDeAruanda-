@@ -114,7 +114,7 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                         {/* Overlay Actions */}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2 pointer-events-none group-hover:pointer-events-auto">
                             <div className="flex justify-end">
-                                <button onClick={() => removeMedia(item.id)} className="text-white hover:text-red-400 z-10">
+                                <button type="button" onClick={() => removeMedia(item.id)} className="text-white hover:text-red-400 z-10">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -122,12 +122,14 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                                 {item.type === 'IMAGE' && (
                                     <>
                                         <button
+                                            type="button"
                                             onClick={() => setMain(item.id)}
                                             className={`text-xs px-2 py-1 rounded ${item.isMain ? 'bg-indigo-600 text-white' : 'bg-white/20 text-white hover:bg-white/40'}`}
                                         >
                                             {item.isMain ? 'Capa' : 'Definir Capa'}
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => handleMagicRemoveBg(item.id)}
                                             title="Remover Fundo (IA)"
                                             className="bg-purple-600 text-white p-1 rounded hover:bg-purple-700"

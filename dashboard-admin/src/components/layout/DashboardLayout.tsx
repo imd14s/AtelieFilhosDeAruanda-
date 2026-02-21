@@ -50,7 +50,7 @@ export function DashboardLayout() {
       icon: Settings,
       label: 'Configurações',
       children: [
-        { icon: Settings, label: 'Gerais', path: '/configs' },
+        { icon: Zap, label: 'IA', path: '/settings/ai' },
         { icon: Plug, label: 'Integrações', path: '/settings/integrations' },
         { icon: Users, label: 'Equipe', path: '/settings/team' },
         { icon: Shield, label: 'Auditoria', path: '/settings/audit' },

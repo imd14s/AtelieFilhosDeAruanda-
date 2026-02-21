@@ -10,6 +10,7 @@ export interface ProductVariant {
     sku: string;
     price: number;
     promotionalPrice?: number;
+    originalPrice?: number;
     stock: number;
     attributes: Record<string, string>; // e.g. { color: "Red", size: "M" }
     imageUrl?: string;
@@ -41,6 +42,7 @@ export interface Product {
     // Pricing & Stock (can be overridden by variants)
     price: number;
     promotionalPrice?: number;
+    originalPrice?: number;
     stock: number;
 
     variants: ProductVariant[];

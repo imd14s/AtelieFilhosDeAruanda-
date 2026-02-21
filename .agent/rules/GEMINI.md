@@ -271,3 +271,20 @@ When user's prompt is NOT in English:
 - **Test**: `playwright_runner.py`, `test_runner.py`
 
 ---
+
+## 🏗️ ENVIRONMENT RUNTIME PROTOCOL (TIER 0)
+
+> 🔴 **MANDATORY DEV ENVIRONMENT RULE:** 
+> - **Database:** MUST always run inside Docker Compose (`docker compose up -d db`).
+> - **Applications (Backend/Frontend/Dashboard):** MUST always run LOCALLY (via `npm run dev` or `mvn spring-boot:run` / bash scripts).
+> - **Ports Pattern in Compose:** In `docker-compose.yml`, ports MUST be strictly defined exactly as `- ${VAR_PORT}`. NEVER hardcode the internal port (e.g. no `- "${DB_PORT}:5432"`). If the variable is wrong or missing, the startup SHOULD intentionally fail.
+> - **Port Conflicts:** If a port is already in use, VERIFY if it's the correct application running. If not, KILL the conflicting port (`lsof -ti:<port> | xargs kill -9`) before starting the service. Do NOT run nested docker applications unless explicitly asked.
+
+## 🗄️ DATABASE MIGRATIONS PROTOCOL
+
+> 🔴 **MANDATORY FLYWAY RULE:** 
+> - ALL schema modifications, configurations, and data seeds MUST be done entirely within the single `V1__init_schema.sql` file.
+> - **NEVER** create `V2`, `V3`, etc. incremental update files. **NEVER** use separate `seed_data.sql` files.
+> - To apply new fields, adjust `V1__init_schema.sql` directly, drop the old postgres volume (`docker compose down -v`), and restart the database clean.
+
+---

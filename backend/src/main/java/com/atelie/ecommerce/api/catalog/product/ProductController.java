@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 @RestController
@@ -66,21 +68,41 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductEntity> create(@RequestBody ProductCreateRequest request) {
+    public ResponseEntity<?> create(@RequestBody ProductCreateRequest request) {
         if (request.categoryId() == null) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("error", "A categoria é obrigatória."));
+        }
+
+        if (request.originalPrice() != null && request.price() != null
+                && request.price().compareTo(request.originalPrice()) >= 0) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("error", "O preço de venda deve ser menor que o preço original."));
+        }
+
+        if (request.variants() != null && !request.variants().isEmpty()) {
+            for (var v : request.variants()) {
+                if (v.imageUrl() == null || v.imageUrl().isBlank()) {
+                    return ResponseEntity.badRequest().body(java.util.Map.of("error",
+                            "Toda variante deve possuir pelo menos uma imagem associada. Por favor, anexe uma imagem antes de adicionar a variante."));
+                }
+                if (v.originalPrice() != null && v.price() != null && v.price().compareTo(v.originalPrice()) >= 0) {
+                    return ResponseEntity.badRequest().body(java.util.Map.of("error",
+                            "O preço de venda da variante deve ser menor que o preço original."));
+                }
+            }
         }
 
         ProductEntity product = new ProductEntity();
         product.setName(request.name());
         product.setDescription(request.description());
         product.setPrice(request.price());
+        product.setOriginalPrice(request.originalPrice());
         product.setStockQuantity(request.stockQuantity());
 
         if (request.media() != null) {
             List<String> imageUrls = request.media().stream()
                     .map(ProductCreateRequest.ProductMediaItem::url)
-                    .toList();
+                    .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
             product.setImages(imageUrls);
         }
 
@@ -115,6 +137,11 @@ public class ProductController {
                         attrsJson,
                         true);
                 variant.setImageUrl(v.imageUrl());
+                variant.setOriginalPrice(v.originalPrice());
+                if (v.media() != null) {
+                    variant.setImages(v.media().stream().map(ProductCreateRequest.ProductMediaItem::url)
+                            .collect(java.util.stream.Collectors.toList()));
+                }
                 return variant;
             }).toList();
         }
@@ -128,7 +155,7 @@ public class ProductController {
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
             var mediaAsset = mediaStorageService.upload(file, "product-image", true);
-            return ResponseEntity.ok(new java.util.HashMap<String, String>() {
+            return ResponseEntity.ok(new HashMap<String, String>() {
                 {
                     put("id", mediaAsset.getId().toString());
                     put("url", "/api/media/public/" + mediaAsset.getId());
@@ -142,7 +169,26 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductEntity> update(@PathVariable UUID id, @RequestBody ProductCreateRequest request) {
+    public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody ProductCreateRequest request) {
+        if (request.originalPrice() != null && request.price() != null
+                && request.price().compareTo(request.originalPrice()) >= 0) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("error", "O preço de venda deve ser menor que o preço original."));
+        }
+
+        if (request.variants() != null && !request.variants().isEmpty()) {
+            for (var v : request.variants()) {
+                if (v.imageUrl() == null || v.imageUrl().isBlank()) {
+                    return ResponseEntity.badRequest().body(java.util.Map.of("error",
+                            "Todas as variantes devem possuir pelo menos uma imagem associada. Por favor, certifique-se de não haver variantes sem capa."));
+                }
+                if (v.originalPrice() != null && v.price() != null && v.price().compareTo(v.originalPrice()) >= 0) {
+                    return ResponseEntity.badRequest().body(java.util.Map.of("error",
+                            "O preço de venda da variante deve ser menor que o preço original."));
+                }
+            }
+        }
+
         ProductEntity existing = productRepository.findById(id)
                 .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
                         "Produto não encontrado"));
@@ -150,10 +196,13 @@ public class ProductController {
         existing.setName(request.name());
         existing.setDescription(request.description());
         existing.setPrice(request.price());
+        existing.setOriginalPrice(request.originalPrice());
         existing.setStockQuantity(request.stockQuantity());
 
         if (request.media() != null) {
-            existing.setImages(request.media().stream().map(ProductCreateRequest.ProductMediaItem::url).toList());
+            existing.setImages(request.media().stream()
+                    .map(ProductCreateRequest.ProductMediaItem::url)
+                    .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new)));
         }
 
         if (request.marketplaceIds() != null) {
@@ -171,8 +220,13 @@ public class ProductController {
                 variant.setId(v.id());
                 variant.setSku(v.sku());
                 variant.setPrice(v.price());
+                variant.setOriginalPrice(v.originalPrice());
                 variant.setStockQuantity(v.stock());
                 variant.setImageUrl(v.imageUrl());
+                if (v.media() != null) {
+                    variant.setImages(v.media().stream().map(ProductCreateRequest.ProductMediaItem::url)
+                            .collect(java.util.stream.Collectors.toList()));
+                }
                 try {
                     if (v.attributes() != null) {
                         variant.setAttributesJson(new com.fasterxml.jackson.databind.ObjectMapper()
@@ -202,13 +256,22 @@ public class ProductController {
     @PostMapping("/generate-description")
     public ResponseEntity<?> generateDescription(@RequestBody java.util.Map<String, String> payload) {
         String title = payload.get("title");
-        if (title == null || title.isBlank())
+        String imageUrl = payload.get("imageUrl");
+
+        if (title == null || title.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(java.util.Map.of("error", "O título é obrigatório para gerar a descrição."));
+        }
+
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("error",
+                            "É necessário inserir uma imagem de capa da variante para que a IA possa analisar e extrair os dados adequadamente."));
+        }
 
         try {
-            String desc = productService.generateDescription(title);
-            return ResponseEntity.ok(java.util.Map.of("description", desc));
+            java.util.Map<String, String> desc = productService.generateProductInfo(title, imageUrl);
+            return ResponseEntity.ok(desc);
         } catch (com.atelie.ecommerce.api.common.exception.BusinessException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         } catch (Exception e) {

@@ -36,7 +36,15 @@ export const ProductService = {
         ...v,
         stock: v.stockQuantity, // Map variant stock
         attributes: v.attributesJson ? JSON.parse(v.attributesJson) : (v.attributes || {}),
-        media: [] // Backend variants don't have media yet
+        media: (v.images || []).map((url: string, index: number) => {
+          const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
+          return {
+            id: crypto.randomUUID(), // Generate temp ID for frontend key
+            url: url,
+            type: isVideo ? 'VIDEO' : 'IMAGE',
+            isMain: index === 0 && !isVideo
+          };
+        })
       })),
 
       // Map simple string[] images to full ProductMedia[]
@@ -74,8 +82,8 @@ export const ProductService = {
     await api.put(`/products/${id}/toggle-alert`);
   },
 
-  generateDescription: async (title: string): Promise<string> => {
-    const { data } = await api.post<{ description: string }>('/products/generate-description', { title });
-    return data.description;
+  generateDescription: async (title: string, imageUrl?: string): Promise<{ title: string, description: string }> => {
+    const { data } = await api.post<{ title: string, description: string }>('/products/generate-description', { title, imageUrl });
+    return data;
   }
 };

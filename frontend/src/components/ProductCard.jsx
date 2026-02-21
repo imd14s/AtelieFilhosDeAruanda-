@@ -53,7 +53,10 @@ const ProductCard = ({ product }) => {
         </p>
 
         <Link to={`/produto/${product.id}`}>
-          <h3 className="font-playfair text-lg text-[var(--azul-profundo)] mb-2 line-clamp-2 group-hover:text-[var(--dourado-suave)] transition-colors h-14 flex items-center justify-center">
+          <h3
+            className="font-playfair text-lg leading-snug text-[var(--azul-profundo)] mb-2 line-clamp-2 group-hover:text-[var(--dourado-suave)] transition-colors min-h-[3.5rem] w-full break-words"
+            title={product.title || product.name}
+          >
             {product.title || product.name}
           </h3>
         </Link>

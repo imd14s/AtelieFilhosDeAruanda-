@@ -64,6 +64,7 @@ public class ProductControllerTest {
                 "Integration Product",
                 "Desc",
                 BigDecimal.valueOf(100.00),
+                null, // originalPrice
                 10,
                 categoryId,
                 new java.util.ArrayList<>(), // media
@@ -76,7 +77,7 @@ public class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", notNullValue()))
-                .andExpect(jsonPath("$.name", is("Integration Product")));
+                .andExpect(jsonPath("$.title", is("Integration Product")));
     }
 
     @Test
@@ -100,7 +101,7 @@ public class ProductControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updatePayload)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is("Updated Name")))
+                .andExpect(jsonPath("$.title", is("Updated Name")))
                 .andExpect(jsonPath("$.price", is(200.00)));
     }
 

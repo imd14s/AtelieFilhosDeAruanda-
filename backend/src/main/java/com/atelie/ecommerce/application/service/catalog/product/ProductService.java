@@ -20,6 +20,7 @@ import com.atelie.ecommerce.api.config.DynamicConfigService;
 import com.atelie.ecommerce.api.common.exception.BusinessException;
 import com.atelie.ecommerce.application.integration.MarketplaceIntegrationFactory;
 import com.atelie.ecommerce.application.integration.IMarketplaceAdapter;
+import com.atelie.ecommerce.application.service.ai.GeminiIntegrationService;
 import com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity;
 import com.atelie.ecommerce.infrastructure.persistence.integration.repository.MarketplaceIntegrationRepository;
 import lombok.extern.slf4j.Slf4j; // Add logging
@@ -43,6 +44,7 @@ public class ProductService {
     private final ApplicationEventPublisher eventPublisher;
     private final MarketplaceIntegrationFactory marketplaceFactory;
     private final MarketplaceIntegrationRepository marketplaceRepository;
+    private final GeminiIntegrationService geminiIntegrationService;
 
     public ProductService(ProductRepository productRepository,
             CategoryRepository categoryRepository,
@@ -52,7 +54,8 @@ public class ProductService {
             DynamicConfigService configService,
             ApplicationEventPublisher eventPublisher,
             MarketplaceIntegrationFactory marketplaceFactory,
-            MarketplaceIntegrationRepository marketplaceRepository) {
+            MarketplaceIntegrationRepository marketplaceRepository,
+            GeminiIntegrationService geminiIntegrationService) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.variantRepository = variantRepository;
@@ -62,6 +65,7 @@ public class ProductService {
         this.eventPublisher = eventPublisher;
         this.marketplaceFactory = marketplaceFactory;
         this.marketplaceRepository = marketplaceRepository;
+        this.geminiIntegrationService = geminiIntegrationService;
     }
 
     @Transactional(readOnly = true)
@@ -198,8 +202,14 @@ public class ProductService {
     }
 
     private void updateVariants(ProductEntity existing, List<ProductVariantEntity> newVariants) {
+        if (existing.getVariants() == null) {
+            existing.setVariants(new java.util.ArrayList<>());
+        }
+
         java.util.Map<UUID, ProductVariantEntity> existingMap = existing.getVariants().stream()
-                .collect(java.util.stream.Collectors.toMap(ProductVariantEntity::getId, v -> v));
+                .collect(java.util.stream.Collectors.toMap(ProductVariantEntity::getId, v -> v, (v1, v2) -> v1)); // handle
+                                                                                                                  // duplicates
+                                                                                                                  // safely
 
         java.util.List<ProductVariantEntity> toAdd = new ArrayList<>();
         java.util.List<UUID> toKeep = new ArrayList<>();
@@ -218,6 +228,10 @@ public class ProductService {
                 existingVariant.setStockQuantity(v.getStockQuantity());
                 existingVariant.setAttributesJson(v.getAttributesJson());
                 existingVariant.setImageUrl(v.getImageUrl());
+                existingVariant.setOriginalPrice(v.getOriginalPrice());
+                if (v.getImages() != null) {
+                    existingVariant.setImages(new java.util.ArrayList<>(v.getImages()));
+                }
                 existingVariant.setActive(v.getActive());
                 existingVariant.setUpdatedAt(java.time.LocalDateTime.now());
                 toKeep.add(v.getId());
@@ -267,25 +281,14 @@ public class ProductService {
         productRepository.save(product);
     }
 
-    public String generateDescription(String title) {
-        String token = configService.getString("OPENAI_API_TOKEN");
-        if (token == null || token.isBlank()) {
-            throw new BusinessException("Token OpenAI não configurado no sistema.");
-        }
+    public String generateDescription(String title, String imageUrl) {
+        // Agora delega para o serviço real do Gemini informando também a capa
+        java.util.Map<String, String> response = geminiIntegrationService.generateProductInfo(title, imageUrl);
+        return response.get("description");
+    }
 
-        // Mock implementation until real OpenAI integration
-        // In real scenario, would call OpenAI API here using the token
-        try {
-            // Simulate network delay
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        return "Descrição gerada por IA para: " + title + "\n\n" +
-                "Este é um produto exclusivo do Ateliê Filhos de Aruanda. " +
-                "Feito com dedicação e materiais de alta qualidade para garantir " +
-                "beleza e durabilidade. Axé!";
+    public java.util.Map<String, String> generateProductInfo(String title, String imageUrl) {
+        return geminiIntegrationService.generateProductInfo(title, imageUrl);
     }
 
     @Transactional(readOnly = true)

@@ -15,6 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisher;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -42,6 +44,9 @@ class ProductServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private ServiceProviderJpaRepository providerRepository;
+
     @InjectMocks
     private ProductService productService;
 
@@ -64,6 +69,7 @@ class ProductServiceTest {
             return p;
         });
         when(gtinGenerator.generateInternalEan13()).thenReturn("1234567890123");
+        when(providerRepository.findByCode(any())).thenReturn(Optional.empty());
 
         // Act
         ProductEntity result = productService.saveProduct(newProduct, categoryId);

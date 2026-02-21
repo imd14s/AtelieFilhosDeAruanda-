@@ -31,6 +31,9 @@ public class ProductVariantEntity {
 
     private BigDecimal price;
 
+    @Column(name = "original_price")
+    private BigDecimal originalPrice;
+
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
 
@@ -40,6 +43,11 @@ public class ProductVariantEntity {
 
     @Column(name = "image_url")
     private String imageUrl;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "product_variant_images", joinColumns = @JoinColumn(name = "variant_id"))
+    @Column(name = "image_url")
+    private java.util.List<String> images = new java.util.ArrayList<>();
 
     @Column(nullable = false)
     private Boolean active;
@@ -67,6 +75,14 @@ public class ProductVariantEntity {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     public Integer getStockQuantity() {
@@ -147,6 +163,14 @@ public class ProductVariantEntity {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public java.util.List<String> getImages() {
+        return images;
+    }
+
+    public void setImages(java.util.List<String> images) {
+        this.images = images;
     }
 
     // Manual constructor for builder fallback

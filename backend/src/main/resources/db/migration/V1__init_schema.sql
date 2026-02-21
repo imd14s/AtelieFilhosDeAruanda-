@@ -27,9 +27,10 @@ CREATE TABLE categories (
 
 CREATE TABLE products (
     id UUID PRIMARY KEY,
-    name VARCHAR(160) NOT NULL,
+    name VARCHAR(500) NOT NULL,
     description VARCHAR(2000) NOT NULL,
     price NUMERIC(19,2) NOT NULL,
+    original_price NUMERIC(19,2),
     category_id UUID NOT NULL,
     active BOOLEAN NOT NULL,
     image_url VARCHAR(255),
@@ -38,7 +39,7 @@ CREATE TABLE products (
     stock_quantity INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    slug VARCHAR(255), -- V6
+    slug VARCHAR(500), -- V6
     CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 CREATE INDEX idx_products_attributes ON products USING GIN (attributes);
@@ -58,6 +59,7 @@ CREATE TABLE product_variants (
     gtin VARCHAR(20),
     stock_quantity INTEGER NOT NULL DEFAULT 0,
     price DECIMAL(19, 2),
+    original_price DECIMAL(19, 2),
     active BOOLEAN DEFAULT TRUE,
     attributes_json JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -66,6 +68,13 @@ CREATE TABLE product_variants (
     CONSTRAINT fk_variant_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX ux_product_variant_gtin ON product_variants(gtin) WHERE gtin IS NOT NULL;
+
+CREATE TABLE product_variant_images (
+    variant_id UUID NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    CONSTRAINT fk_variant_images_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_variant_images_variant_id ON product_variant_images(variant_id);
 
 CREATE TABLE product_integrations (
     id UUID PRIMARY KEY,
@@ -260,8 +269,8 @@ CREATE TABLE IF NOT EXISTS product_marketplaces ( -- V8
 CREATE TABLE marketplace_integrations ( -- V9
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     provider VARCHAR(50) NOT NULL UNIQUE,
-    encrypted_credentials JSONB,
-    auth_payload JSONB,
+    encrypted_credentials TEXT,
+    auth_payload TEXT,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -285,3 +294,13 @@ CREATE INDEX idx_audit_logs_resource ON audit_logs(resource);
 CREATE INDEX idx_audit_logs_resource_id ON audit_logs(resource_id);
 CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp);
 CREATE INDEX idx_audit_logs_performed_by ON audit_logs(performed_by_user_id);
+
+-- 11. AI Configurations
+CREATE TABLE configuracoes_ia (
+    id UUID PRIMARY KEY,
+    nome_ia VARCHAR(255) NOT NULL,
+    api_key VARCHAR(255) NOT NULL,
+    pre_prompt TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

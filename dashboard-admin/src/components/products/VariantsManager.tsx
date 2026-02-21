@@ -1,54 +1,13 @@
-import { useState } from 'react';
-import { Plus, Trash2, Upload, CloudLightning, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Pencil, Image as ImageIcon } from 'lucide-react';
 import type { ProductVariant } from '../../types/product';
-import { MediaService } from '../../services/MediaService';
 
 interface VariantsManagerProps {
     variants: ProductVariant[];
     onChange: (variants: ProductVariant[]) => void;
+    onEdit?: (variant: ProductVariant) => void;
 }
 
-export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
-    const [isUploading, setIsUploading] = useState(false);
-    const [newVariant, setNewVariant] = useState<Partial<ProductVariant>>({
-        sku: '',
-        price: 0,
-        stock: 0,
-        attributes: { size: '', color: '' },
-        imageUrl: ''
-    });
-
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setIsUploading(true);
-            try {
-                const response = await MediaService.upload(e.target.files[0], () => { });
-                setNewVariant(prev => ({ ...prev, imageUrl: response.url }));
-            } catch (error) {
-                console.error('Upload failed', error);
-                alert('Erro ao fazer upload da imagem da variante.');
-            } finally {
-                setIsUploading(false);
-            }
-        }
-    };
-
-    const handleAdd = () => {
-        // SKU is no longer mandatory here, backend will generate it
-
-        const variant: ProductVariant = {
-            id: crypto.randomUUID(),
-            sku: newVariant.sku!,
-            price: newVariant.price || 0,
-            stock: newVariant.stock || 0,
-            attributes: { ...newVariant.attributes },
-            imageUrl: newVariant.imageUrl
-        };
-
-        onChange([...variants, variant]);
-        setNewVariant({ sku: '', price: 0, stock: 0, attributes: { size: '', color: '' }, imageUrl: '' });
-    };
-
+export function VariantsManager({ variants, onChange, onEdit }: VariantsManagerProps) {
     const removeVariant = (id: string) => {
         onChange(variants.filter(v => v.id !== id));
     };
@@ -61,109 +20,75 @@ export function VariantsManager({ variants, onChange }: VariantsManagerProps) {
         return `${cleanBase}${url}`;
     };
 
+    if (variants.length === 0) {
+        return <div className="p-6 text-center text-gray-400 text-sm border rounded bg-gray-50 border-dashed">Nenhuma variante adicionada ainda. Preencha os dados acima e clique em "Adicionar".</div>;
+    }
+
     return (
-        <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
-            <h3 className="font-semibold text-gray-700">Variantes do Produto</h3>
-
-            {/* Form de Adição Rápida */}
-            <div className="grid grid-cols-6 gap-2 items-end">
-                <div>
-                    <label className="text-xs text-gray-500 block mb-1">Imagem</label>
-                    <label className={`border border-dashed border-gray-300 rounded h-[38px] w-full flex items-center justify-center cursor-pointer hover:bg-gray-100 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                        {newVariant.imageUrl ? (
-                            <img src={getImageUrl(newVariant.imageUrl)} alt="Preview" className="h-full w-full object-cover rounded" />
+        <div className="bg-white rounded border divide-y shadow-sm">
+            {variants.map((variant, index) => (
+                <div key={variant.id || index} className="p-3 flex items-center justify-between text-sm">
+                    <div className="flex gap-4 items-center flex-wrap">
+                        {variant.imageUrl ? (
+                            <div className="relative">
+                                <img src={getImageUrl(variant.imageUrl)} alt="Variant" className="w-10 h-10 rounded object-cover border" />
+                                {variant.media && variant.media.length > 1 && (
+                                    <span className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">
+                                        {variant.media.length}
+                                    </span>
+                                )}
+                            </div>
                         ) : (
-                            isUploading ? <Loader2 size={16} className="animate-spin text-gray-400" /> : <Upload size={16} className="text-gray-400" />
+                            <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center border text-gray-400">
+                                <ImageIcon size={16} />
+                            </div>
                         )}
-                        <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
-                    </label>
-                </div>
-                <div>
-                    <label className="text-xs text-gray-500">SKU</label>
-                    <input
-                        className="w-full p-2 border rounded"
-                        value={newVariant.sku}
-                        onChange={e => setNewVariant({ ...newVariant, sku: e.target.value })}
-                        placeholder="SKU-123"
-                    />
-                </div>
-                <div>
-                    <label className="text-xs text-gray-500">Tamanho</label>
-                    <input
-                        className="w-full p-2 border rounded"
-                        value={newVariant.attributes?.size}
-                        onChange={e => setNewVariant({
-                            ...newVariant,
-                            attributes: { ...newVariant.attributes, size: e.target.value }
-                        })}
-                        placeholder="P, M, G"
-                    />
-                </div>
-                <div>
-                    <label className="text-xs text-gray-500">Cor</label>
-                    <input
-                        className="w-full p-2 border rounded"
-                        value={newVariant.attributes?.color}
-                        onChange={e => setNewVariant({
-                            ...newVariant,
-                            attributes: { ...newVariant.attributes, color: e.target.value }
-                        })}
-                        placeholder="Azul"
-                    />
-                </div>
-                <div>
-                    <label className="text-xs text-gray-500">Preço</label>
-                    <input
-                        type="number"
-                        className="w-full p-2 border rounded"
-                        value={newVariant.price || ''}
-                        onChange={e => setNewVariant({ ...newVariant, price: e.target.value ? Number(e.target.value) : 0 })}
-                        placeholder="0.00"
-                    />
-                </div>
-                <button
-                    type="button"
-                    onClick={handleAdd}
-                    className="bg-indigo-600 text-white p-2 h-10 w-full rounded flex items-center justify-center hover:bg-indigo-700"
-                >
-                    <Plus size={20} />
-                </button>
-            </div>
-
-            {/* Lista de Variantes */}
-            <div className="bg-white rounded border divide-y">
-                {variants.map(variant => (
-                    <div key={variant.id} className="p-3 flex items-center justify-between text-sm">
-                        <div className="flex gap-4 items-center">
-                            {variant.imageUrl ? (
-                                <img src={getImageUrl(variant.imageUrl)} alt="Variant" className="w-8 h-8 rounded object-cover border" />
-                            ) : (
-                                <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center border text-gray-400">
-                                    <ImageIcon size={14} />
-                                </div>
-                            )}
-                            <span className="font-mono bg-gray-100 px-2 rounded">
-                                {variant.sku || 'SKU Auto-gerado'}
+                        <span className="font-mono bg-indigo-50 text-indigo-700 px-2 py-1 flex items-center rounded text-xs">
+                            {variant.sku || 'SKU Auto-gerado'}
+                        </span>
+                        <div className="flex flex-col">
+                            <span className="text-gray-900 font-medium">
+                                {[variant.attributes?.size, variant.attributes?.color].filter(Boolean).join(' - ') || 'Sem atributos'}
                             </span>
-                            <span className="text-gray-600">
-                                {[variant.attributes?.size, variant.attributes?.color].filter(Boolean).join(' / ') || 'Sem atributos'}
-                            </span>
-                            <span className="font-medium">
-                                {variant.price > 0 ? `R$ ${variant.price.toFixed(2)}` : 'Preço Base'}
+                            <span className="text-gray-500 text-xs">
+                                {variant.stock} unidades
                             </span>
                         </div>
+                        <div className="flex flex-col ml-auto text-right">
+                            {variant.originalPrice && variant.originalPrice > variant.price && (
+                                <span className="text-gray-400 text-xs line-through">
+                                    R$ {variant.originalPrice.toFixed(2)}
+                                </span>
+                            )}
+                            <span className="font-medium text-emerald-600 block">
+                                R$ {(variant.price || 0).toFixed(2)}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-1 ml-4 py-1">
+                        {onEdit && (
+                            <button
+                                type="button"
+                                onClick={() => onEdit(variant)}
+                                className="text-indigo-500 hover:bg-indigo-50 p-2 rounded transition-colors"
+                                title="Editar variante"
+                            >
+                                <Pencil size={18} />
+                            </button>
+                        )}
                         <button
-                            onClick={() => removeVariant(variant.id)}
-                            className="text-red-500 hover:bg-red-50 p-1 rounded"
+                            type="button"
+                            onClick={() => removeVariant(variant.id!)}
+                            className="text-red-500 hover:bg-red-50 p-2 rounded transition-colors"
+                            title="Remover variante"
                         >
-                            <Trash2 size={16} />
+                            <Trash2 size={18} />
                         </button>
                     </div>
-                ))}
-                {variants.length === 0 && (
-                    <div className="p-4 text-center text-gray-400 text-sm">Nenhuma variante adicionada</div>
-                )}
-            </div>
+                </div>
+            ))}
         </div>
     );
 }
+

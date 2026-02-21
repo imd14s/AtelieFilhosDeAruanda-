@@ -1,6 +1,6 @@
 #!/bin/bash
 export DB_HOST=localhost
-export DB_PORT=5432
+export DB_PORT=$(docker compose -f ../docker-compose.yml port db 5432 | cut -d: -f2)
 export DB_NAME=ecommerce_db
 export DB_USER=postgres
 export DB_PASSWORD=local_dev_password

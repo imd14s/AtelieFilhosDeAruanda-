@@ -15,6 +15,7 @@ public record ProductCreateRequest(
                 @JsonProperty("title") String name,
                 String description,
                 BigDecimal price,
+                BigDecimal originalPrice,
                 @JsonProperty("stock") Integer stockQuantity,
                 @JsonProperty("category") UUID categoryId,
                 List<ProductMediaItem> media,
@@ -24,7 +25,8 @@ public record ProductCreateRequest(
         public record ProductMediaItem(String url, String type, Boolean isMain) {
         }
 
-        public record ProductVariantRequest(UUID id, String sku, BigDecimal price, Integer stock,
-                        java.util.Map<String, String> attributes, String imageUrl) {
+        public record ProductVariantRequest(UUID id, String sku, BigDecimal price, BigDecimal originalPrice,
+                        Integer stock,
+                        java.util.Map<String, String> attributes, String imageUrl, List<ProductMediaItem> media) {
         }
 }

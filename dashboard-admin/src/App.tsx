@@ -6,7 +6,7 @@ import { SetupWizard } from './pages/setup/SetupWizard';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
 import { ProductsPage } from './pages/products/ProductsPage';
 import { OrdersPage } from './pages/orders/OrdersList';
-import { ConfigPage } from './pages/configs/ConfigPage';
+import { AiConfigPage } from './pages/settings/AiConfigPage';
 import { TeamPage } from './pages/settings/TeamPage';
 import { AuditLogPage } from './pages/settings/AuditLogPage';
 import { ShippingPage } from './pages/settings/ShippingPage';
@@ -38,7 +38,7 @@ function AppRoutes() {
         <Route path="/products/edit/:id" element={<ProductForm />} />
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/configs" element={<ConfigPage />} />
+        <Route path="/settings/ai" element={<AiConfigPage />} />
         <Route path="/settings/team" element={<TeamPage />} />
         <Route path="/settings/audit" element={<AuditLogPage />} />
         <Route path="/settings/shipping" element={<ShippingPage />} />

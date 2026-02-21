@@ -42,6 +42,9 @@ public class ProductEntity {
 
     private BigDecimal price;
 
+    @Column(name = "original_price")
+    private BigDecimal originalPrice;
+
     @JsonProperty("stock")
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
@@ -208,6 +211,14 @@ public class ProductEntity {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     @JsonProperty("stock")
