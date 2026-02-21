@@ -68,10 +68,29 @@ const ShopPage = () => {
       <main className="max-w-7xl mx-auto px-4 mt-8">
         <button onClick={() => setIsFilterOpen(true)} className="lg:hidden mb-4 border p-2 text-xs uppercase">Filtros</button>
         {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>
-        ) : (
+          <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[var(--dourado-suave)]" /></div>
+        ) : products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.map(p => <ProductCard key={p.id} product={p} />)}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-white/50 border border-dashed border-[var(--azul-profundo)]/10 rounded-lg flex flex-col items-center">
+            <div className="w-16 h-16 bg-[var(--azul-profundo)]/5 rounded-full flex items-center justify-center mb-4">
+              <LayoutGrid className="text-[var(--azul-profundo)]/20" size={32} />
+            </div>
+            <h2 className="font-playfair text-2xl text-[var(--azul-profundo)] mb-2">Nenhum Axé encontrado</h2>
+            <p className="font-lato text-sm text-[var(--azul-profundo)]/60 mb-8 max-w-xs">
+              Não encontramos itens que correspondam aos seus filtros no momento.
+            </p>
+            <button
+              onClick={() => {
+                setSearchParams({});
+                setIsFilterOpen(false);
+              }}
+              className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)] border-b border-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] hover:border-[var(--dourado-suave)] transition-all"
+            >
+              Limpar Filtros
+            </button>
           </div>
         )}
       </main>

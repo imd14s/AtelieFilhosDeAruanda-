@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { OrderService } from '../../services/OrderService';
 import type { Order } from '../../types/order';
-import { Ban, CheckCircle, Truck } from 'lucide-react';
+import { Ban, CheckCircle, Truck, Package } from 'lucide-react';
 
 export function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -90,79 +90,90 @@ export function OrdersPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {orders.map((order) => (
-                                <tr key={order.id} className="hover:bg-gray-50 transition">
-                                    <td className="p-4 font-mono text-xs text-gray-500">#{order.id}</td>
-                                    <td className="p-4 font-medium text-gray-800">{order.customerName}</td>
-                                    <td className="p-4 text-gray-600">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-100 text-green-700' :
-                                            order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                                                order.status === 'CANCELED' ? 'bg-red-100 text-red-700' :
-                                                    order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-700' :
-                                                        order.status === 'DELIVERED' ? 'bg-indigo-100 text-indigo-700' :
-                                                            'bg-gray-100 text-gray-700'
-                                            }`}>
-                                            {order.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-sm text-gray-500">
-                                        {new Date(order.createdAt).toLocaleDateString()}
-                                    </td>
-                                    <td className="p-4 text-right flex justify-end gap-2">
-                                        {order.status === 'PENDING' && (
-                                            <button
-                                                onClick={() => handleApproveClick(order.id)}
-                                                className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
-                                                title="Aprovar Pedido"
-                                            >
-                                                <CheckCircle size={18} />
-                                                <span className="text-xs font-semibold">Aprovar</span>
-                                            </button>
-                                        )}
-                                        {order.status === 'PAID' && (
-                                            <button
-                                                onClick={() => handleShipClick(order.id)}
-                                                className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
-                                                title="Marcar como Enviado"
-                                            >
-                                                <Truck size={18} />
-                                                <span className="text-xs font-semibold">Enviar</span>
-                                            </button>
-                                        )}
-                                        {order.status === 'SHIPPED' && (
-                                            <button
-                                                onClick={async () => {
-                                                    if (!confirm('Deseja marcar como ENTREGUE?')) return;
-                                                    try {
-                                                        await OrderService.delivered(order.id);
-                                                        setOrders(orders.map(o => o.id === order.id ? { ...o, status: 'DELIVERED' } : o));
-                                                    } catch (err) {
-                                                        alert('Erro ao finalizar pedido');
-                                                    }
-                                                }}
-                                                className="text-green-600 hover:text-green-800 transition flex items-center gap-1"
-                                                title="Finalizar Pedido"
-                                            >
-                                                <CheckCircle size={18} />
-                                                <span className="text-xs font-semibold">Finalizar</span>
-                                            </button>
-                                        )}
-                                        {order.status !== 'CANCELED' && order.status !== 'SHIPPED' && order.status !== 'DELIVERED' && (
-                                            <button
-                                                onClick={() => handleCancelClick(order.id)}
-                                                className="text-red-500 hover:text-red-700 transition flex items-center gap-1"
-                                                title="Cancelar Pedido"
-                                            >
-                                                <Ban size={18} />
-                                                <span className="text-xs font-semibold">Cancelar</span>
-                                            </button>
-                                        )}
+                            {orders.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="p-12 text-center text-gray-400">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Package size={48} className="text-gray-200" />
+                                            <p>Nenhum pedido encontrado no momento.</p>
+                                        </div>
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                orders.map((order) => (
+                                    <tr key={order.id} className="hover:bg-gray-50 transition">
+                                        <td className="p-4 font-mono text-xs text-gray-500">#{order.id}</td>
+                                        <td className="p-4 font-medium text-gray-800">{order.customerName}</td>
+                                        <td className="p-4 text-gray-600">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-100 text-green-700' :
+                                                order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                                    order.status === 'CANCELED' ? 'bg-red-100 text-red-700' :
+                                                        order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-700' :
+                                                            order.status === 'DELIVERED' ? 'bg-indigo-100 text-indigo-700' :
+                                                                'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                {order.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-sm text-gray-500">
+                                            {new Date(order.createdAt).toLocaleDateString()}
+                                        </td>
+                                        <td className="p-4 text-right flex justify-end gap-2">
+                                            {order.status === 'PENDING' && (
+                                                <button
+                                                    onClick={() => handleApproveClick(order.id)}
+                                                    className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
+                                                    title="Aprovar Pedido"
+                                                >
+                                                    <CheckCircle size={18} />
+                                                    <span className="text-xs font-semibold">Aprovar</span>
+                                                </button>
+                                            )}
+                                            {order.status === 'PAID' && (
+                                                <button
+                                                    onClick={() => handleShipClick(order.id)}
+                                                    className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
+                                                    title="Marcar como Enviado"
+                                                >
+                                                    <Truck size={18} />
+                                                    <span className="text-xs font-semibold">Enviar</span>
+                                                </button>
+                                            )}
+                                            {order.status === 'SHIPPED' && (
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!confirm('Deseja marcar como ENTREGUE?')) return;
+                                                        try {
+                                                            await OrderService.delivered(order.id);
+                                                            setOrders(orders.map(o => o.id === order.id ? { ...o, status: 'DELIVERED' } : o));
+                                                        } catch (err) {
+                                                            alert('Erro ao finalizar pedido');
+                                                        }
+                                                    }}
+                                                    className="text-green-600 hover:text-green-800 transition flex items-center gap-1"
+                                                    title="Finalizar Pedido"
+                                                >
+                                                    <CheckCircle size={18} />
+                                                    <span className="text-xs font-semibold">Finalizar</span>
+                                                </button>
+                                            )}
+                                            {order.status !== 'CANCELED' && order.status !== 'SHIPPED' && order.status !== 'DELIVERED' && (
+                                                <button
+                                                    onClick={() => handleCancelClick(order.id)}
+                                                    className="text-red-500 hover:text-red-700 transition flex items-center gap-1"
+                                                    title="Cancelar Pedido"
+                                                >
+                                                    <Ban size={18} />
+                                                    <span className="text-xs font-semibold">Cancelar</span>
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 )}

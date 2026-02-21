@@ -80,65 +80,85 @@ const ReviewSection = ({ productId }) => {
                 </div>
             )}
 
-            <ReviewSummary reviews={reviews} />
+            {reviews.length > 0 ? (
+                <>
+                    <ReviewSummary reviews={reviews} />
 
-            {/* Galeria de Fotos de Clientes (Opcional, como no mockup) */}
-            <div className="space-y-6">
-                <h4 className="font-playfair text-sm text-[var(--azul-profundo)] uppercase tracking-widest flex items-center gap-2">
-                    <Image size={16} className="text-[#C9A24D]" /> Opiniões com fotos
-                </h4>
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                    {reviews.flatMap(r => r.media || []).map((m, i) => (
-                        <div key={i} className="w-40 h-56 bg-white shrink-0 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group">
-                            <img src={getImageUrl(m.url)} alt="Review" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Lista de Comentários */}
-            <div className="space-y-8">
-                <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-                    <h4 className="font-playfair text-sm text-[var(--azul-profundo)] uppercase tracking-widest flex items-center gap-2">
-                        <MessageSquare size={16} className="text-[#C9A24D]" /> Comentários
-                    </h4>
-                    <div className="flex gap-4 text-[10px] font-lato uppercase tracking-widest text-gray-400">
-                        <button className="text-[var(--azul-profundo)] font-bold border-b border-[var(--azul-profundo)]">Mais Recentes</button>
-                        <button className="hover:text-[var(--azul-profundo)] transition-colors">Mais Relevantes</button>
-                    </div>
-                </div>
-
-                <div className="grid gap-8">
-                    {reviews.map(review => (
-                        <div key={review.id} className="flex flex-col md:flex-row gap-6 pb-8 border-b border-gray-50 last:border-0">
-                            <div className="w-full md:w-48 shrink-0">
-                                <div className="flex gap-0.5 mb-2">
-                                    {[1, 2, 3, 4, 5].map(s => (
-                                        <Star key={s} size={12} className={s <= review.rating ? "fill-[#C9A24D] text-[#C9A24D]" : "text-gray-200"} />
-                                    ))}
+                    {/* Galeria de Fotos de Clientes */}
+                    <div className="space-y-6">
+                        <h4 className="font-playfair text-sm text-[var(--azul-profundo)] uppercase tracking-widest flex items-center gap-2">
+                            <Image size={16} className="text-[#C9A24D]" /> Opiniões com fotos
+                        </h4>
+                        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                            {reviews.flatMap(r => r.media || []).map((m, i) => (
+                                <div key={i} className="w-40 h-56 bg-white shrink-0 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group">
+                                    <img src={getImageUrl(m.url)} alt="Review" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                 </div>
-                                <span className="font-lato text-sm font-bold text-[var(--azul-profundo)] block">{review.user.name}</span>
-                                <span className="font-lato text-[10px] text-gray-400 uppercase tracking-widest">Verificado</span>
-                            </div>
-                            <div className="flex-1 space-y-4">
-                                <p className="font-lato text-gray-600 leading-relaxed italic">"{review.comment}"</p>
-                                {review.media?.length > 0 && (
-                                    <div className="flex gap-2">
-                                        {review.media.map((m, i) => (
-                                            <div key={i} className="aspect-square w-16 bg-white overflow-hidden rounded-sm border border-gray-100">
-                                                <img src={getImageUrl(m.url)} alt="Anexo" className="w-full h-full object-cover" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                <span className="text-[10px] font-lato text-gray-300 uppercase tracking-widest block">
-                                    {new Date(review.createdAt).toLocaleDateString('pt-BR')}
-                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Lista de Comentários */}
+                    <div className="space-y-8">
+                        <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+                            <h4 className="font-playfair text-sm text-[var(--azul-profundo)] uppercase tracking-widest flex items-center gap-2">
+                                <MessageSquare size={16} className="text-[#C9A24D]" /> Comentários
+                            </h4>
+                            <div className="flex gap-4 text-[10px] font-lato uppercase tracking-widest text-gray-400">
+                                <button className="text-[var(--azul-profundo)] font-bold border-b border-[var(--azul-profundo)]">Mais Recentes</button>
+                                <button className="hover:text-[var(--azul-profundo)] transition-colors">Mais Relevantes</button>
                             </div>
                         </div>
-                    ))}
+
+                        <div className="grid gap-8">
+                            {reviews.map(review => (
+                                <div key={review.id} className="flex flex-col md:flex-row gap-6 pb-8 border-b border-gray-50 last:border-0">
+                                    <div className="w-full md:w-48 shrink-0">
+                                        <div className="flex gap-0.5 mb-2">
+                                            {[1, 2, 3, 4, 5].map(s => (
+                                                <Star key={s} size={12} className={s <= review.rating ? "fill-[#C9A24D] text-[#C9A24D]" : "text-gray-200"} />
+                                            ))}
+                                        </div>
+                                        <span className="font-lato text-sm font-bold text-[var(--azul-profundo)] block">{review.user.name}</span>
+                                        <span className="font-lato text-[10px] text-gray-400 uppercase tracking-widest">Verificado</span>
+                                    </div>
+                                    <div className="flex-1 space-y-4">
+                                        <p className="font-lato text-gray-600 leading-relaxed italic">"{review.comment}"</p>
+                                        {review.media?.length > 0 && (
+                                            <div className="flex gap-2">
+                                                {review.media.map((m, i) => (
+                                                    <div key={i} className="aspect-square w-16 bg-white overflow-hidden rounded-sm border border-gray-100">
+                                                        <img src={getImageUrl(m.url)} alt="Anexo" className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <span className="text-[10px] font-lato text-gray-300 uppercase tracking-widest block">
+                                            {new Date(review.createdAt).toLocaleDateString('pt-BR')}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <div className="py-20 text-center bg-gray-50/50 rounded-sm border border-dashed border-gray-200">
+                    <Star size={40} className="mx-auto text-gray-200 mb-4" />
+                    <h3 className="font-playfair text-xl text-[var(--azul-profundo)] mb-2">Seja o primeiro a avaliar</h3>
+                    <p className="font-lato text-sm text-gray-400 max-w-xs mx-auto mb-6">
+                        Sua opinião é fundamental para nossa comunidade. Compartilhe sua experiência com este item!
+                    </p>
+                    {!showForm && (
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="text-[var(--azul-profundo)] font-lato text-[10px] uppercase tracking-widest border-b border-[var(--azul-profundo)] hover:text-[#C9A24D] hover:border-[#C9A24D] transition-all"
+                        >
+                            Escrever uma avaliação
+                        </button>
+                    )}
                 </div>
-            </div>
+            )}
         </div>
     );
 };

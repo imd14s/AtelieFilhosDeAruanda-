@@ -100,40 +100,48 @@ export function CouponList() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {coupons.map((coupon) => (
-                                <tr key={coupon.id} className="hover:bg-gray-50 transition">
-                                    <td className="p-4 font-mono font-bold text-indigo-700">{coupon.code}</td>
-                                    <td className="p-4 text-gray-700">
-                                        {coupon.type === 'PERCENTAGE' ? `${coupon.value}%` : `R$ ${coupon.value.toFixed(2)}`}
-                                    </td>
-                                    <td className="p-4 text-sm text-gray-500">
-                                        {coupon.usageCount} {coupon.usageLimit ? `/ ${coupon.usageLimit}` : ''}
-                                    </td>
-                                    <td className="p-4">
-                                        <button onClick={() => handleToggle(coupon.id, coupon.active)} className="text-indigo-600">
-                                            {coupon.active ? <ToggleRight size={24} /> : <ToggleLeft size={24} className="text-gray-300" />}
-                                        </button>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => handleOpenEdit(coupon)}
-                                                className="p-1 text-gray-400 hover:text-indigo-600 transition"
-                                                title="Editar"
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(coupon.id)}
-                                                className="p-1 text-gray-400 hover:text-red-600 transition"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
+                            {coupons.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-gray-500 italic">
+                                        Nenhum cupom cadastrado.
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                coupons.map((coupon) => (
+                                    <tr key={coupon.id} className="hover:bg-gray-50 transition">
+                                        <td className="p-4 font-mono font-bold text-indigo-700">{coupon.code}</td>
+                                        <td className="p-4 text-gray-700">
+                                            {coupon.type === 'PERCENTAGE' ? `${coupon.value}%` : `R$ ${coupon.value.toFixed(2)}`}
+                                        </td>
+                                        <td className="p-4 text-sm text-gray-500">
+                                            {coupon.usageCount} {coupon.usageLimit ? `/ ${coupon.usageLimit}` : ''}
+                                        </td>
+                                        <td className="p-4">
+                                            <button onClick={() => handleToggle(coupon.id, coupon.active)} className="text-indigo-600">
+                                                {coupon.active ? <ToggleRight size={24} /> : <ToggleLeft size={24} className="text-gray-300" />}
+                                            </button>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleOpenEdit(coupon)}
+                                                    className="p-1 text-gray-400 hover:text-indigo-600 transition"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(coupon.id)}
+                                                    className="p-1 text-gray-400 hover:text-red-600 transition"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 )}
