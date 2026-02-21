@@ -4,6 +4,8 @@ import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.entity.SubscriptionPlanEntity;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.repository.SubscriptionPlanRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -22,6 +24,7 @@ public class SubscriptionPlanService {
         return planRepository.findAll();
     }
 
+    @Cacheable("subscription-plans")
     public List<SubscriptionPlanEntity> listActive() {
         return planRepository.findByActiveTrue();
     }
@@ -31,6 +34,7 @@ public class SubscriptionPlanService {
                 .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
     }
 
+    @CacheEvict(value = "subscription-plans", allEntries = true)
     @Transactional
     public SubscriptionPlanEntity save(SubscriptionPlanEntity plan) {
         if (plan.getFrequencyRules() != null) {
@@ -42,6 +46,7 @@ public class SubscriptionPlanService {
         return planRepository.save(plan);
     }
 
+    @CacheEvict(value = "subscription-plans", allEntries = true)
     @Transactional
     public void delete(UUID id) {
         planRepository.deleteById(id);

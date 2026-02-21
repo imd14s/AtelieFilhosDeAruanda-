@@ -12,6 +12,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -68,6 +70,7 @@ public class ProductService {
         this.geminiIntegrationService = geminiIntegrationService;
     }
 
+    @Cacheable(value = "products", key = "#id")
     @Transactional(readOnly = true)
     public ProductEntity findById(UUID id) {
         return productRepository.findById(id)
@@ -79,6 +82,7 @@ public class ProductService {
      * If variants list is empty/null for a NEW product, a default variant is
      * created.
      */
+    @CacheEvict(value = "products", allEntries = true)
     @Transactional
     public ProductEntity saveProduct(ProductEntity product, UUID categoryId, List<ProductVariantEntity> variants) {
         CategoryEntity category = categoryRepository.findById(categoryId)
@@ -162,6 +166,7 @@ public class ProductService {
         return updateProduct(id, details, null);
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     @Transactional
     public ProductEntity updateProduct(UUID id, ProductEntity details, List<ProductVariantEntity> variants) {
         ProductEntity existing = findById(id);

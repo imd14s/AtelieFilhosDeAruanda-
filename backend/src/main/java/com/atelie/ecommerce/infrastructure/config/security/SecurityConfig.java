@@ -92,9 +92,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/questions/product/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
 
-                        // Se seu checkout for público:
-                        .requestMatchers("/api/checkout/**").permitAll()
-                        .requestMatchers("/api/shipping/**").permitAll()
+                        // Checkout e Shipping: exigem autenticação
+                        .requestMatchers("/api/checkout/**").authenticated()
+                        .requestMatchers("/api/shipping/**").authenticated()
                         .requestMatchers("/api/newsletter/**").permitAll()
 
                         // Recursos do Usuário (exigem Auth)

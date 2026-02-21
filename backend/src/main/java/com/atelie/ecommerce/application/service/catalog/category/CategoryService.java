@@ -5,6 +5,8 @@ import com.atelie.ecommerce.api.catalog.category.dto.CreateCategoryRequest;
 import com.atelie.ecommerce.api.common.exception.DuplicateResourceException;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +21,7 @@ public class CategoryService {
         this.repository = repository;
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse create(CreateCategoryRequest request) {
         // Validar se já existe categoria com o mesmo nome
         if (repository.existsByNameIgnoreCase(request.getName())) {
@@ -36,12 +39,14 @@ public class CategoryService {
         return new CategoryResponse(entity.getId(), entity.getName(), entity.getActive());
     }
 
+    @Cacheable("categories")
     public List<CategoryResponse> list() {
         return repository.findAll().stream()
                 .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getActive()))
                 .toList();
     }
 
+    @CacheEvict(value = "categories", allEntries = true)
     public void delete(UUID id) {
         if (!repository.existsById(id)) {
             throw new com.atelie.ecommerce.api.common.exception.NotFoundException("Categoria não encontrada.");

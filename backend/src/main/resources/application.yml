@@ -15,8 +15,12 @@ spring:
         default_batch_fetch_size: 50
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
+      max-file-size: ${MAX_UPLOAD_MB:10}MB
+      max-request-size: ${MAX_UPLOAD_MB:10}MB
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=300s
   flyway:
     enabled: true
     placeholders:
@@ -44,20 +48,37 @@ server:
 # --- INTEGRAÇÕES ---
 
 # --- SWAGGER / OpenAPI ---
+# Em produção, definir SWAGGER_ENABLED=false via ENV.
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    enabled: true
+    enabled: ${SWAGGER_ENABLED:false}
     tags-sorter: alpha
     operations-sorter: alpha
+
+# --- MEDIA / UPLOADS ---
+app:
+  upload:
+    allowed-mime-types: ${ALLOWED_IMAGE_MIME:image/png,image/jpeg,image/webp}
+    max-size-mb: ${MAX_UPLOAD_MB:10}
+
+# --- LOGGING ---
+logging:
+  level:
+    root: WARN
+    com.atelie.ecommerce: ${LOG_LEVEL:INFO}
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,mappings
+        include: health
   endpoint:
     health:
       show-details: never
