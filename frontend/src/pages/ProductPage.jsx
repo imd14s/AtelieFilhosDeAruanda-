@@ -112,6 +112,21 @@ const ProductPage = () => {
   const displayStock = currentVariant ? currentVariant.stockQuantity : product?.stockQuantity;
   const isOutOfStock = displayStock <= 0;
 
+  const handleReviewAdded = (newReview) => {
+    // Atualização Otimista
+    setProduct(prev => {
+      const newTotal = (prev.totalReviews || 0) + 1;
+      const currentAvg = prev.averageRating || 4.6;
+      const newAvg = ((currentAvg * (prev.totalReviews || 1)) + newReview.rating) / newTotal;
+
+      return {
+        ...prev,
+        totalReviews: newTotal,
+        averageRating: parseFloat(newAvg.toFixed(1))
+      };
+    });
+  };
+
   const handleAddToCart = () => {
     if (!product || isOutOfStock) return;
 
@@ -122,20 +137,7 @@ const ProductPage = () => {
       price: displayPrice,
       images: currentVariant?.imageUrl ? [currentVariant.imageUrl] : product.images
     };
-    const handleReviewAdded = (newReview) => {
-      // Atualização Otimista
-      setProduct(prev => {
-        const newTotal = (prev.totalReviews || 0) + 1;
-        const currentAvg = prev.averageRating || 4.6;
-        const newAvg = ((currentAvg * (prev.totalReviews || 1)) + newReview.rating) / newTotal;
 
-        return {
-          ...prev,
-          totalReviews: newTotal,
-          averageRating: parseFloat(newAvg.toFixed(1))
-        };
-      });
-    };
     storeService.cart.add(cartProduct, quantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);

@@ -11,6 +11,18 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID || "dummy"
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+const isConfigValid = firebaseConfig.apiKey && firebaseConfig.apiKey !== "dummy";
+
+let app, auth, googleProvider;
+
+if (isConfigValid) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    googleProvider = new GoogleAuthProvider();
+} else {
+    console.warn("[Firebase] API Key não configurada. Google Login não funcionará até que as chaves sejam adicionadas ao .env");
+    auth = { currentUser: null }; // Mock básico para evitar erros de undefined
+    googleProvider = {};
+}
+
+export { auth, googleProvider };
