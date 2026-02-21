@@ -52,22 +52,6 @@ const ReviewSummary = ({ reviews = [] }) => {
                 ))}
             </div>
 
-            {/* Características Subjetivas (Simulado como no Mockup) */}
-            <div className="hidden lg:flex flex-col gap-6 w-64 pl-8 border-l border-gray-100">
-                <div className="space-y-2">
-                    <h4 className="font-playfair text-sm text-[var(--azul-profundo)] uppercase tracking-wider">Características</h4>
-                    {['Qualidade', 'Custo-benefício', 'Confortável'].map(attr => (
-                        <div key={attr} className="space-y-1">
-                            <span className="text-[10px] font-lato uppercase tracking-widest text-gray-500">{attr}</span>
-                            <div className="flex gap-0.5">
-                                {[1, 2, 3, 4, 5].map(i => (
-                                    <div key={i} className="h-1 flex-1 bg-[#C9A24D] rounded-full opacity-80" />
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
         </div>
     );
 };

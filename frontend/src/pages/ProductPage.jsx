@@ -48,15 +48,20 @@ const ProductPage = () => {
         }
 
         // Buscar recomendações
-        if (data?.categoryId) {
-          setLoadingRecs(true);
-          try {
-            const recs = await storeService.getProducts({ categoryId: data.categoryId });
-            // Filtrar o próprio produto e limitar a 4
-            setRecommendations(recs.filter(r => r.id !== id).slice(0, 4));
-          } catch (e) { console.error("Error fetching recommendations", e); }
-          setLoadingRecs(false);
+        setLoadingRecs(true);
+        try {
+          let recs = [];
+          if (data?.categoryId) {
+            recs = await storeService.getProducts({ categoryId: data.categoryId });
+            recs = recs.filter(r => r.id !== id);
+          }
+          setRecommendations(recs.slice(0, 4));
+        } catch (e) {
+          console.error("Error fetching recommendations", e);
+          // Fallback final
+          setRecommendations([]);
         }
+        setLoadingRecs(false);
       } catch (err) {
         console.error("Failed to load product", err);
       } finally {
@@ -82,6 +87,22 @@ const ProductPage = () => {
     Object.keys(attrs).forEach(k => attrs[k] = Array.from(attrs[k]));
     return attrs;
   }, [product]);
+
+  // Mídias da variante selecionada (reage a mudança de currentVariant)
+  const variantMedias = useMemo(() => {
+    if (currentVariant) {
+      const seen = new Set();
+      const imgs = [];
+      const addUnique = (url) => {
+        if (url && !seen.has(url)) { seen.add(url); imgs.push(url); }
+      };
+      addUnique(currentVariant.imageUrl);
+      (currentVariant.images || []).forEach(addUnique);
+      // Se a variante não tiver nenhuma mídia própria, mostra só a 1ª imagem do produto
+      return imgs.length > 0 ? imgs : (product?.images?.slice(0, 1) ?? []);
+    }
+    return product?.images ?? [];
+  }, [currentVariant, product]);
 
   const handleOptionSelect = (key, value) => {
     const newOptions = { ...selectedOptions, [key]: value };
@@ -203,7 +224,7 @@ const ProductPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--branco-off-white)] pt-12 pb-24">
+    <div className="min-h-screen bg-white">
       <SEO
         title={product.name}
         description={product.description?.substring(0, 160)}
@@ -230,33 +251,30 @@ const ProductPage = () => {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        {/* Breadcrumb Otimizado */}
-        <Link to="/store" className="inline-flex items-center gap-2 text-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)] mb-8 transition-colors">
-          <ChevronLeft size={16} />
-          <span className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)]">Voltar para a Loja</span>
-        </Link>
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 lg:py-12">
+        {/* Breadcrumb / Botão Voltar */}
+        <div className="mb-8">
+          <Link
+            to="/shop"
+            className="group flex items-center gap-2 text-[10px] uppercase tracking-widest text-gray-400 hover:text-[var(--azul-profundo)] transition-all"
+          >
+            <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+            Voltar para o catálogo
+          </Link>
+        </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
-
+        <div className="flex flex-col lg:flex-row gap-12 xl:gap-24">
           {/* Mídia Seção (Esquerda) */}
           <div className="flex flex-row gap-4 flex-1">
-            {/* Thumbnails Verticais (Filtrados por Variante se Cor selecionada) */}
-            {(product.images?.length > 1 || product.variants?.length > 0) && (
+            {/* Thumbnails Verticais – reage à variante selecionada */}
+            {variantMedias.length > 0 && (
               <div className="hidden md:flex flex-col gap-3 w-20 shrink-0">
-                {(product.variants && selectedOptions['Cor']
-                  ? product.variants.filter(v => {
-                    try {
-                      const attrs = JSON.parse(v.attributesJson || '{}');
-                      return attrs['Cor'] === selectedOptions['Cor'] && v.imageUrl;
-                    } catch (e) { return false; }
-                  }).map(v => v.imageUrl)
-                  : product.images || []
-                ).map((img, i, arr) => (
+                {variantMedias.map((img, i) => (
                   <div
                     key={i}
                     onClick={() => setMainMedia(img)}
-                    className={`aspect-square bg-white overflow-hidden shadow-sm transition-all cursor-pointer relative rounded-sm ${mainMedia === img ? 'ring-2 ring-[var(--azul-profundo)]' : 'opacity-60 hover:opacity-100'}`}
+                    className={`aspect-square bg-white overflow-hidden shadow-sm transition-all cursor-pointer relative rounded-sm ${mainMedia === img ? 'ring-2 ring-[var(--azul-profundo)]' : 'opacity-60 hover:opacity-100'
+                      }`}
                   >
                     {renderMedia(img, false)}
                     {isVideo(img) && (
@@ -322,17 +340,17 @@ const ProductPage = () => {
               <div className="space-y-4">
                 <h1 className="font-playfair text-3xl md:text-[40px] text-[var(--azul-profundo)] leading-tight font-medium">{product.name}</h1>
 
-                {/* Estrelas e Qtd Avaliações conforme mockup */}
+                {/* Estrelas e Qtd Avaliações com dados reais */}
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-lato text-gray-500">{product.averageRating || '4.6'}</span>
+                  <span className="text-sm font-lato text-gray-500">{product.averageRating ? product.averageRating.toFixed(1) : '0.0'}</span>
                   <div className="flex">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <svg key={star} className={`w-4 h-4 ${star <= Math.round(product.averageRating || 4.6) ? 'text-blue-500 fill-blue-500' : 'text-gray-300'}`} viewBox="0 0 20 20">
+                      <svg key={star} className={`w-4 h-4 ${star <= Math.round(product.averageRating || 0) ? 'text-blue-500 fill-blue-500' : 'text-gray-300'}`} viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     ))}
                   </div>
-                  <span className="text-sm font-lato text-gray-400">({product.totalReviews || '20752'})</span>
+                  <span className="text-sm font-lato text-gray-400">({product.totalReviews || 0})</span>
                 </div>
 
                 <div className="flex flex-col gap-1 mt-6">
@@ -366,55 +384,86 @@ const ProductPage = () => {
                 )}
               </div>
 
-              {/* Variantes com Imagens */}
-              {Object.keys(availableAttributes).length > 0 && (
-                <div className="space-y-6 py-6 border-y border-[var(--azul-profundo)]/10">
-                  {Object.entries(availableAttributes).map(([key, options]) => (
-                    <div key={key} className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="font-lato text-[11px] uppercase tracking-widest text-[var(--azul-profundo)] font-bold">{key}: <span className="font-normal opacity-60 ml-2">{selectedOptions[key]}</span></span>
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        {options.map(opt => {
-                          const isSelected = selectedOptions[key] === opt;
-                          // Tentar encontrar uma imagem para esta variante (se for cor)
-                          const variantImg = product.variants?.find(v => {
-                            try {
-                              const attrs = JSON.parse(v.attributesJson || '{}');
-                              return attrs[key] === opt && v.imageUrl;
-                            } catch (e) { return false; }
-                          })?.imageUrl;
+              {/* Seletor de Variantes: linha horizontal de miniaturas */}
+              {product.variants && product.variants.length > 0 && (() => {
+                // Atributos da variante selecionada para o label
+                let selectedAttrs = {};
+                try {
+                  selectedAttrs = JSON.parse(currentVariant?.attributesJson || '{}');
+                } catch { /* noop */ }
 
-                          return (
-                            <button
-                              key={opt}
-                              onClick={() => handleOptionSelect(key, opt)}
-                              className={`group relative transition-all duration-300 rounded-sm overflow-hidden
-                                ${key.toLowerCase() === 'cor' && variantImg ? 'w-12 h-12' : 'px-5 py-2 min-w-[3rem] border'}
-                                ${isSelected
-                                  ? (variantImg ? 'ring-2 ring-[var(--azul-profundo)] ring-offset-2' : 'border-[var(--azul-profundo)] bg-[var(--azul-profundo)] text-white shadow-md')
-                                  : (variantImg ? 'opacity-70 hover:opacity-100 ring-1 ring-gray-200' : 'border-gray-200 text-gray-600 hover:border-black bg-white')
-                                }
-                              `}
-                            >
-                              {key.toLowerCase() === 'cor' && variantImg ? (
-                                <img src={getImageUrl(variantImg)} alt={opt} className="w-full h-full object-cover" />
-                              ) : opt}
-                            </button>
-                          );
-                        })}
-                      </div>
+                // Filtra variantes ativas com imagem; usa fallback para todas as ativas
+                const activeVariants = product.variants.filter(v => v.active !== false);
+
+                return (
+                  <div className="py-5 border-y border-gray-100 space-y-3">
+                    {/* Label dos atributos selecionados */}
+                    {Object.keys(selectedAttrs).length > 0 && (
+                      <p className="font-lato text-sm text-gray-700">
+                        {Object.entries(selectedAttrs).map(([k, v], i) => (
+                          <span key={k}>
+                            {i > 0 && <span className="mx-2 text-gray-300">·</span>}
+                            <span className="font-semibold capitalize">{k}:</span>{' '}
+                            <span className="font-bold uppercase tracking-wide text-[var(--azul-profundo)]">{v}</span>
+                          </span>
+                        ))}
+                      </p>
+                    )}
+
+                    {/* Miniaturas horizontais – uma por variante */}
+                    <div className="flex flex-row gap-2 overflow-x-auto pb-1">
+                      {activeVariants.map((variant) => {
+                        const isSelected = currentVariant?.id === variant.id;
+                        const thumbSrc = variant.imageUrl
+                          || product.images?.[0]
+                          || '/images/default.png';
+
+                        let variantAttrs = {};
+                        try { variantAttrs = JSON.parse(variant.attributesJson || '{}'); } catch { /* noop */ }
+                        const tooltipLabel = Object.entries(variantAttrs)
+                          .map(([k, v]) => `${k}: ${v}`)
+                          .join(' | ') || `Variante ${variant.id}`;
+
+                        return (
+                          <button
+                            key={variant.id}
+                            title={tooltipLabel}
+                            onClick={() => {
+                              setCurrentVariant(variant);
+                              setSelectedOptions(variantAttrs);
+                              if (variant.imageUrl) setMainMedia(variant.imageUrl);
+                            }}
+                            className={`shrink-0 w-[64px] h-[64px] rounded-md overflow-hidden border-2 transition-all duration-200 focus:outline-none
+                              ${isSelected
+                                ? 'border-[#3483fa] ring-2 ring-[#3483fa] ring-offset-1'
+                                : 'border-gray-200 hover:border-gray-400'
+                              }
+                            `}
+                          >
+                            <img
+                              src={getImageUrl(thumbSrc)}
+                              alt={tooltipLabel}
+                              className="w-full h-full object-cover"
+                              onError={e => { e.target.src = '/images/default.png'; }}
+                            />
+                          </button>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
+
 
               {/* Quantidade e Comprar - Botões Duplos conforme Mockup */}
               <div className="flex flex-col gap-4 pt-4">
                 <div className="flex items-center gap-2">
-                  <span className="font-lato text-sm text-[var(--azul-profundo)]">Quantidade: <b>{quantity} unidade</b></span>
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-[var(--azul-claro)]"><ChevronLeft size={16} className="-rotate-90" /></button>
-                  <span className="text-gray-400 text-xs">(+50 disponív...</span>
+                  <span className="font-lato text-sm text-[var(--azul-profundo)]">Quantidade: <b>{quantity} {quantity > 1 ? 'unidades' : 'unidade'}</b></span>
+                  <div className="flex flex-col border-l border-gray-200 pl-2">
+                    <button onClick={() => setQuantity(quantity + 1)} className="text-[var(--azul-claro)] hover:text-[var(--azul-profundo)]"><ChevronLeft size={14} className="rotate-90" /></button>
+                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-[var(--azul-claro)] hover:text-[var(--azul-profundo)]"><ChevronLeft size={14} className="-rotate-90" /></button>
+                  </div>
+                  <span className="text-gray-400 text-xs ml-2">({displayStock > 0 ? `+${displayStock} disponíveis` : 'Sem estoque'})</span>
                 </div>
 
                 <div className="flex flex-col gap-3">

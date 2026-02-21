@@ -10,6 +10,7 @@ import AboutPage from "./pages/AboutPage";
 import EthicsPage from "./pages/EthicsPage";
 import ShopPage from "./pages/ShopPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import ProfilePage from "./pages/ProfilePage";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
 
             <Route path="/categoria/:slug" element={<CategoryPage />} />
             <Route path="/produto/:id" element={<ProductPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
 
             {/* Rota 404 */}
             <Route
