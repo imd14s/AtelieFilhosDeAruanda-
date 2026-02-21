@@ -84,11 +84,20 @@ const Header = () => {
             <div className="hidden md:flex items-center gap-5 text-[var(--azul-profundo)]">
               {user ? (
                 <div className="flex items-center gap-3 border-r pr-5 border-[var(--azul-profundo)]/10">
-                  <div className="text-right">
-                    <p className="font-lato text-[9px] uppercase tracking-widest text-[var(--dourado-suave)]">Axé</p>
-                    <p className="font-playfair text-xs font-bold leading-none">{user.name || 'Membro'}</p>
-                  </div>
-                  <button onClick={handleLogout} className="text-[var(--azul-profundo)]/40 hover:text-red-800 transition-colors">
+                  <Link to="/perfil" className="flex items-center gap-3 group transition-all">
+                    <div className="text-right">
+                      <p className="font-lato text-[9px] uppercase tracking-widest text-[var(--dourado-suave)] group-hover:text-[var(--azul-profundo)] transition-colors">Axé</p>
+                      <p className="font-playfair text-xs font-bold leading-none group-hover:text-[#C9A24D] transition-colors line-clamp-1 max-w-[100px]">{user.name || 'Membro'}</p>
+                    </div>
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-[var(--dourado-suave)] shadow-sm" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-[var(--dourado-suave)] flex items-center justify-center font-playfair font-bold text-sm shadow-sm border border-[var(--dourado-suave)]">
+                        {user.name ? user.name.charAt(0).toUpperCase() : 'M'}
+                      </div>
+                    )}
+                  </Link>
+                  <button onClick={handleLogout} title="Sair" className="text-[var(--azul-profundo)]/40 hover:text-red-800 transition-colors ml-2">
                     <LogOut size={16} />
                   </button>
                 </div>

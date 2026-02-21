@@ -1,36 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, Star, ChevronRight, X, CheckCircle, LogOut } from 'lucide-react';
+import { Search, ChevronDown, Zap, MessageCircle, Star, Package } from 'lucide-react';
 import SEO from '../components/SEO';
 import ReviewForm from '../components/ReviewForm';
 
-// Mock purchase data para testar a funcionalidade
+// Mock purchase data based on the screenshot style
 const MOCK_ORDERS = [
     {
-        id: 'ORD-20250215-001',
-        date: '2025-02-15T10:00:00Z',
+        id: 'ORD-20251208-001',
+        dateContext: '8 de dezembro de 2025',
         status: 'DELIVERED',
-        statusLabel: 'Entregue',
-        total: 60.00,
+        statusTitle: 'Entregue',
+        statusDetail: 'Chegou no dia 15 de dezembro',
+        isFull: true,
+        seller: 'TRI MATE',
         items: [
             {
                 productId: 'prod-1',
-                productName: 'Chapéu de Couro Artesanal do Cangaço',
-                productImage: '/images/default.png',
+                productName: 'Kit Chimarrão Mate Gaúcho Bomba, Cuia Porongo, Porta Erva',
+                productImage: '/images/default.png', // Fallback, will show generic image
                 quantity: 1,
-                price: 60.00,
+                variation: 'Cor: Tradicional Cabaça Porongo',
                 canReview: true,
                 reviewed: false,
             }
         ]
-    }
+    },
+    {
+        id: 'ORD-20251208-002',
+        dateContext: '8 de dezembro de 2025',
+        status: 'DELIVERED',
+        statusTitle: 'Entregue',
+        statusDetail: 'Chegou no dia 16 de dezembro',
+        isFull: true,
+        seller: 'Loja oficial Kizumba',
+        items: [
+            {
+                productId: 'prod-2',
+                productName: 'Kit Maleta Mochila De Ferramentas Oficina Infantil Criança Com 22 Peças',
+                productImage: '/images/default.png',
+                quantity: 1,
+                variation: '',
+                canReview: true,
+                reviewed: false,
+            }
+        ]
+    },
+    {
+        id: 'ORD-20250407-001',
+        dateContext: '7 de abril de 2025',
+        status: 'DELIVERED',
+        statusTitle: 'Entregue',
+        statusDetail: 'Chegou no dia 10 de abril',
+        isFull: false,
+        seller: 'Loja oficial DUOSEG',
+        items: [
+            {
+                productId: 'prod-3',
+                productName: 'Projetor Portátil 4k Hd Android 11.0 Smart Wifi 5g Bluetooth',
+                productImage: '/images/default.png',
+                quantity: 1,
+                variation: 'Cor: Branco, Voltagem: 127/220V',
+                canReview: true,
+                reviewed: false,
+            }
+        ]
+    },
 ];
 
 const ProfilePage = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [orders, setOrders] = useState(MOCK_ORDERS);
-    const [reviewItem, setReviewItem] = useState(null); // Item being reviewed
+    const [reviewItem, setReviewItem] = useState(null);
     const [reviewedItems, setReviewedItems] = useState(new Set());
 
     useEffect(() => {
@@ -38,7 +80,6 @@ const ProfilePage = () => {
         const userData = localStorage.getItem('user');
 
         if (!token || !userData) {
-            // Usuário não logado: redireciona para home com alerta
             navigate('/', { replace: true });
             return;
         }
@@ -50,12 +91,6 @@ const ProfilePage = () => {
         }
     }, [navigate]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user');
-        navigate('/');
-    };
-
     const handleReviewSubmitted = (itemId) => {
         setReviewedItems(prev => new Set([...prev, itemId]));
         setReviewItem(null);
@@ -63,14 +98,20 @@ const ProfilePage = () => {
 
     if (!user) return null;
 
-    const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-    const formatDate = (d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    // Agrupar pedidos por dataContext para renderizar como os cards do Mercado Livre
+    const groupedOrders = orders.reduce((acc, order) => {
+        if (!acc[order.dateContext]) {
+            acc[order.dateContext] = [];
+        }
+        acc[order.dateContext].push(order);
+        return acc;
+    }, {});
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <SEO title="Meu Perfil" description="Gerencie suas compras e avaliações." />
+        <div className="min-h-screen bg-[#ebebeb] pb-12 font-lato">
+            <SEO title="Minhas Compras" description="Histórico de compras e avaliações." />
 
-            {/* Review Modal */}
+            {/* Review Modal Reutilizado */}
             {reviewItem && (
                 <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
                     <div className="bg-white w-full max-w-xl rounded-sm shadow-2xl p-8 relative max-h-[90vh] overflow-y-auto">
@@ -78,7 +119,7 @@ const ProfilePage = () => {
                             onClick={() => setReviewItem(null)}
                             className="absolute top-4 right-4 text-gray-400 hover:text-[var(--azul-profundo)] transition-colors"
                         >
-                            <X size={20} />
+                            ✕
                         </button>
                         <div className="mb-6">
                             <h3 className="font-playfair text-xl text-[var(--azul-profundo)] mb-1">Avaliar Produto</h3>
@@ -92,110 +133,122 @@ const ProfilePage = () => {
                 </div>
             )}
 
-            <div className="max-w-4xl mx-auto px-4 py-12">
-                {/* Header do Perfil */}
-                <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-8 mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-5">
-                            {user.photoURL ? (
-                                <img src={user.photoURL} alt={user.name} className="w-16 h-16 rounded-full object-cover border-2 border-[var(--azul-profundo)]/20" />
-                            ) : (
-                                <div className="w-16 h-16 rounded-full bg-[var(--azul-profundo)]/10 flex items-center justify-center">
-                                    <span className="font-playfair text-2xl text-[var(--azul-profundo)]">{user.name?.[0]?.toUpperCase()}</span>
-                                </div>
-                            )}
-                            <div>
-                                <h1 className="font-playfair text-2xl text-[var(--azul-profundo)]">{user.name}</h1>
-                                <p className="font-lato text-sm text-gray-400">{user.email}</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 text-[10px] font-lato uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                            <LogOut size={14} />
-                            Sair
+            <div className="max-w-5xl mx-auto px-4 pt-8">
+                {/* Header (Mimetiza a "Compras" do Meli) */}
+                <h1 className="text-2xl font-bold text-gray-800 mb-6">Compras</h1>
+
+                {/* Filtros e Busca */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                    <div className="relative w-full md:w-1/2 lg:w-1/3">
+                        <input
+                            type="text"
+                            placeholder="Busque por compra, marca e mais..."
+                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-full text-sm focus:outline-none focus:border-blue-500 shadow-sm"
+                        />
+                        <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                    </div>
+                    <div className="flex items-center gap-6 text-sm text-gray-600">
+                        <button className="flex items-center gap-1 hover:text-blue-500">
+                            Categoria <ChevronDown size={14} />
                         </button>
+                        <button className="flex items-center gap-1 hover:text-blue-500">
+                            Data <ChevronDown size={14} />
+                        </button>
+                        <span className="text-gray-400 border-l border-gray-300 pl-6">{orders.length} compras</span>
                     </div>
                 </div>
 
-                {/* Minhas Compras */}
-                <div>
-                    <h2 className="font-playfair text-xl text-[var(--azul-profundo)] uppercase tracking-widest mb-6 flex items-center gap-3">
-                        <Package size={20} className="text-[#C9A24D]" />
-                        Minhas Compras
-                    </h2>
+                {/* Banner de Pendências de Opinião */}
+                <div className="bg-white rounded-md p-4 mb-6 shadow-sm border border-gray-200 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded">
+                            <Package size={24} className="text-gray-400" />
+                        </div>
+                        <span className="text-sm text-gray-800">5 produtos esperam sua opinião</span>
+                    </div>
+                    <button className="px-6 py-2 bg-blue-50 text-blue-500 font-semibold text-sm rounded hover:bg-blue-100 transition-colors">
+                        Opinar
+                    </button>
+                </div>
 
-                    <div className="space-y-4">
-                        {orders.map(order => (
-                            <div key={order.id} className="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
-                                {/* Header do Pedido */}
-                                <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-100">
-                                    <div className="flex items-center gap-6">
-                                        <div>
-                                            <p className="font-lato text-[10px] uppercase tracking-widest text-gray-400">Pedido</p>
-                                            <p className="font-lato text-sm font-bold text-[var(--azul-profundo)]">{order.id}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-lato text-[10px] uppercase tracking-widest text-gray-400">Data</p>
-                                            <p className="font-lato text-sm text-[var(--azul-profundo)]">{formatDate(order.date)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-lato text-[10px] uppercase tracking-widest text-gray-400">Total</p>
-                                            <p className="font-lato text-sm font-bold text-[var(--azul-profundo)]">{formatCurrency(order.total)}</p>
-                                        </div>
-                                    </div>
-                                    <span className={`inline-flex items-center gap-1.5 text-[10px] font-lato uppercase tracking-widest px-3 py-1.5 rounded-full font-bold
-                    ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}
-                  `}>
-                                        {order.status === 'DELIVERED' && <CheckCircle size={11} />}
-                                        {order.statusLabel}
-                                    </span>
-                                </div>
+                {/* Lista de Compras Agrupadas por Data */}
+                <div className="space-y-6">
+                    {Object.entries(groupedOrders).map(([date, dateOrders]) => (
+                        <div key={date} className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
+                            {/* Card Header (Data) */}
+                            <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
+                                <h2 className="text-sm font-semibold text-gray-800">{date}</h2>
+                                <button className="text-xs text-blue-500 hover:text-blue-600 font-semibold">
+                                    Adicionar tudo ao carrinho
+                                </button>
+                            </div>
 
-                                {/* Itens do Pedido */}
-                                <div className="divide-y divide-gray-50">
-                                    {order.items.map((item, idx) => {
-                                        const alreadyReviewed = reviewedItems.has(item.productId);
-                                        return (
-                                            <div key={idx} className="flex items-center gap-5 px-6 py-5">
-                                                <div className="w-16 h-16 shrink-0 rounded-sm overflow-hidden border border-gray-100">
-                                                    <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
+                            {/* Card Body (Itens do Grupo) */}
+                            <div className="divide-y divide-gray-100">
+                                {dateOrders.map(order => (
+                                    <div key={order.id} className="p-6">
+                                        {order.items.map((item, idx) => (
+                                            <div key={idx} className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+
+                                                {/* Esquerda: Status, Produto */}
+                                                <div className="flex flex-1 gap-4">
+                                                    <div className="w-20 h-20 shrink-0 border border-gray-200 rounded p-1 flex items-center justify-center overflow-hidden">
+                                                        <img src={item.productImage} alt={item.productName} className="max-w-full max-h-full object-contain" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="text-sm font-bold text-green-600">{order.statusTitle}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 mb-3">
+                                                            <span className="text-sm text-gray-800 font-semibold">{order.statusDetail}</span>
+                                                            {order.isFull && (
+                                                                <span className="text-green-600 flex items-center text-[10px] font-bold italic ml-1 tracking-tight">
+                                                                    <Zap size={10} fill="currentColor" className="mr-[1px]" /> FULL
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-gray-500 line-clamp-2 leading-tight max-w-md">
+                                                            {item.productName}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400 mt-1">
+                                                            {item.quantity} un. {item.variation && `| ${item.variation}`}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1">
-                                                    <p className="font-lato text-sm font-medium text-[var(--azul-profundo)]">{item.productName}</p>
-                                                    <p className="font-lato text-xs text-gray-400 mt-0.5">Qtd: {item.quantity} · {formatCurrency(item.price)}</p>
+
+                                                {/* Meio: Informações do Vendedor */}
+                                                <div className="w-full md:w-1/4">
+                                                    <p className="text-xs text-gray-500 mb-1">{order.seller}</p>
+                                                    <button className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1 font-medium">
+                                                        Enviar mensagem
+                                                    </button>
                                                 </div>
-                                                <div className="flex items-center gap-3 shrink-0">
-                                                    <Link
-                                                        to={`/produto/${item.productId}`}
-                                                        className="text-[10px] font-lato uppercase tracking-widest text-gray-400 hover:text-[var(--azul-profundo)] transition-colors flex items-center gap-1"
-                                                    >
-                                                        Ver produto <ChevronRight size={12} />
-                                                    </Link>
-                                                    {item.canReview && order.status === 'DELIVERED' && (
-                                                        alreadyReviewed ? (
-                                                            <span className="flex items-center gap-1.5 text-[10px] font-lato uppercase tracking-widest text-green-600">
-                                                                <CheckCircle size={12} /> Avaliado
-                                                            </span>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => setReviewItem(item)}
-                                                                className="bg-[var(--azul-profundo)] text-white px-5 py-2.5 font-lato text-[10px] uppercase tracking-[0.2em] rounded-sm hover:bg-[#C9A24D] transition-all flex items-center gap-2 shadow-sm active:scale-95"
-                                                            >
-                                                                <Star size={12} fill="currentColor" />
-                                                                Avaliar Produto
-                                                            </button>
-                                                        )
+
+                                                {/* Direita: Ações */}
+                                                <div className="w-full md:w-48 flex flex-col gap-2 shrink-0">
+                                                    <button className="w-full py-2 bg-blue-500 text-white text-sm font-semibold rounded hover:bg-blue-600 transition-colors">
+                                                        Ver compra
+                                                    </button>
+                                                    <button className="w-full py-2 bg-blue-50 text-blue-500 text-sm font-semibold rounded hover:bg-blue-100 transition-colors">
+                                                        Comprar novamente
+                                                    </button>
+
+                                                    {item.canReview && !reviewedItems.has(item.productId) && (
+                                                        <button
+                                                            onClick={() => setReviewItem(item)}
+                                                            className="mt-2 text-xs text-center text-gray-500 hover:text-blue-500 transition-colors"
+                                                        >
+                                                            Avaliar Produto
+                                                        </button>
                                                     )}
                                                 </div>
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                        ))}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
