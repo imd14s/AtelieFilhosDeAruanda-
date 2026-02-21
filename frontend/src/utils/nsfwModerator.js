@@ -10,7 +10,8 @@ export const loadModel = async () => {
     if (!modelPromise) {
         // Necessary for some environments to avoid issues with webgl
         await tf.ready();
-        modelPromise = nsfwjs.load();
+        // Load models locally to avoid external network latency
+        modelPromise = nsfwjs.load('/models/');
     }
     return modelPromise;
 };
