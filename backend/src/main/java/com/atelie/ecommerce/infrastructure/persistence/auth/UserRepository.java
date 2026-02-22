@@ -17,5 +17,5 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     long countByRole(String role);
 
-    long countByRoleAndEmailVerifiedTrue(String role, boolean verified);
+    long countByRoleAndEmailVerifiedTrue(String role);
 }

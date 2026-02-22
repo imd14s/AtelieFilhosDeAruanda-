@@ -22,7 +22,7 @@ public class MarketingMetricsService {
         long totalNewsletter = newsletterRepository.count();
         long totalRegistrations = totalCustomers + totalNewsletter;
 
-        long verifiedCustomers = userRepository.countByRoleAndEmailVerifiedTrue("CUSTOMER", true);
+        long verifiedCustomers = userRepository.countByRoleAndEmailVerifiedTrue("CUSTOMER");
         long verifiedNewsletter = newsletterRepository.countByEmailVerifiedTrue();
         long totalVerified = verifiedCustomers + verifiedNewsletter;
 

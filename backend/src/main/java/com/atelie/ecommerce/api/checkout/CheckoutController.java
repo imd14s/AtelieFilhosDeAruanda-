@@ -17,48 +17,51 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/checkout")
 public class CheckoutController {
 
-    private final OrderService orderService;
-    private final PaymentService paymentService;
+        private final OrderService orderService;
+        private final PaymentService paymentService;
 
-    public CheckoutController(OrderService orderService, PaymentService paymentService) {
-        this.orderService = orderService;
-        this.paymentService = paymentService;
-    }
+        public CheckoutController(OrderService orderService, PaymentService paymentService) {
+                this.orderService = orderService;
+                this.paymentService = paymentService;
+        }
 
-    @PostMapping("/process")
-    public ResponseEntity<?> processOrder(@RequestBody Map<String, Object> payload) {
-        // 1. Extrair dados do cliente e itens
-        String customerName = (String) payload.get("customerName");
-        String customerEmail = (String) payload.get("customerEmail");
-        // CPF/CNPJ opcional para o OrderEntity mas necessário para alguns drivers de
-        // pagamento
+        @PostMapping("/process")
+        public ResponseEntity<?> processOrder(@RequestBody Map<String, Object> payload) {
+                // 1. Extrair dados do cliente e itens
+                String customerName = (String) payload.get("customerName");
+                String customerEmail = (String) payload.get("customerEmail");
+                // CPF/CNPJ opcional para o OrderEntity mas necessário para alguns drivers de
+                // pagamento
 
-        List<Map<String, Object>> itemsRaw = (List<Map<String, Object>>) payload.get("items");
-        List<CreateOrderItemRequest> items = itemsRaw.stream().map(item -> new CreateOrderItemRequest(
-                java.util.UUID.fromString((String) item.get("productId")),
-                item.get("variantId") != null ? java.util.UUID.fromString((String) item.get("variantId")) : null,
-                (Integer) item.get("quantity"))).collect(Collectors.toList());
+                List<Map<String, Object>> itemsRaw = (List<Map<String, Object>>) payload.get("items");
+                List<CreateOrderItemRequest> items = itemsRaw.stream().map(item -> new CreateOrderItemRequest(
+                                java.util.UUID.fromString((String) item.get("productId")),
+                                item.get("variantId") != null
+                                                ? java.util.UUID.fromString((String) item.get("variantId"))
+                                                : null,
+                                (Integer) item.get("quantity"))).collect(Collectors.toList());
 
-        // 2. Criar o pedido (Status PENDING)
-        CreateOrderRequest orderRequest = new CreateOrderRequest(
-                "STOREFRONT",
-                null, // externalId gerado pelo sistema
-                customerName,
-                items);
+                // 2. Criar o pedido (Status PENDING)
+                CreateOrderRequest orderRequest = new CreateOrderRequest(
+                                "STOREFRONT",
+                                null, // externalId gerado pelo sistema
+                                customerName,
+                                customerEmail,
+                                items);
 
-        OrderEntity order = orderService.createOrder(orderRequest);
+                OrderEntity order = orderService.createOrder(orderRequest);
 
-        // 3. Gerar o pagamento (PIX)
-        PaymentResponse payment = paymentService.createPixPayment(
-                order.getId(),
-                customerName,
-                customerEmail,
-                order.getTotalAmount());
+                // 3. Gerar o pagamento (PIX)
+                PaymentResponse payment = paymentService.createPixPayment(
+                                order.getId(),
+                                customerName,
+                                customerEmail,
+                                order.getTotalAmount());
 
-        // 4. Retornar dados combinados
-        return ResponseEntity.ok(Map.of(
-                "orderId", order.getId().toString(),
-                "status", order.getStatus(),
-                "payment", payment));
-    }
+                // 4. Retornar dados combinados
+                return ResponseEntity.ok(Map.of(
+                                "orderId", order.getId().toString(),
+                                "status", order.getStatus(),
+                                "payment", payment));
+        }
 }
