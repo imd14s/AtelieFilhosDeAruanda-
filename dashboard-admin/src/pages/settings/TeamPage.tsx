@@ -18,7 +18,9 @@ export function TeamPage() {
         setLoading(true);
         try {
             const data = await UserService.getAll();
-            setUsers(data);
+            // Exibe apenas membros da equipe (ADMIN e EMPLOYEE)
+            const teamOnly = data.filter(u => u.role === 'ADMIN' || u.role === 'EMPLOYEE');
+            setUsers(teamOnly);
         } catch (error) {
             console.error('Erro ao carregar usuários', error);
         } finally {
@@ -188,7 +190,6 @@ export function TeamPage() {
                                 >
                                     <option value="EMPLOYEE">Funcionário</option>
                                     <option value="ADMIN">Administrador</option>
-                                    <option value="CUSTOMER">Cliente</option>
                                 </select>
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
