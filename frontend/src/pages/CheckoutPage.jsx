@@ -20,15 +20,26 @@ const CheckoutPage = () => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     const [formData, setFormData] = useState({
-        email: '',
-        nome: '',
-        sobrenome: '',
+        email: user.email || '',
+        nome: user.name?.split(' ')[0] || '',
+        sobrenome: user.name?.split(' ').slice(1).join(' ') || '',
         endereco: '',
         cidade: '',
         estado: '',
         cep: cep || '',
         metodoPagamento: 'pix'
     });
+
+    React.useEffect(() => {
+        if (user.id) {
+            setFormData(prev => ({
+                ...prev,
+                email: user.email || prev.email,
+                nome: user.name?.split(' ')[0] || prev.nome,
+                sobrenome: user.name?.split(' ').slice(1).join(' ') || prev.sobrenome
+            }));
+        }
+    }, []);
 
     const subtotal = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const discount = appliedCoupon

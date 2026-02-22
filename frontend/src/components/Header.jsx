@@ -28,11 +28,15 @@ const Header = () => {
   useEffect(() => {
     initHeader();
     const handleOpenAuth = () => setIsAuthOpen(true);
+
     window.addEventListener('cart-updated', initHeader);
     window.addEventListener('open-auth-modal', handleOpenAuth);
+    window.addEventListener('auth-changed', initHeader); // Re-sincroniza ao logar/deslogar
+
     return () => {
       window.removeEventListener('cart-updated', initHeader);
       window.removeEventListener('open-auth-modal', handleOpenAuth);
+      window.removeEventListener('auth-changed', initHeader);
     };
   }, [location.pathname]);
 

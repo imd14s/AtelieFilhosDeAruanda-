@@ -104,7 +104,9 @@ export const storeService = {
   cart: {
     get: () => {
       try {
-        const cart = localStorage.getItem('cart');
+        const user = storeService.auth.getUser();
+        const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
+        const cart = localStorage.getItem(cartKey);
         return cart ? JSON.parse(cart) : { items: [] };
       } catch (e) {
         console.error("[storeService] Erro ao ler carrinho do localStorage", e);
@@ -115,6 +117,8 @@ export const storeService = {
     add: (product, quantity = 1) => {
       if (!product || !product.id) return;
 
+      const user = storeService.auth.getUser();
+      const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
       const cart = storeService.cart.get();
       const existingItem = cart.items.find(item => item.id === product.id);
 
@@ -130,20 +134,50 @@ export const storeService = {
         });
       }
 
-      localStorage.setItem('cart', JSON.stringify(cart));
+      localStorage.setItem(cartKey, JSON.stringify(cart));
       window.dispatchEvent(new Event('cart-updated'));
     },
 
     remove: (productId) => {
+      const user = storeService.auth.getUser();
+      const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
       const cart = storeService.cart.get();
       cart.items = cart.items.filter(item => item.id !== productId);
-      localStorage.setItem('cart', JSON.stringify(cart));
+      localStorage.setItem(cartKey, JSON.stringify(cart));
       window.dispatchEvent(new Event('cart-updated'));
     },
 
     clear: () => {
-      localStorage.removeItem('cart');
+      const user = storeService.auth.getUser();
+      const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
+      localStorage.removeItem(cartKey);
       window.dispatchEvent(new Event('cart-updated'));
+    },
+
+    migrate: (userId) => {
+      try {
+        const guestCart = JSON.parse(localStorage.getItem('cart_guest') || '{"items":[]}');
+        if (guestCart.items.length === 0) return;
+
+        const userCartKey = `cart_user_${userId}`;
+        const userCart = JSON.parse(localStorage.getItem(userCartKey) || '{"items":[]}');
+
+        // Merge logic
+        guestCart.items.forEach(guestItem => {
+          const existingItem = userCart.items.find(item => item.id === guestItem.id);
+          if (existingItem) {
+            existingItem.quantity += guestItem.quantity;
+          } else {
+            userCart.items.push(guestItem);
+          }
+        });
+
+        localStorage.setItem(userCartKey, JSON.stringify(userCart));
+        localStorage.removeItem('cart_guest');
+        window.dispatchEvent(new Event('cart-updated'));
+      } catch (e) {
+        console.error("[storeService] Erro ao migrar carrinho", e);
+      }
     }
   },
 
@@ -241,6 +275,10 @@ export const storeService = {
             emailVerified: response.data.emailVerified
           };
           localStorage.setItem('user', JSON.stringify(userObj));
+
+          // Migrar carrinho de convidado para o usuário logado
+          storeService.cart.migrate(userObj.id);
+
           window.dispatchEvent(new Event('auth-changed'));
           return userObj;
         }
