@@ -22,7 +22,7 @@ import { CategoriesPage } from './pages/categories/CategoriesPage';
 import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage';
 import { SubscribersPage } from './pages/marketing/SubscribersPage';
 import { SignaturesPage } from './pages/marketing/SignaturesPage';
-import { UsersPage } from './pages/settings/UsersPage';
+import { ClientsPage } from './pages/settings/ClientsPage';
 import { EmailSettingsPage } from './pages/settings/EmailSettingsPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -62,7 +62,7 @@ function AppRoutes() {
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
         <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
         <Route path="/automations" element={<AutomationsPage />} />
-        <Route path="/settings/users" element={<UsersPage />} />
+        <Route path="/settings/users" element={<ClientsPage />} />
         <Route path="/settings/integrations" element={<IntegrationsPage />} />
       </Route>
     </Routes>

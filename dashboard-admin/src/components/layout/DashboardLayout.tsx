@@ -72,7 +72,7 @@ export function DashboardLayout() {
         { icon: Zap, label: 'IA', path: '/settings/ai' },
         { icon: Plug, label: 'Integrações', path: '/settings/integrations' },
         { icon: Send, label: 'E-mails (Remetente)', path: '/settings/email' },
-        { icon: Users, label: 'Usuários (LGPD)', path: '/settings/users' },
+        { icon: Users, label: 'Clientes', path: '/settings/users' },
         { icon: Users, label: 'Equipe', path: '/settings/team' },
         { icon: Shield, label: 'Auditoria', path: '/settings/audit' },
         { icon: Truck, label: 'Frete', path: '/settings/shipping' },
