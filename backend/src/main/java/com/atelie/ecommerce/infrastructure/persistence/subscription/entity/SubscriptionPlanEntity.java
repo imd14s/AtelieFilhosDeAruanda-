@@ -31,24 +31,31 @@ public class SubscriptionPlanEntity {
     @Column(name = "base_price")
     private BigDecimal basePrice;
 
+    @Builder.Default
     @Column(name = "min_products")
     private Integer minProducts = 1;
 
+    @Builder.Default
     @Column(name = "max_products")
     private Integer maxProducts = 10;
 
+    @Builder.Default
     @Column(name = "is_coupon_pack")
     private Boolean isCouponPack = false;
 
+    @Builder.Default
     @Column(name = "coupon_bundle_count")
     private Integer couponBundleCount = 0;
 
+    @Builder.Default
     @Column(name = "coupon_discount_percentage")
     private BigDecimal couponDiscountPercentage = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "coupon_validity_days")
     private Integer couponValidityDays = 0;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean active = true;
 

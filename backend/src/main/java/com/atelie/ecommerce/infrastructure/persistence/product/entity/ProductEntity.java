@@ -2,6 +2,7 @@ package com.atelie.ecommerce.infrastructure.persistence.product.entity;
 
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 
 @Entity
 @Table(name = "products")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class ProductEntity {
     public ProductEntity() {
         this.images = new ArrayList<>();

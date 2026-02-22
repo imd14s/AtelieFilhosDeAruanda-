@@ -17,6 +17,9 @@ spring:
     multipart:
       max-file-size: ${MAX_UPLOAD_MB:10}MB
       max-request-size: ${MAX_UPLOAD_MB:10}MB
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
   cache:
     type: caffeine
     caffeine:

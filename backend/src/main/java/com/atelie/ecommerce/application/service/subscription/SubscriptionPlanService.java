@@ -2,6 +2,7 @@ package com.atelie.ecommerce.application.service.subscription;
 
 import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.entity.SubscriptionPlanEntity;
+import com.atelie.ecommerce.infrastructure.persistence.subscription.entity.SubscriptionPlanProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.repository.SubscriptionPlanRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.CacheEvict;
@@ -37,12 +38,25 @@ public class SubscriptionPlanService {
     @CacheEvict(value = "subscription-plans", allEntries = true)
     @Transactional
     public SubscriptionPlanEntity save(SubscriptionPlanEntity plan) {
+        if (plan.getId() == null) {
+            plan.setId(UUID.randomUUID());
+        }
+
         if (plan.getFrequencyRules() != null) {
+            plan.getFrequencyRules().removeIf(rule -> rule == null);
             plan.getFrequencyRules().forEach(rule -> rule.setPlan(plan));
         }
+
         if (plan.getProducts() != null) {
-            plan.getProducts().forEach(p -> p.setPlan(plan));
+            plan.getProducts().removeIf(p -> p == null || p.getProduct() == null || p.getProduct().getId() == null);
+            plan.getProducts().forEach(p -> {
+                p.setPlan(plan);
+                p.setId(new SubscriptionPlanProductEntity.SubscriptionPlanProductId(
+                        plan.getId(),
+                        p.getProduct().getId()));
+            });
         }
+
         return planRepository.save(plan);
     }
 

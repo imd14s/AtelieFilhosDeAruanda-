@@ -153,6 +153,12 @@
       <version>8.7.0</version>
     </dependency>
 
+    <!-- Jackson Hibernate Module (Fix for 500 serialization error) -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-hibernate6</artifactId>
+    </dependency>
+
   </dependencies>
 
   <build>

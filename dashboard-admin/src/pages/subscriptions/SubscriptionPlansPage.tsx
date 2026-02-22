@@ -12,11 +12,27 @@ const getImageUrl = (url: string) => {
     return `${cleanBase}${url}`;
 };
 
+const INITIAL_PLAN_STATE = {
+    type: 'FIXED',
+    name: '',
+    description: '',
+    active: true,
+    frequencyRules: [],
+    products: [],
+    minProducts: 1,
+    maxProducts: 10,
+    basePrice: 0,
+    isCouponPack: false,
+    couponBundleCount: 0,
+    couponDiscountPercentage: 0,
+    couponValidityDays: 0
+};
+
 export function SubscriptionPlansPage() {
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [editingPlan, setEditingPlan] = useState<any>(null);
+    const [editingPlan, setEditingPlan] = useState<any>(INITIAL_PLAN_STATE);
     const [availableProducts, setAvailableProducts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -50,7 +66,12 @@ export function SubscriptionPlansPage() {
         try {
             const planToSave = {
                 ...editingPlan,
-                isCouponPack: editingPlan.type === 'COUPON'
+                isCouponPack: editingPlan.type === 'COUPON',
+                // Ensure numeric fields are not NaN
+                basePrice: Number(editingPlan.basePrice) || 0,
+                couponBundleCount: Number(editingPlan.couponBundleCount) || 0,
+                couponDiscountPercentage: Number(editingPlan.couponDiscountPercentage) || 0,
+                couponValidityDays: Number(editingPlan.couponValidityDays) || 0
             };
 
             if (editingPlan.id) {
@@ -60,10 +81,10 @@ export function SubscriptionPlansPage() {
             }
             fetchPlans();
             setShowModal(false);
-            setEditingPlan(null);
-        } catch (error) {
+            setEditingPlan(INITIAL_PLAN_STATE);
+        } catch (error: any) {
             console.error('Erro ao salvar plano:', error);
-            alert('Erro ao salvar plano.');
+            alert('Erro ao salvar plano: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -81,7 +102,7 @@ export function SubscriptionPlansPage() {
 
     const updateProductQuantity = (productId: string, quantity: number) => {
         const newProducts = editingPlan.products.map((p: any) =>
-            (p.product?.id || p.productId) === productId ? { ...p, quantity } : p
+            (p.product?.id || p.productId) === productId ? { ...p, quantity: Number(quantity) } : p
         );
         setEditingPlan({ ...editingPlan, products: newProducts });
     };
@@ -98,18 +119,21 @@ export function SubscriptionPlansPage() {
         setEditingPlan({ ...editingPlan, frequencyRules: newRules });
     };
 
-    const updateDiscount = (freq: string, discount: number) => {
+    const updateDiscount = (freq: string, discount: any) => {
         const newRules = editingPlan.frequencyRules.map((r: any) =>
-            r.frequency === freq ? { ...r, discountPercentage: discount } : r
+            r.frequency === freq ? { ...r, discountPercentage: discount === '' ? 0 : Number(discount) } : r
         );
         setEditingPlan({ ...editingPlan, frequencyRules: newRules });
     };
 
-    const filteredProducts = availableProducts.filter(ap => {
-        const isNotSelected = !(editingPlan?.products || []).some((p: any) => (p.product?.id || p.productId) === ap.id);
-        const matchesSearch = ap.name.toLowerCase().includes(searchTerm.toLowerCase());
-        return isNotSelected && matchesSearch;
-    });
+    const filteredProducts = searchTerm.length > 0
+        ? availableProducts.filter(ap => {
+            const isNotSelected = !(editingPlan?.products || []).some((p: any) => (p.product?.id || p.productId) === ap.id);
+            const productName = ap.title || ap.name || '';
+            const matchesSearch = productName.toLowerCase().includes(searchTerm.toLowerCase());
+            return isNotSelected && matchesSearch;
+        }).slice(0, 10)
+        : [];
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center p-20 space-y-4">
@@ -127,20 +151,7 @@ export function SubscriptionPlansPage() {
                 </div>
                 <button
                     onClick={() => {
-                        setEditingPlan({
-                            type: 'FIXED',
-                            name: '',
-                            description: '',
-                            active: true,
-                            frequencyRules: [],
-                            products: [],
-                            minProducts: 1,
-                            maxProducts: 10,
-                            isCouponPack: false,
-                            couponBundleCount: 5,
-                            couponDiscountPercentage: 10,
-                            couponValidityDays: 30
-                        });
+                        setEditingPlan(INITIAL_PLAN_STATE);
                         setShowModal(true);
                     }}
                     className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
@@ -160,7 +171,7 @@ export function SubscriptionPlansPage() {
                                     plan.isCouponPack ? "bg-amber-100 text-amber-700" :
                                         plan.type === 'FIXED' ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
                                 )}>
-                                    {plan.isCouponPack ? 'Venda de Cupons' : plan.type === 'FIXED' ? 'Fixo (Admin)' : 'Personalizado'}
+                                    {plan.isCouponPack ? 'Venda de Cupons' : plan.type === 'FIXED' ? 'Fixo (Admin)' : 'Customizado'}
                                 </div>
                                 {plan.active ? <CheckCircle2 className="text-green-500" size={18} /> : <XCircle className="text-red-500" size={18} />}
                             </div>
@@ -176,16 +187,29 @@ export function SubscriptionPlansPage() {
                                     {plan.isCouponPack ? <Ticket size={16} /> : <Package size={16} />}
                                     <span>
                                         {plan.isCouponPack
-                                            ? `${plan.couponBundleCount} cupons de ${plan.couponDiscountPercentage}%`
-                                            : plan.type === 'FIXED' ? `${plan.products?.length || 0} produtos inclusos` : `${plan.minProducts}-${plan.maxProducts} itens p/ kit`
+                                            ? `${plan.couponBundleCount || 0} cupons de ${plan.couponDiscountPercentage || 0}%`
+                                            : plan.type === 'FIXED' ? `${plan.products?.length || 0} produtos inclusos` : `${plan.minProducts || 1}-${plan.maxProducts || 10} itens p/ kit`
                                         }
                                     </span>
+                                </div>
+                                <div className="flex items-center gap-2 font-bold text-indigo-600">
+                                    <Percent size={16} className="text-gray-400" />
+                                    <span>A partir de R$ {plan.basePrice?.toFixed(2) || '0.00'}</span>
                                 </div>
                             </div>
 
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => { setEditingPlan(plan); setShowModal(true); }}
+                                    onClick={() => {
+                                        setEditingPlan({
+                                            ...INITIAL_PLAN_STATE,
+                                            ...plan,
+                                            // Ensure nested arrays are cloned
+                                            frequencyRules: plan.frequencyRules ? [...plan.frequencyRules] : [],
+                                            products: plan.products ? [...plan.products] : []
+                                        });
+                                        setShowModal(true);
+                                    }}
                                     className="flex-1 flex justify-center items-center gap-2 border border-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
                                 >
                                     <Edit2 size={16} />
@@ -226,7 +250,7 @@ export function SubscriptionPlansPage() {
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Tipo</label>
                                     <select
-                                        value={editingPlan.type}
+                                        value={editingPlan.type || 'FIXED'}
                                         onChange={(e) => setEditingPlan({ ...editingPlan, type: e.target.value, isCouponPack: e.target.value === 'COUPON' })}
                                         className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                                     >
@@ -238,7 +262,7 @@ export function SubscriptionPlansPage() {
                                     <label className="text-xs font-bold text-gray-500 uppercase">Nome</label>
                                     <input
                                         type="text"
-                                        value={editingPlan.name}
+                                        value={editingPlan.name || ''}
                                         required
                                         onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
                                         className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -247,10 +271,27 @@ export function SubscriptionPlansPage() {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Valor (Preço Base)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={editingPlan.basePrice || ''}
+                                            onChange={(e) => setEditingPlan({ ...editingPlan, basePrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                                            className="w-full border rounded-lg p-2 pl-9 outline-none focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="space-y-1">
                                 <label className="text-xs font-bold text-gray-500 uppercase">Descrição</label>
                                 <textarea
-                                    value={editingPlan.description}
+                                    value={editingPlan.description || ''}
                                     onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
                                     className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
                                     placeholder="Explique o que o cliente recebe nesta assinatura..."
@@ -267,31 +308,34 @@ export function SubscriptionPlansPage() {
                                             <label className="text-[10px] font-bold text-amber-600 uppercase">Qtd. Cupons</label>
                                             <input
                                                 type="number"
-                                                value={editingPlan.couponBundleCount}
-                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponBundleCount: parseInt(e.target.value) })}
-                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500"
+                                                value={editingPlan.couponBundleCount || ''}
+                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponBundleCount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                                                placeholder="0"
                                             />
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-amber-600 uppercase">% Desconto</label>
                                             <input
                                                 type="number"
-                                                value={editingPlan.couponDiscountPercentage}
-                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponDiscountPercentage: parseFloat(e.target.value) })}
-                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500"
+                                                value={editingPlan.couponDiscountPercentage || ''}
+                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponDiscountPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                                                placeholder="0"
                                             />
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-amber-600 uppercase">Validade (Dias)</label>
                                             <input
                                                 type="number"
-                                                value={editingPlan.couponValidityDays}
-                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponValidityDays: parseInt(e.target.value) })}
-                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500"
+                                                value={editingPlan.couponValidityDays || ''}
+                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponValidityDays: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                                                placeholder="0"
                                             />
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-amber-600 italic">* O cliente receberá {editingPlan.couponBundleCount} cupons de {editingPlan.couponDiscountPercentage}% válidos por {editingPlan.couponValidityDays} dias após cada ciclo de pagamento.</p>
+                                    <p className="text-[10px] text-amber-600 italic">* O cliente receberá {editingPlan.couponBundleCount || 0} cupons de {editingPlan.couponDiscountPercentage || 0}% válidos por {editingPlan.couponValidityDays || 0} dias após cada ciclo de pagamento.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -314,8 +358,8 @@ export function SubscriptionPlansPage() {
                                                     <input
                                                         type="number"
                                                         min="1"
-                                                        value={p.quantity}
-                                                        onChange={(e) => updateProductQuantity(p.product?.id || p.productId, parseInt(e.target.value))}
+                                                        value={p.quantity || 1}
+                                                        onChange={(e) => updateProductQuantity(p.product?.id || p.productId, Number(e.target.value))}
                                                         className="w-16 border rounded p-1 text-center text-sm"
                                                     />
                                                     <button type="button" onClick={() => toggleProduct(p.product)} className="text-red-500 hover:bg-red-50 p-1 rounded">
@@ -350,7 +394,10 @@ export function SubscriptionPlansPage() {
                                                 <button
                                                     key={product.id}
                                                     type="button"
-                                                    onClick={() => toggleProduct(product)}
+                                                    onClick={() => {
+                                                        toggleProduct(product);
+                                                        setSearchTerm('');
+                                                    }}
                                                     className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-lg text-left transition text-sm"
                                                 >
                                                     <img src={getImageUrl(product.media?.[0]?.url || product.imageUrl)} alt="" className="w-8 h-8 rounded object-cover" />
@@ -358,8 +405,14 @@ export function SubscriptionPlansPage() {
                                                     <Plus size={14} className="text-indigo-400" />
                                                 </button>
                                             ))}
-                                            {filteredProducts.length === 0 && (
+                                            {searchTerm.length > 0 && filteredProducts.length === 0 && (
                                                 <p className="text-center py-2 text-xs text-gray-400">Nenhum produto encontrado.</p>
+                                            )}
+                                            {searchTerm.length === 0 && (
+                                                <div className="flex flex-col items-center justify-center py-4 text-gray-400">
+                                                    <Search size={24} className="mb-1 opacity-20" />
+                                                    <p className="text-[10px]">Digite para buscar e adicionar produtos</p>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -396,11 +449,10 @@ export function SubscriptionPlansPage() {
                                                 )}>
                                                     <input
                                                         type="number"
-                                                        disabled={!rule}
-                                                        value={rule?.discountPercentage || 0}
-                                                        onChange={(e) => updateDiscount(freq.key, parseFloat(e.target.value))}
-                                                        placeholder="Desc."
-                                                        className="w-full p-2 text-sm outline-none"
+                                                        value={rule ? (rule.discountPercentage || '') : ''}
+                                                        onChange={(e) => updateDiscount(freq.key, e.target.value)}
+                                                        placeholder="0"
+                                                        className="w-full p-2 text-sm outline-none text-center"
                                                     />
                                                     <span className="bg-gray-50 px-2 py-2 text-xs text-gray-400 font-bold">%</span>
                                                 </div>

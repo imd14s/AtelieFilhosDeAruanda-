@@ -13,5 +13,9 @@ export ALLOWED_IMAGE_MIME=image/png,image/jpeg,image/webp,video/mp4,video/webm,v
 export ADMIN_EMAIL=admin@atelie.com
 export ADMIN_PASSWORD=ECautomation@3009
 
+# Limpeza de processos na porta 8080
+echo "Cleaning up port 8080..."
+fuser -k 8080/tcp 2>/dev/null || true
+
 mvn spring-boot:run > backend_monitor.log 2>&1 &
 echo " Backend starting... check backend_monitor.log"
