@@ -34,6 +34,12 @@ public class UserEntity {
     @Column(name = "verification_code")
     private String verificationCode;
 
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+
+    @Column(name = "reset_password_expires_at")
+    private LocalDateTime resetPasswordExpiresAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -134,6 +140,22 @@ public class UserEntity {
 
     public void setVerificationCode(String verificationCode) {
         this.verificationCode = verificationCode;
+    }
+
+    public String getResetPasswordToken() {
+        return resetPasswordToken;
+    }
+
+    public void setResetPasswordToken(String resetPasswordToken) {
+        this.resetPasswordToken = resetPasswordToken;
+    }
+
+    public LocalDateTime getResetPasswordExpiresAt() {
+        return resetPasswordExpiresAt;
+    }
+
+    public void setResetPasswordExpiresAt(LocalDateTime resetPasswordExpiresAt) {
+        this.resetPasswordExpiresAt = resetPasswordExpiresAt;
     }
 
     public LocalDateTime getCreatedAt() {

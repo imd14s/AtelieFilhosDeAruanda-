@@ -22,8 +22,7 @@ import { CategoriesPage } from './pages/categories/CategoriesPage';
 import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage';
 import { SubscribersPage } from './pages/marketing/SubscribersPage';
 import { SignaturesPage } from './pages/marketing/SignaturesPage';
-import EmailQueuePage from './pages/marketing/EmailQueuePage';
-import EmailTemplatesPage from './pages/marketing/EmailTemplatesPage';
+import EmailMarketingHub from './pages/marketing/EmailMarketingHub';
 import { ClientsPage } from './pages/settings/ClientsPage';
 import { EmailSettingsPage } from './pages/settings/EmailSettingsPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -55,14 +54,12 @@ function AppRoutes() {
         <Route path="/settings/audit" element={<AuditLogPage />} />
         <Route path="/settings/shipping" element={<ShippingPage />} />
         <Route path="/settings/payment" element={<PaymentPage />} />
-        <Route path="/settings/email" element={<EmailSettingsPage />} />
+        <Route path="/settings/payment" element={<PaymentPage />} />
         <Route path="/settings/stock-alerts" element={<StockAlertPage />} />
         <Route path="/marketing/coupons" element={<CouponList />} />
         <Route path="/marketing/campaigns" element={<CampaignsPage />} />
         <Route path="/marketing/subscribers" element={<SubscribersPage />} />
-        <Route path="/marketing/signatures" element={<SignaturesPage />} />
-        <Route path="/marketing/email-queue" element={<EmailQueuePage />} />
-        <Route path="/marketing/templates" element={<EmailTemplatesPage />} />
+        <Route path="/marketing/email" element={<EmailMarketingHub />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
         <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
         <Route path="/automations" element={<AutomationsPage />} />

@@ -32,6 +32,13 @@ public class EmailTemplate {
     @Column(name = "signature_id")
     private UUID signatureId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "automation_type")
+    private AutomationType automationType;
+
+    @Column(name = "automation_description")
+    private String automationDescription;
+
     @Column(name = "is_active")
     private boolean isActive;
 

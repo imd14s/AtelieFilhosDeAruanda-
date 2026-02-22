@@ -4,6 +4,8 @@ import com.atelie.ecommerce.api.common.exception.NotFoundException;
 import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
 import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
 import com.atelie.ecommerce.application.service.inventory.InventoryService;
+import com.atelie.ecommerce.application.service.marketing.CommunicationService;
+import com.atelie.ecommerce.domain.marketing.model.AutomationType;
 import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.domain.order.OrderStatus;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
@@ -22,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -32,21 +35,25 @@ public class OrderService {
     private final ProductVariantRepository variantRepository;
     private final InventoryService inventoryService;
     private final com.atelie.ecommerce.application.service.audit.AuditService auditService;
+    private final CommunicationService communicationService;
 
     public OrderService(OrderRepository orderRepository,
             ProductRepository productRepository,
             ProductVariantRepository variantRepository,
             InventoryService inventoryService,
-            com.atelie.ecommerce.application.service.audit.AuditService auditService) {
+            com.atelie.ecommerce.application.service.audit.AuditService auditService,
+            CommunicationService communicationService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.inventoryService = inventoryService;
         this.auditService = auditService;
+        this.communicationService = communicationService;
     }
 
     @Transactional
-    public OrderEntity processMarketplaceOrder(String source, String externalId, String customerName, String status,
+    public OrderEntity processMarketplaceOrder(String source, String externalId, String customerName,
+            String customerEmail, String status,
             BigDecimal totalAmount, List<CreateOrderItemRequest> items) {
         // Idempotency check
         java.util.Optional<OrderEntity> existing = orderRepository.findByExternalIdAndSource(externalId, source);
@@ -71,6 +78,7 @@ public class OrderService {
         order.setSource(source);
         order.setExternalId(externalId);
         order.setCustomerName(customerName);
+        order.setCustomerEmail(customerEmail);
         order.setStatus(status);
         order.setCreatedAt(Instant.now());
         order.setTotalAmount(totalAmount);
@@ -147,6 +155,7 @@ public class OrderService {
         order.setSource(request.source());
         order.setExternalId(request.externalId() != null ? request.externalId() : order.getId().toString());
         order.setCustomerName(request.customerName());
+        order.setCustomerEmail(request.customerEmail());
         order.setStatus(OrderStatus.PENDING.name());
         order.setCreatedAt(Instant.now());
 
@@ -235,6 +244,16 @@ public class OrderService {
                 com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
                 orderId.toString(),
                 "Order approved (PAID)");
+
+        // Send confirmation email
+        if (order.getCustomerEmail() != null) {
+            communicationService.sendAutomation(
+                    AutomationType.ORDER_CONFIRM,
+                    order.getCustomerEmail(),
+                    Map.of(
+                            "customer_name", order.getCustomerName(),
+                            "order_id", order.getExternalId()));
+        }
     }
 
     @Transactional

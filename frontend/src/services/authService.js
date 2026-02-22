@@ -66,6 +66,16 @@ export const authService = {
         localStorage.removeItem('user');
     },
 
+    requestPasswordReset: async (email) => {
+        const response = await api.post('/auth/password-reset', { email });
+        return response.data;
+    },
+
+    resetPassword: async (token, newPassword) => {
+        const response = await api.post('/auth/password-reset/reset', { token, newPassword });
+        return response.data;
+    },
+
     getUser: () => {
         try {
             const userStr = localStorage.getItem('user');

@@ -1,7 +1,9 @@
 package com.atelie.ecommerce.api.marketing;
 
+import com.atelie.ecommerce.domain.marketing.model.AutomationType;
 import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
 import com.atelie.ecommerce.domain.marketing.model.NewsletterSubscriber;
+import com.atelie.ecommerce.application.service.marketing.CommunicationService;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.NewsletterSubscriberRepository;
 import com.atelie.ecommerce.api.config.DynamicConfigService;
@@ -24,17 +26,17 @@ public class NewsletterController {
 
     private final NewsletterSubscriberRepository subscriberRepository;
     private final EmailQueueRepository emailQueueRepository;
-    private final com.atelie.ecommerce.infrastructure.persistence.marketing.EmailTemplateRepository emailTemplateRepository;
     private final DynamicConfigService configService;
+    private final CommunicationService communicationService;
 
     public NewsletterController(NewsletterSubscriberRepository subscriberRepository,
             EmailQueueRepository emailQueueRepository,
-            com.atelie.ecommerce.infrastructure.persistence.marketing.EmailTemplateRepository emailTemplateRepository,
-            DynamicConfigService configService) {
+            DynamicConfigService configService,
+            CommunicationService communicationService) {
         this.subscriberRepository = subscriberRepository;
         this.emailQueueRepository = emailQueueRepository;
-        this.emailTemplateRepository = emailTemplateRepository;
         this.configService = configService;
+        this.communicationService = communicationService;
     }
 
     @PostMapping("/subscribe")
@@ -70,35 +72,14 @@ public class NewsletterController {
                         Map.of("message", "Um e-mail de confirmação já foi enviado. Verifique sua caixa de entrada."));
             }
 
-            // Queue Verification Email using Template
+            // Send Automation Email using CommunicationService
             String frontendUrl = configService.requireString("FRONTEND_URL");
             String verificationLink = frontendUrl + "/verify-newsletter?token=" + subscriber.getVerificationToken();
 
-            String subject = "✨ Confirme sua inscrição - Ateliê Filhos de Aruanda";
-            String content = "<h1>Olá!</h1><p>Clique no link para confirmar sua inscrição na nossa newsletter e receber nosso Axé!</p>"
-                    + "<a href='" + verificationLink + "'>Confirmar Inscrição</a>";
-            UUID signatureId = null;
-
-            // Tenta carregar template do banco
-            var templateOpt = emailTemplateRepository.findBySlug("NEWSLETTER_CONFIRMATION");
-            if (templateOpt.isPresent() && templateOpt.get().isActive()) {
-                var template = templateOpt.get();
-                subject = template.getSubject();
-                content = template.getContent().replace("{{verification_link}}", verificationLink);
-                signatureId = template.getSignatureId();
-            }
-
-            EmailQueue verificationEmail = EmailQueue.builder()
-                    .recipient(email)
-                    .subject(subject)
-                    .content(content)
-                    .priority(EmailQueue.EmailPriority.HIGH)
-                    .status(EmailQueue.EmailStatus.PENDING)
-                    .type("NEWSLETTER_VERIFICATION")
-                    .signatureId(signatureId)
-                    .build();
-
-            emailQueueRepository.save(verificationEmail);
+            communicationService.sendAutomation(
+                    AutomationType.NEWSLETTER_CONFIRM,
+                    email,
+                    Map.of("verification_link", verificationLink));
 
             return ResponseEntity.ok(Map.of("message", "Inscrição realizada! Verifique seu e-mail para confirmar."));
         } catch (Exception e) {

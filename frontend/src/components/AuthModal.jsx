@@ -50,7 +50,7 @@ const GoogleLoginButtonDisabled = () => (
 );
 
 const AuthModal = ({ isOpen, onClose }) => {
-  const [view, setView] = useState("LOGIN"); // LOGIN, REGISTER, VERIFY
+  const [view, setView] = useState("LOGIN"); // LOGIN, REGISTER, VERIFY, RECOVERY
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -58,7 +58,6 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Early return APÓS todos os hooks (nenhum hook abaixo daqui)
   if (!isOpen) return null;
 
   const handleGoogleSuccess = async (tokenResponse) => {
@@ -144,6 +143,21 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleRequestReset = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await authService.requestPasswordReset(email);
+      window.dispatchEvent(new CustomEvent('show-alert', { detail: "E-mail de recuperação enviado! Verifique sua caixa de entrada." }));
+      setView("LOGIN");
+    } catch (err) {
+      setError("Não encontramos este e-mail em nossa base.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#0f2A44]/60 backdrop-blur-sm">
       <div className="bg-[#F7F7F4] w-full max-w-md overflow-hidden relative shadow-2xl rounded-sm">
@@ -160,11 +174,13 @@ const AuthModal = ({ isOpen, onClose }) => {
               {view === "LOGIN" && "Bem-vindo"}
               {view === "REGISTER" && "Criar Conta"}
               {view === "VERIFY" && "Verificação"}
+              {view === "RECOVERY" && "Recuperação"}
             </h2>
             <p className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#C9A24D]">
               {view === "LOGIN" && "Entre na sua conta para continuar"}
               {view === "REGISTER" && "Cadastre-se para aproveitar ofertas"}
               {view === "VERIFY" && `Código enviado para ${email}`}
+              {view === "RECOVERY" && "Informe seu e-mail para recuperar o acesso"}
             </p>
           </div>
 
@@ -198,6 +214,10 @@ const AuthModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
+              <div className="flex justify-end">
+                <span onClick={() => setView("RECOVERY")} className="text-[11px] text-[#C9A24D] cursor-pointer hover:underline font-lato">Esqueci minha senha</span>
+              </div>
+
               {error && <p className="text-red-600 text-[11px] font-lato italic">{error}</p>}
 
               <button
@@ -214,7 +234,6 @@ const AuthModal = ({ isOpen, onClose }) => {
                 <div className="flex-grow border-t border-gray-200"></div>
               </div>
 
-              {/* Botão Google — renderiza o componente correto baseado na configuração */}
               {GOOGLE_CLIENT_ID ? (
                 <GoogleLoginButton
                   onSuccess={handleGoogleSuccess}
@@ -336,6 +355,46 @@ const AuthModal = ({ isOpen, onClose }) => {
                   onClick={() => setView("REGISTER")}
                 >
                   Voltar
+                </p>
+              </div>
+            </form>
+          )}
+
+          {/* VIEW: RECOVERY */}
+          {view === "RECOVERY" && (
+            <form onSubmit={handleRequestReset} className="space-y-5">
+              <div className="text-center mb-4">
+                <p className="text-sm text-gray-600 mb-2">Informe seu e-mail para receber o link de recuperação:</p>
+              </div>
+              <div>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0f2A44]/30" size={16} />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white border border-[#0f2A44]/10 py-3 pl-10 pr-4 text-sm focus:border-[#C9A24D] outline-none transition-colors"
+                    placeholder="Seu e-mail cadastrado"
+                  />
+                </div>
+              </div>
+
+              {error && <p className="text-red-600 text-[11px] font-lato italic">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#0f2A44] text-white py-4 font-lato text-xs uppercase tracking-[0.2em] hover:bg-[#C9A24D] transition-all flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 size={16} className="animate-spin" /> : "Enviar Recuperação"}
+              </button>
+              <div className="mt-4 text-center">
+                <p
+                  className="font-lato text-[11px] text-[#0f2A44]/40 cursor-pointer hover:underline"
+                  onClick={() => setView("LOGIN")}
+                >
+                  Voltar para o Login
                 </p>
               </div>
             </form>

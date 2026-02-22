@@ -17,6 +17,9 @@ public class OrderEntity {
     @Column(name = "customer_name")
     private String customerName;
 
+    @Column(name = "customer_email")
+    private String customerEmail;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity user;
@@ -86,6 +89,14 @@ public class OrderEntity {
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
+    }
+
+    public String getCustomerEmail() {
+        return customerEmail;
+    }
+
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
     }
 
     public com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity getUser() {

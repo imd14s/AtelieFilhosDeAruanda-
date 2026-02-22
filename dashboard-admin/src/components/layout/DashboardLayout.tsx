@@ -53,11 +53,7 @@ export function DashboardLayout() {
       icon: Ticket,
       label: 'Marketing',
       children: [
-        { icon: Mail, label: 'Campanhas', path: '/marketing/campaigns' },
-        { icon: Users, label: 'Assinantes', path: '/marketing/subscribers' },
-        { icon: Send, label: 'Fila de E-mails', path: '/marketing/email-queue' },
-        { icon: Zap, label: 'Mensagens Automáticas', path: '/marketing/templates' },
-        { icon: PenTool, label: 'Assinaturas', path: '/marketing/signatures' },
+        { icon: Mail, label: 'E-mail Marketing', path: '/marketing/email' },
         { icon: Ticket, label: 'Cupons', path: '/marketing/coupons' },
         { icon: Mail, label: 'Recuperação', path: '/marketing/abandoned-cart' },
       ]
@@ -73,7 +69,6 @@ export function DashboardLayout() {
       children: [
         { icon: Zap, label: 'IA', path: '/settings/ai' },
         { icon: Plug, label: 'Integrações', path: '/settings/integrations' },
-        { icon: Send, label: 'E-mails (Remetente)', path: '/settings/email' },
         { icon: Users, label: 'Clientes', path: '/settings/users' },
         { icon: Users, label: 'Equipe', path: '/settings/team' },
         { icon: Shield, label: 'Auditoria', path: '/settings/audit' },

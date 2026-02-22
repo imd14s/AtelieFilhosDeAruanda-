@@ -31,6 +31,7 @@ import OrderDetailPage from "./pages/OrderDetailPage";
 import AtelieSubscribePage from "./pages/AtelieSubscribePage";
 import VerifyNewsletter from "./pages/VerifyNewsletter";
 import UnsubscribeNewsletter from "./pages/UnsubscribeNewsletter";
+import PasswordResetPage from "./pages/PasswordResetPage";
 import UserLayout from "./pages/UserLayout";
 import SubscriptionCheckoutPage from "./pages/SubscriptionCheckoutPage";
 import ScrollToTop from "./components/ScrollToTop";
@@ -61,6 +62,7 @@ function App() {
               <Route path="/verify-newsletter" element={<VerifyNewsletter />} />
               <Route path="/unsubscribe" element={<UnsubscribeNewsletter />} />
               <Route path="/assinar/:id" element={<SubscriptionCheckoutPage />} />
+              <Route path="/redefinir-senha" element={<PasswordResetPage />} />
 
               {/* Rotas Dinâmicas usando ID do Java */}
 

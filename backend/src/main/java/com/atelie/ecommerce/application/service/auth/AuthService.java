@@ -6,12 +6,14 @@ import com.atelie.ecommerce.api.auth.dto.GoogleLoginRequest;
 import com.atelie.ecommerce.api.auth.dto.LoginResponse;
 import com.atelie.ecommerce.api.admin.dto.CreateUserDTO;
 import com.atelie.ecommerce.api.common.exception.ConflictException;
+import com.atelie.ecommerce.domain.marketing.model.AutomationType;
 import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
 import com.atelie.ecommerce.infrastructure.security.TokenProvider;
 import com.atelie.ecommerce.infrastructure.security.UserPrincipal;
+import com.atelie.ecommerce.application.service.marketing.CommunicationService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,6 +37,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final EmailQueueRepository emailQueueRepository;
+    private final CommunicationService communicationService;
 
     private final com.atelie.ecommerce.application.service.audit.AuditService auditService;
 
@@ -43,13 +46,15 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             UserRepository userRepository,
             EmailQueueRepository emailQueueRepository,
-            com.atelie.ecommerce.application.service.audit.AuditService auditService) {
+            com.atelie.ecommerce.application.service.audit.AuditService auditService,
+            CommunicationService communicationService) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.emailQueueRepository = emailQueueRepository;
         this.auditService = auditService;
+        this.communicationService = communicationService;
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -107,14 +112,11 @@ public class AuthService {
 
         userRepository.save(newUser);
 
-        // REAL Email Queue sending
-        EmailQueue email = new EmailQueue();
-        email.setRecipient(request.getEmail());
-        email.setSubject("Verifique seu e-mail - Ateliê Filhos de Aruanda");
-        email.setContent("<h1>Bem-vindo!</h1><p>Seu código de verificação é: <strong>" + code + "</strong></p>");
-        email.setType("VERIFICATION");
-        email.setPriority(EmailQueue.EmailPriority.HIGH);
-        emailQueueRepository.save(email);
+        // Send Automation Email using CommunicationService
+        communicationService.sendAutomation(
+                AutomationType.USER_VERIFY,
+                request.getEmail(),
+                Map.of("code", code));
     }
 
     @Transactional
