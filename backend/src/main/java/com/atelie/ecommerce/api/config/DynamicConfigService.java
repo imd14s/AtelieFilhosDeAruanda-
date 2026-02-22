@@ -4,6 +4,7 @@ import com.atelie.ecommerce.domain.common.event.EntityChangedEvent;
 import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,10 +17,12 @@ public class DynamicConfigService {
     public static final String CACHE_TTL_SECONDS_KEY = "CACHE_TTL_SECONDS";
 
     private final SystemConfigRepository repository;
+    private final Environment environment;
     private final Map<String, String> cache = new ConcurrentHashMap<>();
 
-    public DynamicConfigService(SystemConfigRepository repository) {
+    public DynamicConfigService(SystemConfigRepository repository, Environment environment) {
         this.repository = repository;
+        this.environment = environment;
         refresh();
     }
 
@@ -30,7 +33,7 @@ public class DynamicConfigService {
             configs.forEach(c -> cache.put(c.getConfigKey(), c.getConfigValue()));
             log.info("Cache de configurações atualizado: {} itens", cache.size());
         } catch (Exception e) {
-            log.warn("Não foi possível carregar configurações iniciais (pode ser a primeira execução): {}",
+            log.warn("Não foi possível carregar configurações do banco: {}",
                     e.getMessage());
         }
     }
@@ -42,13 +45,23 @@ public class DynamicConfigService {
     }
 
     public String getString(String key) {
-        return cache.get(key);
+        String val = cache.get(key);
+        if (val == null) {
+            // Fallback: buscar nas variáveis de ambiente do Spring
+            val = environment.getProperty(key);
+        }
+        return val;
     }
 
     public String requireString(String key) {
         String v = getString(key);
+        if (v == null) {
+            // Última tentativa: recarregar do banco
+            refresh();
+            v = getString(key);
+        }
         if (v == null)
-            throw new IllegalStateException("Config ausente: " + key);
+            throw new IllegalStateException("Config ausente (banco e ENV): " + key);
         return v;
     }
 
@@ -57,11 +70,11 @@ public class DynamicConfigService {
     }
 
     public boolean containsKey(String key) {
-        return cache.containsKey(key);
+        return cache.containsKey(key) || environment.containsProperty(key);
     }
 
     public String get(String key, String defaultValue) {
-        String val = cache.get(key);
+        String val = getString(key);
         return val != null ? val : defaultValue;
     }
 

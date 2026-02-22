@@ -22,6 +22,8 @@ import { CategoriesPage } from './pages/categories/CategoriesPage';
 import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage';
 import { SubscribersPage } from './pages/marketing/SubscribersPage';
 import { SignaturesPage } from './pages/marketing/SignaturesPage';
+import EmailQueuePage from './pages/marketing/EmailQueuePage';
+import EmailTemplatesPage from './pages/marketing/EmailTemplatesPage';
 import { ClientsPage } from './pages/settings/ClientsPage';
 import { EmailSettingsPage } from './pages/settings/EmailSettingsPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -59,6 +61,8 @@ function AppRoutes() {
         <Route path="/marketing/campaigns" element={<CampaignsPage />} />
         <Route path="/marketing/subscribers" element={<SubscribersPage />} />
         <Route path="/marketing/signatures" element={<SignaturesPage />} />
+        <Route path="/marketing/email-queue" element={<EmailQueuePage />} />
+        <Route path="/marketing/templates" element={<EmailTemplatesPage />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
         <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
         <Route path="/automations" element={<AutomationsPage />} />

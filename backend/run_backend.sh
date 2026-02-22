@@ -12,6 +12,11 @@ export MAX_UPLOAD_MB=50
 export ALLOWED_IMAGE_MIME=image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime
 export ADMIN_EMAIL=admin@atelie.com
 export ADMIN_PASSWORD=ECautomation@3009
+export MAIL_HOST=localhost
+export MAIL_PORT=1025
+export MAIL_USERNAME=dev
+export MAIL_PASSWORD=dev
+export FRONTEND_URL=http://localhost:5173
 
 # Limpeza de processos na porta 8080
 echo "Cleaning up port 8080..."

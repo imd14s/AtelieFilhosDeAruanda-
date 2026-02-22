@@ -34,6 +34,8 @@ public class EmailQueueJob {
     @Scheduled(fixedDelay = 60000)
     @Transactional
     public void processQueue() {
+        log.info("[DEBUG-NEWSLETTER] EmailQueueJob.processQueue() executado em {}", LocalDateTime.now());
+
         LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         long sentToday = emailQueueRepository.countByStatusAndSentAtAfter(EmailQueue.EmailStatus.SENT, today);
 
@@ -48,6 +50,7 @@ public class EmailQueueJob {
         List<EmailQueue> pendingEmails = emailQueueRepository.findPendingEmails(LocalDateTime.now());
 
         if (pendingEmails.isEmpty()) {
+            log.info("[DEBUG-NEWSLETTER] Nenhum e-mail pendente na fila.");
             return;
         }
 

@@ -20,4 +20,6 @@ public interface EmailQueueRepository extends JpaRepository<EmailQueue, UUID> {
     long countByCampaignIdAndStatus(UUID campaignId, EmailQueue.EmailStatus status);
 
     List<EmailQueue> findByCampaignIdAndStatus(UUID campaignId, EmailQueue.EmailStatus status);
+
+    boolean existsByRecipientAndTypeAndStatus(String recipient, String type, EmailQueue.EmailStatus status);
 }

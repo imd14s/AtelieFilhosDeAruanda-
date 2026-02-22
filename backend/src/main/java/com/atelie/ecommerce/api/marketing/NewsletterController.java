@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -23,13 +24,16 @@ public class NewsletterController {
 
     private final NewsletterSubscriberRepository subscriberRepository;
     private final EmailQueueRepository emailQueueRepository;
+    private final com.atelie.ecommerce.infrastructure.persistence.marketing.EmailTemplateRepository emailTemplateRepository;
     private final DynamicConfigService configService;
 
     public NewsletterController(NewsletterSubscriberRepository subscriberRepository,
             EmailQueueRepository emailQueueRepository,
+            com.atelie.ecommerce.infrastructure.persistence.marketing.EmailTemplateRepository emailTemplateRepository,
             DynamicConfigService configService) {
         this.subscriberRepository = subscriberRepository;
         this.emailQueueRepository = emailQueueRepository;
+        this.emailTemplateRepository = emailTemplateRepository;
         this.configService = configService;
     }
 
@@ -56,19 +60,42 @@ public class NewsletterController {
 
             subscriberRepository.save(subscriber);
 
-            // Queue Verification Email
+            // Evitar duplicatas na fila se já houver um e-mail PENDING do mesmo tipo para o
+            // mesmo destinatário
+            boolean alreadyQueued = emailQueueRepository.existsByRecipientAndTypeAndStatus(
+                    email, "NEWSLETTER_VERIFICATION", EmailQueue.EmailStatus.PENDING);
+
+            if (alreadyQueued) {
+                return ResponseEntity.ok(
+                        Map.of("message", "Um e-mail de confirmação já foi enviado. Verifique sua caixa de entrada."));
+            }
+
+            // Queue Verification Email using Template
             String frontendUrl = configService.requireString("FRONTEND_URL");
+            String verificationLink = frontendUrl + "/verify-newsletter?token=" + subscriber.getVerificationToken();
+
+            String subject = "✨ Confirme sua inscrição - Ateliê Filhos de Aruanda";
+            String content = "<h1>Olá!</h1><p>Clique no link para confirmar sua inscrição na nossa newsletter e receber nosso Axé!</p>"
+                    + "<a href='" + verificationLink + "'>Confirmar Inscrição</a>";
+            UUID signatureId = null;
+
+            // Tenta carregar template do banco
+            var templateOpt = emailTemplateRepository.findBySlug("NEWSLETTER_CONFIRMATION");
+            if (templateOpt.isPresent() && templateOpt.get().isActive()) {
+                var template = templateOpt.get();
+                subject = template.getSubject();
+                content = template.getContent().replace("{{verification_link}}", verificationLink);
+                signatureId = template.getSignatureId();
+            }
+
             EmailQueue verificationEmail = EmailQueue.builder()
                     .recipient(email)
-                    .subject("✨ Confirme sua inscrição - Ateliê Filhos de Aruanda")
-                    .content(
-                            "<h1>Olá!</h1><p>Clique no link para confirmar sua inscrição na nossa newsletter e receber nosso Axé!</p>"
-                                    +
-                                    "<a href='" + frontendUrl + "/verify-newsletter?token="
-                                    + subscriber.getVerificationToken() + "'>Confirmar Inscrição</a>")
+                    .subject(subject)
+                    .content(content)
                     .priority(EmailQueue.EmailPriority.HIGH)
                     .status(EmailQueue.EmailStatus.PENDING)
                     .type("NEWSLETTER_VERIFICATION")
+                    .signatureId(signatureId)
                     .build();
 
             emailQueueRepository.save(verificationEmail);

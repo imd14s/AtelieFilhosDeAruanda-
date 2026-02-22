@@ -55,6 +55,8 @@ export function DashboardLayout() {
       children: [
         { icon: Mail, label: 'Campanhas', path: '/marketing/campaigns' },
         { icon: Users, label: 'Assinantes', path: '/marketing/subscribers' },
+        { icon: Send, label: 'Fila de E-mails', path: '/marketing/email-queue' },
+        { icon: Zap, label: 'Mensagens Automáticas', path: '/marketing/templates' },
         { icon: PenTool, label: 'Assinaturas', path: '/marketing/signatures' },
         { icon: Ticket, label: 'Cupons', path: '/marketing/coupons' },
         { icon: Mail, label: 'Recuperação', path: '/marketing/abandoned-cart' },

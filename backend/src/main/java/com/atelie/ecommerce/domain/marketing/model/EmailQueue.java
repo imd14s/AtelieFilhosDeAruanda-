@@ -52,6 +52,9 @@ public class EmailQueue {
     @Column(name = "campaign_id")
     private UUID campaignId;
 
+    @Column(name = "signature_id")
+    private UUID signatureId;
+
     public enum EmailPriority {
         LOW, MEDIUM, HIGH
     }

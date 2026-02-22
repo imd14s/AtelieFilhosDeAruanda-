@@ -19,10 +19,13 @@ public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender mailSender;
     private final DynamicConfigService configService;
+    private final EmailSignatureService signatureService;
 
-    public EmailService(JavaMailSender mailSender, DynamicConfigService configService) {
+    public EmailService(JavaMailSender mailSender, DynamicConfigService configService,
+            EmailSignatureService signatureService) {
         this.mailSender = mailSender;
         this.configService = configService;
+        this.signatureService = signatureService;
     }
 
     public void sendEmail(EmailQueue email) throws MessagingException {
@@ -31,9 +34,9 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        String senderEmail = configService.get("MAIL_SENDER_ADDRESS", "nao-responda@ateliedearuanda.com.br");
-        String senderName = configService.get("MAIL_SENDER_NAME", "Ateliê Filhos de Aruanda");
-        String frontendUrl = configService.get("FRONTEND_URL", "http://localhost:5173");
+        String senderEmail = configService.requireString("MAIL_SENDER_ADDRESS");
+        String senderName = configService.requireString("MAIL_SENDER_NAME");
+        String frontendUrl = configService.requireString("FRONTEND_URL");
 
         try {
             helper.setFrom(senderEmail, senderName);
@@ -43,10 +46,22 @@ public class EmailService {
 
         helper.setTo(email.getRecipient());
         helper.setSubject(email.getSubject());
-        helper.setText(email.getContent(), true); // true = HTML
+
+        String content = email.getContent();
+        if (email.getSignatureId() != null) {
+            try {
+                var sig = signatureService.findById(email.getSignatureId());
+                if (sig != null) {
+                    content += "<br><br>" + signatureService.generateHtml(sig);
+                }
+            } catch (Exception e) {
+                log.warn("Could not load signature {}: {}", email.getSignatureId(), e.getMessage());
+            }
+        }
+
+        helper.setText(content, true); // true = HTML
 
         // Add List-Unsubscribe header dynamically
-        String frontendUrl = configService.get("FRONTEND_URL", "http://localhost:5173");
         String unsubscribeLink = frontendUrl + "/unsubscribe";
         message.addHeader("List-Unsubscribe", "<" + unsubscribeLink + ">");
 
