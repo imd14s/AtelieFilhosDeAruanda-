@@ -21,7 +21,8 @@ export const authService = {
                 id: response.data.id,
                 name: response.data.name,
                 email: response.data.email,
-                role: response.data.role
+                role: response.data.role,
+                emailVerified: response.data.emailVerified
             }));
         }
         return response.data;
@@ -49,6 +50,7 @@ export const authService = {
                     name: response.data.name,
                     email: response.data.email,
                     role: response.data.role,
+                    emailVerified: response.data.emailVerified,
                     photoURL: userInfo.picture || null,
                 }));
             }

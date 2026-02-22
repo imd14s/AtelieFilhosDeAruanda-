@@ -24,11 +24,7 @@ const Home = () => {
     loadProducts();
   }, []);
 
-  const categories = [
-    { name: 'Velas', img: '/images/velas.png', path: '/store?categoria=velas' },
-    { name: 'Guias', img: '/images/guias.png', path: '/store?categoria=guias' },
-    { name: 'Ervas', img: '/images/ervas.png', path: '/store?categoria=ervas' },
-  ];
+
 
   return (
     <div className="bg-[var(--branco-off-white)] min-h-screen">

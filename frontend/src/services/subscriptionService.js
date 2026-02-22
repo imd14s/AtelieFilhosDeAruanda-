@@ -5,9 +5,9 @@ const subscriptionService = {
 
     getPlan: (id) => api.get(`/subscription-plans/${id}`).then(r => r.data),
 
-    getUserSubscriptions: () => api.get('/subscriptions/my').then(r => r.data),
+    getUserSubscriptions: (userId) => api.get(`/subscriptions/my?userId=${userId}`).then(r => r.data),
 
-    subscribe: (data) => api.post('/subscriptions', data).then(r => r.data),
+    subscribe: (userId, data) => api.post(`/subscriptions?userId=${userId}`, data).then(r => r.data),
 
     pauseSubscription: (id) => api.patch(`/subscriptions/${id}/status?status=PAUSED`).then(r => r.data),
 

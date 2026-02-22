@@ -4,7 +4,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import GlobalAlertModal from "./components/GlobalAlertModal";
 import { FavoritesProvider } from "./context/FavoritesContext";
-import Home from "./pages/Homer";
+import Home from "./pages/Home";
 import SearchPage from "./pages/SearchPage";
 import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
@@ -32,6 +32,7 @@ import AtelieSubscribePage from "./pages/AtelieSubscribePage";
 import VerifyNewsletter from "./pages/VerifyNewsletter";
 import UnsubscribeNewsletter from "./pages/UnsubscribeNewsletter";
 import UserLayout from "./pages/UserLayout";
+import SubscriptionCheckoutPage from "./pages/SubscriptionCheckoutPage";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -59,6 +60,7 @@ function App() {
               <Route path="/assinaturas" element={<AtelieSubscribePage />} />
               <Route path="/verify-newsletter" element={<VerifyNewsletter />} />
               <Route path="/unsubscribe" element={<UnsubscribeNewsletter />} />
+              <Route path="/assinar/:id" element={<SubscriptionCheckoutPage />} />
 
               {/* Rotas Dinâmicas usando ID do Java */}
 

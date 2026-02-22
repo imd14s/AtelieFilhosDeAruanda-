@@ -17,5 +17,5 @@ export ADMIN_PASSWORD=ECautomation@3009
 echo "Cleaning up port 8080..."
 fuser -k 8080/tcp 2>/dev/null || true
 
-mvn spring-boot:run > backend_monitor.log 2>&1 &
+mvn spring-boot:run -Dmaven.test.skip=true > backend_monitor.log 2>&1 &
 echo " Backend starting... check backend_monitor.log"

@@ -7,10 +7,12 @@ import SearchBar from './SearchBar';
 import NavMenu from './NavMenu';
 import AuthModal from './AuthModal';
 
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+
   const [user, setUser] = useState(null);
   const [cart, setCart] = useState({ items: [] });
   const [searchTerm, setSearchTerm] = useState('');
@@ -136,6 +138,8 @@ const Header = () => {
                 </button>
               )}
             </div>
+
+
 
             <button
               onClick={() => setIsCartOpen(true)}

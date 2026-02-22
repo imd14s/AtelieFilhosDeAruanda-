@@ -122,10 +122,6 @@ const FavoritesPage = () => {
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50/50 rounded-lg">
                                     {filteredFavorites.map((product) => (
                                         <div key={product.id} className="relative group">
-                                            {/* Coração de Favorito Pré-selecionado no topo do ProductCard para UX idêntico ao ML */}
-                                            <button className="absolute top-2 right-2 z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md text-blue-500 hover:text-red-500 hover:bg-gray-50 transition-colors">
-                                                <Heart size={16} className="fill-current" />
-                                            </button>
                                             <ProductCard product={product} />
                                         </div>
                                     ))}

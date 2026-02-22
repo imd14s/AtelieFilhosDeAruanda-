@@ -13,6 +13,7 @@ public class LoginResponse {
     private String name;
     private String email;
     private String role;
+    private boolean emailVerified;
 
     // Construtor preventivo: permite criar apenas com o token sem quebrar o
     // Controller

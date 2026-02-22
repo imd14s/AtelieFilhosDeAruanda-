@@ -54,11 +54,7 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
 
   return (
     <div className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 rounded-sm border border-gray-100 max-w-[280px] mx-auto w-full">
-      {hasDiscount && (
-        <div className="absolute top-2 left-2 z-10 bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm">
-          {discountPercentage}% OFF
-        </div>
-      )}
+
 
       {/* Ícone de Favorito */}
       <button
@@ -82,7 +78,7 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
           src={imageUrl}
           alt={product.title || product.name}
           onError={(e) => { e.target.src = '/images/default.png'; }}
-          className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-contain object-center transition-transform duration-500 group-hover:scale-105"
         />
         {isOutOfStock && (
           <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
@@ -108,9 +104,16 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
                 {originalPriceFormatted}
               </span>
             )}
-            <span className="font-lato text-base font-bold text-[var(--azul-profundo)]">
-              {priceFormatted}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-lato text-xl font-black text-[var(--azul-profundo)]">
+                {priceFormatted}
+              </span>
+              {hasDiscount && (
+                <div className="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm shadow-sm whitespace-nowrap">
+                  {discountPercentage}% OFF
+                </div>
+              )}
+            </div>
           </div>
 
           <button

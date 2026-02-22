@@ -237,7 +237,8 @@ export const storeService = {
             id: response.data.id,
             name: response.data.name,
             email: response.data.email,
-            role: response.data.role
+            role: response.data.role,
+            emailVerified: response.data.emailVerified
           };
           localStorage.setItem('user', JSON.stringify(userObj));
           window.dispatchEvent(new Event('auth-changed'));

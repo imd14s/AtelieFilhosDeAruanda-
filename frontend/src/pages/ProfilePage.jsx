@@ -55,21 +55,23 @@ const ProfilePage = () => {
                     </div>
                 </div>
 
-                {/* Banner de Verificação (Apenas visual, sem lógica deep yet) */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-10 flex items-start gap-4">
-                    <AlertTriangle className="text-yellow-500 shrink-0 mt-0.5" size={20} />
-                    <div>
-                        <h3 className="text-sm font-bold text-yellow-800">Verifique seu e-mail</h3>
-                        <p className="text-sm text-yellow-700 mt-1 mb-3">Para garantir a segurança da sua conta e receber notificações de pedidos, confirme seu endereço de e-mail.</p>
-                        <button
-                            onClick={() => handleAction('/users/resend-verification', { email: user.email }, 'Link enviado para o e-mail!')}
-                            className="bg-yellow-500 text-white px-4 py-2 rounded text-sm font-bold hover:bg-yellow-600 transition-colors"
-                        >
-                            {loading && modal === null ? <Loader2 size={16} className="animate-spin inline mr-2" /> : 'Validar E-mail'}
-                        </button>
-                        {actionMsg && modal === null && <span className="ml-3 text-sm text-yellow-800 font-bold">{actionMsg}</span>}
+                {/* Banner de Verificação (Apenas para não verificados) */}
+                {user.emailVerified === false && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-10 flex items-start gap-4">
+                        <AlertTriangle className="text-yellow-500 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <h3 className="text-sm font-bold text-yellow-800">Verifique seu e-mail</h3>
+                            <p className="text-sm text-yellow-700 mt-1 mb-3">Para garantir a segurança da sua conta e receber notificações de pedidos, confirme seu endereço de e-mail.</p>
+                            <button
+                                onClick={() => handleAction('/users/resend-verification', { email: user.email }, 'Link enviado para o e-mail!')}
+                                className="bg-yellow-500 text-white px-4 py-2 rounded text-sm font-bold hover:bg-yellow-600 transition-colors"
+                            >
+                                {loading && modal === null ? <Loader2 size={16} className="animate-spin inline mr-2" /> : 'Validar E-mail'}
+                            </button>
+                            {actionMsg && modal === null && <span className="ml-3 text-sm text-yellow-800 font-bold">{actionMsg}</span>}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button onClick={() => setModal('info')} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
