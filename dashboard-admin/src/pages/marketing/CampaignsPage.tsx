@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, Plus, Send, Clock, CheckCircle, AlertCircle, RefreshCcw } from 'lucide-react';
 import { api } from '../../api/axios';
+import { RichTextEditor } from '../../components/common/RichTextEditor';
 
 export function CampaignsPage() {
     const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -174,14 +175,13 @@ export function CampaignsPage() {
 
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Conteúdo da Mensagem</label>
-                                    <textarea
-                                        rows={8}
-                                        required
-                                        placeholder="Escreva sua mensagem aqui..."
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-gray-50"
-                                        value={newCampaign.content}
-                                        onChange={e => setNewCampaign({ ...newCampaign, content: e.target.value })}
-                                    />
+                                    <div className="bg-white">
+                                        <RichTextEditor
+                                            value={newCampaign.content}
+                                            onChange={content => setNewCampaign({ ...newCampaign, content })}
+                                            placeholder="Escreva sua mensagem aqui..."
+                                        />
+                                    </div>
                                 </div>
 
                                 <p className="text-[10px] text-gray-400 italic">
