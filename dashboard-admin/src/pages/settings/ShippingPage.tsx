@@ -3,6 +3,7 @@ import { Truck, AlertCircle, Plus, LayoutGrid, ShieldCheck, Trash2, X, Code, Sav
 import { AdminProviderService } from '../../services/AdminProviderService';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { MelhorEnvioConfig } from '../../components/shipping/MelhorEnvioConfig';
+import { MandaBemConfig } from '../../components/shipping/MandaBemConfig';
 
 const RECOMMENDED_PROVIDERS = [
     { name: 'Melhor Envio', code: 'MELHOR_ENVIO', driverKey: 'shipping.melhorenvio', icon: '📦' },
@@ -161,9 +162,8 @@ export function ShippingPage() {
                                     <div>
                                         <div className="flex items-center gap-3">
                                             <h3 className="text-xl font-black text-gray-800">{provider.name}</h3>
-                                            <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">{provider.code}</span>
                                         </div>
-                                        <p className="text-sm text-gray-400 mt-1 font-medium">Logística: <span className="font-mono">{provider.id}</span></p>
+                                        <p className="text-sm text-gray-400 mt-1 font-medium">Serviço de Logística</p>
                                     </div>
                                 </div>
 
@@ -202,6 +202,11 @@ export function ShippingPage() {
                                 <div className="p-8 pt-0 animate-slide-down space-y-4">
                                     {provider.code === 'MELHOR_ENVIO' ? (
                                         <MelhorEnvioConfig
+                                            config={configData}
+                                            onChange={setConfigData}
+                                        />
+                                    ) : provider.code === 'MANDA_BEM' ? (
+                                        <MandaBemConfig
                                             config={configData}
                                             onChange={setConfigData}
                                         />
