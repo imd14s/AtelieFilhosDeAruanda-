@@ -14,6 +14,8 @@ export interface Coupon {
 export interface AbandonedCartTrigger {
     delayMinutes?: number;
     subject?: string;
+    content?: string;
+    signatureId?: string;
 }
 
 export interface AbandonedCartSettings {
