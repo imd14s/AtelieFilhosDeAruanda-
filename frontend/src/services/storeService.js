@@ -102,79 +102,128 @@ export const storeService = {
 
   // --- CARRINHO (Gerenciamento Local) ---
   cart: {
-    get: () => {
-      try {
-        const user = storeService.auth.getUser();
-        const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
-        const cart = localStorage.getItem(cartKey);
-        return cart ? JSON.parse(cart) : { items: [] };
-      } catch (e) {
-        console.error("[storeService] Erro ao ler carrinho do localStorage", e);
-        return { items: [] };
-      }
-    },
-
-    add: (product, quantity = 1) => {
-      if (!product || !product.id) return;
-
+    get: async () => {
       const user = storeService.auth.getUser();
       const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
-      const cart = storeService.cart.get();
-      const existingItem = cart.items.find(item => item.id === product.id);
+      let cartData = JSON.parse(localStorage.getItem(cartKey)) || [];
+      let cart = Array.isArray(cartData) ? cartData : (cartData.items || []);
+
+      if (user) {
+        try {
+          const response = await api.get(`/cart/${user.id}`, {
+            headers: TENANT_HEADER
+          });
+          const remoteCart = response.data;
+          if (remoteCart.items && remoteCart.items.length > 0) {
+            cart = remoteCart.items;
+            localStorage.setItem(cartKey, JSON.stringify(cart));
+          }
+        } catch (error) {
+          console.error('[storeService] Erro ao buscar carrinho remoto:', error);
+        }
+      }
+      return cart;
+    },
+
+    save: async (cart) => {
+      const user = storeService.auth.getUser();
+      const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
+      localStorage.setItem(cartKey, JSON.stringify(cart));
+
+      if (user) {
+        try {
+          await api.post(`/cart/${user.id}/sync`, cart, {
+            headers: TENANT_HEADER
+          });
+        } catch (error) {
+          console.error('[storeService] Erro ao sincronizar carrinho:', error);
+        }
+      }
+      window.dispatchEvent(new Event('cart-updated'));
+    },
+
+    add: async (product, quantity = 1, variantId = null) => {
+      const cart = await storeService.cart.get();
+      const existingItem = cart.find(item =>
+        item.id === product.id && item.variantId === (variantId || "")
+      );
 
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
-        cart.items.push({
+        cart.push({
           id: product.id,
-          name: product.title || product.name,
+          name: product.name || product.title,
           price: product.price,
-          image: product.images?.[0] || '',
-          quantity: quantity
+          image: product.image || (product.images && product.images[0]) || (product.media && product.media[0]?.url),
+          quantity: quantity,
+          variantId: variantId || ""
         });
       }
 
-      localStorage.setItem(cartKey, JSON.stringify(cart));
-      window.dispatchEvent(new Event('cart-updated'));
+      await storeService.cart.save(cart);
+      return cart;
     },
 
-    remove: (productId) => {
-      const user = storeService.auth.getUser();
-      const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
-      const cart = storeService.cart.get();
-      cart.items = cart.items.filter(item => item.id !== productId);
-      localStorage.setItem(cartKey, JSON.stringify(cart));
-      window.dispatchEvent(new Event('cart-updated'));
+    remove: async (productId, variantId = null) => {
+      let cart = await storeService.cart.get();
+      cart = cart.filter(item =>
+        !(item.id === productId && item.variantId === (variantId || ""))
+      );
+      await storeService.cart.save(cart);
+      return cart;
     },
 
-    clear: () => {
+    updateQuantity: async (productId, quantity, variantId = null) => {
+      let cart = await storeService.cart.get();
+      const item = cart.find(item =>
+        item.id === productId && item.variantId === (variantId || "")
+      );
+
+      if (item) {
+        item.quantity = Math.max(1, quantity);
+        await storeService.cart.save(cart);
+      }
+      return cart;
+    },
+
+    clear: async () => {
       const user = storeService.auth.getUser();
       const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
       localStorage.removeItem(cartKey);
+
+      if (user) {
+        try {
+          await api.delete(`/cart/${user.id}`, {
+            headers: TENANT_HEADER
+          });
+        } catch (error) {
+          console.error('[storeService] Erro ao limpar carrinho remoto:', error);
+        }
+      }
       window.dispatchEvent(new Event('cart-updated'));
     },
 
-    migrate: (userId) => {
+    migrate: async (userId) => {
       try {
-        const guestCart = JSON.parse(localStorage.getItem('cart_guest') || '{"items":[]}');
-        if (guestCart.items.length === 0) return;
+        const guestCart = JSON.parse(localStorage.getItem('cart_guest')) || [];
+        if (guestCart.length === 0) return;
 
-        const userCartKey = `cart_user_${userId}`;
-        const userCart = JSON.parse(localStorage.getItem(userCartKey) || '{"items":[]}');
+        let userCart = await storeService.cart.get();
 
-        // Merge logic
-        guestCart.items.forEach(guestItem => {
-          const existingItem = userCart.items.find(item => item.id === guestItem.id);
+        guestCart.forEach(guestItem => {
+          const existingItem = userCart.find(item =>
+            item.id === guestItem.id && item.variantId === guestItem.variantId
+          );
           if (existingItem) {
             existingItem.quantity += guestItem.quantity;
           } else {
-            userCart.items.push(guestItem);
+            userCart.push(guestItem);
           }
         });
 
-        localStorage.setItem(userCartKey, JSON.stringify(userCart));
+        await storeService.cart.save(userCart);
         localStorage.removeItem('cart_guest');
-        window.dispatchEvent(new Event('cart-updated'));
       } catch (e) {
         console.error("[storeService] Erro ao migrar carrinho", e);
       }

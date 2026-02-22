@@ -10,7 +10,7 @@ const CheckoutPage = () => {
     const navigate = useNavigate();
     const { shippingSelected, cep } = location.state || {};
 
-    const [cart, setCart] = useState(storeService.cart.get());
+    const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(false);
     const [successOrder, setSuccessOrder] = useState(null);
     const [couponCode, setCouponCode] = useState('');
@@ -31,17 +31,23 @@ const CheckoutPage = () => {
     });
 
     React.useEffect(() => {
-        if (user.id) {
-            setFormData(prev => ({
-                ...prev,
-                email: user.email || prev.email,
-                nome: user.name?.split(' ')[0] || prev.nome,
-                sobrenome: user.name?.split(' ').slice(1).join(' ') || prev.sobrenome
-            }));
-        }
+        const initCheckout = async () => {
+            const currentCart = await storeService.cart.get();
+            setCart(currentCart);
+
+            if (user.id) {
+                setFormData(prev => ({
+                    ...prev,
+                    email: user.email || prev.email,
+                    nome: user.name?.split(' ')[0] || prev.nome,
+                    sobrenome: user.name?.split(' ').slice(1).join(' ') || prev.sobrenome
+                }));
+            }
+        };
+        initCheckout();
     }, []);
 
-    const subtotal = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
     const discount = appliedCoupon
         ? (appliedCoupon.type === 'PERCENTAGE'
             ? (subtotal * (appliedCoupon.value / 100))
@@ -74,16 +80,17 @@ const CheckoutPage = () => {
         setLoading(true);
         try {
             const order = {
-                items: cart.items.map(i => ({ productId: i.id, quantity: i.quantity })),
+                items: cart.map(i => ({ productId: i.id, quantity: i.quantity, variantId: i.variantId })),
                 customerEmail: formData.email,
                 shippingAddress: `${formData.endereco}, ${formData.cidade} - ${formData.estado} (CEP: ${formData.cep})`,
                 totalAmount: total,
-                paymentMethod: formData.metodoPagamento
+                paymentMethod: formData.metodoPagamento,
+                couponCode: appliedCoupon?.code
             };
 
             const result = await storeService.createOrder(order);
             setSuccessOrder(result);
-            storeService.cart.clear(); // Limpa carrinho ao finalizar
+            await storeService.cart.clear(); // Limpa carrinho ao finalizar
         } catch (error) {
             console.error(error);
             window.dispatchEvent(new CustomEvent('show-alert', { detail: "Erro ao processar o pedido. Tente novamente." }));
@@ -112,7 +119,7 @@ const CheckoutPage = () => {
     }
 
 
-    if (cart.items.length === 0 && !successOrder) {
+    if (cart.length === 0 && !successOrder) {
         return (
             <div className="min-h-screen bg-[var(--branco-off-white)] flex flex-col items-center justify-center p-4">
                 <SEO title="Checkout" />

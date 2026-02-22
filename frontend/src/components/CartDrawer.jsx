@@ -13,47 +13,39 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
   const [shippingSelected, setShippingSelected] = useState(null);
   const { addToast } = useToast();
   const [calculateLoading, setCalculateLoading] = useState(false);
+  const [shippingError, setShippingError] = useState(null); // New state for shipping error
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   const handleCalculateShipping = async () => {
     if (cep.length < 9) return;
     setCalculateLoading(true);
+    setShippingError(null); // Clear previous errors
     try {
-      const options = await storeService.calculateShipping(cep, cartItems);
+      const options = await storeService.calculateShipping(cep); // Changed to `cep` only
+      setShippingOptions(options);
       if (options.length === 0) {
-        addToast("Nenhuma opção de frete disponível no momento.", "info");
-        setShippingOptions([
-          { provider: 'Correios (PAC)', price: 25.90, days: 8 },
-          { provider: 'Correios (SEDEX)', price: 42.10, days: 3 }
-        ]);
-      } else {
-        setShippingOptions(options);
+        addToast("Nenhuma opção de frete disponível para este CEP.", "info");
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Erro ao calcular frete:', error);
+      setShippingError('Não foi possível calcular o frete para este CEP.');
+      setShippingOptions([]);
       addToast("Erro ao calcular frete. Tente novamente.", "error");
-      console.error(err);
     } finally {
       setCalculateLoading(false);
     }
   };
 
-
-  const removeItem = (id) => {
-    storeService.cart.remove(id);
-    onUpdateCart(storeService.cart.get());
+  const removeItem = async (id) => {
+    const updatedCart = await storeService.cart.remove(id);
+    onUpdateCart({ items: updatedCart });
   };
 
-  const updateQuantity = (id, newQty) => {
+  const updateQuantity = async (id, newQty) => {
     if (newQty < 1) return;
-    const cart = storeService.cart.get();
-    const item = cart.items.find(i => i.id === id);
-    if (item) {
-      item.quantity = newQty;
-      localStorage.setItem('cart', JSON.stringify(cart));
-      onUpdateCart(cart);
-      window.dispatchEvent(new Event('cart-updated'));
-    }
+    const updatedCart = await storeService.cart.updateQuantity(id, newQty);
+    onUpdateCart({ items: updatedCart });
   };
 
   if (!isOpen) return null;

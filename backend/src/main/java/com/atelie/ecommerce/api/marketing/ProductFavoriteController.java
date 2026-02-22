@@ -33,7 +33,23 @@ public class ProductFavoriteController {
 
     @GetMapping("/ranking")
     public ResponseEntity<List<FavoriteRankingDTO>> getRanking() {
-        return ResponseEntity.ok(favoriteRepository.findFavoriteRanking());
+        List<FavoriteRankingDTO> ranking = favoriteRepository.findFavoriteRanking();
+
+        List<FavoriteRankingDTO> enhancedRanking = ranking.stream().map(dto -> {
+            if (dto.productImage() == null || dto.productImage().isBlank()) {
+                return productRepository.findById(dto.productId())
+                        .map(p -> new FavoriteRankingDTO(
+                                dto.productId(),
+                                dto.productName(),
+                                (p.getImages() != null && !p.getImages().isEmpty()) ? p.getImages().get(0) : null,
+                                dto.productPrice(),
+                                dto.favCount()))
+                        .orElse(dto);
+            }
+            return dto;
+        }).toList();
+
+        return ResponseEntity.ok(enhancedRanking);
     }
 
     @PostMapping

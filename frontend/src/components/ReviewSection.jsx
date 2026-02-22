@@ -10,41 +10,15 @@ const ReviewSection = ({ productId, onReviewAdded, onReviewsLoaded }) => {
 
     useEffect(() => {
         const fetchReviews = async () => {
+            if (!productId) return;
             setLoading(true);
             try {
-                // Mock data para desenvolvimento UI
-                // Substituir por: const data = await storeService.getReviews(productId);
-                const mockReviews = [
-                    {
-                        id: '1',
-                        user: { name: 'Maria Silva' },
-                        rating: 5,
-                        comment: 'Simplesmente maravilhoso! O tecido é de altíssima qualidade e o caimento perfeito. Senti a energia logo que abri a caixa.',
-                        createdAt: '2025-02-15T10:00:00Z',
-                        media: []
-                    },
-                    {
-                        id: '2',
-                        user: { name: 'João Santos' },
-                        rating: 4,
-                        comment: 'Muito bonito e bem acabado. Chegou rápido e bem embalado.',
-                        createdAt: '2025-02-10T14:30:00Z',
-                        media: []
-                    },
-                    {
-                        id: '3',
-                        user: { name: 'Ana Oliveira' },
-                        rating: 4,
-                        comment: 'Produto excedeu as expectativas. O acabamento em couro é impecável e as cores são vibrantes.',
-                        createdAt: '2025-02-05T09:15:00Z',
-                        media: []
-                    }
-                ];
-                setReviews(mockReviews);
-                // Notifica o pai com as reviews carregadas para ele calcular a média
-                onReviewsLoaded?.(mockReviews);
+                const data = await storeService.getReviews(productId);
+                setReviews(data || []);
+                onReviewsLoaded?.(data || []);
             } catch (err) {
-                console.error("Failed to load reviews", err);
+                console.error("[ReviewSection] Falha ao carregar reviews:", err);
+                setReviews([]);
             } finally {
                 setLoading(false);
             }

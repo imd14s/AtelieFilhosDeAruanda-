@@ -27,29 +27,52 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
     }
 
     @Override
-    public String driverKey() { return "payment.mercadopago"; }
+    public String driverKey() {
+        return "payment.mercadopago";
+    }
 
     @Override
-    public ServiceType serviceType() { return ServiceType.PAYMENT; }
+    public ServiceType serviceType() {
+        return ServiceType.PAYMENT;
+    }
 
     @Override
     public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
         String accessToken = DriverConfigReader.requireNonBlank(
-            (String) config.get("access_token"), "access_token (Config MP)"
-        );
+                (String) config.get("access_token"), "access_token (Config MP)");
 
         String notificationUrl = (String) config.get("notification_url");
         BigDecimal amount = (BigDecimal) request.get("amount");
         String email = (String) request.get("email");
         String externalRef = (String) request.get("orderId");
+        String paymentMethodId = (String) request.getOrDefault("payment_method_id", "pix");
+        String token = (String) request.get("token"); // Token do cartão se for credit_card
 
         Map<String, Object> mpRequest = new HashMap<>();
         mpRequest.put("transaction_amount", amount);
         mpRequest.put("description", "Pedido " + externalRef);
-        mpRequest.put("payment_method_id", "pix");
+        mpRequest.put("payment_method_id", paymentMethodId);
+        mpRequest.put("external_reference", externalRef);
+
+        if ("credit_card".equals(paymentMethodId)) {
+            if (token == null || token.isBlank()) {
+                return Map.of("error", true, "message", "Token do cartão ausente para pagamento via crédito");
+            }
+            mpRequest.put("token", token);
+            mpRequest.put("installments", request.getOrDefault("installments", 1));
+        }
 
         Map<String, Object> payer = new HashMap<>();
         payer.put("email", email);
+
+        // Dados adicionais do payer para cartão (opcional mas recomendado)
+        if (request.containsKey("identification_number")) {
+            Map<String, String> identification = new HashMap<>();
+            identification.put("type", "CPF");
+            identification.put("number", (String) request.get("identification_number"));
+            payer.put("identification", identification);
+        }
+
         mpRequest.put("payer", payer);
 
         if (notificationUrl != null && !notificationUrl.isBlank()) {
@@ -64,25 +87,27 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mpRequest, headers);
 
-            // CORREÇÃO: Fallback hardcoded removido. Exige MP_API_URL no .env ou Config Table.
-            String apiUrl = env.getProperty("MP_API_URL");
-            if (apiUrl == null || apiUrl.isBlank()) {
-                throw new IllegalStateException("Configuração MP_API_URL ausente no ambiente!");
-            }
+            String apiUrl = env.getProperty("MP_API_URL", "https://api.mercadopago.com/v1/payments");
 
             Map response = restTemplate.postForObject(apiUrl.trim(), entity, Map.class);
 
             Map<String, Object> result = new HashMap<>();
             result.put("provider", "MERCADO_PAGO");
-            result.put("status", "pending");
+
             if (response != null) {
+                String status = (String) response.get("status");
+                result.put("status", status);
                 result.put("external_id", response.get("id"));
-                Map poi = (Map) response.get("point_of_interaction");
-                if (poi != null) {
-                    Map transData = (Map) poi.get("transaction_data");
-                    if (transData != null) {
-                        result.put("qr_code", transData.get("qr_code"));
-                        result.put("qr_code_base64", transData.get("qr_code_base64"));
+                result.put("status_detail", response.get("status_detail"));
+
+                if ("pix".equals(paymentMethodId)) {
+                    Map poi = (Map) response.get("point_of_interaction");
+                    if (poi != null) {
+                        Map transData = (Map) poi.get("transaction_data");
+                        if (transData != null) {
+                            result.put("qr_code", transData.get("qr_code"));
+                            result.put("qr_code_base64", transData.get("qr_code_base64"));
+                        }
                     }
                 }
             }

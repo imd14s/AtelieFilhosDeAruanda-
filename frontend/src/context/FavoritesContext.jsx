@@ -46,9 +46,16 @@ export const FavoritesProvider = ({ children }) => {
 
     const toggleFavorite = async (product) => {
         const user = storeService.auth.getUser();
+        const token = localStorage.getItem('auth_token');
         const userId = user?.id || user?.googleId;
 
-        if (!userId) {
+        if (!userId || !token) {
+            window.dispatchEvent(new CustomEvent('show-alert', { detail: "Sua sessão expirou ou você não está logado. Faça login para favoritar." }));
+            // Limpa dados residuais se o token sumiu mas o user ainda estava no estado
+            if (!token && userId) {
+                localStorage.removeItem('user');
+                window.dispatchEvent(new Event('auth-changed'));
+            }
             window.dispatchEvent(new CustomEvent('show-alert', { detail: "Faça login para favoritar produtos." }));
             window.dispatchEvent(new Event('open-auth-modal'));
             return false;

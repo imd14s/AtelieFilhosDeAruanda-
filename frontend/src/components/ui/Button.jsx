@@ -30,7 +30,7 @@ const Button = ({
             {...props}
         >
             {isLoading && <Spinner size={16} />}
-            <span className={isLoading ? 'opacity-0' : 'opacity-100'}>
+            <span className={`${isLoading ? 'opacity-0' : 'opacity-100'} flex items-center justify-center gap-2`}>
                 {children}
             </span>
             {isLoading && (

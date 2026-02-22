@@ -9,7 +9,6 @@ import Spinner from './ui/Spinner';
 import { useToast } from '../context/ToastContext';
 
 const ProductCard = ({ product, initialIsFavorite = false }) => {
-  const { user } = useOutletContext() || {};
   const { isFavorite: checkFavorite, toggleFavorite, loading: favLoading } = useFavorites();
   const [loading, setLoading] = useState(false);
   const [added, setAdded] = useState(false);
@@ -96,7 +95,7 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
       <div className="p-3 flex flex-col flex-1">
         <Link to={`/produto/${product.id}`} className="mb-2">
           <h3
-            className="font-playfair text-sm leading-tight text-[var(--azul-profundo)] line-clamp-2 min-h-[2.5rem] hover:text-[var(--dourado-suave)] transition-colors"
+            className="font-playfair text-sm text-[var(--azul-profundo)] line-clamp-2 h-[2.8rem] leading-[1.4rem] hover:text-[var(--dourado-suave)] transition-colors overflow-hidden"
             title={product.title || product.name}
           >
             {product.title || product.name}

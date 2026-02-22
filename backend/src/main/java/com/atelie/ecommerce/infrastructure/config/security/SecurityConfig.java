@@ -92,6 +92,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/questions/product/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
 
+                        // Carrinho: exige autenticação (fix: removido permitAll de debug)
+                        .requestMatchers("/api/cart/**").authenticated()
+
                         // Checkout e Shipping: exigem autenticação
                         .requestMatchers("/api/checkout/**").authenticated()
                         .requestMatchers("/api/shipping/**").authenticated()

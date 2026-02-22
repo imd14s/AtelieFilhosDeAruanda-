@@ -16,4 +16,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Trata erros de resposta globalmente
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Se o erro for 401 (Unauthorized) e não for uma tentativa de login
+    if (error.response?.status === 401 && !error.config.url.includes('/auth/login')) {
+      console.warn("[API] Sessão expirada ou inválida. Limpando dados locais...");
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('auth-changed'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

@@ -13,7 +13,7 @@ import { useToast } from '../context/ToastContext';
 
 const ProductPage = () => {
   const { id } = useParams();
-  const { user } = useOutletContext();
+  const user = storeService.auth.getUser();
   const { isFavorite: checkFavorite, toggleFavorite, loading: favLoading } = useFavorites();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);

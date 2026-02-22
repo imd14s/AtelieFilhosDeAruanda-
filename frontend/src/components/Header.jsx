@@ -20,9 +20,11 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const initHeader = () => {
-    setUser(storeService.auth.getUser());
-    setCart(storeService.cart.get());
+  const initHeader = async () => {
+    const user = storeService.auth.getUser();
+    setUser(user);
+    const cartItems = await storeService.cart.get();
+    setCart({ items: cartItems || [] });
   };
 
   useEffect(() => {

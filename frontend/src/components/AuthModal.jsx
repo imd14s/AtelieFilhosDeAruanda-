@@ -58,6 +58,7 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { addToast } = useToast();
 
   if (!isOpen) return null;
@@ -93,6 +94,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     setName("");
     setCode("");
     setLoading(false);
+    setError(null);
   };
 
   const handleClose = () => {
@@ -104,11 +106,13 @@ const AuthModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     setLoading(true);
     try {
+      setError(null);
       await authService.login(email, password);
       addToast("Bem-vindo de volta!", "success");
       handleClose();
       window.location.reload();
     } catch (err) {
+      setError("E-mail ou senha incorretos.");
       addToast("E-mail ou senha incorretos.", "error");
     } finally {
       setLoading(false);
@@ -214,7 +218,7 @@ const AuthModal = ({ isOpen, onClose }) => {
               </div>
 
               <div className="flex justify-end">
-                <span onClick={() => setView("RECOVERY")} className="text-[11px] text-[#C9A24D] cursor-pointer hover:underline font-lato">Esqueci minha senha</span>
+                <span onClick={() => { setView("RECOVERY"); setError(null); }} className="text-[11px] text-[#C9A24D] cursor-pointer hover:underline font-lato">Esqueci minha senha</span>
               </div>
 
               {error && <p className="text-red-600 text-[11px] font-lato italic">{error}</p>}
@@ -246,7 +250,7 @@ const AuthModal = ({ isOpen, onClose }) => {
               <div className="mt-4 text-center">
                 <p className="font-lato text-[11px] text-[#0f2A44]/40">
                   Ainda não tem conta?{" "}
-                  <span onClick={() => setView("REGISTER")} className="text-[#C9A24D] cursor-pointer hover:underline">
+                  <span onClick={() => { setView("REGISTER"); setError(null); }} className="text-[#C9A24D] cursor-pointer hover:underline">
                     Cadastre-se
                   </span>
                 </p>

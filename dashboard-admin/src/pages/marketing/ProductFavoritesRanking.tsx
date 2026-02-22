@@ -63,9 +63,10 @@ export default function ProductFavoritesRanking() {
     const getImageUrl = (url: string) => {
         if (!url) return '';
         if (url.startsWith('http')) return url;
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+        const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080/api';
         const cleanBase = apiUrl.replace(/\/api$/, '');
-        // Garantir que a URL comece com / se não for absoluta
+        // Garantir que a URL comece com / se não for absoluta e nem começar com data:
+        if (url.startsWith('data:')) return url;
         const cleanPath = url.startsWith('/') ? url : `/${url}`;
         return `${cleanBase}${cleanPath}`;
     };
