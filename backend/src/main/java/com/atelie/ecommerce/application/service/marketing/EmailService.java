@@ -10,33 +10,66 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailConfigRepository;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Properties;
 
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
-    private final JavaMailSender mailSender;
     private final DynamicConfigService configService;
     private final EmailSignatureService signatureService;
+    private final EmailConfigRepository emailConfigRepository;
 
-    public EmailService(JavaMailSender mailSender, DynamicConfigService configService,
-            EmailSignatureService signatureService) {
-        this.mailSender = mailSender;
+    public EmailService(DynamicConfigService configService,
+            EmailSignatureService signatureService,
+            EmailConfigRepository emailConfigRepository) {
         this.configService = configService;
         this.signatureService = signatureService;
+        this.emailConfigRepository = emailConfigRepository;
+    }
+
+    private JavaMailSender createDynamicMailSender() {
+        var configs = emailConfigRepository.findAll();
+        if (configs.isEmpty()) {
+            throw new IllegalStateException("SMTP Configuration not found in database.");
+        }
+        var config = configs.get(0);
+
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost(config.getMailHost());
+        mailSender.setPort(config.getMailPort());
+        mailSender.setUsername(config.getMailUsername());
+        mailSender.setPassword(config.getMailPassword());
+
+        Properties props = mailSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.debug", "false");
+
+        return mailSender;
     }
 
     public void sendEmail(EmailQueue email) throws MessagingException {
+        JavaMailSender mailSender = createDynamicMailSender();
+
+        var configs = emailConfigRepository.findAll();
+        var emailSettings = configs.get(0);
+
         log.info("Sending email to {} - Subject: {}", email.getRecipient(), email.getSubject());
 
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        String senderEmail = configService.requireString("MAIL_SENDER_ADDRESS");
-        String senderName = configService.requireString("MAIL_SENDER_NAME");
-        String frontendUrl = configService.requireString("FRONTEND_URL");
+        String senderEmail = emailSettings.getMailSenderAddress();
+        String senderName = emailSettings.getMailSenderName();
+        String frontendUrl = configService.getString("FRONTEND_URL");
+        if (frontendUrl == null)
+            frontendUrl = "http://localhost:3001";
 
         try {
             helper.setFrom(senderEmail, senderName);
