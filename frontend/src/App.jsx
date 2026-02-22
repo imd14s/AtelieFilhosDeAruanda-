@@ -24,6 +24,8 @@ import QuestionsPage from "./pages/QuestionsPage";
 import HistoryPage from "./pages/HistoryPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import BenefitsPage from "./pages/BenefitsPage";
+import AddressesPage from "./pages/AddressesPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 import AtelieSubscribePage from "./pages/AtelieSubscribePage";
 import VerifyNewsletter from "./pages/VerifyNewsletter";
 import UnsubscribeNewsletter from "./pages/UnsubscribeNewsletter";
@@ -70,6 +72,8 @@ function App() {
               <Route path="perguntas" element={<QuestionsPage />} />
               <Route path="historico" element={<HistoryPage />} />
               <Route path="favoritos" element={<FavoritesPage />} />
+              <Route path="enderecos" element={<AddressesPage />} />
+              <Route path="compras/:id" element={<OrderDetailPage />} />
             </Route>
 
             {/* Rota 404 */}

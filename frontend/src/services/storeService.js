@@ -261,6 +261,51 @@ export const storeService = {
     isAuthenticated: () => !!localStorage.getItem('auth_token')
   },
 
+  // --- PEDIDOS ---
+  /**
+   * Cria um pedido via checkout do backend.
+   * Endpoint: POST /api/checkout/process
+   */
+  createOrder: async (orderData) => {
+    try {
+      const payload = {
+        customerName: orderData.customerName || `${orderData.nome || ''} ${orderData.sobrenome || ''}`.trim(),
+        customerEmail: orderData.customerEmail || orderData.email,
+        items: (orderData.items || []).map(i => ({
+          productId: i.productId || i.id,
+          variantId: i.variantId || null,
+          quantity: i.quantity
+        })),
+        shippingAddress: orderData.shippingAddress,
+        paymentMethod: orderData.paymentMethod || 'pix',
+        couponCode: orderData.couponCode || null
+      };
+
+      const response = await api.post('/checkout/process', payload, {
+        headers: TENANT_HEADER
+      });
+      return response.data;
+    } catch (error) {
+      console.error("[storeService] Erro ao criar pedido:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Busca detalhes de um pedido pelo ID.
+   */
+  getOrderById: async (orderId) => {
+    try {
+      const response = await api.get(`/orders/${orderId}`, {
+        headers: TENANT_HEADER
+      });
+      return response.data;
+    } catch (error) {
+      console.error("[storeService] Erro ao buscar pedido:", error);
+      throw error;
+    }
+  },
+
   // --- FRETE ---
   /**
    * Calcula as opções de frete para um CEP e lista de itens.

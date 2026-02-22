@@ -38,20 +38,6 @@ const Home = () => {
       />
       <Hero />
 
-      <section className="max-w-7xl mx-auto px-4 py-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {categories.map((cat) => (
-            <Link key={cat.name} to={cat.path} className="group relative overflow-hidden aspect-[4/5] shadow-sm">
-              <img src={cat.img} alt={cat.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--azul-profundo)]/90 to-transparent"></div>
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-12">
-                <h3 className="font-playfair text-3xl text-[var(--branco-off-white)]">{cat.name}</h3>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <section className="bg-white py-24 border-y border-[var(--azul-profundo)]/5">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="font-playfair text-4xl text-[var(--azul-profundo)] mb-16 text-center">Destaques do Ateliê</h2>

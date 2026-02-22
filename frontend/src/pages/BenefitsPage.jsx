@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { Tag, Clock, Ticket, ChevronRight, Gift } from 'lucide-react';
 import marketingService from '../services/marketingService';
 
@@ -39,10 +39,7 @@ const BenefitsPage = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Cupons e Benefícios</h1>
                     <p className="text-gray-500 text-sm mt-1">Aproveite seus descontos exclusivos do Ateliê.</p>
                 </div>
-                <div className="hidden md:flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
-                    <Gift className="text-blue-500" size={16} />
-                    <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Membro Ouro</span>
-                </div>
+
             </div>
 
             {coupons.length === 0 ? (
@@ -116,9 +113,9 @@ const BenefitsPage = () => {
                     <p className="text-blue-100 text-sm mb-4 leading-relaxed">
                         Assine nosso Kit Mensal e receba mensalmente guias, velas e ervas exclusivas, além de cupons fixos de 10% em todas as compras.
                     </p>
-                    <button className="bg-[var(--dourado-suave)] hover:bg-yellow-600 text-[var(--azul-profundo)] px-6 py-2 rounded-full text-xs font-bold transition-transform group-hover:scale-105">
+                    <Link to="/assinaturas" className="inline-block bg-[var(--dourado-suave)] hover:bg-yellow-600 text-[var(--azul-profundo)] px-6 py-2 rounded-full text-xs font-bold transition-transform group-hover:scale-105">
                         CONHECER ASSINATURAS
-                    </button>
+                    </Link>
                 </div>
                 <Gift className="absolute -right-8 -bottom-8 text-white/10 w-48 h-48 -rotate-12 group-hover:rotate-0 transition-transform duration-700" />
             </div>

@@ -32,8 +32,10 @@ const SubscriptionsPage = () => {
     };
 
     const handleToggleStatus = (sub) => {
-        const newStatus = sub.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-        api.patch(`/product-subscriptions/${sub.id}/status?status=${newStatus}`)
+        const action = sub.status === 'ACTIVE'
+            ? subscriptionService.pauseSubscription(sub.id)
+            : subscriptionService.resumeSubscription(sub.id);
+        action
             .then(() => fetchSubscriptions())
             .catch(err => console.error("Error updating status:", err));
     };

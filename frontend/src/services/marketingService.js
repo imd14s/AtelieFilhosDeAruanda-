@@ -11,6 +11,20 @@ const marketingService = {
     },
 
     // Future methods for coupons and subscriptions
+    validateCoupon: async (code, userId, cartTotal) => {
+        try {
+            const response = await api.post('/marketing/coupons/validate', {
+                code,
+                userId,
+                cartTotal
+            });
+            return response.data;
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Cupom inválido';
+            throw new Error(msg);
+        }
+    },
+
     getAvailableCoupons: async () => {
         try {
             const response = await api.get('/coupons/my-coupons');

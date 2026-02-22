@@ -185,20 +185,61 @@ const CheckoutPage = () => {
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Pagamento</h2>
                             </div>
                             <div className="space-y-4">
-                                <label className="flex items-center gap-4 p-6 border border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5 cursor-pointer">
+                                <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'pix' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
                                     <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange} className="accent-[var(--azul-profundo)]" />
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
                                         <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Pix com 5% de desconto</span>
                                     </div>
                                 </label>
-                                <label className="flex items-center gap-4 p-6 border border-[var(--azul-profundo)]/10 bg-white opacity-50 cursor-not-allowed">
-                                    <input type="radio" name="metodoPagamento" value="card" disabled className="accent-[var(--azul-profundo)]" />
+                                <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'card' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
+                                    <input type="radio" name="metodoPagamento" value="card" checked={formData.metodoPagamento === 'card'} onChange={handleInputChange} className="accent-[var(--azul-profundo)]" />
                                     <div className="flex items-center gap-3">
-                                        <CreditCard size={24} className="text-[var(--azul-profundo)]/40" />
-                                        <span className="font-lato text-sm uppercase tracking-widest text-[var(--azul-profundo)]/40">Cartão de Crédito (Breve)</span>
+                                        <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
+                                            <CreditCard size={20} />
+                                        </div>
+                                        <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito</span>
                                     </div>
                                 </label>
+
+                                {/* Formulário de Cartão Sensível */}
+                                {formData.metodoPagamento === 'card' && (
+                                    <div className="p-6 border border-[var(--azul-profundo)]/10 bg-white mt-4 animate-in fade-in slide-in-from-top-4">
+                                        <h3 className="font-lato text-xs font-bold uppercase tracking-widest text-[var(--azul-profundo)] mb-6 flex items-center gap-2">
+                                            <ShieldCheck size={16} className="text-green-600" /> Transação Segura via Mercado Pago
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="md:col-span-2">
+                                                <label className="block text-xs text-gray-500 mb-1">Número do Cartão</label>
+                                                <input type="text" placeholder="0000 0000 0000 0000" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="block text-xs text-gray-500 mb-1">Nome Impresso no Cartão</label>
+                                                <input type="text" placeholder="JOAO M SILVA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] uppercase" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Validade (MM/AA)</label>
+                                                <input type="text" placeholder="MM/AA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">CVV</label>
+                                                <input type="text" placeholder="123" maxLength="4" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">CPF do Titular</label>
+                                                <input type="text" placeholder="000.000.000-00" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Parcelas</label>
+                                                <select className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]">
+                                                    <option>1x de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)} sem juros</option>
+                                                    <option>2x de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total / 2)} sem juros</option>
+                                                    <option>3x de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total / 3)} sem juros</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </section>
                     </div>
