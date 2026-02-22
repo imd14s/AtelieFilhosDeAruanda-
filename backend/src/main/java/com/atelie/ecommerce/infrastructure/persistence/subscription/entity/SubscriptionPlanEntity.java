@@ -37,6 +37,18 @@ public class SubscriptionPlanEntity {
     @Column(name = "max_products")
     private Integer maxProducts = 10;
 
+    @Column(name = "is_coupon_pack")
+    private Boolean isCouponPack = false;
+
+    @Column(name = "coupon_bundle_count")
+    private Integer couponBundleCount = 0;
+
+    @Column(name = "coupon_discount_percentage")
+    private BigDecimal couponDiscountPercentage = BigDecimal.ZERO;
+
+    @Column(name = "coupon_validity_days")
+    private Integer couponValidityDays = 0;
+
     @Column(nullable = false)
     private Boolean active = true;
 
