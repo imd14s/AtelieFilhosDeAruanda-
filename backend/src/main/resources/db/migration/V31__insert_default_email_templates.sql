@@ -2,8 +2,8 @@
 -- Isso garante que as automações não falharão por falta de template no banco inicial.
 
 -- Template: NEWSLETTER_CONFIRM
-INSERT INTO email_templates (id, name, subject, content, automation_type, is_active, created_at, updated_at)
-SELECT gen_random_uuid(), 'Bem-vindo(a) à Newsletter', 'Bem-vindo(a) à nossa Newsletter!',
+INSERT INTO email_templates (id, slug, name, subject, content, automation_type, is_active, created_at, updated_at)
+SELECT gen_random_uuid(), 'newsletter-confirm', 'Bem-vindo(a) à Newsletter', 'Bem-vindo(a) à nossa Newsletter!',
 '<div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
     <h2>Bem-vindo(a)!</h2>
     <p>Obrigado por se inscrever na nossa Newsletter. A partir de agora você receberá nossas novidades e cupons exclusivos.</p>
@@ -14,8 +14,8 @@ SELECT gen_random_uuid(), 'Bem-vindo(a) à Newsletter', 'Bem-vindo(a) à nossa N
 WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE automation_type = 'NEWSLETTER_CONFIRM');
 
 -- Template: USER_VERIFY
-INSERT INTO email_templates (id, name, subject, content, automation_type, is_active, created_at, updated_at)
-SELECT gen_random_uuid(), 'Código de Verificação de Cadastro', 'Seu código de verificação: {{{code}}}',
+INSERT INTO email_templates (id, slug, name, subject, content, automation_type, is_active, created_at, updated_at)
+SELECT gen_random_uuid(), 'user-verify', 'Código de Verificação de Cadastro', 'Seu código de verificação: {{{code}}}',
 '<div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
     <h2>Olá, {{{name}}}!</h2>
     <p>Obrigado por se cadastrar na nossa loja. Para concluir, utilize o código abaixo na tela de verificação:</p>
@@ -26,8 +26,8 @@ SELECT gen_random_uuid(), 'Código de Verificação de Cadastro', 'Seu código d
 WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE automation_type = 'USER_VERIFY');
 
 -- Template: ORDER_CONFIRM
-INSERT INTO email_templates (id, name, subject, content, automation_type, is_active, created_at, updated_at)
-SELECT gen_random_uuid(), 'Confirmação do Pedido', 'Recebemos seu pedido #{{{order_number}}}',
+INSERT INTO email_templates (id, slug, name, subject, content, automation_type, is_active, created_at, updated_at)
+SELECT gen_random_uuid(), 'order-confirm', 'Confirmação do Pedido', 'Recebemos seu pedido #{{{order_number}}}',
 '<div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
     <h2>Olá, {{{customer_name}}}!</h2>
     <p>Recebemos o seu pedido <strong>#{{{order_number}}}</strong> no valor de <strong>R$ {{{total}}}</strong>.</p>
@@ -38,8 +38,8 @@ SELECT gen_random_uuid(), 'Confirmação do Pedido', 'Recebemos seu pedido #{{{o
 WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE automation_type = 'ORDER_CONFIRM');
 
 -- Template: PASSWORD_RESET
-INSERT INTO email_templates (id, name, subject, content, automation_type, is_active, created_at, updated_at)
-SELECT gen_random_uuid(), 'Recuperação de Senha', 'Recupere sua senha do Ateliê',
+INSERT INTO email_templates (id, slug, name, subject, content, automation_type, is_active, created_at, updated_at)
+SELECT gen_random_uuid(), 'password-reset', 'Recuperação de Senha', 'Recupere sua senha do Ateliê',
 '<div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
     <h2>Olá, {{{name}}}!</h2>
     <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>

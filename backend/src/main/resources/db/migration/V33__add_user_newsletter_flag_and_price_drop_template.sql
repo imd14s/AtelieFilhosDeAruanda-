@@ -2,8 +2,8 @@
 ALTER TABLE users ADD COLUMN subscribed_newsletter BOOLEAN DEFAULT FALSE;
 
 -- Template: PRODUCT_PRICE_DROP
-INSERT INTO email_templates (id, name, subject, content, automation_type, is_active, created_at, updated_at)
-SELECT gen_random_uuid(), 'Alerta de Baixa de Preço', 'O preço baixou! {{{product_name}}} com {{{discount_percentage}}}% de desconto',
+INSERT INTO email_templates (id, slug, name, subject, content, automation_type, is_active, created_at, updated_at)
+SELECT gen_random_uuid(), 'product-price-drop', 'Alerta de Baixa de Preço', 'O preço baixou! {{{product_name}}} com {{{discount_percentage}}}% de desconto',
 '<div style="font-family: Arial, sans-serif; color: #333; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 600px; margin: auto;">
     <h2 style="color: #d4af37; text-align: center;">Uma oferta que você vai amar!</h2>
     <p>Olá, {{{customer_name}}}!</p>

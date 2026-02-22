@@ -16,9 +16,9 @@ public interface ProductFavoriteRepository
         List<ProductFavoriteEntity> findByProductId(UUID productId);
 
         @Query("SELECT new com.atelie.ecommerce.api.marketing.dto.FavoriteRankingDTO(" +
-                        "p.id, p.name, p.mainImage, p.price, COUNT(f)) " +
+                        "p.id, p.name, p.imageUrl, p.price, COUNT(f)) " +
                         "FROM ProductFavoriteEntity f JOIN f.product p " +
-                        "GROUP BY p.id, p.name, p.mainImage, p.price " +
+                        "GROUP BY p.id, p.name, p.imageUrl, p.price " +
                         "ORDER BY COUNT(f) DESC")
         List<FavoriteRankingDTO> findFavoriteRanking();
 }

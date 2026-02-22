@@ -59,6 +59,9 @@ public class ProductEntity {
     private BigDecimal width;
     private BigDecimal length;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Transient
     @JsonProperty("discountPercentage")
     private Integer discountPercentage;
@@ -135,6 +138,10 @@ public class ProductEntity {
     // --- MÉTODOS DE COMPATIBILIDADE ---
     public String getImageUrl() {
         return (images != null && !images.isEmpty()) ? images.get(0) : null;
+    }
+
+    public String getMainImage() {
+        return getImageUrl();
     }
 
     public void setImageUrl(String url) {

@@ -10,6 +10,7 @@ import com.atelie.ecommerce.api.config.DynamicConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,10 +52,12 @@ public class NewsletterController {
     public ResponseEntity<?> subscribe() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return ResponseEntity.status(401).body(Map.of("message", "Você precisa estar logado para se inscrever."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Você precisa estar logado para assinar a newsletter."));
         }
 
         String email = auth.getName();
+
         try {
             // 1. Sincronizar na entidade User
             userRepository.findByEmail(email).ifPresent(user -> {
@@ -65,29 +68,33 @@ public class NewsletterController {
             // 2. Garantir registro no NewsletterSubscriber para compatibilidade de
             // campanhas
             NewsletterSubscriber subscriber = subscriberRepository.findByEmail(email)
-                    .orElse(NewsletterSubscriber.builder()
+                    .orElseGet(() -> NewsletterSubscriber.builder()
                             .email(email)
                             .active(true)
                             .emailVerified(true)
-                            .verificationToken(UUID.randomUUID().toString())
+                            .verificationToken(java.util.UUID.randomUUID().toString())
                             .build());
 
-            if (Boolean.TRUE.equals(subscriber.getEmailVerified()) && Boolean.TRUE.equals(subscriber.getActive())) {
-                return ResponseEntity.ok(Map.of("message", "Você já está inscrito na nossa Newsletter!"));
-            }
-
-            subscriber.setEmailVerified(true);
             subscriber.setActive(true);
             subscriberRepository.save(subscriber);
 
-            // 3. Enviar e-mail de boas-vindas
-            communicationService.sendAutomation(AutomationType.NEWSLETTER_CONFIRM, email, Map.of("name", email));
+            // 3. Agendar e-mail de boas-vindas via CommunicationService
+            try {
+                communicationService.sendAutomation(
+                        AutomationType.NEWSLETTER_CONFIRM,
+                        email,
+                        Map.of("email", email));
+            } catch (Exception e) {
+                log.error("Erro ao enviar e-mail de boas-vindas: {}", e.getMessage());
+            }
 
-            return ResponseEntity
-                    .ok(Map.of("message", "Inscrição realizada com sucesso! Bem-vindo(a) à nossa Newsletter."));
+            return ResponseEntity.ok(Map.of(
+                    "message", "Assinatura realizada com sucesso! Você receberá nossas novidades por e-mail.",
+                    "email", email));
         } catch (Exception e) {
-            log.error("Error subscribing logged user {}: {}", email, e.getMessage());
-            return ResponseEntity.internalServerError().body(Map.of("message", "Erro interno ao processar inscrição"));
+            log.error("Erro ao processar assinatura de newsletter para {}: {}", email, e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Erro ao processar assinatura."));
         }
     }
 
