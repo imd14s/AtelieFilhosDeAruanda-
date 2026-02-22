@@ -31,6 +31,7 @@ public class MarketingMetricsService {
         return Map.of(
                 "totalRegistrations", totalRegistrations,
                 "totalVerified", totalVerified,
-                "totalSent", totalSent);
+                "totalSent", totalSent,
+                "totalNewsletter", totalNewsletter);
     }
 }

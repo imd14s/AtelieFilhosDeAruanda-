@@ -3,7 +3,7 @@ import {
     LayoutDashboard, Mail, PenTool, Settings,
     RefreshCcw, AlertCircle, CheckCircle, Clock,
     Trash2, Save, Plus, X, Edit2, Server,
-    User, Send, Upload, Eye, Info
+    User, Send, Upload, Eye, Info, XCircle
 } from 'lucide-react';
 import { api } from '../../api/axios';
 import { RichTextEditor } from '../../components/common/RichTextEditor';
@@ -16,6 +16,7 @@ interface EmailMetric {
     failed: number;
     pending: number;
     verifiedUsers: number;
+    totalNewsletter: number;
 }
 
 interface EmailQueued {
@@ -77,10 +78,10 @@ interface SMTPConfig {
 }
 
 const AUTOMATION_TYPES = [
-    { id: 'NEWSLETTER_CONFIRM', label: 'Inscrição Newsletter', icon: '✉️' },
     { id: 'USER_VERIFY', label: 'Verificação de Conta', icon: '👤' },
     { id: 'ORDER_CONFIRM', label: 'Confirmação de Pedido', icon: '🛍️' },
     { id: 'PASSWORD_RESET', label: 'Troca de Senha', icon: '🔑' },
+    { id: 'PRODUCT_PRICE_DROP', label: 'Alerta de Preço', icon: '🏷️' },
     { id: 'CAMPAIGN', label: 'Campanha Manual', icon: '🚀' }
 ];
 
@@ -97,7 +98,7 @@ export default function EmailMarketingHub() {
     const [activeDesignSubTab, setActiveDesignSubTab] = useState<'templates' | 'signatures' | 'campaigns'>('templates');
 
     // --- State: Analytics ---
-    const [metrics, setMetrics] = useState<EmailMetric>({ totalSent: 0, failed: 0, pending: 0, verifiedUsers: 0 });
+    const [metrics, setMetrics] = useState<EmailMetric>({ totalSent: 0, failed: 0, pending: 0, verifiedUsers: 0, totalNewsletter: 0 });
     const [queue, setQueue] = useState<EmailQueued[]>([]);
     const [loadingAnalytics, setLoadingAnalytics] = useState(true);
     const [queueFilter, setQueueFilter] = useState<string>('ALL');
@@ -202,7 +203,8 @@ export default function EmailMarketingHub() {
                 totalSent: rawMetrics.emailsSent || 0,
                 failed: queueRes.data.filter((e: any) => e.status === 'FAILED').length,
                 pending: queueRes.data.filter((e: any) => e.status === 'PENDING').length,
-                verifiedUsers: rawMetrics.verifiedUsers || 0
+                verifiedUsers: rawMetrics.verifiedUsers || 0,
+                totalNewsletter: rawMetrics.totalNewsletter || 0
             });
             setQueue(queueRes.data.reverse());
         } catch (error) {
@@ -238,7 +240,8 @@ export default function EmailMarketingHub() {
                 api.get('/marketing/email-templates'),
                 api.get('/marketing/signatures')
             ]);
-            setTemplates(templatesRes.data);
+            // Filtrar templates da newsletter legados
+            setTemplates(templatesRes.data.filter((t: any) => t.slug !== 'NEWSLETTER_CONFIRM' && t.automationType !== 'NEWSLETTER_CONFIRM'));
             setSignatures(signaturesRes.data);
             if (signaturesRes.data.length > 0 && !selectedSignatureId) {
                 handleSelectSignature(signaturesRes.data[0]);
@@ -313,16 +316,41 @@ export default function EmailMarketingHub() {
         e.preventDefault();
         setIsSavingCampaign(true);
         try {
-            await api.post('/marketing/campaigns', newCampaign);
+            if (newCampaign.id) {
+                await api.put(`/marketing/campaigns/${newCampaign.id}`, newCampaign);
+            } else {
+                await api.post('/marketing/campaigns', newCampaign);
+            }
             loadCampaigns();
             setIsCreatingCampaign(false);
             setNewCampaign({ name: '', subject: '', content: '', status: 'PENDING', totalRecipients: 0, sentCount: 0, audience: 'NEWSLETTER_SUBSCRIBERS', signatureId: null });
-            alert('Campanha criada com sucesso!');
+            alert(newCampaign.id ? 'Campanha atualizada!' : 'Campanha criada com sucesso!');
         } catch (error: any) {
-            console.error('Error creating campaign:', error.response?.data || error);
-            alert(`Erro ao criar campanha: ${error.response?.data?.message || 'Erro interno'}`);
+            console.error('Error saving campaign:', error.response?.data || error);
+            alert(`Erro ao salvar campanha: ${error.response?.data?.message || 'Erro interno'}`);
         } finally {
             setIsSavingCampaign(false);
+        }
+    };
+
+    const handleEditCampaign = (campaign: EmailCampaign) => {
+        if (campaign.status !== 'PENDING') {
+            alert('Apenas campanhas em rascunho (PENDING) podem ser editadas.');
+            return;
+        }
+        setNewCampaign(campaign);
+        setIsCreatingCampaign(true);
+    };
+
+    const handleCancelCampaign = async (id: string) => {
+        if (!confirm('Deseja interromper o envio desta campanha?')) return;
+        try {
+            await api.post(`/marketing/campaigns/${id}/cancel`);
+            loadCampaigns();
+            alert('Envio interrompido.');
+        } catch (error) {
+            console.error('Error cancelling campaign:', error);
+            alert('Erro ao cancelar campanha.');
         }
     };
 
@@ -512,6 +540,7 @@ export default function EmailMarketingHub() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
                     { label: 'Total Enviado', value: metrics.totalSent, icon: Send, color: 'indigo' },
+                    { label: 'Assinantes Newsletter', value: metrics.totalNewsletter, icon: User, color: 'blue' },
                     { label: 'Em Pendência', value: metrics.pending, icon: Clock, color: 'amber' },
                     { label: 'Falhas de Envio', value: metrics.failed, icon: AlertCircle, color: 'red' },
                     { label: 'Usuários Verificados', value: metrics.verifiedUsers, icon: CheckCircle, color: 'green' },
@@ -861,7 +890,13 @@ export default function EmailMarketingHub() {
                                     </div>
                                     <div className="flex gap-2">
                                         {c.status === 'PENDING' && (
-                                            <button onClick={() => handleDeleteCampaign(c.id!)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={16} /></button>
+                                            <>
+                                                <button onClick={() => handleEditCampaign(c)} className="text-indigo-400 hover:text-indigo-600 p-1"><PenTool size={16} /></button>
+                                                <button onClick={() => handleDeleteCampaign(c.id!)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={16} /></button>
+                                            </>
+                                        )}
+                                        {c.status === 'SENDING' && (
+                                            <button onClick={() => handleCancelCampaign(c.id!)} className="text-amber-500 hover:text-amber-700 p-1 flex items-center gap-1 font-bold text-[10px]"><XCircle size={14} /> CANCELAR</button>
                                         )}
                                     </div>
                                 </div>
@@ -887,9 +922,12 @@ export default function EmailMarketingHub() {
                                 <form onSubmit={handleCreateCampaign} className="space-y-6">
                                     <div className="flex justify-between items-center pb-4 border-b">
                                         <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
-                                            <Send className="text-indigo-600" size={24} /> Criar Envio em Massa
+                                            <Send className="text-indigo-600" size={24} /> {newCampaign.id ? 'Editar Campanha' : 'Criar Envio em Massa'}
                                         </h3>
-                                        <button type="button" onClick={() => setIsCreatingCampaign(false)} className="text-gray-400 hover:text-gray-600"><X /></button>
+                                        <button type="button" onClick={() => {
+                                            setIsCreatingCampaign(false);
+                                            setNewCampaign({ name: '', subject: '', content: '', status: 'PENDING', totalRecipients: 0, sentCount: 0, audience: 'NEWSLETTER_SUBSCRIBERS', signatureId: null });
+                                        }} className="text-gray-400 hover:text-gray-600"><X /></button>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-6">
@@ -953,7 +991,7 @@ export default function EmailMarketingHub() {
 
                                     <div className="flex justify-end pt-6 border-t">
                                         <button type="submit" disabled={isSavingCampaign} className="px-10 py-4 bg-indigo-600 text-white font-black rounded-xl shadow-xl hover:bg-indigo-700 transition disabled:bg-indigo-300">
-                                            {isSavingCampaign ? 'SALVANDO...' : 'CRIAR CAMPANHA PENDENTE'}
+                                            {isSavingCampaign ? 'SALVANDO...' : newCampaign.id ? 'ATUALIZAR CAMPANHA' : 'CRIAR CAMPANHA PENDENTE'}
                                         </button>
                                     </div>
                                 </form>

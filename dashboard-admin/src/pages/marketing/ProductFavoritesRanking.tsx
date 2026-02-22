@@ -65,7 +65,9 @@ export default function ProductFavoritesRanking() {
         if (url.startsWith('http')) return url;
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
         const cleanBase = apiUrl.replace(/\/api$/, '');
-        return `${cleanBase}${url.startsWith('/') ? url : `/${url}`}`;
+        // Garantir que a URL comece com / se não for absoluta
+        const cleanPath = url.startsWith('/') ? url : `/${url}`;
+        return `${cleanBase}${cleanPath}`;
     };
 
     const filteredRanking = ranking

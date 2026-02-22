@@ -150,6 +150,7 @@ public class ProductEntity {
         if (url != null && !this.images.contains(url)) {
             this.images.add(0, url);
         }
+        this.imageUrl = url; // Sincroniza o campo para projeções JPQL
     }
 
     // Método auxiliar exigido pelo ProductManagementController
@@ -192,12 +193,14 @@ public class ProductEntity {
             length = BigDecimal.ZERO;
 
         generateSlug();
+        syncImageUrl();
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
         generateSlug();
+        syncImageUrl();
     }
 
     // Heuristic slug generation if null
@@ -214,6 +217,12 @@ public class ProductEntity {
                         : UUID.randomUUID().toString().substring(0, 4);
                 this.slug = safeName + "-" + suffix;
             }
+        }
+    }
+
+    private void syncImageUrl() {
+        if ((this.imageUrl == null || this.imageUrl.isEmpty()) && this.images != null && !this.images.isEmpty()) {
+            this.imageUrl = this.images.get(0);
         }
     }
 
