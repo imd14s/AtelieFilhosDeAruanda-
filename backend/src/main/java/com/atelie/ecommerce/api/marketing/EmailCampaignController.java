@@ -38,4 +38,21 @@ public class EmailCampaignController {
         campaignService.startCampaign(id);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EmailCampaign> updateCampaign(@PathVariable UUID id, @RequestBody EmailCampaign campaign) {
+        return ResponseEntity.ok(campaignService.updateCampaign(id, campaign));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCampaign(@PathVariable UUID id) {
+        campaignService.deleteCampaign(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelCampaign(@PathVariable UUID id) {
+        campaignService.cancelCampaign(id);
+        return ResponseEntity.ok().build();
+    }
 }

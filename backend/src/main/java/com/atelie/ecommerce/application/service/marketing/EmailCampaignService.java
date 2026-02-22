@@ -43,7 +43,57 @@ public class EmailCampaignService {
 
     @Transactional
     public EmailCampaign createCampaign(EmailCampaign campaign) {
+        campaign.setStatus(EmailCampaign.CampaignStatus.PENDING);
         return campaignRepository.save(campaign);
+    }
+
+    @Transactional
+    public EmailCampaign updateCampaign(UUID id, EmailCampaign dto) {
+        EmailCampaign existing = campaignRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Campanha não encontrada"));
+        if (existing.getStatus() == EmailCampaign.CampaignStatus.SENDING
+                || existing.getStatus() == EmailCampaign.CampaignStatus.COMPLETED) {
+            throw new IllegalStateException("Não é possível editar uma campanha em envio ou concluída.");
+        }
+        existing.setName(dto.getName());
+        existing.setSubject(dto.getSubject());
+        existing.setAudience(dto.getAudience());
+        existing.setContent(dto.getContent());
+        existing.setSignatureId(dto.getSignatureId());
+        return campaignRepository.save(existing);
+    }
+
+    @Transactional
+    public void deleteCampaign(UUID id) {
+        EmailCampaign existing = campaignRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Campanha não encontrada"));
+
+        // Remove pending emails from queue to prevent sending deleted campaign emails
+        List<EmailQueue> pendingEmails = emailQueueRepository.findByCampaignIdAndStatus(id,
+                EmailQueue.EmailStatus.PENDING);
+        emailQueueRepository.deleteAll(pendingEmails);
+
+        campaignRepository.delete(existing);
+    }
+
+    @Transactional
+    public void cancelCampaign(UUID id) {
+        EmailCampaign existing = campaignRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Campanha não encontrada"));
+
+        if (existing.getStatus() != EmailCampaign.CampaignStatus.SENDING) {
+            throw new IllegalStateException("Apenas campanhas em envio podem ser canceladas.");
+        }
+
+        List<EmailQueue> pendingEmails = emailQueueRepository.findByCampaignIdAndStatus(id,
+                EmailQueue.EmailStatus.PENDING);
+        for (EmailQueue q : pendingEmails) {
+            q.setStatus(EmailQueue.EmailStatus.FAILED);
+            emailQueueRepository.save(q);
+        }
+
+        existing.setStatus(EmailCampaign.CampaignStatus.FAILED);
+        campaignRepository.save(existing);
     }
 
     @Transactional

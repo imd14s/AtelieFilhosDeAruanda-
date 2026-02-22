@@ -8,6 +8,7 @@ export function CampaignsPage() {
     const [signatures, setSignatures] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [newCampaign, setNewCampaign] = useState({
         name: '',
@@ -51,13 +52,22 @@ export function CampaignsPage() {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const { data } = await api.post('/marketing/campaigns', {
-                ...newCampaign,
-                signatureId: newCampaign.signatureId || null
-            });
+            if (editingId) {
+                await api.put(`/marketing/campaigns/${editingId}`, {
+                    ...newCampaign,
+                    signatureId: newCampaign.signatureId || null
+                });
+                alert('Campanha atualizada com sucesso!');
+            } else {
+                await api.post('/marketing/campaigns', {
+                    ...newCampaign,
+                    signatureId: newCampaign.signatureId || null
+                });
+                alert('Campanha criada com sucesso e está pronta para ser enviada!');
+            }
 
-            // Start the campaign immediately after creation
-            await api.post(`/marketing/campaigns/${data.id}/start`);
+            // Removed auto-start to allow editing before sending
+            // await api.post(`/marketing/campaigns/${data.id}/start`);
 
             setIsModalOpen(false);
             setNewCampaign({
@@ -67,8 +77,8 @@ export function CampaignsPage() {
                 content: '',
                 signatureId: signatures.length > 0 ? signatures[0].id : ''
             });
+            setEditingId(null);
             loadCampaigns();
-            alert('Campanha criada e iniciada com sucesso!');
         } catch (error) {
             console.error('Erro ao criar campanha', error);
             alert('Erro ao criar campanha. Verifique os campos.');
@@ -76,6 +86,43 @@ export function CampaignsPage() {
             setIsSaving(false);
         }
     };
+
+    const handleStartCampaign = async (id: string) => {
+        if (!confirm('Deseja realmente iniciar o envio desta campanha?')) return;
+        try {
+            await api.post(`/marketing/campaigns/${id}/start`);
+            alert('Campanha iniciada com sucesso!');
+            loadCampaigns();
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao iniciar a campanha.');
+        }
+    };
+
+    const handleCancelCampaign = async (id: string) => {
+        if (!confirm('Tem certeza? Isso irá parar o envio para os destinatários restantes.')) return;
+        try {
+            await api.post(`/marketing/campaigns/${id}/cancel`);
+            alert('Campanha cancelada.');
+            loadCampaigns();
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao cancelar a campanha.');
+        }
+    };
+
+    const handleDeleteCampaign = async (id: string) => {
+        if (!confirm('Você tem certeza que deseja excluir esta campanha e todos os seus dados?')) return;
+        try {
+            await api.delete(`/marketing/campaigns/${id}`);
+            alert('Campanha excluída.');
+            loadCampaigns();
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao excluir a campanha.');
+        }
+    };
+
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -98,7 +145,13 @@ export function CampaignsPage() {
                     <p className="text-sm text-gray-500 mt-1">Envio em massa com monitoramento em tempo real (atualização a cada 10min).</p>
                 </div>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => {
+                        setEditingId(null);
+                        setNewCampaign({
+                            name: '', subject: '', audience: 'NEWSLETTER_SUBSCRIBERS', content: '', signatureId: signatures.length > 0 ? signatures[0].id : ''
+                        });
+                        setIsModalOpen(true);
+                    }}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-lg hover:bg-indigo-700 transition flex items-center gap-2"
                 >
                     <Plus size={20} />
@@ -113,7 +166,7 @@ export function CampaignsPage() {
                         <form onSubmit={handleCreateCampaign}>
                             <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
                                 <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                    <Plus className="text-indigo-600" /> Nova Campanha
+                                    <Plus className="text-indigo-600" /> {editingId ? 'Editar Campanha' : 'Nova Campanha'}
                                 </h2>
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                     <Plus size={24} className="rotate-45" />
@@ -203,7 +256,7 @@ export function CampaignsPage() {
                                     className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition disabled:bg-indigo-400 flex items-center gap-2"
                                 >
                                     {isSaving ? <RefreshCcw size={18} className="animate-spin" /> : <Send size={18} />}
-                                    {isSaving ? 'Enviando...' : 'Criar e Enviar Campanha'}
+                                    {isSaving ? (editingId ? 'Salvando...' : 'Criando...') : (editingId ? 'Salvar Alterações' : 'Criar Campanha')}
                                 </button>
                             </div>
                         </form>
@@ -260,9 +313,36 @@ export function CampaignsPage() {
                                     <p className="text-[10px] text-gray-500 mt-1">{campaign.sentCount} / {campaign.totalRecipients} enviados</p>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <button className="text-indigo-600 hover:text-indigo-800 font-bold text-sm flex items-center gap-1">
-                                        <RefreshCcw size={14} /> Detalhes
-                                    </button>
+                                    <div className="flex gap-2">
+                                        {campaign.status === 'PENDING' && (
+                                            <>
+                                                <button onClick={() => handleStartCampaign(campaign.id)} className="text-green-600 hover:text-green-800 text-xs font-bold border px-2 py-1 flex items-center gap-1 rounded">
+                                                    Iniciar
+                                                </button>
+                                                <button onClick={() => {
+                                                    setEditingId(campaign.id);
+                                                    setNewCampaign({
+                                                        name: campaign.name,
+                                                        subject: campaign.subject,
+                                                        audience: campaign.audience,
+                                                        content: campaign.content,
+                                                        signatureId: campaign.signatureId || ''
+                                                    });
+                                                    setIsModalOpen(true);
+                                                }} className="text-blue-600 hover:text-blue-800 text-xs font-bold border px-2 py-1 flex items-center gap-1 rounded">
+                                                    Editar
+                                                </button>
+                                            </>
+                                        )}
+                                        {campaign.status === 'SENDING' && (
+                                            <button onClick={() => handleCancelCampaign(campaign.id)} className="text-orange-600 hover:text-orange-800 text-xs font-bold border px-2 py-1 flex items-center gap-1 rounded">
+                                                Cancelar
+                                            </button>
+                                        )}
+                                        <button onClick={() => handleDeleteCampaign(campaign.id)} className="text-red-600 hover:text-red-800 text-xs font-bold border px-2 py-1 flex items-center gap-1 rounded">
+                                            Excluir
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
