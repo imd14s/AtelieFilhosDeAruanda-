@@ -107,6 +107,7 @@ class OrderControllerIntegrationTest {
                                 "SITE",
                                 "ORDER-EXT-001",
                                 "Customer A",
+                                "customer@test.com",
                                 List.of(itemReq));
 
                 mockMvc.perform(post("/api/orders")

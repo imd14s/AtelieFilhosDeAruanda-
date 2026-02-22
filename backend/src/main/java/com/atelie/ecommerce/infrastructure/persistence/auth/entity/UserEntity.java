@@ -28,6 +28,7 @@ public class UserEntity {
     @Column(nullable = false)
     private String role; // ADMIN, EMPLOYEE, CUSTOMER
 
+    @Builder.Default
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
@@ -52,6 +53,7 @@ public class UserEntity {
     @Column(name = "mp_customer_id")
     private String mpCustomerId;
 
+    @Builder.Default
     @Column(name = "subscribed_newsletter")
     private Boolean subscribedNewsletter = false;
 

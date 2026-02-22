@@ -40,6 +40,9 @@ spring:
           starttls:
             enable: false
 
+cloudinary:
+  url: ${CLOUDINARY_URL:cloudinary://934773461645288:bH-6XBcWBUA_1y_CgwZ-7vGEnIY@dwkv9hnnk}
+
 server:
   port: ${SERVER_PORT:8080}
 
@@ -57,7 +60,7 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    enabled: ${SWAGGER_ENABLED:true}
+    enabled: ${SPRING_DOC_ENABLED:true}
     tags-sorter: alpha
     operations-sorter: alpha
 

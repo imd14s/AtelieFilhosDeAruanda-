@@ -44,6 +44,7 @@ public class UserAddressEntity {
     @Column(name = "zip_code", nullable = false, length = 10)
     private String zipCode;
 
+    @Builder.Default
     @Column(name = "is_default")
     private Boolean isDefault = false;
 

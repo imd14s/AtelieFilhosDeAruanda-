@@ -1,25 +1,29 @@
 package com.atelie.ecommerce.api.media;
 
 import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/media")
 public class MediaController {
 
     private final MediaStorageService media;
+    private final com.atelie.ecommerce.application.service.media.MediaMigrationService migrationService;
 
-    public MediaController(MediaStorageService media) {
+    public MediaController(MediaStorageService media,
+            com.atelie.ecommerce.application.service.media.MediaMigrationService migrationService) {
         this.media = media;
+        this.migrationService = migrationService;
+    }
+
+    @PostMapping("/migrate-legacy")
+    public ResponseEntity<?> migrateLegacy() {
+        return ResponseEntity.ok(migrationService.migrateAll());
     }
 
     @PostMapping("/upload")
@@ -28,26 +32,16 @@ public class MediaController {
             @RequestParam(value = "public", defaultValue = "false") boolean isPublic) {
         var saved = media.upload(file, category, isPublic);
 
-        // Append extension to URL so frontend can detect type
-        String ext = "";
-        String original = saved.getOriginalFilename();
-        if (original != null && original.contains(".")) {
-            ext = original.substring(original.lastIndexOf("."));
-        }
-
-        var url = "/api/media/public/" + saved.getId() + ext;
         return ResponseEntity
-                .ok(new MediaResponse(String.valueOf(saved.getId()), url, saved.getType().name(),
+                .ok(new MediaResponse(String.valueOf(saved.getId()), saved.getStorageKey(), saved.getType().name(),
                         saved.getOriginalFilename()));
     }
 
     public record MediaResponse(String id, String url, String type, String filename) {
     }
 
-    // Capture everything after /public/ as "filename" (including ID and extension)
     @GetMapping("/public/{filename:.+}")
-    public ResponseEntity<Resource> downloadPublic(@PathVariable("filename") String filename) {
-        // Extract ID from filename (e.g. "123.mp4" -> 123)
+    public ResponseEntity<Void> downloadPublic(@PathVariable("filename") String filename) {
         long id;
         try {
             String idStr = filename;
@@ -59,41 +53,10 @@ public class MediaController {
             return ResponseEntity.notFound().build();
         }
 
-        Optional<Resource> opt = media.loadPublic(id);
-        if (opt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Resource resource = opt.get();
-
-        String resourceFilename = resource.getFilename() != null ? resource.getFilename() : "file";
-        String contentType = "application/octet-stream";
-        long sizeBytes = -1L;
-
-        try {
-            // Para FileSystemResource, conseguimos acessar o Path e descobrir mime
-            Path path = resource.getFile().toPath();
-            String probed = Files.probeContentType(path);
-            if (probed != null && !probed.isBlank())
-                contentType = probed;
-        } catch (Exception ignored) {
-            // fallback mantém octet-stream
-        }
-
-        try {
-            sizeBytes = resource.contentLength();
-        } catch (Exception ignored) {
-            // sem content-length
-        }
-
-        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resourceFilename + "\"")
-                .contentType(MediaType.parseMediaType(contentType));
-
-        if (sizeBytes >= 0) {
-            builder.header(HttpHeaders.CONTENT_LENGTH, String.valueOf(sizeBytes));
-        }
-
-        return builder.body(resource);
+        return media.getUrl(id)
+                .map(url -> ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create(url))
+                        .<Void>build())
+                .orElse(ResponseEntity.notFound().build());
     }
 }

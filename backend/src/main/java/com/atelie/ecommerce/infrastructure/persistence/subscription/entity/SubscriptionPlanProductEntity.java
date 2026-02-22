@@ -28,6 +28,7 @@ public class SubscriptionPlanProductEntity {
     @JoinColumn(name = "product_id")
     private ProductEntity product;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer quantity = 1;
 

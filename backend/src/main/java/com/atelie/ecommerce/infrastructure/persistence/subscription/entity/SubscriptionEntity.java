@@ -51,6 +51,7 @@ public class SubscriptionEntity {
     @JoinColumn(name = "shipping_address_id")
     private UserAddressEntity shippingAddress;
 
+    @Builder.Default
     @OneToMany(mappedBy = "subscription", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubscriptionItemEntity> items = new ArrayList<>();
 

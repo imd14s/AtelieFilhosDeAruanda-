@@ -59,9 +59,11 @@ public class SubscriptionPlanEntity {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Builder.Default
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubscriptionFrequencyRuleEntity> frequencyRules = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubscriptionPlanProductEntity> products = new ArrayList<>();
 

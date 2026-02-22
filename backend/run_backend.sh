@@ -21,5 +21,11 @@ export FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
 echo "Cleaning up port 8080..."
 fuser -k 8080/tcp 2>/dev/null || true
 
-mvn spring-boot:run -Dmaven.test.skip=true > backend_monitor.log 2>&1 &
-echo " Backend starting... check backend_monitor.log"
+# Otimização de Memória para Plano Free (512MB RAM)
+# -Xmx384m: Limite máximo de Heap
+# -Xss512k: Tamanho da stack por thread
+# -XX:MaxMetaspaceSize=128m
+export MAVEN_OPTS="-Xmx384m -Xss512k -XX:MaxMetaspaceSize=128m"
+
+mvn spring-boot:run -Dmaven.test.skip=true -Dspring-boot.run.jvmArguments="-Xmx384m -Xss512k" > backend_monitor.log 2>&1 &
+echo " Backend starting with memory optimizations... check backend_monitor.log"

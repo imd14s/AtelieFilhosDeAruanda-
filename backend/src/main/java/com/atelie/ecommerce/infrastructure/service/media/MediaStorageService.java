@@ -5,15 +5,11 @@ import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetRepositor
 import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetEntity;
 import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetType;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import java.io.IOException;
-import java.nio.file.*;
 import java.time.Instant;
 import java.util.*;
 
@@ -21,43 +17,31 @@ import java.util.*;
 public class MediaStorageService {
 
     private final MediaAssetRepository repo;
-    private final Path uploadDir;
+    private final CloudinaryService cloudinaryService;
     private final long maxUploadBytes;
     private final List<String> allowedImageMime;
 
-    public MediaStorageService(MediaAssetRepository repo, Environment env) {
+    public MediaStorageService(MediaAssetRepository repo, CloudinaryService cloudinaryService, Environment env) {
         this.repo = repo;
-        this.uploadDir = Paths.get(requireEnv(env, "UPLOAD_DIR"));
-        this.maxUploadBytes = Long.parseLong(requireEnv(env, "MAX_UPLOAD_MB")) * 1024L * 1024L;
-        this.allowedImageMime = Arrays.asList(requireEnv(env, "ALLOWED_IMAGE_MIME").split(","));
-
-        try {
-            Files.createDirectories(uploadDir);
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot create upload directory: " + uploadDir, e);
-        }
+        this.cloudinaryService = cloudinaryService;
+        this.maxUploadBytes = Long.parseLong(requireEnv(env, "MAX_UPLOAD_MB", "50")) * 1024L * 1024L;
+        this.allowedImageMime = Arrays
+                .asList(requireEnv(env, "ALLOWED_IMAGE_MIME", "image/png,image/jpeg,image/webp,video/mp4").split(","));
     }
 
     /** Usado por FileStorageService e ProductImageController */
     public String storeImage(MultipartFile file) {
         validateImage(file);
-        String filename = UUID.randomUUID() + extractExtension(file.getOriginalFilename());
-        Path target = uploadDir.resolve(filename);
-        try {
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to store file: " + filename, e);
-        }
-        return filename;
+        return cloudinaryService.upload(file);
     }
 
     /** Usado por MediaController */
     public MediaAssetEntity upload(MultipartFile file, String category, boolean isPublic) {
-        String filename = storeImage(file);
+        String secureUrl = storeImage(file);
 
         MediaAssetEntity asset = ReflectionPropertyUtils.instantiate(MediaAssetEntity.class);
 
-        asset.setStorageKey(filename);
+        asset.setStorageKey(secureUrl);
         asset.setOriginalFilename(file.getOriginalFilename());
         asset.setMimeType(file.getContentType());
         asset.setSizeBytes(file.getSize());
@@ -74,25 +58,26 @@ public class MediaStorageService {
         return repo.save(asset);
     }
 
-    /** Usado por MediaController: ele trata como Optional<Resource> */
-    public Optional<Resource> loadPublic(long id) {
-        Optional<MediaAssetEntity> opt = repo.findById(id);
-        if (opt.isEmpty())
-            return Optional.empty();
+    /**
+     * Carrega o recurso. Se for uma URL externa, faz o download do conteúdo.
+     */
+    public Optional<org.springframework.core.io.Resource> loadPublic(long id) {
+        return getUrl(id).map(url -> {
+            try {
+                byte[] bytes = new java.net.URL(url).openStream().readAllBytes();
+                return new org.springframework.core.io.ByteArrayResource(bytes, "media-" + id);
+            } catch (java.io.IOException e) {
+                return null;
+            }
+        });
+    }
 
-        MediaAssetEntity asset = opt.get();
-
-        Boolean pub = ReflectionPropertyUtils.tryGetBoolean(asset, "getPublic", "isPublic", "getIsPublic",
-                "isPublicAsset", "getPublicAsset");
-        if (pub != null && !pub)
-            return Optional.empty();
-
-        String filename = ReflectionPropertyUtils.tryGetString(asset, "getFilename", "getFileName");
-        if (filename == null || filename.isBlank())
-            return Optional.empty();
-
-        Path path = uploadDir.resolve(filename);
-        return Optional.of(new FileSystemResource(path));
+    /**
+     * Nota: O carregamento de recursos locais via FileSystemResource é desativado
+     * em favor de URLs diretas do Cloudinary.
+     */
+    public Optional<String> getUrl(long id) {
+        return repo.findById(id).map(MediaAssetEntity::getStorageKey);
     }
 
     // ---------------- validation ----------------
@@ -105,8 +90,6 @@ public class MediaStorageService {
             throw new IllegalArgumentException("File exceeds MAX_UPLOAD_MB");
         }
 
-        // Bypass validation for ADMINS as requested: "dashboard-admin ... não precisa
-        // de validação"
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
@@ -115,25 +98,15 @@ public class MediaStorageService {
 
         String ct = file.getContentType();
         if (ct == null || !allowedImageMime.contains(ct)) {
-            // Se for vídeo e o tipo mime começar com video/, permitimos se estiver na lista
-            // ou se for um fallback seguro
-            // Mas aqui seguimos estritamente a lista do ENV para segurança, que agora
-            // inclui videos.
             throw new IllegalArgumentException(
                     "Tipo de arquivo não permitido: " + ct + ". Permitidos: " + allowedImageMime);
         }
     }
 
-    private static String extractExtension(String name) {
-        if (name == null || !name.contains("."))
-            return "";
-        return name.substring(name.lastIndexOf("."));
-    }
-
-    private static String requireEnv(Environment env, String key) {
+    private static String requireEnv(Environment env, String key, String defaultValue) {
         String value = env.getProperty(key);
         if (value == null || value.trim().isEmpty()) {
-            throw new IllegalStateException("Missing required ENV: " + key);
+            return defaultValue;
         }
         return value.trim();
     }

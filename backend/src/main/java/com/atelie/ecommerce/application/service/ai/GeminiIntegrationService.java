@@ -62,7 +62,7 @@ public class GeminiIntegrationService {
 
                 if (resourceOpt.isPresent()) {
                     Resource resource = resourceOpt.get();
-                    byte[] bytes = Files.readAllBytes(resource.getFile().toPath());
+                    byte[] bytes = resource.getContentAsByteArray();
                     base64Image = Base64.getEncoder().encodeToString(bytes);
 
                     String filename = resource.getFilename();
@@ -173,7 +173,7 @@ public class GeminiIntegrationService {
 
                         if (resourceOpt.isPresent()) {
                             Resource resource = resourceOpt.get();
-                            byte[] bytes = Files.readAllBytes(resource.getFile().toPath());
+                            byte[] bytes = resource.getContentAsByteArray();
                             String base64Image = Base64.getEncoder().encodeToString(bytes);
 
                             Map<String, Object> inlineData = new HashMap<>();
