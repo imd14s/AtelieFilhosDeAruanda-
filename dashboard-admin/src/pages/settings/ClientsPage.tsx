@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User as UserIcon, CheckCircle, XCircle, Search, Loader2 } from 'lucide-react';
+import { User as UserIcon, CheckCircle, XCircle, Search, Loader2, Mail } from 'lucide-react';
 import { UserService } from '../../services/UserService';
 import type { User } from '../../types/user';
 
@@ -64,6 +64,7 @@ export function ClientsPage() {
                             <tr>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Cliente</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">E-mail</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Newsletter</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Conta</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Data de Cadastro</th>
                             </tr>
@@ -87,6 +88,18 @@ export function ClientsPage() {
                                         <div className="flex items-center space-x-2">
                                             <span className="text-sm text-gray-600">{c.email}</span>
                                             {c.active ? <CheckCircle size={14} className="text-green-500" /> : <XCircle size={14} className="text-red-400" />}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="flex justify-center">
+                                            {c.subscribedNewsletter ? (
+                                                <div className="group relative">
+                                                    <Mail size={16} className="text-indigo-600 fill-indigo-100" />
+                                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Assinante</span>
+                                                </div>
+                                            ) : (
+                                                <Mail size={16} className="text-gray-200" />
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">

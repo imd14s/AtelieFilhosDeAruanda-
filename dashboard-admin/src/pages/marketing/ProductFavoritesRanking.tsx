@@ -6,10 +6,10 @@ import clsx from 'clsx';
 
 interface FavoriteRanking {
     productId: string;
-    name: string;
-    mainImage: string;
-    price: number;
-    favoriteCount: number;
+    productName: string;
+    productImage: string;
+    productPrice: number;
+    favCount: number;
 }
 
 export default function ProductFavoritesRanking() {
@@ -17,6 +17,7 @@ export default function ProductFavoritesRanking() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [creatingCampaignFor, setCreatingCampaignFor] = useState<string | null>(null);
+    const [sortBy, setSortBy] = useState<'favCount' | 'productPrice'>('favCount');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -36,14 +37,14 @@ export default function ProductFavoritesRanking() {
     };
 
     const handleCreateCampaign = async (product: FavoriteRanking) => {
-        if (!confirm(`Deseja criar uma campanha de e-mail focada em "${product.name}" para os ${product.favoriteCount} clientes que favoritaram?`)) return;
+        if (!confirm(`Deseja criar uma campanha de e-mail focada em "${product.productName}" para os ${product.favCount} clientes que favoritaram?`)) return;
 
         setCreatingCampaignFor(product.productId);
         try {
             const newCampaign = {
-                name: `Promoção Exclusiva: ${product.name}`,
+                name: `Promoção Exclusiva: ${product.productName}`,
                 subject: `Baixou de preço! O item que você favoritou está em oferta limitadíssima.`,
-                content: `<div style="text-align: center;"><h1>Seu Produto Favorito!</h1><p>Você demonstrou interesse em <strong>${product.name}</strong>. Aproveite essa chance única!</p></div>`,
+                content: `<div style="text-align: center;"><h1>Seu Produto Favorito!</h1><p>Você demonstrou interesse em <strong>${product.productName}</strong>. Aproveite essa chance única!</p></div>`,
                 status: 'PENDING',
                 audience: `PRODUCT:${product.productId}`,
                 signatureId: null
@@ -67,7 +68,13 @@ export default function ProductFavoritesRanking() {
         return `${cleanBase}${url.startsWith('/') ? url : `/${url}`}`;
     };
 
-    const filteredRanking = ranking.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredRanking = ranking
+        .filter(p => p.productName.toLowerCase().includes(searchTerm.toLowerCase()))
+        .sort((a, b) => {
+            if (sortBy === 'favCount') return b.favCount - a.favCount;
+            if (sortBy === 'productPrice') return b.productPrice - a.productPrice;
+            return 0;
+        });
 
     return (
         <div className="space-y-8 pb-20 fade-in">
@@ -76,7 +83,24 @@ export default function ProductFavoritesRanking() {
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
                         <Heart className="text-rose-500 fill-rose-500" size={32} /> Ranking de Favoritos
                     </h1>
-                    <p className="text-gray-500 font-medium mt-1">Veja quais produtos são os mais desejados pelos clientes e crie campanhas focadas.</p>
+                    <div className="flex items-center gap-4 mt-2">
+                        <p className="text-gray-500 font-medium">Veja quais produtos são os mais desejados pelos clientes.</p>
+                        <div className="h-4 w-px bg-gray-200"></div>
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setSortBy('favCount')}
+                                className={clsx("px-3 py-1 text-[10px] font-bold rounded-md transition-all", sortBy === 'favCount' ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
+                            >
+                                MAIS FAVORITADOS
+                            </button>
+                            <button
+                                onClick={() => setSortBy('productPrice')}
+                                className={clsx("px-3 py-1 text-[10px] font-bold rounded-md transition-all", sortBy === 'productPrice' ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}
+                            >
+                                MAIOR PREÇO
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="relative w-full md:w-96">
@@ -121,22 +145,22 @@ export default function ProductFavoritesRanking() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 rounded-lg border bg-white overflow-hidden flex items-center justify-center shrink-0">
-                                                {item.mainImage ? (
-                                                    <img src={getImageUrl(item.mainImage)} alt={item.name} className="w-full h-full object-cover" />
+                                                {item.productImage ? (
+                                                    <img src={getImageUrl(item.productImage)} alt={item.productName} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <ImageIcon className="text-gray-300" size={20} />
                                                 )}
                                             </div>
-                                            <p className="font-bold text-gray-800 drop-shadow-sm line-clamp-2">{item.name}</p>
+                                            <p className="font-bold text-gray-800 drop-shadow-sm line-clamp-2">{item.productName}</p>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 font-medium text-gray-600">
-                                        R$ {item.price.toFixed(2).replace('.', ',')}
+                                        R$ {item.productPrice.toFixed(2).replace('.', ',')}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-center gap-1.5 bg-rose-50 text-rose-600 px-3 py-1.5 rounded-full w-fit mx-auto font-black shadow-inner">
                                             <Heart size={14} className="fill-rose-500" />
-                                            {item.favoriteCount}
+                                            {item.favCount}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">

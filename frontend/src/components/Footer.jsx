@@ -21,19 +21,28 @@ const Footer = () => {
   const handleSubscribe = async (e) => {
     e.preventDefault();
     if (!user) {
-      window.dispatchEvent(new CustomEvent('show-alert', { detail: "Faça login para assinar a Newsletter." }));
+      window.dispatchEvent(new CustomEvent('show-alert', {
+        detail: "Você precisa estar logado para receber cupons exclusivos e novidades!"
+      }));
       window.dispatchEvent(new CustomEvent('open-auth-modal'));
       return;
     }
 
     setLoading(true);
     try {
-      const response = await marketingService.subscribeNewsletter(user.email);
-      setMessage(response.message || "Inscrição realizada com sucesso!");
+      const response = await marketingService.subscribeNewsletter();
+      setMessage(response.message || "Bem-vindo(a) à nossa Newsletter!");
       setSubscribed(true);
+
+      // Feedback visual adicional para premium feel
+      window.dispatchEvent(new CustomEvent('show-alert', {
+        detail: "Sucesso! Verifique seu e-mail para novidades."
+      }));
     } catch (err) {
       console.error("Erro ao assinar:", err);
-      window.dispatchEvent(new CustomEvent('show-alert', { detail: err.message || "Erro ao assinar newsletter" }));
+      window.dispatchEvent(new CustomEvent('show-alert', {
+        detail: err.message || "Erro ao assinar newsletter"
+      }));
     } finally {
       setLoading(false);
     }
@@ -54,22 +63,37 @@ const Footer = () => {
               Espiritualidade com axé, cuidado e propósito. Produtos artesanais feitos com fé e consciência para iluminar o seu caminhar.
             </p>
 
-            {/* Newsletter Integrada */}
-            <div className="pt-2">
-              <p className="font-lato text-[10px] uppercase tracking-widest text-[var(--dourado-suave)] mb-3">Novidades & cupons de desconto! </p>
+            {/* Newsletter Integrada - Versão Chamativa */}
+            <div className="pt-2 bg-[var(--azul-profundo)]/40 p-4 rounded-lg border border-[var(--dourado-suave)]/10">
+              <p className="font-playfair text-sm text-[var(--dourado-suave)] mb-1 italic">Quer ganhar descontos?</p>
+              <p className="font-lato text-[11px] uppercase tracking-widest text-[var(--branco-off-white)]/80 mb-4">Receba novidades & cupons!</p>
+
               {subscribed ? (
-                <p className="text-xs font-lato text-green-400">{message}</p>
+                <div className="flex items-center gap-2 text-green-400 font-lato text-xs animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="w-6 h-6 rounded-full bg-green-400/10 flex items-center justify-center">
+                    <Send size={12} />
+                  </div>
+                  {message}
+                </div>
               ) : (
-                <form onSubmit={handleSubscribe} className="relative max-w-[240px]">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-white/5 border border-[var(--dourado-suave)]/30 hover:bg-[var(--dourado-suave)] hover:text-[var(--azul-profundo)] text-[var(--dourado-suave)] py-2 px-4 text-xs font-lato uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
-                  >
-                    {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                    {user ? "Assinar com 1 clique" : "Faça login para assinar"}
-                  </button>
-                </form>
+                <button
+                  onClick={handleSubscribe}
+                  disabled={loading}
+                  className="w-full group relative overflow-hidden bg-gradient-to-r from-[var(--dourado-suave)] to-[#b8860b] hover:from-[#b8860b] hover:to-[var(--dourado-suave)] text-[var(--azul-profundo)] py-3 px-4 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_6px_20px_rgba(212,175,55,0.4)] hover:-translate-y-0.5"
+                >
+                  <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></div>
+                  <div className="flex items-center justify-center gap-2 relative z-10">
+                    {loading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Mail size={16} className="group-hover:scale-110 transition-transform" />
+                    )}
+                    <span className="font-lato">Quero Novidades e Cupons</span>
+                  </div>
+                </button>
+              )}
+              {!user && !subscribed && (
+                <p className="text-[9px] font-lato text-[var(--branco-off-white)]/40 mt-2 text-center italic">* Exclusivo para membros logados</p>
               )}
             </div>
           </div>

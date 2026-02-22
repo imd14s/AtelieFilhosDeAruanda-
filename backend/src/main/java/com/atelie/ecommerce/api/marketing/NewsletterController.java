@@ -10,8 +10,12 @@ import com.atelie.ecommerce.api.config.DynamicConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
+import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -28,26 +32,38 @@ public class NewsletterController {
     private final EmailQueueRepository emailQueueRepository;
     private final DynamicConfigService configService;
     private final CommunicationService communicationService;
+    private final UserRepository userRepository;
 
     public NewsletterController(NewsletterSubscriberRepository subscriberRepository,
             EmailQueueRepository emailQueueRepository,
             DynamicConfigService configService,
-            CommunicationService communicationService) {
+            CommunicationService communicationService,
+            UserRepository userRepository) {
         this.subscriberRepository = subscriberRepository;
         this.emailQueueRepository = emailQueueRepository;
         this.configService = configService;
         this.communicationService = communicationService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/subscribe")
     @Transactional
-    public ResponseEntity<?> subscribe(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        if (email == null || !email.contains("@")) {
-            return ResponseEntity.badRequest().body(Map.of("message", "E-mail inválido"));
+    public ResponseEntity<?> subscribe() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseEntity.status(401).body(Map.of("message", "Você precisa estar logado para se inscrever."));
         }
 
+        String email = auth.getName();
         try {
+            // 1. Sincronizar na entidade User
+            userRepository.findByEmail(email).ifPresent(user -> {
+                user.setSubscribedNewsletter(true);
+                userRepository.save(user);
+            });
+
+            // 2. Garantir registro no NewsletterSubscriber para compatibilidade de
+            // campanhas
             NewsletterSubscriber subscriber = subscriberRepository.findByEmail(email)
                     .orElse(NewsletterSubscriber.builder()
                             .email(email)
@@ -64,10 +80,13 @@ public class NewsletterController {
             subscriber.setActive(true);
             subscriberRepository.save(subscriber);
 
+            // 3. Enviar e-mail de boas-vindas
+            communicationService.sendAutomation(AutomationType.NEWSLETTER_CONFIRM, email, Map.of("name", email));
+
             return ResponseEntity
                     .ok(Map.of("message", "Inscrição realizada com sucesso! Bem-vindo(a) à nossa Newsletter."));
         } catch (Exception e) {
-            log.error("Error subscribing email {}: {}", email, e.getMessage());
+            log.error("Error subscribing logged user {}: {}", email, e.getMessage());
             return ResponseEntity.internalServerError().body(Map.of("message", "Erro interno ao processar inscrição"));
         }
     }

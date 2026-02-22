@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import com.atelie.ecommerce.api.config.DynamicConfigService;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.HashMap;
@@ -21,42 +22,74 @@ public class PriceDropNotificationService {
     private final EmailCampaignService campaignService;
     private final EmailTemplateRepository templateRepository;
 
+    private final DynamicConfigService configService;
+
     public void notifyPriceDrop(ProductEntity product) {
         log.info("Processando baixa de preço para o produto: {} (ID: {})", product.getName(), product.getId());
 
-        // Buscar template padrão de promoção/favoritos se existir, ou usar um inline
-        // simples
-        String content = "<h1>O preço baixou!</h1>" +
-                "<p>O item que você favoritou, <strong>" + product.getName()
-                + "</strong>, agora está saindo por apenas <strong>R$ " + product.getPrice() + "</strong>!</p>" +
-                "<p>Aproveite antes que acabe o estoque.</p>";
+        BigDecimal currentPrice = product.getPrice();
+        BigDecimal oldPrice = product.getLastNotifiedPrice();
 
-        // Tentar buscar um template específico de baixa de preço
-        EmailTemplate template = templateRepository.findByName("FAVORITE_PRICE_DROP").orElse(null);
-        if (template != null) {
-            // Lógica de substituição de variáveis se necessário (futuro)
-            content = template.getContent();
+        if (oldPrice == null || oldPrice.compareTo(currentPrice) <= 0) {
+            return; // Segurança extra
         }
 
-        // Usar a lógica já existente da CampaignService para disparar para a audiência
-        // PRODUCT:id
-        // Criamos uma campanha "virtual" ou apenas usamos o método de envio direto
-        // Para manter simplicidade e rastreabilidade, vamos apenas registrar no log por
-        // enquanto
-        // ou criar uma campanha temporária de sistema.
+        // Calcular porcentagem de desconto
+        double discount = ((oldPrice.doubleValue() - currentPrice.doubleValue()) / oldPrice.doubleValue()) * 100;
+        String discountPercentage = String.format("%.0f", discount);
+
+        // Buscar template padrão de baixa de preço
+        EmailTemplate template = templateRepository
+                .findByAutomationTypeAndIsActiveTrue(
+                        com.atelie.ecommerce.domain.marketing.model.AutomationType.PRODUCT_PRICE_DROP)
+                .orElse(null);
+
+        String subject = "Baixou o preço! " + product.getName() + " com " + discountPercentage + "% OFF";
+        String content;
+
+        if (template != null) {
+            subject = template.getSubject();
+            content = template.getContent();
+        } else {
+            content = "<h1>O preço baixou!</h1>" +
+                    "<p>O item que você favoritou, <strong>" + product.getName()
+                    + "</strong>, agora está saindo por apenas <strong>R$ " + currentPrice + "</strong>!</p>" +
+                    "<p>Aproveite agora!</p>";
+        }
+
+        // Preparar contexto para substituição
+        String frontendUrl = configService.get("FRONTEND_URL", "http://localhost:5173");
+        Map<String, String> context = new HashMap<>();
+        context.put("product_name", product.getName());
+        context.put("product_description", product.getDescription() != null ? product.getDescription() : "");
+        context.put("old_price", oldPrice.toString());
+        context.put("new_price", currentPrice.toString());
+        context.put("discount_percentage", discountPercentage);
+        context.put("product_image", getImageUrl(product.getMainImage()));
+        context.put("product_link",
+                frontendUrl + "/produto/" + (product.getSlug() != null ? product.getSlug() : product.getId()));
+        context.put("customer_name", "Cliente"); // Placeholder genérico para campanhas em massa
+
+        // Realizar substituição manual para o subject (o content será substituído no
+        // loop da campanha se usássemos placeholders lá, mas passamos pronto aqui)
+        for (Map.Entry<String, String> entry : context.entrySet()) {
+            subject = subject.replace("{{{" + entry.getKey() + "}}}", entry.getValue());
+            subject = subject.replace("{{" + entry.getKey() + "}}", entry.getValue());
+            content = content.replace("{{{" + entry.getKey() + "}}}", entry.getValue());
+            content = content.replace("{{" + entry.getKey() + "}}", entry.getValue());
+        }
 
         log.info("Notificando interessados no produto {}. Audiência: PRODUCT:{}", product.getName(), product.getId());
 
-        // Na prática, chamamos o envio de e-mails aqui.
-        // Como o EmailCampaignService.startManualCampaign processa a audiência
-        // "PRODUCT:id",
-        // podemos reutilizá-lo criando um objeto de campanha efêmero ou chamando um
-        // método de baixo nível.
+        campaignService.sendManualMessage(subject, content, "PRODUCT:" + product.getId());
+    }
 
-        // Implementação simplificada:
-        campaignService.sendManualMessage(
-                "Baixou o preço! " + product.getName(),
-                content,
-                "PRODUCT:" + product.getId());
+    private String getImageUrl(String imagePath) {
+        if (imagePath == null || imagePath.isEmpty())
+            return "";
+        if (imagePath.startsWith("http"))
+            return imagePath;
+        String backendUrl = configService.get("BACKEND_URL", "http://localhost:8080");
+        return backendUrl + (imagePath.startsWith("/") ? imagePath : "/" + imagePath);
     }
 }

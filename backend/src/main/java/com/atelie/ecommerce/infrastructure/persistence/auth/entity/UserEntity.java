@@ -52,6 +52,9 @@ public class UserEntity {
     @Column(name = "mp_customer_id")
     private String mpCustomerId;
 
+    @Column(name = "subscribed_newsletter")
+    private Boolean subscribedNewsletter = false;
+
     // --- CONSTRUTOR DE COMPATIBILIDADE (Resgate) ---
     // Necessário para AuthService e AdminBootstrap funcionarem sem refatoração
     // profunda
@@ -62,6 +65,7 @@ public class UserEntity {
         this.role = role;
         this.emailVerified = "ADMIN".equals(role); // Admin já nasce verificado
         this.active = true;
+        this.subscribedNewsletter = false;
     }
 
     @PrePersist
@@ -180,5 +184,13 @@ public class UserEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Boolean getSubscribedNewsletter() {
+        return subscribedNewsletter;
+    }
+
+    public void setSubscribedNewsletter(Boolean subscribedNewsletter) {
+        this.subscribedNewsletter = subscribedNewsletter;
     }
 }

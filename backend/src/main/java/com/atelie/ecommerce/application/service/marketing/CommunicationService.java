@@ -25,7 +25,18 @@ public class CommunicationService {
 
     @Transactional
     public void sendAutomation(AutomationType type, String recipient, Map<String, Object> context) {
-        log.info("Processando automação {} para {}", type, recipient);
+        // Por padrão, decide a prioridade baseada no tipo se não for informada
+        EmailQueue.EmailPriority priority = (type == AutomationType.USER_VERIFY
+                || type == AutomationType.PASSWORD_RESET)
+                        ? EmailQueue.EmailPriority.HIGH
+                        : EmailQueue.EmailPriority.MEDIUM;
+        sendAutomation(type, recipient, context, priority);
+    }
+
+    @Transactional
+    public void sendAutomation(AutomationType type, String recipient, Map<String, Object> context,
+            EmailQueue.EmailPriority priority) {
+        log.info("Processando automação {} para {} com prioridade {}", type, recipient, priority);
 
         Optional<EmailTemplate> templateOpt = emailTemplateRepository.findByAutomationTypeAndIsActiveTrue(type);
 
@@ -38,13 +49,17 @@ public class CommunicationService {
         String subject = template.getSubject();
         String content = template.getContent();
 
-        // Substituição de placeholders {{key}}
+        // Substituição de placeholders {{{key}}} - Suportando o padrão Triplo-chaves
+        // usado no Hub
         if (context != null) {
             for (Map.Entry<String, Object> entry : context.entrySet()) {
-                String placeholder = "{{" + entry.getKey() + "}}";
                 String value = entry.getValue() != null ? entry.getValue().toString() : "";
-                content = content.replace(placeholder, value);
-                subject = subject.replace(placeholder, value);
+
+                // Suporta {{key}} e {{{key}}}
+                content = content.replace("{{{" + entry.getKey() + "}}}", value);
+                content = content.replace("{{" + entry.getKey() + "}}", value);
+                subject = subject.replace("{{{" + entry.getKey() + "}}}", value);
+                subject = subject.replace("{{" + entry.getKey() + "}}", value);
             }
         }
 
@@ -52,14 +67,14 @@ public class CommunicationService {
                 .recipient(recipient)
                 .subject(subject)
                 .content(content)
-                .priority(EmailQueue.EmailPriority.HIGH)
+                .priority(priority != null ? priority : EmailQueue.EmailPriority.LOW)
                 .status(EmailQueue.EmailStatus.PENDING)
                 .type(type.name())
                 .signatureId(template.getSignatureId())
                 .build();
 
         EmailQueue savedEmail = emailQueueRepository.save(email);
-        log.info("E-mail de automação {} enfileirado para {}", type, recipient);
+        log.info("E-mail de automação {} enfileirado para {} com ID {}", type, recipient, savedEmail.getId());
 
         // Se for prioridade HIGH (como USER_VERIFY ou PASSWORD_RESET), tenta disparar
         // imediatamente

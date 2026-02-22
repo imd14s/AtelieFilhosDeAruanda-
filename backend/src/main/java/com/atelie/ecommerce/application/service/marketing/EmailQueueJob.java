@@ -31,7 +31,7 @@ public class EmailQueueJob {
         this.campaignRepository = campaignRepository;
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 5000)
     @Transactional
     public void processQueue() {
         log.info("[DEBUG-NEWSLETTER] EmailQueueJob.processQueue() executado em {}", LocalDateTime.now());
@@ -50,7 +50,6 @@ public class EmailQueueJob {
         List<EmailQueue> pendingEmails = emailQueueRepository.findPendingEmails(LocalDateTime.now());
 
         if (pendingEmails.isEmpty()) {
-            log.info("[DEBUG-NEWSLETTER] Nenhum e-mail pendente na fila.");
             return;
         }
 
@@ -77,12 +76,14 @@ public class EmailQueueJob {
             }
             emailQueueRepository.save(email);
 
-            // Small delay to avoid triggering spam filters
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                break;
+            // Skip delay for HIGH priority emails to meet the < 2s requirement
+            if (email.getPriority() != EmailQueue.EmailPriority.HIGH) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
         }
     }

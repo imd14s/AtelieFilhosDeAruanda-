@@ -6,6 +6,7 @@ export interface User {
     email: string;
     role: Role;
     active: boolean;
+    subscribedNewsletter?: boolean;
     createdAt: string;
     // Optional for compatibility if backend doesn't send them yet
     permissions?: string[];
