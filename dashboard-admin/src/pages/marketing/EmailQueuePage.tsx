@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, RefreshCcw, Trash2, AlertCircle, CheckCircle, Clock, Send, Zap, PenTool } from 'lucide-react';
+import { Mail, RefreshCcw, Trash2, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { api } from '../../api/axios';
 import clsx from 'clsx';
 

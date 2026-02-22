@@ -7,7 +7,7 @@ import clsx from 'clsx';
 const {
   LayoutDashboard, ShoppingBag, Settings, LogOut, Package,
   Zap, Users, Shield, Truck, CreditCard, Ticket, Mail,
-  ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X, Bell, PenTool, Send
+  ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X, Bell
 } = Icons;
 
 console.log('Icons loaded:', { Bell: !!Bell });

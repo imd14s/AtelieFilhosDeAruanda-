@@ -21,11 +21,9 @@ import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 import { CategoriesPage } from './pages/categories/CategoriesPage';
 import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage';
 import { SubscribersPage } from './pages/marketing/SubscribersPage';
-import { SignaturesPage } from './pages/marketing/SignaturesPage';
 import EmailMarketingHub from './pages/marketing/EmailMarketingHub';
 import ProductFavoritesRanking from './pages/marketing/ProductFavoritesRanking';
 import { ClientsPage } from './pages/settings/ClientsPage';
-import { EmailSettingsPage } from './pages/settings/EmailSettingsPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 console.log('App initialization - Routes loaded');

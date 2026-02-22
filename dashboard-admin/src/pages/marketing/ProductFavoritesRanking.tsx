@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Send, Search, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Heart, Send, Search, Image as ImageIcon } from 'lucide-react';
 import { api } from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
