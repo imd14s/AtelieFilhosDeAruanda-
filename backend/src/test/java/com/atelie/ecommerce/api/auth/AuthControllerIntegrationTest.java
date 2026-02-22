@@ -1,6 +1,7 @@
 package com.atelie.ecommerce.api.auth;
 
 import com.atelie.ecommerce.api.auth.dto.LoginRequest;
+import com.atelie.ecommerce.api.auth.dto.LoginResponse;
 import com.atelie.ecommerce.api.auth.dto.RegisterRequest;
 import com.atelie.ecommerce.application.service.auth.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +40,7 @@ public class AuthControllerIntegrationTest {
         void login_ValidCredentials_ShouldReturnToken() throws Exception {
                 LoginRequest request = new LoginRequest("test@example.com", "password");
 
-                given(authService.login(any(LoginRequest.class))).willReturn("mock-jwt-token");
+                given(authService.login(any(LoginRequest.class))).willReturn(new LoginResponse("mock-jwt-token"));
 
                 mockMvc.perform(post("/api/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -131,11 +132,10 @@ public class AuthControllerIntegrationTest {
                 request.setEmail("new@example.com");
                 request.setPassword("password");
 
-
                 mockMvc.perform(post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isCreated()); // or isUnauthorized? Usually AccessDenied -> 403
-                                                                    // Forbidden
+                                                                  // Forbidden
         }
 }

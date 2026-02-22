@@ -2,9 +2,9 @@ spring:
   application:
     name: ecommerce-api
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ecommerce_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:local_dev_password}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -15,8 +15,8 @@ spring:
         default_batch_fetch_size: 50
   servlet:
     multipart:
-      max-file-size: ${MAX_UPLOAD_MB:10}MB
-      max-request-size: ${MAX_UPLOAD_MB:10}MB
+      max-file-size: ${MAX_UPLOAD_MB:50}MB
+      max-request-size: ${MAX_UPLOAD_MB:50}MB
   jackson:
     serialization:
       fail-on-empty-beans: false
@@ -29,10 +29,10 @@ spring:
     placeholders:
       PGCRYPTO_EXTENSION: ${PGCRYPTO_EXTENSION:CREATE EXTENSION IF NOT EXISTS pgcrypto;}
   mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:user}
+    password: ${MAIL_PASSWORD:pass}
     properties:
       mail:
         smtp:
@@ -57,7 +57,7 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    enabled: ${SWAGGER_ENABLED:false}
+    enabled: ${SWAGGER_ENABLED:true}
     tags-sorter: alpha
     operations-sorter: alpha
 
@@ -65,7 +65,7 @@ springdoc:
 app:
   upload:
     allowed-mime-types: ${ALLOWED_IMAGE_MIME:image/png,image/jpeg,image/webp}
-    max-size-mb: ${MAX_UPLOAD_MB:10}
+    max-size-mb: ${MAX_UPLOAD_MB:50}
 
 # --- LOGGING ---
 logging:

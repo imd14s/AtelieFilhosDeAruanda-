@@ -27,7 +27,7 @@ public class WebhookController {
     private final com.atelie.ecommerce.application.integration.MarketplaceCoreService marketplaceCoreService;
 
     // CORREÇÃO: Sem default value. Deve vir do ambiente obrigatoriamente.
-    @Value("${WEBHOOK_SECRET}")
+    @Value("${WEBHOOK_SECRET:dummy_webhook_secret_for_dev}")
     private String webhookSecret;
 
     public WebhookController(OrderService orderService, OrderRepository orderRepository,

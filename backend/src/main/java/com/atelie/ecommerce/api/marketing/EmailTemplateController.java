@@ -30,6 +30,15 @@ public class EmailTemplateController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping
+    public ResponseEntity<EmailTemplate> create(@RequestBody EmailTemplate template) {
+        if (template.getSlug() == null || template.getSlug().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        template.setId(null); // Garantir que o Hibernate gere um novo UUID
+        return ResponseEntity.ok(repository.save(template));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<EmailTemplate> update(@PathVariable UUID id, @RequestBody EmailTemplate template) {
         return repository.findById(id).map(existing -> {
@@ -40,5 +49,14 @@ public class EmailTemplateController {
             existing.setActive(template.isActive());
             return ResponseEntity.ok(repository.save(existing));
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        if (!repository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        repository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

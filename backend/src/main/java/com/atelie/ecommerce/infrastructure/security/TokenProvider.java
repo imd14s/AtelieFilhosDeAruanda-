@@ -19,11 +19,11 @@ import java.util.function.Function;
 @Component
 public class TokenProvider {
 
-    @Value("${JWT_SECRET}")
+    @Value("${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
     private String secret;
 
     // ENV: JWT_EXPIRATION_MS (ex: 86400000)
-    @Value("${JWT_EXPIRATION_MS}")
+    @Value("${JWT_EXPIRATION_MS:86400000}")
     private long expirationMs;
 
     // ENV: JWT_ROLES_CLAIM (default "roles")
