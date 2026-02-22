@@ -6,6 +6,7 @@ import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.atelie.ecommerce.api.marketing.dto.FavoriteRankingDTO;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +29,11 @@ public class ProductFavoriteController {
     @GetMapping("/user/{userId}")
     public List<ProductFavoriteEntity> getMyFavorites(@PathVariable UUID userId) {
         return favoriteRepository.findByUserId(userId);
+    }
+
+    @GetMapping("/ranking")
+    public ResponseEntity<List<FavoriteRankingDTO>> getRanking() {
+        return ResponseEntity.ok(favoriteRepository.findFavoriteRanking());
     }
 
     @PostMapping

@@ -2,22 +2,35 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, Instagram, Video, Youtube, ShoppingBag, Heart, Send, Loader2 } from 'lucide-react';
 import marketingService from '../services/marketingService';
+import { storeService } from '../services/storeService';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [message, setMessage] = useState('');
+  const [user, setUser] = useState(null);
+
+  React.useEffect(() => {
+    const initUser = () => setUser(storeService.auth.getUser());
+    initUser();
+    window.addEventListener('auth-changed', initUser);
+    return () => window.removeEventListener('auth-changed', initUser);
+  }, []);
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
+    if (!user) {
+      window.dispatchEvent(new CustomEvent('show-alert', { detail: "Faça login para assinar a Newsletter." }));
+      window.dispatchEvent(new CustomEvent('open-auth-modal'));
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await marketingService.subscribeNewsletter(email);
-      setMessage(response.message || "Inscrição realizada! Verifique seu e-mail.");
+      const response = await marketingService.subscribeNewsletter(user.email);
+      setMessage(response.message || "Inscrição realizada com sucesso!");
       setSubscribed(true);
-      setEmail('');
     } catch (err) {
       console.error("Erro ao assinar:", err);
       window.dispatchEvent(new CustomEvent('show-alert', { detail: err.message || "Erro ao assinar newsletter" }));
@@ -43,25 +56,18 @@ const Footer = () => {
 
             {/* Newsletter Integrada */}
             <div className="pt-2">
-              <p className="font-lato text-[10px] uppercase tracking-widest text-[var(--dourado-suave)] mb-3">Receba nosso Axé</p>
+              <p className="font-lato text-[10px] uppercase tracking-widest text-[var(--dourado-suave)] mb-3">Novidades & cupons de desconto! </p>
               {subscribed ? (
                 <p className="text-xs font-lato text-green-400">{message}</p>
               ) : (
                 <form onSubmit={handleSubscribe} className="relative max-w-[240px]">
-                  <input
-                    type="email"
-                    placeholder="Seu e-mail"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full bg-white/5 border border-white/10 py-2 pl-3 pr-10 text-xs font-lato focus:outline-none focus:border-[#C9A24D] transition-colors"
-                  />
                   <button
                     type="submit"
                     disabled={loading}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--dourado-suave)] hover:text-white transition-colors"
+                    className="w-full bg-white/5 border border-[var(--dourado-suave)]/30 hover:bg-[var(--dourado-suave)] hover:text-[var(--azul-profundo)] text-[var(--dourado-suave)] py-2 px-4 text-xs font-lato uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    {user ? "Assinar com 1 clique" : "Faça login para assinar"}
                   </button>
                 </form>
               )}

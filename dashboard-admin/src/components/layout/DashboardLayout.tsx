@@ -54,6 +54,7 @@ export function DashboardLayout() {
       label: 'Marketing',
       children: [
         { icon: Mail, label: 'E-mail Marketing', path: '/marketing/email' },
+        { icon: Icons.Heart, label: 'Ranking de Favoritos', path: '/marketing/favorites' },
         { icon: Ticket, label: 'Cupons', path: '/marketing/coupons' },
         { icon: Mail, label: 'Recuperação', path: '/marketing/abandoned-cart' },
       ]

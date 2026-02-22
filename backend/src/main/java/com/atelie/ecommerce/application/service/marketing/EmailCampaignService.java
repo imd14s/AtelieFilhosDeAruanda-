@@ -8,6 +8,7 @@ import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailCampaignRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.NewsletterSubscriberRepository;
+import com.atelie.ecommerce.infrastructure.persistence.marketing.ProductFavoriteRepository;
 import com.atelie.ecommerce.api.config.DynamicConfigService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class EmailCampaignService {
     private final EmailCampaignRepository campaignRepository;
     private final EmailQueueRepository emailQueueRepository;
     private final NewsletterSubscriberRepository subscriberRepository;
+    private final ProductFavoriteRepository productFavoriteRepository;
     private final UserRepository userRepository;
     private final EmailSignatureService signatureService;
     private final DynamicConfigService configService;
@@ -30,12 +32,14 @@ public class EmailCampaignService {
     public EmailCampaignService(EmailCampaignRepository campaignRepository,
             EmailQueueRepository emailQueueRepository,
             NewsletterSubscriberRepository subscriberRepository,
+            ProductFavoriteRepository productFavoriteRepository,
             UserRepository userRepository,
             EmailSignatureService signatureService,
             DynamicConfigService configService) {
         this.campaignRepository = campaignRepository;
         this.emailQueueRepository = emailQueueRepository;
         this.subscriberRepository = subscriberRepository;
+        this.productFavoriteRepository = productFavoriteRepository;
         this.userRepository = userRepository;
         this.signatureService = signatureService;
         this.configService = configService;
@@ -105,26 +109,8 @@ public class EmailCampaignService {
             throw new IllegalStateException("Apenas campanhas pendentes podem ser iniciadas");
         }
 
-        // DTO Interno para rastrear Email e Token de Unsubscribe
-        record RecipientInfo(String email, String token) {
-        }
-        List<RecipientInfo> recipients = new ArrayList<>();
-
-        if ("NEWSLETTER_SUBSCRIBERS".equals(campaign.getAudience())) {
-            recipients = subscriberRepository.findAll().stream()
-                    .filter(NewsletterSubscriber::getEmailVerified)
-                    .map(sub -> new RecipientInfo(sub.getEmail(), sub.getVerificationToken()))
-                    .collect(Collectors.toList());
-        } else if ("ALL_CUSTOMERS".equals(campaign.getAudience())) {
-            recipients = userRepository.findAll().stream()
-                    .filter(u -> "CUSTOMER".equals(u.getRole()) && u.getEmailVerified())
-                    .map(u -> new RecipientInfo(u.getEmail(), "no-token")) // Customers without newsletter sub won't
-                                                                           // have opt-out standard here.
-                    .collect(Collectors.toList());
-        } else {
-            // Default to test or small audience
-            recipients = List.of();
-        }
+        // Usar o RecipientInfo definido como membro da classe
+        List<RecipientInfo> recipients = fetchRecipients(campaign.getAudience());
 
         campaign.setTotalRecipients(recipients.size());
         campaign.setStatus(EmailCampaign.CampaignStatus.SENDING);
@@ -181,5 +167,68 @@ public class EmailCampaignService {
 
     public List<EmailCampaign> listAll() {
         return campaignRepository.findAll();
+    }
+
+    private record RecipientInfo(String email, String token) {
+    }
+
+    private List<RecipientInfo> fetchRecipients(String audience) {
+        if ("NEWSLETTER_SUBSCRIBERS".equals(audience)) {
+            return subscriberRepository.findAll().stream()
+                    .filter(NewsletterSubscriber::getEmailVerified)
+                    .map(sub -> new RecipientInfo(sub.getEmail(), sub.getVerificationToken()))
+                    .collect(Collectors.toList());
+        } else if ("ALL_CUSTOMERS".equals(audience)) {
+            return userRepository.findAll().stream()
+                    .filter(u -> "CUSTOMER".equals(u.getRole()) && u.getEmailVerified())
+                    .map(u -> new RecipientInfo(u.getEmail(), "no-token"))
+                    .collect(Collectors.toList());
+        } else if (audience.startsWith("PRODUCT:")) {
+            try {
+                UUID productId = UUID.fromString(audience.substring(8));
+                return productFavoriteRepository.findByProductId(productId).stream()
+                        .map(fav -> new RecipientInfo(fav.getUser().getEmail(), "no-token"))
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                return List.of();
+            }
+        }
+        return List.of();
+    }
+
+    @Transactional
+    public void sendManualMessage(String subject, String content, String audience) {
+        // Criar uma campanha de sistema para rastreamento
+        EmailCampaign systemCampaign = new EmailCampaign();
+        systemCampaign.setName("AUTO: " + subject);
+        systemCampaign.setSubject(subject);
+        systemCampaign.setContent(content);
+        systemCampaign.setAudience(audience);
+        systemCampaign.setStatus(EmailCampaign.CampaignStatus.SENDING);
+        EmailCampaign saved = campaignRepository.save(systemCampaign);
+
+        List<RecipientInfo> recipients = fetchRecipients(audience);
+        saved.setTotalRecipients(recipients.size());
+
+        String frontendUrl = configService.get("FRONTEND_URL", "http://localhost:5173");
+
+        for (RecipientInfo recipient : recipients) {
+            EmailQueue email = new EmailQueue();
+            email.setRecipient(recipient.email());
+            email.setSubject(subject);
+
+            String customContent = content;
+            if (!"no-token".equals(recipient.token())) {
+                String unsubscribeUrl = frontendUrl + "/unsubscribe?token=" + recipient.token();
+                customContent += "<br><p style='font-size:11px;color:#888;'>Para sair: <a href='" + unsubscribeUrl
+                        + "'>clique aqui</a></p>";
+            }
+
+            email.setContent(customContent);
+            email.setCampaignId(saved.getId());
+            email.setType("AUTOMATION");
+            email.setStatus(EmailQueue.EmailStatus.PENDING);
+            emailQueueRepository.save(email);
+        }
     }
 }

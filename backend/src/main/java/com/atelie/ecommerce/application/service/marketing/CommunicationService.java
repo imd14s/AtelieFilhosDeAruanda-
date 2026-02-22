@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class CommunicationService {
 
     private final EmailQueueRepository emailQueueRepository;
     private final EmailTemplateRepository emailTemplateRepository;
+    private final EmailService emailService;
 
     @Transactional
     public void sendAutomation(AutomationType type, String recipient, Map<String, Object> context) {
@@ -56,7 +58,27 @@ public class CommunicationService {
                 .signatureId(template.getSignatureId())
                 .build();
 
-        emailQueueRepository.save(email);
+        EmailQueue savedEmail = emailQueueRepository.save(email);
         log.info("E-mail de automação {} enfileirado para {}", type, recipient);
+
+        // Se for prioridade HIGH (como USER_VERIFY ou PASSWORD_RESET), tenta disparar
+        // imediatamente
+        if (savedEmail.getPriority() == EmailQueue.EmailPriority.HIGH) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    log.info("Iniciando envio assíncrono imediato para {}", recipient);
+                    emailService.sendEmail(savedEmail);
+                    savedEmail.setStatus(EmailQueue.EmailStatus.SENT);
+                    savedEmail.setSentAt(java.time.LocalDateTime.now());
+                    emailQueueRepository.save(savedEmail);
+                    log.info("Envio assíncrono imediato concluído para {}", recipient);
+                } catch (Exception e) {
+                    log.error("Falha no envio assíncrono imediato para {}: {}", recipient, e.getMessage());
+                    savedEmail.setLastError(e.getMessage());
+                    savedEmail.setRetryCount(savedEmail.getRetryCount() + 1);
+                    emailQueueRepository.save(savedEmail);
+                }
+            });
+        }
     }
 }

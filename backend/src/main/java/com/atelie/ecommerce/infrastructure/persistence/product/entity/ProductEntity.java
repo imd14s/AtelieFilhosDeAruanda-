@@ -47,6 +47,9 @@ public class ProductEntity {
     @Column(name = "original_price")
     private BigDecimal originalPrice;
 
+    @Column(name = "last_notified_price")
+    private BigDecimal lastNotifiedPrice;
+
     @JsonProperty("stock")
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
@@ -367,5 +370,13 @@ public class ProductEntity {
 
     public void setLength(BigDecimal length) {
         this.length = length;
+    }
+
+    public BigDecimal getLastNotifiedPrice() {
+        return lastNotifiedPrice;
+    }
+
+    public void setLastNotifiedPrice(BigDecimal lastNotifiedPrice) {
+        this.lastNotifiedPrice = lastNotifiedPrice;
     }
 }

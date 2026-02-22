@@ -23,6 +23,7 @@ import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPa
 import { SubscribersPage } from './pages/marketing/SubscribersPage';
 import { SignaturesPage } from './pages/marketing/SignaturesPage';
 import EmailMarketingHub from './pages/marketing/EmailMarketingHub';
+import ProductFavoritesRanking from './pages/marketing/ProductFavoritesRanking';
 import { ClientsPage } from './pages/settings/ClientsPage';
 import { EmailSettingsPage } from './pages/settings/EmailSettingsPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -60,6 +61,7 @@ function AppRoutes() {
         <Route path="/marketing/campaigns" element={<CampaignsPage />} />
         <Route path="/marketing/subscribers" element={<SubscribersPage />} />
         <Route path="/marketing/email" element={<EmailMarketingHub />} />
+        <Route path="/marketing/favorites" element={<ProductFavoritesRanking />} />
         <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
         <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
         <Route path="/automations" element={<AutomationsPage />} />

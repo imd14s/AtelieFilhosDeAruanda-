@@ -8,6 +8,7 @@ import com.atelie.ecommerce.application.service.marketing.CommunicationService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.atelie.ecommerce.api.config.DynamicConfigService;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -19,13 +20,16 @@ public class PasswordResetService {
     private final UserRepository userRepository;
     private final CommunicationService communicationService;
     private final PasswordEncoder passwordEncoder;
+    private final DynamicConfigService configService;
 
     public PasswordResetService(UserRepository userRepository,
             CommunicationService communicationService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            DynamicConfigService configService) {
         this.userRepository = userRepository;
         this.communicationService = communicationService;
         this.passwordEncoder = passwordEncoder;
+        this.configService = configService;
     }
 
     @Transactional
@@ -38,10 +42,13 @@ public class PasswordResetService {
         user.setResetPasswordExpiresAt(LocalDateTime.now().plusHours(2));
         userRepository.save(user);
 
+        String frontendUrl = configService.requireString("FRONTEND_URL");
+        String resetLink = frontendUrl + "/redefinir-senha?token=" + token;
+
         communicationService.sendAutomation(
                 AutomationType.PASSWORD_RESET,
                 email,
-                Map.of("token", token, "name", user.getName()));
+                Map.of("token", token, "reset_link", resetLink, "name", user.getName()));
     }
 
     @Transactional

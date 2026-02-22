@@ -52,36 +52,20 @@ public class NewsletterController {
                     .orElse(NewsletterSubscriber.builder()
                             .email(email)
                             .active(true)
-                            .emailVerified(false)
+                            .emailVerified(true)
                             .verificationToken(UUID.randomUUID().toString())
                             .build());
 
-            if (Boolean.TRUE.equals(subscriber.getEmailVerified())) {
-                return ResponseEntity.ok(Map.of("message", "Você já está inscrito e verificado!"));
+            if (Boolean.TRUE.equals(subscriber.getEmailVerified()) && Boolean.TRUE.equals(subscriber.getActive())) {
+                return ResponseEntity.ok(Map.of("message", "Você já está inscrito na nossa Newsletter!"));
             }
 
+            subscriber.setEmailVerified(true);
+            subscriber.setActive(true);
             subscriberRepository.save(subscriber);
 
-            // Evitar duplicatas na fila se já houver um e-mail PENDING do mesmo tipo para o
-            // mesmo destinatário
-            boolean alreadyQueued = emailQueueRepository.existsByRecipientAndTypeAndStatus(
-                    email, "NEWSLETTER_VERIFICATION", EmailQueue.EmailStatus.PENDING);
-
-            if (alreadyQueued) {
-                return ResponseEntity.ok(
-                        Map.of("message", "Um e-mail de confirmação já foi enviado. Verifique sua caixa de entrada."));
-            }
-
-            // Send Automation Email using CommunicationService
-            String frontendUrl = configService.requireString("FRONTEND_URL");
-            String verificationLink = frontendUrl + "/verify-newsletter?token=" + subscriber.getVerificationToken();
-
-            communicationService.sendAutomation(
-                    AutomationType.NEWSLETTER_CONFIRM,
-                    email,
-                    Map.of("verification_link", verificationLink));
-
-            return ResponseEntity.ok(Map.of("message", "Inscrição realizada! Verifique seu e-mail para confirmar."));
+            return ResponseEntity
+                    .ok(Map.of("message", "Inscrição realizada com sucesso! Bem-vindo(a) à nossa Newsletter."));
         } catch (Exception e) {
             log.error("Error subscribing email {}: {}", email, e.getMessage());
             return ResponseEntity.internalServerError().body(Map.of("message", "Erro interno ao processar inscrição"));

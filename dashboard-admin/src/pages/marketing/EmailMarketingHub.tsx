@@ -40,6 +40,19 @@ interface EmailTemplate {
     active: boolean;
 }
 
+interface EmailCampaign {
+    id?: string;
+    name: string;
+    subject: string;
+    content: string;
+    status: 'PENDING' | 'SENDING' | 'PAUSED' | 'COMPLETED' | 'FAILED';
+    totalRecipients: number;
+    sentCount: number;
+    audience: string;
+    signatureId: string | null;
+    createdAt?: string;
+}
+
 interface Signature {
     id?: string;
     name: string;
@@ -81,7 +94,7 @@ const SMTP_PROVIDERS = [
 
 export default function EmailMarketingHub() {
     const [activeTab, setActiveTab] = useState<'analytics' | 'design' | 'config'>('analytics');
-    const [activeDesignSubTab, setActiveDesignSubTab] = useState<'templates' | 'signatures'>('templates');
+    const [activeDesignSubTab, setActiveDesignSubTab] = useState<'templates' | 'signatures' | 'campaigns'>('templates');
 
     // --- State: Analytics ---
     const [metrics, setMetrics] = useState<EmailMetric>({ totalSent: 0, failed: 0, pending: 0, verifiedUsers: 0 });
@@ -102,6 +115,21 @@ export default function EmailMarketingHub() {
         content: '',
         signatureId: '',
         active: true
+    });
+
+    // --- State: Campaigns ---
+    const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
+    const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
+    const [isSavingCampaign, setIsSavingCampaign] = useState(false);
+    const [newCampaign, setNewCampaign] = useState<EmailCampaign>({
+        name: '',
+        subject: '',
+        content: '',
+        status: 'PENDING',
+        totalRecipients: 0,
+        sentCount: 0,
+        audience: 'NEWSLETTER_SUBSCRIBERS',
+        signatureId: null
     });
 
     // --- State: Design (Signatures) ---
@@ -147,9 +175,12 @@ export default function EmailMarketingHub() {
     // --- Effects: Data Loading ---
     useEffect(() => {
         if (activeTab === 'analytics') loadAnalytics();
-        if (activeTab === 'design') loadDesignData();
+        if (activeTab === 'design') {
+            loadDesignData();
+            if (activeDesignSubTab === 'campaigns') loadCampaigns();
+        }
         if (activeTab === 'config') loadSMTPConfigs();
-    }, [activeTab]);
+    }, [activeTab, activeDesignSubTab]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -265,6 +296,55 @@ export default function EmailMarketingHub() {
             if (editingTemplate?.id === id) setEditingTemplate(null);
         } catch (error) {
             console.error('Error deleting template:', error);
+        }
+    };
+
+    // --- Logic: Campaigns ---
+    const loadCampaigns = async () => {
+        try {
+            const res = await api.get('/marketing/campaigns');
+            setCampaigns(res.data);
+        } catch (error) {
+            console.error('Error loading campaigns:', error);
+        }
+    };
+
+    const handleCreateCampaign = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSavingCampaign(true);
+        try {
+            await api.post('/marketing/campaigns', newCampaign);
+            loadCampaigns();
+            setIsCreatingCampaign(false);
+            setNewCampaign({ name: '', subject: '', content: '', status: 'PENDING', totalRecipients: 0, sentCount: 0, audience: 'NEWSLETTER_SUBSCRIBERS', signatureId: null });
+            alert('Campanha criada com sucesso!');
+        } catch (error: any) {
+            console.error('Error creating campaign:', error.response?.data || error);
+            alert(`Erro ao criar campanha: ${error.response?.data?.message || 'Erro interno'}`);
+        } finally {
+            setIsSavingCampaign(false);
+        }
+    };
+
+    const handleStartCampaign = async (id: string) => {
+        if (!confirm('Deseja enviar esta campanha agora? Essa ação disparará os emails imediatamente para todos os contatos do público alvo selecionado.')) return;
+        try {
+            await api.post(`/marketing/campaigns/${id}/start`);
+            loadCampaigns();
+            alert('Campanha iniciada com sucesso! Você pode acompanhar o progresso na aba "Monitoramento".');
+        } catch (error) {
+            console.error('Error starting campaign:', error);
+            alert('Erro ao iniciar a campanha.');
+        }
+    };
+
+    const handleDeleteCampaign = async (id: string) => {
+        if (!confirm('Excluir esta campanha? Histórico de envios será mantido nos relatórios, porém o registro da campanha será apagado.')) return;
+        try {
+            await api.delete(`/marketing/campaigns/${id}`);
+            loadCampaigns();
+        } catch (error) {
+            console.error('Error deleting campaign:', error);
         }
     };
 
@@ -454,7 +534,15 @@ export default function EmailMarketingHub() {
                         <RefreshCcw size={18} className={loadingAnalytics ? "animate-spin text-indigo-500" : ""} />
                         Fila de Processamento
                     </h2>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                        {metrics.failed > 0 && (
+                            <button
+                                onClick={handleRetryAllFailed}
+                                className="mr-4 px-3 py-1 bg-red-50 text-red-600 text-xs font-black rounded-lg border border-red-100 hover:bg-red-100 transition flex items-center gap-2"
+                            >
+                                <RefreshCcw size={12} /> REENVIAR TODAS AS FALHAS
+                            </button>
+                        )}
                         {['ALL', 'PENDING', 'SENT', 'FAILED'].map(f => (
                             <button
                                 key={f}
@@ -521,7 +609,8 @@ export default function EmailMarketingHub() {
             <div className="flex gap-4 p-1 bg-gray-100 rounded-xl w-fit">
                 {[
                     { id: 'templates', label: 'Templates de E-mail', icon: Mail },
-                    { id: 'signatures', label: 'Assinaturas Digitais', icon: PenTool }
+                    { id: 'signatures', label: 'Assinaturas Digitais', icon: PenTool },
+                    { id: 'campaigns', label: 'Campanhas em Massa', icon: Send }
                 ].map(st => (
                     <button
                         key={st.id}
@@ -740,6 +829,158 @@ export default function EmailMarketingHub() {
                                 <Mail size={48} className="mb-4 opacity-20" />
                                 <p className="font-bold">Selecione um template para editar</p>
                                 <p className="text-xs">Escolha na lista lateral para ajustar os textos automáticos.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ) : activeDesignSubTab === 'campaigns' ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => setIsCreatingCampaign(true)}
+                            className={clsx(
+                                "w-full p-4 border-2 border-dashed rounded-2xl font-bold flex items-center justify-center gap-2 transition",
+                                isCreatingCampaign ? "bg-indigo-600 border-indigo-600 text-white shadow-lg" : "bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100"
+                            )}
+                        >
+                            <Plus size={20} /> Nova Campanha Manual
+                        </button>
+                        {campaigns.map(c => (
+                            <div
+                                key={c.id}
+                                className="p-4 rounded-xl border bg-white shadow-sm group relative flex flex-col gap-2"
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 line-clamp-1" title={c.name}>{c.name}</h4>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {c.status === 'PENDING' && <span className="px-2 pe-3 text-[10px] bg-amber-100 text-amber-700 font-bold rounded flex items-center gap-1"><Clock size={10} /> Rascunho</span>}
+                                            {c.status === 'SENDING' && <span className="px-2 text-[10px] bg-blue-100 text-blue-700 font-bold rounded animate-pulse w-fit">Enviando {c.sentCount}/{c.totalRecipients || '?'}</span>}
+                                            {c.status === 'COMPLETED' && <span className="px-2 text-[10px] bg-green-100 text-green-700 font-bold rounded flex items-center gap-1"><CheckCircle size={10} /> Concluída</span>}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {c.status === 'PENDING' && (
+                                            <button onClick={() => handleDeleteCampaign(c.id!)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={16} /></button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="text-[10px] text-gray-400 uppercase tracking-widest mt-2 border-t pt-2">
+                                    Atinge: {c.audience === 'ALL_CUSTOMERS' ? 'Todos os Clientes' :
+                                        c.audience === 'NEWSLETTER_SUBSCRIBERS' ? 'Inscritos na Newsletter' :
+                                            c.audience.startsWith('PRODUCT:') ? 'Interessados no Produto' : c.audience}
+                                </div>
+                                {c.status === 'PENDING' && (
+                                    <button
+                                        onClick={() => handleStartCampaign(c.id!)}
+                                        className="mt-2 w-full py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                                    >
+                                        <Send size={14} /> INICIAR ENVIO EM MASSA
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="md:col-span-2">
+                        {isCreatingCampaign ? (
+                            <div className="bg-white rounded-2xl border shadow-xl p-8 space-y-6">
+                                <form onSubmit={handleCreateCampaign} className="space-y-6">
+                                    <div className="flex justify-between items-center pb-4 border-b">
+                                        <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                                            <Send className="text-indigo-600" size={24} /> Criar Envio em Massa
+                                        </h3>
+                                        <button type="button" onClick={() => setIsCreatingCampaign(false)} className="text-gray-400 hover:text-gray-600"><X /></button>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Nome Interno</label>
+                                            <input required value={newCampaign.name} onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })} className="w-full p-4 border-2 rounded-xl outline-none focus:border-indigo-600" placeholder="Ex: Black Friday 2026" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Público Alvo</label>
+                                            <select required value={newCampaign.audience} onChange={e => setNewCampaign({ ...newCampaign, audience: e.target.value })} className="w-full p-4 border-2 rounded-xl bg-gray-50 text-indigo-700 font-bold outline-none focus:border-indigo-600">
+                                                <option value="NEWSLETTER_SUBSCRIBERS">Inscritos na Newsletter</option>
+                                                <option value="ALL_CUSTOMERS">Todos os Clientes (Emails salvos)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-indigo-50/50 p-4 border border-indigo-100 rounded-xl space-y-4">
+                                        <div className="flex justify-between items-center cursor-pointer">
+                                            <label className="block text-[10px] font-bold text-indigo-600 uppercase">Preencher com Template Pronto (Opcional)</label>
+                                        </div>
+                                        <select
+                                            className="w-full p-3 border rounded-xl text-sm outline-none"
+                                            onChange={(e) => {
+                                                const tId = e.target.value;
+                                                const selectedTemplate = templates.find(t => t.id === tId);
+                                                if (selectedTemplate) {
+                                                    setNewCampaign(prev => ({
+                                                        ...prev,
+                                                        subject: selectedTemplate.subject,
+                                                        content: selectedTemplate.content,
+                                                        signatureId: selectedTemplate.signatureId
+                                                    }));
+                                                }
+                                            }}
+                                        >
+                                            <option value="">-- Selecione para preencher os dados abaixo --</option>
+                                            {templates.map(t => <option key={t.id} value={t.id}>{t.name} (Assunto: {t.subject})</option>)}
+                                        </select>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Assunto do E-mail</label>
+                                            <input required value={newCampaign.subject} onChange={e => setNewCampaign({ ...newCampaign, subject: e.target.value })} className="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Novas Guias com Desconto!" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Assinatura no Rodapé</label>
+                                            <select value={newCampaign.signatureId || ''} onChange={e => setNewCampaign({ ...newCampaign, signatureId: e.target.value || null })} className="w-full p-4 border rounded-xl outline-none">
+                                                <option value="">Sem Assinatura</option>
+                                                {signatures.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase">Conteúdo HTML / Visual</label>
+                                        <div className="min-h-[400px] border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                                            <RichTextEditor value={newCampaign.content} onChange={val => setNewCampaign({ ...newCampaign, content: val })} />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end pt-6 border-t">
+                                        <button type="submit" disabled={isSavingCampaign} className="px-10 py-4 bg-indigo-600 text-white font-black rounded-xl shadow-xl hover:bg-indigo-700 transition disabled:bg-indigo-300">
+                                            {isSavingCampaign ? 'SALVANDO...' : 'CRIAR CAMPANHA PENDENTE'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                <div className="h-64 flex flex-col items-center justify-center bg-gray-50 border-2 border-dashed rounded-2xl p-12 text-gray-400">
+                                    <Send size={48} className="mb-4 opacity-20" />
+                                    <p className="font-bold">Nenhuma campanha selecionada</p>
+                                    <p className="text-xs">Crie uma nova ou clique em iniciar nas campanhas laterais.</p>
+                                </div>
+
+                                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+                                    <h4 className="text-amber-800 font-black text-sm uppercase flex items-center gap-2 mb-3">
+                                        <Info size={18} /> Dicas para Suas Campanhas
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-amber-700 leading-relaxed">
+                                        <div className="space-y-2">
+                                            <p><strong>Tags Dinâmicas:</strong> Use <code>{"{{{customer_name}}}"}</code> para personalizar o e-mail com o primeiro nome do cliente.</p>
+                                            <p><strong>Links Úteis:</strong> Use <code>{"{{{store_url}}}"}</code> para inserir o link da sua loja automaticamente.</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p><strong>Baixa de Preço:</strong> Campanhas automáticas são enviadas quando o preço do produto cai para quem o favoritou.</p>
+                                            <p><strong>Assinaturas:</strong> Certifique-se de vincular uma assinatura para transmitir profissionalismo e segurança.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

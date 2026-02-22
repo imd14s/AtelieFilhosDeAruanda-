@@ -95,6 +95,7 @@ public class SecurityConfig {
                         // Checkout e Shipping: exigem autenticação
                         .requestMatchers("/api/checkout/**").authenticated()
                         .requestMatchers("/api/shipping/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/newsletter/subscribe").authenticated()
                         .requestMatchers("/api/newsletter/**").permitAll()
 
                         // Recursos do Usuário (exigem Auth)
