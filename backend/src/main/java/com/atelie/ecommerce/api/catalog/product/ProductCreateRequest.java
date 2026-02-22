@@ -21,6 +21,10 @@ public record ProductCreateRequest(
                 List<ProductMediaItem> media,
                 List<ProductVariantRequest> variants,
                 Boolean active,
+                BigDecimal weight,
+                BigDecimal height,
+                BigDecimal width,
+                BigDecimal length,
                 @JsonProperty("marketplaceIds") List<UUID> marketplaceIds) {
         public record ProductMediaItem(String url, String type, Boolean isMain) {
         }

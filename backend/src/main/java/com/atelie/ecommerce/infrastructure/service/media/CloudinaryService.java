@@ -28,7 +28,7 @@ public class CloudinaryService {
 
     public String upload(byte[] bytes) {
         try {
-            Map uploadResult = cloudinary.uploader().upload(bytes, ObjectUtils.emptyMap());
+            Map uploadResult = cloudinary.uploader().upload(bytes, ObjectUtils.asMap("resource_type", "auto"));
             return (String) uploadResult.get("secure_url");
         } catch (IOException e) {
             throw new RuntimeException("Falha ao fazer upload para o Cloudinary", e);

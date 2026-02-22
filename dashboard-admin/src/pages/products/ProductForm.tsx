@@ -20,10 +20,10 @@ const schema = z.object({
   category: z.string().min(1, 'Categoria obrigatória'),
   tenantId: z.string(),
   marketplaceIds: z.array(z.string()).optional(),
-  weight: z.number().optional(),
-  height: z.number().optional(),
-  width: z.number().optional(),
-  length: z.number().optional(),
+  weight: z.coerce.number().gt(0, 'Peso deve ser maior que zero'),
+  height: z.coerce.number().gt(0, 'Altura deve ser maior que zero'),
+  width: z.coerce.number().gt(0, 'Largura deve ser maior que zero'),
+  length: z.coerce.number().gt(0, 'Comprimento deve ser maior que zero'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -333,10 +333,10 @@ export function ProductForm() {
         variants,
         media: sortedMedia,
         marketplaceIds: selectedMarketplaces,
-        weight: data.weight || 0,
-        height: data.height || 0,
-        width: data.width || 0,
-        length: data.length || 0,
+        weight: data.weight,
+        height: data.height,
+        width: data.width,
+        length: data.length,
       };
 
       if (id) {
@@ -525,6 +525,7 @@ export function ProductForm() {
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
                 placeholder="Ex: 300"
               />
+              {errors.weight && <p className="text-red-500 text-xs mt-1">{errors.weight.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Altura (cm)</label>
@@ -535,6 +536,7 @@ export function ProductForm() {
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
                 placeholder="Ex: 10"
               />
+              {errors.height && <p className="text-red-500 text-xs mt-1">{errors.height.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Largura (cm)</label>
@@ -545,6 +547,7 @@ export function ProductForm() {
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
                 placeholder="Ex: 20"
               />
+              {errors.width && <p className="text-red-500 text-xs mt-1">{errors.width.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento (cm)</label>
@@ -555,6 +558,7 @@ export function ProductForm() {
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
                 placeholder="Ex: 30"
               />
+              {errors.length && <p className="text-red-500 text-xs mt-1">{errors.length.message}</p>}
             </div>
           </div>
         </div>

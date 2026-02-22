@@ -73,6 +73,14 @@ public class ProductController {
             return ResponseEntity.badRequest().body(Map.of("error", "A categoria é obrigatória."));
         }
 
+        if (request.weight() == null || request.weight().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
+                request.height() == null || request.height().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
+                request.width() == null || request.width().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
+                request.length() == null || request.length().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Peso e dimensões (altura, largura, comprimento) são obrigatórios e devem ser maiores que zero."));
+        }
+
         if (request.originalPrice() != null && request.price() != null
                 && request.price().compareTo(request.originalPrice()) >= 0) {
             return ResponseEntity.badRequest()
@@ -98,6 +106,10 @@ public class ProductController {
         product.setPrice(request.price());
         product.setOriginalPrice(request.originalPrice());
         product.setStockQuantity(request.stockQuantity());
+        product.setWeight(request.weight());
+        product.setHeight(request.height());
+        product.setWidth(request.width());
+        product.setLength(request.length());
 
         if (request.media() != null) {
             List<String> imageUrls = request.media().stream()
@@ -176,6 +188,14 @@ public class ProductController {
                     .body(java.util.Map.of("error", "O preço de venda deve ser menor que o preço original."));
         }
 
+        if (request.weight() == null || request.weight().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
+                request.height() == null || request.height().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
+                request.width() == null || request.width().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
+                request.length() == null || request.length().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error",
+                    "Peso e dimensões (altura, largura, comprimento) são obrigatórios e devem ser maiores que zero."));
+        }
+
         if (request.variants() != null && !request.variants().isEmpty()) {
             for (var v : request.variants()) {
                 if (v.imageUrl() == null || v.imageUrl().isBlank()) {
@@ -198,6 +218,10 @@ public class ProductController {
         existing.setPrice(request.price());
         existing.setOriginalPrice(request.originalPrice());
         existing.setStockQuantity(request.stockQuantity());
+        existing.setWeight(request.weight());
+        existing.setHeight(request.height());
+        existing.setWidth(request.width());
+        existing.setLength(request.length());
 
         if (request.media() != null) {
             existing.setImages(request.media().stream()
