@@ -21,7 +21,12 @@ const SavedCardsPage = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (user?.id) fetchCards();
+        const userId = user?.id || user?.googleId;
+        if (userId) {
+            fetchCards();
+        } else {
+            setLoading(false);
+        }
     }, [user]);
 
     const fetchCards = () => {

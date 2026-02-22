@@ -16,14 +16,17 @@ const OrdersPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        if (user?.id) {
-            fetchOrders();
+        const userId = user?.id || user?.googleId;
+        if (userId) {
+            fetchOrders(userId);
+        } else {
+            setLoading(false);
         }
     }, [user]);
 
-    const fetchOrders = () => {
+    const fetchOrders = (userId) => {
         setLoading(true);
-        api.get(`/orders/user/${user.id}`)
+        api.get(`/orders/user/${userId}`)
             .then(res => {
                 setOrders(res.data);
                 setLoading(false);

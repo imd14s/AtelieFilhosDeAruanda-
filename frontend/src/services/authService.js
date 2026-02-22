@@ -1,5 +1,7 @@
 import api from './api';
 
+console.log("[DEBUG - authService.js] Avaliando arquivo e objeto authService");
+
 export const authService = {
     register: async (userData) => {
         const response = await api.post('/auth/register', userData);

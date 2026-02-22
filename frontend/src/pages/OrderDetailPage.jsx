@@ -25,6 +25,8 @@ const OrderDetailPage = () => {
                 .then(data => setOrder(data))
                 .catch(() => setError('Pedido não encontrado.'))
                 .finally(() => setLoading(false));
+        } else {
+            setLoading(false);
         }
     }, [id]);
 

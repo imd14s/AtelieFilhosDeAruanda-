@@ -14,9 +14,10 @@ const HistoryPage = () => {
 
     useEffect(() => {
         const fetchHistory = async () => {
-            if (user?.id) {
+            const userId = user?.id || user?.googleId;
+            if (userId) {
                 setLoading(true);
-                const data = await storeService.history.get(user.id);
+                const data = await storeService.history.get(userId);
                 setHistory(data);
                 setLoading(false);
             } else {

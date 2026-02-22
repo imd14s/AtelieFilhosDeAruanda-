@@ -13,8 +13,9 @@ const QuestionsPage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user?.id) {
-            api.get(`/questions?userId=${user.id}`)
+        const userId = user?.id || user?.googleId;
+        if (userId) {
+            api.get(`/questions?userId=${userId}`)
                 .then(res => {
                     setQuestions(res.data);
                     setLoading(false);
@@ -23,6 +24,8 @@ const QuestionsPage = () => {
                     console.error("Error fetching questions:", err);
                     setLoading(false);
                 });
+        } else {
+            setLoading(false);
         }
     }, [user]);
 

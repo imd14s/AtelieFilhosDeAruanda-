@@ -17,16 +17,19 @@ const ReviewsPage = () => {
     const [reviewItem, setReviewItem] = useState(null);
 
     useEffect(() => {
-        if (user?.id) {
-            fetchReviews();
+        const userId = user?.id || user?.googleId;
+        if (userId) {
+            fetchReviews(userId);
+        } else {
+            setLoading(false);
         }
     }, [user, activeTab]);
 
-    const fetchReviews = () => {
+    const fetchReviews = (userId) => {
         setLoading(true);
         const endpoint = activeTab === 'pending'
-            ? `/reviews/user/${user.id}/pending`
-            : `/reviews/user/${user.id}`;
+            ? `/reviews/user/${userId}/pending`
+            : `/reviews/user/${userId}`;
 
         api.get(endpoint)
             .then(res => {

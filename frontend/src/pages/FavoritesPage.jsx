@@ -16,9 +16,10 @@ const FavoritesPage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user?.id) {
+        const userId = user?.id || user?.googleId;
+        if (userId) {
             setLoading(true);
-            storeService.favorites.get(user.id)
+            storeService.favorites.get(userId)
                 .then(data => {
                     setFavorites(data);
                     setLoading(false);
@@ -27,6 +28,8 @@ const FavoritesPage = () => {
                     console.error("Error fetching favorites:", err);
                     setLoading(false);
                 });
+        } else {
+            setLoading(false);
         }
     }, [user]);
 

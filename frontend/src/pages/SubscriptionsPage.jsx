@@ -14,13 +14,16 @@ const SubscriptionsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        if (user?.id) {
-            fetchSubscriptions();
+        const userId = user?.id || user?.googleId;
+        if (userId) {
+            fetchSubscriptions(userId);
+        } else {
+            setLoading(false);
         }
     }, [user]);
 
-    const fetchSubscriptions = () => {
-        subscriptionService.getUserSubscriptions()
+    const fetchSubscriptions = (userId) => {
+        subscriptionService.getUserSubscriptions(userId)
             .then(data => {
                 setSubscriptions(data);
                 setLoading(false);

@@ -27,12 +27,17 @@ const AddressesPage = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (user?.id) fetchAddresses();
+        const userId = user?.id || user?.googleId;
+        if (userId) {
+            fetchAddresses(userId);
+        } else {
+            setLoading(false);
+        }
     }, [user]);
 
-    const fetchAddresses = () => {
+    const fetchAddresses = (userId) => {
         setLoading(true);
-        addressService.list(user.id)
+        addressService.list(userId)
             .then(data => setAddresses(data))
             .catch(() => setAddresses([]))
             .finally(() => setLoading(false));

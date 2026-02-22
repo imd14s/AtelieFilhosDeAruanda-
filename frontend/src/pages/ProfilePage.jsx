@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, Shield, CreditCard, ChevronRight, MapPin, Bell, Lock, Gift, Mail, AlertTriangle, X, Loader2 } from 'lucide-react';
 import { useOutletContext, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
-import authService from '../services/authService';
+import { authService } from '../services/authService';
 
 const ProfilePage = () => {
     const { user } = useOutletContext();

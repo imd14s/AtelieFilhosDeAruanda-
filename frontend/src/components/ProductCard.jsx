@@ -14,14 +14,19 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
   const handleToggleFavorite = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!user) {
+
+    // Fallback: se não estiver no UserLayout (ex: Home), o storeService tem o usuário no localStorage
+    const currentUser = user || storeService.auth.getUser();
+
+    if (!currentUser) {
       alert("Faça login para favoritar produtos.");
+      window.dispatchEvent(new Event('open-auth-modal'));
       return;
     }
 
     setFavLoading(true);
     try {
-      const newState = await storeService.favorites.toggle(user.id, product.id);
+      const newState = await storeService.favorites.toggle(currentUser.id || currentUser.googleId, product.id);
       setIsFavorite(newState);
     } catch (err) {
       console.error("Failed to toggle favorite", err);
