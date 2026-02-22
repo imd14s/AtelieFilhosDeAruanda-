@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Sparkles, X } from 'lucide-react';
 
 interface Props {

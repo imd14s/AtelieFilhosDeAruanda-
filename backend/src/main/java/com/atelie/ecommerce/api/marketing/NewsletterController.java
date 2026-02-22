@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -133,6 +134,31 @@ public class NewsletterController {
         } catch (Exception e) {
             log.error("Error unsubscribing token {}: {}", token, e.getMessage());
             return ResponseEntity.internalServerError().body(Map.of("message", "Erro ao cancelar inscrição."));
+        }
+    }
+
+    @GetMapping("/subscribers")
+    public ResponseEntity<?> getAllSubscribers() {
+        try {
+            return ResponseEntity.ok(subscriberRepository.findAll());
+        } catch (Exception e) {
+            log.error("Error fetching subscribers: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", "Erro ao buscar inscritos."));
+        }
+    }
+
+    @DeleteMapping("/subscribers/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteSubscriber(@PathVariable UUID id) {
+        try {
+            if (!subscriberRepository.existsById(id)) {
+                return ResponseEntity.status(404).body(Map.of("message", "Inscrito não encontrado."));
+            }
+            subscriberRepository.deleteById(id);
+            return ResponseEntity.ok(Map.of("message", "Inscrito removido com sucesso."));
+        } catch (Exception e) {
+            log.error("Error deleting subscriber {}: {}", id, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", "Erro ao remover inscrito."));
         }
     }
 }

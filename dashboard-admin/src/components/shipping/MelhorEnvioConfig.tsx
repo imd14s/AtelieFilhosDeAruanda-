@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, MapPin, Truck, Plus, Trash2, Info } from 'lucide-react';
 
 interface MelhorEnvioConfigProps {
@@ -132,8 +132,8 @@ export function MelhorEnvioConfig({ config, onChange }: MelhorEnvioConfigProps) 
                             key={carrier.id}
                             onClick={() => handleCarrierToggle(carrier.id)}
                             className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all font-medium text-sm ${allowedCarriers.includes(carrier.id)
-                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                                    : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-gray-200'
+                                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                                : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-gray-200'
                                 }`}
                         >
                             {carrier.name}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Globe, Webhook, Zap, CreditCard, User, Settings, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Check } from 'lucide-react';
+import { Shield, Zap, CreditCard, Settings, ChevronDown, ChevronUp, AlertCircle, Check } from 'lucide-react';
 import type { MercadoPagoConfig } from '../../../types/store-settings';
 
 interface Props {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Shield, CheckCircle, XCircle, Search, Mail } from 'lucide-react';
+import { User, CheckCircle, XCircle, Search } from 'lucide-react';
 
 export function UsersPage() {
     const [users] = useState([

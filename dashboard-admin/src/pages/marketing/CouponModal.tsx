@@ -16,8 +16,7 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
         value: 0,
         usageLimit: 100,
         usageLimitPerUser: 1,
-        minPurchaseValue: 0,
-        ownerId: ''
+        minPurchaseValue: 0
     });
     const [loading, setLoading] = useState(false);
 
@@ -31,8 +30,7 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                 value: 0,
                 usageLimit: 100,
                 usageLimitPerUser: 1,
-                minPurchaseValue: 0,
-                ownerId: ''
+                minPurchaseValue: 0
             });
         }
     }, [initialData, isOpen]);
@@ -143,17 +141,6 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">ID do Usuário Dono (Opcional)</label>
-                        <input
-                            type="text"
-                            value={formData.ownerId || ''}
-                            onChange={(e) => setFormData({ ...formData, ownerId: e.target.value })}
-                            placeholder="UUID do usuário para cupom exclusivo"
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                        />
-                        <p className="text-[10px] text-gray-500 mt-1">Deixe em branco para cupom público.</p>
-                    </div>
 
                     <div className="flex gap-3 pt-4">
                         <button
