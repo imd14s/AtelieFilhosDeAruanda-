@@ -31,13 +31,11 @@ public class AuthController {
 
     @PostMapping("/google")
     public ResponseEntity<LoginResponse> google(@Valid @RequestBody GoogleLoginRequest request) {
-        String token = authService.googleLogin(request);
-        return ResponseEntity.ok(new LoginResponse(token));
+        return ResponseEntity.ok(authService.googleLogin(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        String token = authService.login(request);
-        return ResponseEntity.ok(new LoginResponse(token));
+        return ResponseEntity.ok(authService.login(request));
     }
 }

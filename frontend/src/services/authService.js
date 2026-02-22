@@ -17,6 +17,12 @@ export const authService = {
         const response = await api.post('/auth/login', { email, password });
         if (response.data.token) {
             localStorage.setItem('auth_token', response.data.token);
+            localStorage.setItem('user', JSON.stringify({
+                id: response.data.id,
+                name: response.data.name,
+                email: response.data.email,
+                role: response.data.role
+            }));
         }
         return response.data;
     },
@@ -39,8 +45,10 @@ export const authService = {
             if (response.data.token) {
                 localStorage.setItem('auth_token', response.data.token);
                 localStorage.setItem('user', JSON.stringify({
-                    name: userInfo.name,
-                    email: userInfo.email,
+                    id: response.data.id,
+                    name: response.data.name,
+                    email: response.data.email,
+                    role: response.data.role,
                     photoURL: userInfo.picture || null,
                 }));
             }

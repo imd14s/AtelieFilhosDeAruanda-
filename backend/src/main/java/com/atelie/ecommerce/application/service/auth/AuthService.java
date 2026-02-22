@@ -3,6 +3,7 @@ package com.atelie.ecommerce.application.service.auth;
 import com.atelie.ecommerce.api.auth.dto.LoginRequest;
 import com.atelie.ecommerce.api.auth.dto.RegisterRequest;
 import com.atelie.ecommerce.api.auth.dto.GoogleLoginRequest;
+import com.atelie.ecommerce.api.auth.dto.LoginResponse;
 import com.atelie.ecommerce.api.admin.dto.CreateUserDTO;
 import com.atelie.ecommerce.api.common.exception.ConflictException;
 import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
@@ -51,7 +52,7 @@ public class AuthService {
         this.auditService = auditService;
     }
 
-    public String login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         UserEntity user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
                         "Usuário não encontrado."));
@@ -77,7 +78,13 @@ public class AuthService {
             System.err.println("Failed to audit login: " + e.getMessage());
         }
 
-        return token;
+        return LoginResponse.builder()
+                .token(token)
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
     }
 
     @Transactional
@@ -136,7 +143,7 @@ public class AuthService {
     }
 
     @Transactional
-    public String googleLogin(GoogleLoginRequest request) {
+    public LoginResponse googleLogin(GoogleLoginRequest request) {
         // Log para diagnóstico
         System.out.println("[AuthService] Google Login recebido: " + request);
 
@@ -192,7 +199,15 @@ public class AuthService {
         UserPrincipal principal = UserPrincipal.create(user);
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 principal, null, principal.getAuthorities());
-        return tokenProvider.generateToken(auth);
+        String token = tokenProvider.generateToken(auth);
+
+        return LoginResponse.builder()
+                .token(token)
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
     }
 
     @Transactional

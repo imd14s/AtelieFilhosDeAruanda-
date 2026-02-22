@@ -18,15 +18,17 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
     // Fallback: se não estiver no UserLayout (ex: Home), o storeService tem o usuário no localStorage
     const currentUser = user || storeService.auth.getUser();
 
-    if (!currentUser) {
-      alert("Faça login para favoritar produtos.");
+    const targetUserId = currentUser?.id || currentUser?.googleId;
+    if (!currentUser || !targetUserId) {
+      alert("Sua sessão expirou ou está incompleta. Por favor, faça login novamente para favoritar produtos.");
+      storeService.auth.logout(); // Limpa as credenciais problemáticas da localStorage
       window.dispatchEvent(new Event('open-auth-modal'));
       return;
     }
 
     setFavLoading(true);
     try {
-      const newState = await storeService.favorites.toggle(currentUser.id || currentUser.googleId, product.id);
+      const newState = await storeService.favorites.toggle(targetUserId, product.id);
       setIsFavorite(newState);
     } catch (err) {
       console.error("Failed to toggle favorite", err);

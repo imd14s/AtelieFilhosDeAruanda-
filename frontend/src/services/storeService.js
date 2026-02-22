@@ -233,8 +233,14 @@ export const storeService = {
         const response = await api.post('/auth/login', { email, password });
         if (response.data?.token) {
           localStorage.setItem('auth_token', response.data.token);
-          localStorage.setItem('user', JSON.stringify(response.data.user || { email }));
-          return response.data.user || { email };
+          const userObj = {
+            id: response.data.id,
+            name: response.data.name,
+            email: response.data.email,
+            role: response.data.role
+          };
+          localStorage.setItem('user', JSON.stringify(userObj));
+          return userObj;
         }
         throw new Error("Resposta de login inválida");
       } catch (error) {
