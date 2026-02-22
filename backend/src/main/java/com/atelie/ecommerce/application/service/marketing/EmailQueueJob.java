@@ -31,10 +31,10 @@ public class EmailQueueJob {
         this.campaignRepository = campaignRepository;
     }
 
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelay = 60000)
     @Transactional
     public void processQueue() {
-        log.info("[DEBUG-NEWSLETTER] EmailQueueJob.processQueue() executado em {}", LocalDateTime.now());
+        log.debug("[DEBUG-NEWSLETTER] EmailQueueJob.processQueue() executado em {}", LocalDateTime.now());
 
         LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         long sentToday = emailQueueRepository.countByStatusAndSentAtAfter(EmailQueue.EmailStatus.SENT, today);

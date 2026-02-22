@@ -31,7 +31,7 @@ public class DynamicConfigService {
             var configs = repository.findAll();
             cache.clear();
             configs.forEach(c -> cache.put(c.getConfigKey(), c.getConfigValue()));
-            log.info("Cache de configurações atualizado: {} itens", cache.size());
+            log.debug("Cache de configurações atualizado: {} itens", cache.size());
         } catch (Exception e) {
             log.warn("Não foi possível carregar configurações do banco: {}",
                     e.getMessage());
