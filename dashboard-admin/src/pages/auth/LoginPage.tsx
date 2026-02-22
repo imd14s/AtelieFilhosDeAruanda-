@@ -3,20 +3,27 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 export function LoginPage() {
   const { register, handleSubmit } = useForm();
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
+  const { addToast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async (data: any) => {
+    setIsLoading(true);
     try {
       const res = await api.post('/auth/login', data);
       login(res.data.token);
+      addToast('Bem-vindo ao painel!', 'success');
       navigate('/');
     } catch (err) {
-      setError('Credenciais inválidas');
+      addToast('Credenciais inválidas. Tente novamente.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -24,8 +31,6 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Acesso Administrativo</h2>
-
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{error}</div>}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
@@ -48,12 +53,13 @@ export function LoginPage() {
               placeholder="••••••"
             />
           </div>
-          <button
+          <Button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+            isLoading={isLoading}
+            className="w-full"
           >
             Entrar
-          </button>
+          </Button>
         </form>
       </div>
     </div>

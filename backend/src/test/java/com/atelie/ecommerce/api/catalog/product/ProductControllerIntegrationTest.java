@@ -78,6 +78,10 @@ public class ProductControllerIntegrationTest {
                 List.of(new ProductCreateRequest.ProductMediaItem("image1.jpg", "IMAGE", true)),
                 List.of(), // variants
                 true, // active
+                null, // weight
+                null, // height
+                null, // width
+                null, // length
                 List.of() // marketplaceIds
         );
 

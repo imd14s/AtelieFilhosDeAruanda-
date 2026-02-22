@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Trash2, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
+import { X, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { storeService } from '../services/storeService';
 import { getImageUrl } from '../utils/imageUtils';
+import Button from './ui/Button';
+import { useToast } from '../context/ToastContext';
 
 const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
   const navigate = useNavigate();
   const [cep, setCep] = useState('');
   const [shippingOptions, setShippingOptions] = useState([]);
   const [shippingSelected, setShippingSelected] = useState(null);
+  const { addToast } = useToast();
   const [calculateLoading, setCalculateLoading] = useState(false);
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -18,8 +21,8 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
     setCalculateLoading(true);
     try {
       const options = await storeService.calculateShipping(cep, cartItems);
-      // MOCK se a API falhar para demonstração (remover em produção real se não desejado)
       if (options.length === 0) {
+        addToast("Nenhuma opção de frete disponível no momento.", "info");
         setShippingOptions([
           { provider: 'Correios (PAC)', price: 25.90, days: 8 },
           { provider: 'Correios (SEDEX)', price: 42.10, days: 3 }
@@ -28,6 +31,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
         setShippingOptions(options);
       }
     } catch (err) {
+      addToast("Erro ao calcular frete. Tente novamente.", "error");
       console.error(err);
     } finally {
       setCalculateLoading(false);
@@ -120,13 +124,14 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
                     onChange={(e) => setCep(e.target.value.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').substring(0, 9))}
                     className="flex-1 border border-[#0f2A44]/10 px-3 py-2 font-lato text-xs focus:border-[#C9A24D] outline-none"
                   />
-                  <button
+                  <Button
                     onClick={handleCalculateShipping}
-                    disabled={calculateLoading || cep.length < 9}
-                    className="bg-[#0f2A44] text-white px-4 py-2 font-lato text-[10px] uppercase tracking-widest disabled:opacity-50"
+                    isLoading={calculateLoading}
+                    disabled={cep.length < 9}
+                    className="px-4 py-2"
                   >
-                    {calculateLoading ? <Loader2 size={14} className="animate-spin" /> : 'Calcular'}
-                  </button>
+                    Calcular
+                  </Button>
                 </div>
 
                 {shippingOptions.length > 0 && (
@@ -178,16 +183,16 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
                 </div>
               </div>
 
-              <button
+              <Button
                 onClick={() => {
                   onClose();
                   navigate('/checkout', { state: { shippingSelected, cep } });
                 }}
-                className="w-full bg-[#0f2A44] text-white py-4 font-lato text-xs uppercase tracking-[0.2em] hover:bg-[#C9A24D] transition-all flex items-center justify-center gap-3 group"
+                className="w-full py-4 group"
               >
                 Finalizar Compra
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Button>
             </div>
           )}
 

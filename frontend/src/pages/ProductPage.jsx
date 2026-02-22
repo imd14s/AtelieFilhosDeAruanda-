@@ -3,10 +3,13 @@ import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { storeService } from '../services/storeService';
 import SEO from '../components/SEO';
 import { useFavorites } from '../context/FavoritesContext';
-import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2, Heart } from 'lucide-react';
+import { ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2, Heart } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
 import ReviewSection from '../components/ReviewSection';
 import ProductCard from '../components/ProductCard';
+import Button from '../components/ui/Button';
+import Spinner from '../components/ui/Spinner';
+import { useToast } from '../context/ToastContext';
 
 const ProductPage = () => {
   const { id } = useParams();
@@ -18,6 +21,7 @@ const ProductPage = () => {
   const [added, setAdded] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const { addToast } = useToast();
 
   const [mainMedia, setMainMedia] = useState(null);
   const [selectedOptions, setSelectedOptions] = useState({});
@@ -192,6 +196,7 @@ const ProductPage = () => {
     };
 
     storeService.cart.add(cartProduct, quantity);
+    addToast(`${product.name} adicionado ao carrinho!`, "success");
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);
   };
@@ -241,7 +246,7 @@ const ProductPage = () => {
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F7F7F4]">
-      <Loader2 className="animate-spin text-[#C9A24D]" size={40} />
+      <Spinner size={40} className="text-[#C9A24D]" />
       <p className="font-lato text-[10px] uppercase tracking-widest text-[#0f2A44]/40">Carregando Axé...</p>
     </div>
   );
@@ -547,54 +552,42 @@ const ProductPage = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <button
+                  <Button
                     onClick={() => {
                       handleAddToCart();
-                      // Redirecionar para checkout (simulado)
-                      window.location.href = '/checkout';
+                      navigate('/checkout');
                     }}
                     disabled={isOutOfStock}
-                    className={`w-full h-[58px] font-lato text-[20px] font-medium transition-all flex items-center justify-center rounded-[4px] shadow-sm
-                        ${isOutOfStock
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-[#3483fa] text-white hover:bg-[#2968c8] active:scale-[0.99]'
-                      }
-                    `}
+                    variant="primary"
+                    className="w-full h-[58px] text-[20px] rounded-[4px]"
                   >
                     Comprar agora
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     onClick={handleAddToCart}
                     disabled={isOutOfStock}
-                    className={`w-full h-[58px] font-lato text-[20px] font-medium transition-all flex items-center justify-center gap-3 rounded-[4px] shadow-sm
-                        ${isOutOfStock
-                        ? 'bg-gray-100/50 text-gray-300 cursor-not-allowed border border-gray-100'
-                        : 'bg-[#e3edfb] text-[#3483fa] hover:bg-[#d0e1f9] active:scale-[0.99]'
-                      }
-                    `}
+                    variant="outline"
+                    className="w-full h-[58px] text-[20px] rounded-[4px] bg-[#e3edfb] border-none text-[#3483fa] hover:bg-[#d0e1f9] hover:text-[#3483fa]"
                   >
                     <ShoppingBag size={24} />
                     Adicionar ao carrinho
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     onClick={handleToggleFavorite}
-                    disabled={favLoading}
-                    className={`w-full h-[58px] font-lato text-[16px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 rounded-[4px] border
+                    isLoading={favLoading}
+                    variant="outline"
+                    className={`w-full h-[58px] text-[16px] rounded-[4px] border
                         ${isFavorite
-                        ? 'bg-white border-red-200 text-red-500 hover:bg-red-50'
+                        ? 'bg-white border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600'
                         : 'bg-white border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-500'
                       }
                     `}
                   >
-                    {favLoading ? (
-                      <Loader2 size={24} className="animate-spin text-gray-300" />
-                    ) : (
-                      <Heart size={24} className={isFavorite ? "fill-current" : ""} />
-                    )}
+                    {!favLoading && <Heart size={24} className={isFavorite ? "fill-current" : ""} />}
                     {isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -635,7 +628,7 @@ const ProductPage = () => {
 
             {loadingRecs ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="animate-spin text-[#3483fa]" />
+                <Spinner className="text-[#3483fa]" />
               </div>
             ) : recommendations.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

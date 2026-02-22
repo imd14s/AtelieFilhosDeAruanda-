@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { CategoryService } from '../../services/CategoryService';
 import type { Category } from '../../types/category';
 import { Plus, Trash2, Tag } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import Spinner from '../../components/ui/Spinner';
+import { useToast } from '../../context/ToastContext';
 
 export function CategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -11,6 +14,9 @@ export function CategoriesPage() {
     // Form State
     const [name, setName] = useState('');
     const [active, setActive] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const { addToast } = useToast();
 
     useEffect(() => {
         loadCategories();
@@ -29,30 +35,37 @@ export function CategoriesPage() {
     };
 
     const handleDelete = async (id: string) => {
-        // Simple window.confirm for now, but ensure it blocks
         const confirmed = window.confirm('Tem certeza que deseja excluir esta categoria?');
         if (!confirmed) return;
 
+        setDeletingId(id);
         try {
             await CategoryService.delete(id);
             setCategories(prev => prev.filter(c => c.id !== id));
+            addToast('Categoria excluída com sucesso!', 'success');
         } catch (error) {
-            alert('Erro ao excluir categoria. Verifique se não há produtos associados.');
+            addToast('Erro ao excluir categoria. Verifique se não há produtos associados.', 'error');
             console.error(error);
+        } finally {
+            setDeletingId(null);
         }
     };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         try {
             await CategoryService.create({ name, active });
             await loadCategories();
+            addToast('Categoria criada com sucesso!', 'success');
             setIsModalOpen(false);
             setName('');
             setActive(true);
         } catch (error) {
-            alert('Erro ao criar categoria.');
+            addToast('Erro ao criar categoria.', 'error');
             console.error(error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -63,18 +76,21 @@ export function CategoriesPage() {
                     <h1 className="text-2xl font-bold text-gray-800">Categorias</h1>
                     <p className="text-gray-500">Gerencie as categorias de produtos</p>
                 </div>
-                <button
+                <Button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                    variant="primary"
                 >
                     <Plus size={20} />
                     Nova Categoria
-                </button>
+                </Button>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 {loading ? (
-                    <div className="p-8 text-center text-gray-500">Carregando...</div>
+                    <div className="p-12 flex flex-col items-center justify-center gap-4">
+                        <Spinner size={32} className="text-indigo-600" />
+                        <p className="text-gray-500 text-sm">Carregando categorias...</p>
+                    </div>
                 ) : (
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 border-b">
@@ -97,13 +113,17 @@ export function CategoriesPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => handleDelete(cat.id)}
-                                                className="text-gray-400 hover:text-red-600 transition"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            {deletingId === cat.id ? (
+                                                <Spinner size={18} className="text-red-600 ml-auto" />
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleDelete(cat.id)}
+                                                    className="text-gray-400 hover:text-red-600 transition"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -129,10 +149,12 @@ export function CategoriesPage() {
                                 <label htmlFor="active" className="text-sm font-medium text-gray-700">Ativa</label>
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
-                                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                                    Salvar
-                                </button>
+                                <Button type="button" onClick={() => setIsModalOpen(false)} variant="ghost">
+                                    Cancelar
+                                </Button>
+                                <Button type="submit" isLoading={isSaving} variant="primary">
+                                    {isSaving ? 'Salvando...' : 'Salvar'}
+                                </Button>
                             </div>
                         </form>
                     </div>

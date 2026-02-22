@@ -11,19 +11,10 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/media")
 public class MediaController {
-
     private final MediaStorageService media;
-    private final com.atelie.ecommerce.application.service.media.MediaMigrationService migrationService;
 
-    public MediaController(MediaStorageService media,
-            com.atelie.ecommerce.application.service.media.MediaMigrationService migrationService) {
+    public MediaController(MediaStorageService media) {
         this.media = media;
-        this.migrationService = migrationService;
-    }
-
-    @PostMapping("/migrate-legacy")
-    public ResponseEntity<?> migrateLegacy() {
-        return ResponseEntity.ok(migrationService.migrateAll());
     }
 
     @PostMapping("/upload")

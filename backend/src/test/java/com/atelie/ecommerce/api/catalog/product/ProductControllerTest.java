@@ -70,6 +70,10 @@ public class ProductControllerTest {
                 new java.util.ArrayList<>(), // media
                 new java.util.ArrayList<>(), // variants
                 true, // active
+                null, // weight
+                null, // height
+                null, // width
+                null, // length
                 new java.util.ArrayList<>() // marketplaceIds
         );
         mockMvc.perform(post("/api/products")

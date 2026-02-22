@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { X, Mail, Lock, User, Key, Loader2 } from "lucide-react";
+import { X, Mail, Lock, User, Key } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { authService } from "../services/authService";
+import Button from "./ui/Button";
+import { useToast } from "../context/ToastContext";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
@@ -56,24 +58,24 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { addToast } = useToast();
 
   if (!isOpen) return null;
 
   const handleGoogleSuccess = async (tokenResponse) => {
     setLoading(true);
-    setError("");
     try {
       const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
       });
       const userInfo = await res.json();
       await authService.googleLoginWithUserInfo(userInfo, tokenResponse.access_token);
+      addToast("Login realizado com sucesso!", "success");
       onClose();
       window.location.reload();
     } catch (err) {
       console.error("[Google Login] Erro:", err);
-      setError("Falha ao entrar com Google. Tente novamente.");
+      addToast("Falha ao entrar com Google. Tente novamente.", "error");
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ const AuthModal = ({ isOpen, onClose }) => {
 
   const handleGoogleError = (err) => {
     console.error("[Google Login] Erro OAuth:", err);
-    setError("Falha ao autenticar com Google. Tente novamente.");
+    addToast("Falha ao autenticar com Google. Tente novamente.", "error");
   };
 
   const resetState = () => {
@@ -90,7 +92,6 @@ const AuthModal = ({ isOpen, onClose }) => {
     setPassword("");
     setName("");
     setCode("");
-    setError("");
     setLoading(false);
   };
 
@@ -102,13 +103,13 @@ const AuthModal = ({ isOpen, onClose }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
     try {
       await authService.login(email, password);
+      addToast("Bem-vindo de volta!", "success");
       handleClose();
       window.location.reload();
     } catch (err) {
-      setError("Credenciais inválidas.");
+      addToast("E-mail ou senha incorretos.", "error");
     } finally {
       setLoading(false);
     }
@@ -117,12 +118,12 @@ const AuthModal = ({ isOpen, onClose }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
     try {
       await authService.register({ name, email, password });
+      addToast("Código de verificação enviado para seu e-mail.", "success");
       setView("VERIFY");
     } catch (err) {
-      setError("Erro ao cadastrar. Tente outro e-mail.");
+      addToast("Erro ao cadastrar. Verifique os dados ou tente outro e-mail.", "error");
     } finally {
       setLoading(false);
     }
@@ -131,13 +132,12 @@ const AuthModal = ({ isOpen, onClose }) => {
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
     try {
       await authService.verify(email, code);
-      window.dispatchEvent(new CustomEvent('show-alert', { detail: "Conta verificada! Faça login para continuar." }));
+      addToast("Conta verificada com sucesso! Faça login para continuar.", "success");
       setView("LOGIN");
     } catch (err) {
-      setError("Código inválido.");
+      addToast("Código de verificação inválido ou expirado.", "error");
     } finally {
       setLoading(false);
     }
@@ -146,13 +146,12 @@ const AuthModal = ({ isOpen, onClose }) => {
   const handleRequestReset = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
     try {
       await authService.requestPasswordReset(email);
-      window.dispatchEvent(new CustomEvent('show-alert', { detail: "E-mail de recuperação enviado! Verifique sua caixa de entrada." }));
+      addToast("Instruções enviadas para seu e-mail.", "success");
       setView("LOGIN");
     } catch (err) {
-      setError("Não encontramos este e-mail em nossa base.");
+      addToast("Não encontramos uma conta com este e-mail.", "error");
     } finally {
       setLoading(false);
     }
@@ -220,13 +219,13 @@ const AuthModal = ({ isOpen, onClose }) => {
 
               {error && <p className="text-red-600 text-[11px] font-lato italic">{error}</p>}
 
-              <button
+              <Button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-[#0f2A44] text-white py-4 font-lato text-xs uppercase tracking-[0.2em] hover:bg-[#C9A24D] transition-all flex items-center justify-center gap-2"
+                isLoading={loading}
+                className="w-full py-4"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : "Entrar"}
-              </button>
+                Entrar
+              </Button>
 
               <div className="relative flex py-2 items-center">
                 <div className="flex-grow border-t border-gray-200"></div>

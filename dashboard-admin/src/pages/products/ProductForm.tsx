@@ -13,6 +13,8 @@ import type { ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { AdminProviderService } from '../../services/AdminProviderService';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),
@@ -31,6 +33,7 @@ type FormData = z.infer<typeof schema>;
 export function ProductForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { addToast } = useToast();
 
   // Product-level states
   const [categories, setCategories] = useState<Category[]>([]);
@@ -149,7 +152,7 @@ export function ProductForm() {
 
   const handleGenerateDescription = async () => {
     const title = getValues('title');
-    if (!title) return alert('Preencha o título do formulário primeiro.');
+    if (!title) return addToast('Preencha o título do formulário primeiro.', 'info');
 
     const mainImage = currentMedia.find(m => m.isMain) || currentMedia[0];
     const imageUrl = mainImage ? mainImage.url : undefined;
@@ -157,7 +160,7 @@ export function ProductForm() {
     // Frontend validation to capture missing image before sending to API 
     // (though the Backend will also validate this as per requirements)
     if (!imageUrl) {
-      alert('É necessário adicionar uma imagem da variante atual no painel "Mídia & Imagens" para gerar as informações via IA.');
+      addToast('É necessário adicionar uma imagem da variante atual para gerar as informações via IA.', 'info');
       return;
     }
 
@@ -221,7 +224,7 @@ export function ProductForm() {
       : Number(variantInput.originalPrice) || undefined;
 
     if (finalOriginalPrice && finalPrice >= finalOriginalPrice) {
-      alert("O Preço promocional (Por) deve ser menor ou igual ao Preço Original (De).");
+      addToast("O Preço promocional deve ser menor ou igual ao Preço Original.", "error");
       return;
     }
 
@@ -297,7 +300,7 @@ export function ProductForm() {
           finalCategoryId = createdCat.id;
         } catch (e) {
           console.error("Falha ao criar nova categoria dynamique", e);
-          alert('Erro ao criar a nova categoria. Tente novamente.');
+          addToast('Erro ao criar a nova categoria. Tente novamente.', 'error');
           setIsSaving(false);
           return;
         }
@@ -349,7 +352,7 @@ export function ProductForm() {
     } catch (error: any) {
       console.error('Erro ao salvar produto', error);
       const msg = error.response?.data?.error || error.response?.data?.message || error.message || 'Erro interno da API';
-      alert(`Erro ao ${id ? 'atualizar' : 'criar'} produto: \n${msg}`);
+      addToast(`Erro ao ${id ? 'atualizar' : 'criar'} produto: ${msg}`, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -403,15 +406,17 @@ export function ProductForm() {
             <div className="col-span-2">
               <div className="flex justify-between items-center mb-1">
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descrição</label>
-                <button
+                <Button
                   type="button"
                   onClick={handleGenerateDescription}
-                  disabled={isGeneratingAI}
-                  className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-md hover:bg-indigo-200 flex items-center gap-1 font-semibold transition-colors disabled:opacity-50"
+                  isLoading={isGeneratingAI}
+                  variant="secondary"
+                  size="sm"
+                  className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-none"
                   title="Utiliza a imagem principal em anexo acima para gerar detalhes"
                 >
                   <Wand2 size={14} /> {isGeneratingAI ? 'Gerando...' : 'Gerar informações por IA'}
-                </button>
+                </Button>
               </div>
               <textarea id="description" {...register('description')} className="w-full p-2 border rounded-lg h-24 focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="Descreva os detalhes gerais da peça..." />
             </div>
@@ -481,26 +486,26 @@ export function ProductForm() {
 
             <div className="col-span-2 md:col-span-5 flex justify-end mt-2 items-center gap-3">
               {editingVariantId && (
-                <button
+                <Button
                   type="button"
                   onClick={() => {
                     setEditingVariantId(null);
                     setVariantInput({ color: '', size: '', sku: '', originalPrice: '', price: '', stock: '' });
                     setCurrentMedia([]);
                   }}
-                  className="text-gray-500 hover:text-gray-700 font-medium px-4 py-2 transition"
+                  variant="ghost"
                 >
                   Cancelar Edição
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 type="button"
                 onClick={handleAddVariant}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition"
+                variant="primary"
               >
                 {editingVariantId ? <Save size={18} /> : <Plus size={18} />}
                 {editingVariantId ? 'Salvar Alteração' : 'Adicionar Variante'}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -597,21 +602,22 @@ export function ProductForm() {
 
         {/* Action Bar / Rodapé */}
         <div className="fixed bottom-0 left-64 right-0 bg-white border-t p-4 flex justify-end gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <button
+          <Button
             type="button"
             onClick={() => navigate('/products')}
-            className="px-6 py-2 border rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition"
+            variant="secondary"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="px-8 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium flex items-center gap-2 disabled:opacity-50 transition"
+            isLoading={isSaving}
+            variant="primary"
+            className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500 min-w-[160px]"
           >
-            <Save size={20} />
+            {!isSaving && <Save size={20} />}
             {isSaving ? 'Salvando...' : 'Salvar Produto'}
-          </button>
+          </Button>
         </div>
       </form >
     </div >

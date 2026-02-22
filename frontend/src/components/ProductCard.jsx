@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { storeService } from '../services/storeService';
 import { useFavorites } from '../context/FavoritesContext';
-import { ShoppingBag, Check, Loader2, Heart } from 'lucide-react';
+import { ShoppingBag, Check, Heart } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
+import Button from './ui/Button';
+import Spinner from './ui/Spinner';
+import { useToast } from '../context/ToastContext';
 
 const ProductCard = ({ product, initialIsFavorite = false }) => {
   const { user } = useOutletContext() || {};
   const { isFavorite: checkFavorite, toggleFavorite, loading: favLoading } = useFavorites();
   const [loading, setLoading] = useState(false);
   const [added, setAdded] = useState(false);
+  const { addToast } = useToast();
 
   const isFavorite = checkFavorite(product.id);
 
@@ -21,10 +25,12 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
 
   const handleAddToCart = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setLoading(true);
 
     setTimeout(() => {
       storeService.cart.add(product, 1);
+      addToast(`${product.name} adicionado!`, "success");
       setAdded(true);
       setLoading(false);
       setTimeout(() => setAdded(false), 2000);
@@ -67,7 +73,7 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
         title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
       >
         {favLoading ? (
-          <Loader2 size={14} className="animate-spin text-gray-300" />
+          <Spinner size={14} className="text-gray-300" />
         ) : (
           <Heart size={16} className={isFavorite ? "fill-current" : ""} />
         )}
@@ -116,26 +122,21 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
             </div>
           </div>
 
-          <button
+          <Button
             onClick={handleAddToCart}
-            disabled={loading || isOutOfStock}
-            className={`w-full flex items-center justify-center gap-2 py-2 px-3 font-lato text-[10px] uppercase tracking-wider transition-all duration-300 rounded-sm ${isOutOfStock
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : added
-                ? 'bg-green-700 text-white'
-                : 'bg-[var(--azul-profundo)] text-white hover:bg-[var(--dourado-suave)]'
-              }`}
+            isLoading={loading}
+            disabled={isOutOfStock}
+            variant={added ? 'primary' : 'primary'}
+            className={`w-full py-2 px-3 text-[10px] ${added ? 'bg-green-700 hover:bg-green-800' : ''}`}
           >
-            {loading ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : added ? (
+            {added ? (
               <><Check size={14} /> Na Sacola</>
             ) : isOutOfStock ? (
               'Indisponível'
             ) : (
               <><ShoppingBag size={14} /> Comprar</>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
