@@ -75,7 +75,7 @@ const CheckoutPage = () => {
             storeService.cart.clear(); // Limpa carrinho ao finalizar
         } catch (error) {
             console.error(error);
-            alert("Erro ao processar o pedido. Tente novamente.");
+            window.dispatchEvent(new CustomEvent('show-alert', { detail: "Erro ao processar o pedido. Tente novamente." }));
         } finally {
             setLoading(false);
         }

@@ -2,7 +2,8 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { storeService } from '../services/storeService';
 import SEO from '../components/SEO';
-import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2 } from 'lucide-react';
+import { useFavorites } from '../context/FavoritesContext';
+import { Loader2, ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2, Heart } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
 import ReviewSection from '../components/ReviewSection';
 import ProductCard from '../components/ProductCard';
@@ -10,6 +11,7 @@ import ProductCard from '../components/ProductCard';
 const ProductPage = () => {
   const { id } = useParams();
   const { user } = useOutletContext();
+  const { isFavorite: checkFavorite, toggleFavorite, loading: favLoading } = useFavorites();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -20,6 +22,13 @@ const ProductPage = () => {
   const [mainMedia, setMainMedia] = useState(null);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [currentVariant, setCurrentVariant] = useState(null);
+
+  const isFavorite = checkFavorite(id);
+
+  const handleToggleFavorite = async () => {
+    if (!product) return;
+    await toggleFavorite(product);
+  };
 
   // UI State
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -567,6 +576,24 @@ const ProductPage = () => {
                   >
                     <ShoppingBag size={24} />
                     Adicionar ao carrinho
+                  </button>
+
+                  <button
+                    onClick={handleToggleFavorite}
+                    disabled={favLoading}
+                    className={`w-full h-[58px] font-lato text-[16px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 rounded-[4px] border
+                        ${isFavorite
+                        ? 'bg-white border-red-200 text-red-500 hover:bg-red-50'
+                        : 'bg-white border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-500'
+                      }
+                    `}
+                  >
+                    {favLoading ? (
+                      <Loader2 size={24} className="animate-spin text-gray-300" />
+                    ) : (
+                      <Heart size={24} className={isFavorite ? "fill-current" : ""} />
+                    )}
+                    {isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                   </button>
                 </div>
               </div>

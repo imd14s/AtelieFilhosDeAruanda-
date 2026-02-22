@@ -135,7 +135,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     setError("");
     try {
       await authService.verify(email, code);
-      alert("Conta verificada! Faça login para continuar.");
+      window.dispatchEvent(new CustomEvent('show-alert', { detail: "Conta verificada! Faça login para continuar." }));
       setView("LOGIN");
     } catch (err) {
       setError("Código inválido.");

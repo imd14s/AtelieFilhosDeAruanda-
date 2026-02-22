@@ -20,7 +20,7 @@ const Footer = () => {
       setEmail('');
     } catch (err) {
       console.error("Erro ao assinar:", err);
-      alert(err.message || "Erro ao assinar newsletter");
+      window.dispatchEvent(new CustomEvent('show-alert', { detail: err.message || "Erro ao assinar newsletter" }));
     } finally {
       setLoading(false);
     }

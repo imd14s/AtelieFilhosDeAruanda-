@@ -1,37 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Heart, HeartOff, MoreVertical } from 'lucide-react';
 import SEO from '../components/SEO';
+import { useFavorites } from '../context/FavoritesContext';
 import { useOutletContext, Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import api from '../services/api';
+import { storeService } from '../services/storeService';
 
 // MOCK_FAVORITES removed in favor of real API data
 
 
 const FavoritesPage = () => {
     const { user } = useOutletContext();
+    const { favorites: favIds, refreshFavorites } = useFavorites();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('favorites'); // 'favorites' or 'lists'
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const fetchFavorites = useCallback(async () => {
         const userId = user?.id || user?.googleId;
-        if (userId) {
-            setLoading(true);
-            storeService.favorites.get(userId)
-                .then(data => {
-                    setFavorites(data);
-                    setLoading(false);
-                })
-                .catch(err => {
-                    console.error("Error fetching favorites:", err);
-                    setLoading(false);
-                });
-        } else {
+        if (!userId) return;
+
+        setLoading(true);
+        try {
+            const data = await storeService.favorites.get(userId);
+            setFavorites(data);
+        } catch (err) {
+            console.error("Error fetching favorites:", err);
+        } finally {
             setLoading(false);
         }
     }, [user]);
+
+    useEffect(() => {
+        fetchFavorites();
+    }, [fetchFavorites]);
+
+    // Sincroniza quando os IDs mudam (ex: item removido em outra aba ou via card)
+    useEffect(() => {
+        if (!loading && favorites.length > 0) {
+            setFavorites(prev => prev.filter(p => favIds.includes(p.id)));
+        }
+    }, [favIds]);
 
     if (!user) return null;
 

@@ -53,7 +53,7 @@ const OrdersPage = () => {
                 }, 1);
             });
         });
-        alert('Produtos adicionados ao carrinho!');
+        window.dispatchEvent(new CustomEvent('show-alert', { detail: 'Produtos adicionados ao carrinho!' }));
     };
 
     if (!user) return null;

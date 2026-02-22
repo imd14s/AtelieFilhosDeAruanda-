@@ -240,6 +240,7 @@ export const storeService = {
             role: response.data.role
           };
           localStorage.setItem('user', JSON.stringify(userObj));
+          window.dispatchEvent(new Event('auth-changed'));
           return userObj;
         }
         throw new Error("Resposta de login inválida");
@@ -252,6 +253,7 @@ export const storeService = {
     logout: () => {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
+      window.dispatchEvent(new Event('auth-changed'));
       window.location.href = '/'; // Redirecionamento limpo
     },
 

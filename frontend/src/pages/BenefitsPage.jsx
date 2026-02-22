@@ -89,7 +89,7 @@ const BenefitsPage = () => {
                                     <button
                                         onClick={() => {
                                             navigator.clipboard.writeText(coupon.code);
-                                            alert("Código copiado!");
+                                            window.dispatchEvent(new CustomEvent('show-alert', { detail: "Código copiado!" }));
                                         }}
                                         className="mt-4 w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold rounded-lg transition-colors border border-gray-200 flex items-center justify-center gap-2"
                                     >
