@@ -97,7 +97,7 @@ const Footer = () => {
             <div>
               <h3 className="font-playfair text-lg mb-6 border-b border-[var(--dourado-suave)]/30 pb-2 inline-block">Contato</h3>
               <ul className="space-y-4 font-lato text-sm text-[var(--branco-off-white)]/70">
-                <li className="flex items-start gap-4">
+                <li className="flex items-center gap-4">
                   <Phone size={18} className="text-[var(--dourado-suave)] shrink-0 mt-0.5" />
                   <div className="flex flex-col space-y-1">
                     <span>(11) 96321-2172</span>
@@ -144,10 +144,11 @@ const Footer = () => {
           </div>
 
           {/* Selos de Pagamento */}
-          <div className="flex gap-3 items-center grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+          <div className="flex gap-4 items-center grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-all duration-500">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-3" />
             <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_Pix_Brasil.png" alt="Pix" className="h-4" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/50/Pix_%28Brazil%29_logo.svg" alt="Pix" className="h-4" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Mercado_Pago.svg" alt="Mercado Pago" className="h-10" />
           </div>
         </div>
       </div>
