@@ -23,6 +23,7 @@ import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPa
 import { SubscribersPage } from './pages/marketing/SubscribersPage';
 import { SignaturesPage } from './pages/marketing/SignaturesPage';
 import { UsersPage } from './pages/settings/UsersPage';
+import { EmailSettingsPage } from './pages/settings/EmailSettingsPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 console.log('App initialization - Routes loaded');
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route path="/settings/audit" element={<AuditLogPage />} />
         <Route path="/settings/shipping" element={<ShippingPage />} />
         <Route path="/settings/payment" element={<PaymentPage />} />
+        <Route path="/settings/email" element={<EmailSettingsPage />} />
         <Route path="/settings/stock-alerts" element={<StockAlertPage />} />
         <Route path="/marketing/coupons" element={<CouponList />} />
         <Route path="/marketing/campaigns" element={<CampaignsPage />} />

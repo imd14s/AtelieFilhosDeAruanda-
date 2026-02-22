@@ -25,6 +25,8 @@ import HistoryPage from "./pages/HistoryPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import BenefitsPage from "./pages/BenefitsPage";
 import AtelieSubscribePage from "./pages/AtelieSubscribePage";
+import VerifyNewsletter from "./pages/VerifyNewsletter";
+import UnsubscribeNewsletter from "./pages/UnsubscribeNewsletter";
 import UserLayout from "./pages/UserLayout";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -49,6 +51,8 @@ function App() {
             <Route path="/termos" element={<TermsOfUsePage />} />
             <Route path="/contato" element={<ContactPage />} />
             <Route path="/assinaturas" element={<AtelieSubscribePage />} />
+            <Route path="/verify-newsletter" element={<VerifyNewsletter />} />
+            <Route path="/unsubscribe" element={<UnsubscribeNewsletter />} />
 
             {/* Rotas Dinâmicas usando ID do Java */}
 

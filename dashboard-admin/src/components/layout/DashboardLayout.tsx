@@ -7,7 +7,7 @@ import clsx from 'clsx';
 const {
   LayoutDashboard, ShoppingBag, Settings, LogOut, Package,
   Zap, Users, Shield, Truck, CreditCard, Ticket, Mail,
-  ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X, Bell, PenTool
+  ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X, Bell, PenTool, Send
 } = Icons;
 
 console.log('Icons loaded:', { Bell: !!Bell });
@@ -71,6 +71,7 @@ export function DashboardLayout() {
       children: [
         { icon: Zap, label: 'IA', path: '/settings/ai' },
         { icon: Plug, label: 'Integrações', path: '/settings/integrations' },
+        { icon: Send, label: 'E-mails (Remetente)', path: '/settings/email' },
         { icon: Users, label: 'Usuários (LGPD)', path: '/settings/users' },
         { icon: Users, label: 'Equipe', path: '/settings/team' },
         { icon: Shield, label: 'Auditoria', path: '/settings/audit' },

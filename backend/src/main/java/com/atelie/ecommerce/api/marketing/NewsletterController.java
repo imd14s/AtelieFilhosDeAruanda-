@@ -73,4 +73,66 @@ public class NewsletterController {
             return ResponseEntity.internalServerError().body(Map.of("message", "Erro interno ao processar inscrição"));
         }
     }
+
+    @PostMapping("/verify")
+    @Transactional
+    public ResponseEntity<?> verify(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Token não fornecido."));
+        }
+
+        try {
+            var subscriber = subscriberRepository.findByVerificationToken(token)
+                    .orElse(null);
+
+            if (subscriber == null) {
+                return ResponseEntity.status(404).body(Map.of("message", "Token inválido ou expirado."));
+            }
+
+            if (Boolean.TRUE.equals(subscriber.getEmailVerified())) {
+                return ResponseEntity.ok(Map.of("message", "E-mail já verificado anteriormente. Obrigado!"));
+            }
+
+            subscriber.setEmailVerified(true);
+            subscriber.setActive(true);
+            subscriberRepository.save(subscriber);
+
+            return ResponseEntity.ok(Map.of("message", "Inscrição confirmada com sucesso! Bem-vindo(a) ao Ateliê."));
+        } catch (Exception e) {
+            log.error("Error verifying token {}: {}", token, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", "Erro ao verificar inscrição."));
+        }
+    }
+
+    @PostMapping("/unsubscribe")
+    @Transactional
+    public ResponseEntity<?> unsubscribe(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Token não fornecido."));
+        }
+
+        try {
+            var subscriber = subscriberRepository.findByVerificationToken(token)
+                    .orElse(null);
+
+            if (subscriber == null) {
+                return ResponseEntity.status(404).body(Map.of("message", "Assinatura não encontrada."));
+            }
+
+            if (Boolean.FALSE.equals(subscriber.getActive())) {
+                return ResponseEntity.ok(Map.of("message", "Sua inscrição já estava cancelada. Sentiremos sua falta!"));
+            }
+
+            subscriber.setActive(false);
+            subscriberRepository.save(subscriber);
+
+            return ResponseEntity
+                    .ok(Map.of("message", "Inscrição cancelada com sucesso. Você não receberá mais nossos e-mails."));
+        } catch (Exception e) {
+            log.error("Error unsubscribing token {}: {}", token, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", "Erro ao cancelar inscrição."));
+        }
+    }
 }
