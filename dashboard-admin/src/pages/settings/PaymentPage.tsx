@@ -6,7 +6,6 @@ import type { AdminServiceProvider, MercadoPagoConfig } from '../../types/store-
 
 const RECOMMENDED_PAYMENT_PROVIDERS = [
     { name: 'Mercado Pago', code: 'MERCADO_PAGO', driverKey: 'payment.mercadopago', icon: '🔵', desc: 'Cartão de Crédito, PIX e Boleto' },
-    { name: 'PIX Direto', code: 'PIX_NATIVO', driverKey: 'payment.pix', icon: '💎', desc: 'Transferência instantânea sem taxas MP' },
 ];
 
 export function PaymentPage() {
@@ -26,7 +25,7 @@ export function PaymentPage() {
             setLoading(true);
             const data = await AdminProviderService.listProviders();
             // Filtrar o PIX isolado conforme metodologia: ele deve ser um método dentro de outro provedor
-            setProviders(data.filter(p => p.serviceType === 'PAYMENT' && p.code !== 'PIX'));
+            setProviders(data.filter(p => p.serviceType === 'PAYMENT' && p.code !== 'PIX' && p.code !== 'PIX_NATIVO'));
             setError(null);
         } catch (err) {
             console.error(err);
