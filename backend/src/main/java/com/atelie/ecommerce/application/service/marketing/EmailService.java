@@ -46,6 +46,7 @@ public class EmailService {
         helper.setText(email.getContent(), true); // true = HTML
 
         // Add List-Unsubscribe header dynamically
+        String frontendUrl = configService.get("FRONTEND_URL", "http://localhost:5173");
         String unsubscribeLink = frontendUrl + "/unsubscribe";
         message.addHeader("List-Unsubscribe", "<" + unsubscribeLink + ">");
 

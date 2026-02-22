@@ -15,7 +15,7 @@ const Footer = () => {
     setLoading(true);
     try {
       const response = await marketingService.subscribeNewsletter(email);
-      setMessage(response.message);
+      setMessage(response.message || "Inscrição realizada! Verifique seu e-mail.");
       setSubscribed(true);
       setEmail('');
     } catch (err) {

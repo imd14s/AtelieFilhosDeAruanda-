@@ -4,6 +4,7 @@ import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
 import com.atelie.ecommerce.domain.marketing.model.NewsletterSubscriber;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.NewsletterSubscriberRepository;
+import com.atelie.ecommerce.api.config.DynamicConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +23,14 @@ public class NewsletterController {
 
     private final NewsletterSubscriberRepository subscriberRepository;
     private final EmailQueueRepository emailQueueRepository;
+    private final DynamicConfigService configService;
 
     public NewsletterController(NewsletterSubscriberRepository subscriberRepository,
-            EmailQueueRepository emailQueueRepository) {
+            EmailQueueRepository emailQueueRepository,
+            DynamicConfigService configService) {
         this.subscriberRepository = subscriberRepository;
         this.emailQueueRepository = emailQueueRepository;
+        this.configService = configService;
     }
 
     @PostMapping("/subscribe")
@@ -53,13 +57,14 @@ public class NewsletterController {
             subscriberRepository.save(subscriber);
 
             // Queue Verification Email
+            String frontendUrl = configService.requireString("FRONTEND_URL");
             EmailQueue verificationEmail = EmailQueue.builder()
                     .recipient(email)
                     .subject("✨ Confirme sua inscrição - Ateliê Filhos de Aruanda")
                     .content(
                             "<h1>Olá!</h1><p>Clique no link para confirmar sua inscrição na nossa newsletter e receber nosso Axé!</p>"
                                     +
-                                    "<a href='https://atelie.com/verify-newsletter?token="
+                                    "<a href='" + frontendUrl + "/verify-newsletter?token="
                                     + subscriber.getVerificationToken() + "'>Confirmar Inscrição</a>")
                     .priority(EmailQueue.EmailPriority.HIGH)
                     .status(EmailQueue.EmailStatus.PENDING)
