@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
-import { Truck, AlertCircle, Plus, LayoutGrid, ShieldCheck, Trash2, X, Code, Save } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Truck, AlertCircle, Plus, LayoutGrid, ShieldCheck, Trash2, Code, Save } from 'lucide-react';
+
 import { AdminProviderService } from '../../services/AdminProviderService';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { MelhorEnvioConfig } from '../../components/shipping/MelhorEnvioConfig';
 import { MandaBemConfig } from '../../components/shipping/MandaBemConfig';
+import BaseModal from '../../components/ui/BaseModal';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 const RECOMMENDED_PROVIDERS = [
     { name: 'Melhor Envio', code: 'MELHOR_ENVIO', driverKey: 'shipping.melhorenvio', icon: '📦' },
@@ -18,6 +22,7 @@ export function ShippingPage() {
     const [configData, setConfigData] = useState<any>({});
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newProvider, setNewProvider] = useState({ name: '', code: '', driverKey: '' });
+    const { addToast } = useToast();
 
     useEffect(() => {
         loadData();
@@ -40,9 +45,10 @@ export function ShippingPage() {
     const handleToggle = async (id: string, currentStatus: boolean) => {
         try {
             await AdminProviderService.toggleProvider(id, !currentStatus);
-            setProviders(prev => prev.map(p => p.id === id ? { ...p, enabled: !currentStatus } : p));
+            setProviders((prev: AdminServiceProvider[]) => prev.map(p => p.id === id ? { ...p, enabled: !currentStatus } : p));
+            addToast('Status atualizado com sucesso!', 'success');
         } catch (err) {
-            alert('Erro ao atualizar status');
+            addToast('Erro ao atualizar status', 'error');
         }
     };
 
@@ -50,10 +56,11 @@ export function ShippingPage() {
         if (!confirm('Tem certeza que deseja remover este provedor de frete? Todas as configurações serão perdidas.')) return;
         try {
             await AdminProviderService.deleteProvider(id);
-            setProviders(prev => prev.filter(p => p.id !== id));
+            setProviders((prev: AdminServiceProvider[]) => prev.filter(p => p.id !== id));
             if (editingProvider?.id === id) setEditingProvider(null);
+            addToast('Provedor removido!', 'success');
         } catch (err) {
-            alert('Erro ao remover provedor.');
+            addToast('Erro ao remover provedor.', 'error');
         }
     };
 
@@ -69,9 +76,10 @@ export function ShippingPage() {
             });
             setIsAddModalOpen(false);
             setNewProvider({ name: '', code: '', driverKey: '' });
+            addToast('Provedor criado com sucesso!', 'success');
             loadData();
         } catch (err) {
-            alert('Erro ao criar provedor.');
+            addToast('Erro ao criar provedor.', 'error');
         }
     };
 
@@ -93,14 +101,13 @@ export function ShippingPage() {
         if (!editingProvider) return;
         try {
             await AdminProviderService.saveProviderConfig({
-                providerId: editingProvider.id,
                 configJson: JSON.stringify(configData),
                 environment: 'PRODUCTION'
             });
-            alert('Configuração de frete salva!');
+            addToast('Configuração de frete salva!', 'success');
             setEditingProvider(null);
         } catch (err) {
-            alert('Erro ao salvar configuração.');
+            addToast('Erro ao salvar configuração.', 'error');
         }
     };
 
@@ -119,12 +126,13 @@ export function ShippingPage() {
                         </div>
                     </div>
                 </div>
-                <button
+                <Button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-gray-900 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition shadow-lg active:scale-95"
+                    variant="primary"
+                    className="shadow-lg"
                 >
                     <Plus size={20} /> Adicionar Provedor
-                </button>
+                </Button>
             </header>
 
             {error && (
@@ -227,12 +235,13 @@ export function ShippingPage() {
                                     )}
 
                                     <div className="flex justify-end pt-2">
-                                        <button
+                                        <Button
                                             onClick={handleSaveConfig}
-                                            className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-100 transition active:scale-95"
+                                            variant="primary"
+                                            className="px-8 shadow-lg shadow-indigo-100"
                                         >
                                             <Save size={18} /> Salvar Alterações
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             )}
@@ -242,90 +251,88 @@ export function ShippingPage() {
             )}
 
             {/* Modal de Adicionar Provedor */}
-            {isAddModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
-                        <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-                            <h3 className="text-xl font-bold text-gray-800">Novo Provedor de Frete</h3>
-                            <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition">
-                                <X size={20} />
+            <BaseModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                title="Novo Provedor de Frete"
+                maxWidth="max-w-md"
+            >
+                <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-3 mb-2">
+                        {RECOMMENDED_PROVIDERS.map(p => (
+                            <button
+                                key={p.code}
+                                onClick={() => setNewProvider({ name: p.name, code: p.code, driverKey: p.driverKey })}
+                                className={`p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-3 ${newProvider.code === p.code
+                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                    : 'border-gray-100 hover:border-indigo-200 bg-gray-50'
+                                    }`}
+                            >
+                                <span className="text-2xl">{p.icon}</span>
+                                <div>
+                                    <div className="font-bold text-[13px]">{p.name}</div>
+                                    <div className="text-[10px] opacity-70 uppercase tracking-wider font-mono">{p.code}</div>
+                                </div>
                             </button>
-                        </div>
-                        <div className="p-6 space-y-6">
-                            <div className="grid grid-cols-2 gap-3 mb-2">
-                                {RECOMMENDED_PROVIDERS.map(p => (
-                                    <button
-                                        key={p.code}
-                                        onClick={() => setNewProvider({ name: p.name, code: p.code, driverKey: p.driverKey })}
-                                        className={`p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-3 ${newProvider.code === p.code
-                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                            : 'border-gray-100 hover:border-indigo-200 bg-gray-50'
-                                            }`}
-                                    >
-                                        <span className="text-2xl">{p.icon}</span>
-                                        <div>
-                                            <div className="font-bold text-[13px]">{p.name}</div>
-                                            <div className="text-[10px] opacity-70 uppercase tracking-wider font-mono">{p.code}</div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
+                        ))}
+                    </div>
 
-                            <div className="space-y-4 pt-4 border-t border-dashed">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-gray-600">Nome Transportadora</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: Melhor Envio"
-                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        value={newProvider.name}
-                                        onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-gray-600">Código de Serviço</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: MELHOR_ENVIO"
-                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none uppercase font-mono"
-                                        value={newProvider.code}
-                                        onChange={e => {
-                                            const code = e.target.value.toUpperCase();
-                                            const driverKey = code === 'MELHOR_ENVIO' ? 'shipping.melhorenvio' : code.toLowerCase();
-                                            setNewProvider({ ...newProvider, code, driverKey });
-                                        }}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-gray-600">Driver Key</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: shipping.melhorenvio"
-                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono"
-                                        value={newProvider.driverKey}
-                                        onChange={e => setNewProvider({ ...newProvider, driverKey: e.target.value })}
-                                    />
-                                </div>
-                            </div>
+                    <div className="space-y-4 pt-4 border-t border-dashed">
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-600">Nome Transportadora</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: Melhor Envio"
+                                className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={newProvider.name}
+                                onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
+                            />
                         </div>
-                        <div className="p-6 bg-gray-50 flex gap-3">
-                            <button
-                                onClick={() => setIsAddModalOpen(false)}
-                                className="flex-1 py-3 text-gray-500 font-bold hover:text-gray-800 transition"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleAddProvider}
-                                disabled={!newProvider.name || !newProvider.code}
-                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-100 transition active:scale-95"
-                            >
-                                Criar Provedor
-                            </button>
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-600">Código de Serviço</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: MELHOR_ENVIO"
+                                className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none uppercase font-mono"
+                                value={newProvider.code}
+                                onChange={e => {
+                                    const code = e.target.value.toUpperCase();
+                                    const driverKey = code === 'MELHOR_ENVIO' ? 'shipping.melhorenvio' : code.toLowerCase();
+                                    setNewProvider({ ...newProvider, code, driverKey });
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-600">Driver Key</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: shipping.melhorenvio"
+                                className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono"
+                                value={newProvider.driverKey}
+                                onChange={e => setNewProvider({ ...newProvider, driverKey: e.target.value })}
+                            />
                         </div>
                     </div>
+
+                    <div className="pt-4 border-t flex gap-3">
+                        <Button
+                            onClick={() => setIsAddModalOpen(false)}
+                            variant="secondary"
+                            className="flex-1"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleAddProvider}
+                            disabled={!newProvider.name || !newProvider.code}
+                            variant="primary"
+                            className="flex-1 shadow-lg shadow-indigo-100"
+                        >
+                            Criar Provedor
+                        </Button>
+                    </div>
                 </div>
-            )}
+            </BaseModal>
         </div>
     );
 }

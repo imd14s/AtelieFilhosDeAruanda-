@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ConfigService } from '../../services/ConfigService';
+
 import type { SystemConfig } from '../../types/config';
 import { Settings, Trash2, Plus, Save } from 'lucide-react';
+import BaseModal from '../../components/ui/BaseModal';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 export function ConfigPage() {
     const [configs, setConfigs] = useState<SystemConfig[]>([]);
@@ -11,6 +15,8 @@ export function ConfigPage() {
     // Form State
     const [configKey, setConfigKey] = useState('');
     const [configValue, setConfigValue] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const { addToast } = useToast();
 
     useEffect(() => {
         loadConfigs();
@@ -32,23 +38,28 @@ export function ConfigPage() {
         if (!confirm(`Tem certeza que deseja remover a configuração ${keyToDelete}?`)) return;
         try {
             await ConfigService.delete(keyToDelete);
-            setConfigs(configs.filter(c => c.configKey !== keyToDelete));
+            setConfigs((prev: SystemConfig[]) => prev.filter(c => c.configKey !== keyToDelete));
+            addToast('Configuração removida.', 'success');
         } catch (error) {
-            alert('Não foi possível excluir esta configuração. Tente novamente.');
+            addToast('Não foi possível excluir esta configuração.', 'error');
             console.error(error);
         }
     }
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         try {
             await ConfigService.upsert({ configKey, configValue });
-            await loadConfigs(); // Reload to get potential server-side formatting
+            await loadConfigs();
             setIsModalOpen(false);
             setConfigKey(''); setConfigValue('');
+            addToast('Configuração salva com sucesso!', 'success');
         } catch (error) {
-            alert('Não foi possível salvar. Tente novamente.');
+            addToast('Não foi possível salvar.', 'error');
             console.error(error);
+        } finally {
+            setIsSaving(false);
         }
     }
 
@@ -59,13 +70,14 @@ export function ConfigPage() {
                     <h1 className="text-2xl font-bold text-gray-800">Configurações do Sistema</h1>
                     <p className="text-gray-500">Feature Flags e Variáveis Globais</p>
                 </div>
-                <button
+                <Button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                    variant="primary"
+                    className="shadow-lg"
                 >
                     <Plus size={20} />
                     Nova Configuração
-                </button>
+                </Button>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -87,14 +99,15 @@ export function ConfigPage() {
                                         <p className="mb-4">Nenhuma configuração encontrada.</p>
                                         <button
                                             onClick={async () => {
-                                                if (!confirm('Deseja criar as configurações padrão (Ex: OPENAI_API_TOKEN)?')) return;
+                                                if (!confirm('Deseja criar as configurações padrão?')) return;
                                                 try {
                                                     await ConfigService.upsert({
                                                         configKey: 'OPENAI_API_TOKEN',
                                                         configValue: 'sk-placeholder'
                                                     });
                                                     loadConfigs();
-                                                } catch (e) { alert('Erro ao criar defaults') }
+                                                    addToast('Configurações padrão criadas.');
+                                                } catch (e) { addToast('Erro ao criar defaults', 'error') }
                                             }}
                                             className="text-indigo-600 hover:text-indigo-800 font-medium underline"
                                         >
@@ -125,31 +138,54 @@ export function ConfigPage() {
             </div>
 
             {/* Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <Settings size={20} />Nova Configuração
-                        </h3>
-                        <form onSubmit={handleSave} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Chave (Key)</label>
-                                <input autoFocus required className="w-full border rounded p-2 font-mono uppercase" placeholder="EX: SITE_MAINTENANCE" value={configKey} onChange={e => setConfigKey(e.target.value.toUpperCase())} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Valor</label>
-                                <input required className="w-full border rounded p-2" placeholder="true / false / 123" value={configValue} onChange={e => setConfigValue(e.target.value)} />
-                            </div>
-                            <div className="flex justify-end gap-2 pt-2">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
-                                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2">
-                                    <Save size={16} /> Salvar
-                                </button>
-                            </div>
-                        </form>
+            <BaseModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Nova Configuração"
+                maxWidth="max-w-md"
+            >
+                <form onSubmit={handleSave} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Chave (Key)</label>
+                        <input
+                            autoFocus
+                            required
+                            className="w-full border rounded-xl p-3 font-mono uppercase focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="EX: SITE_MAINTENANCE"
+                            value={configKey}
+                            onChange={e => setConfigKey(e.target.value.toUpperCase())}
+                        />
                     </div>
-                </div>
-            )}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Valor</label>
+                        <input
+                            required
+                            className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="true / false / 123"
+                            value={configValue}
+                            onChange={e => setConfigValue(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                        <Button
+                            type="button"
+                            onClick={() => setIsModalOpen(false)}
+                            variant="secondary"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            isLoading={isSaving}
+                            variant="primary"
+                            className="px-6 shadow-lg"
+                        >
+                            <Save size={18} className="mr-2" />
+                            Salvar
+                        </Button>
+                    </div>
+                </form>
+            </BaseModal>
         </div>
     );
 }

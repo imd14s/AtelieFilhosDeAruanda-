@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
-import { CreditCard, AlertCircle, Plus, LayoutGrid, ShieldCheck, Trash2, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CreditCard, AlertCircle, Plus, LayoutGrid, ShieldCheck, Trash2 } from 'lucide-react';
+
 import { AdminProviderService } from '../../services/AdminProviderService';
 import { MercadoPagoForm } from './components/MercadoPagoForm';
 import type { AdminServiceProvider, MercadoPagoConfig } from '../../types/store-settings';
+import BaseModal from '../../components/ui/BaseModal';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 const RECOMMENDED_PAYMENT_PROVIDERS = [
     { name: 'Mercado Pago', code: 'MERCADO_PAGO', driverKey: 'payment.mercadopago', icon: '🔵', desc: 'Cartão de Crédito, PIX e Boleto' },
@@ -15,6 +19,7 @@ export function PaymentPage() {
     const [editingProvider, setEditingProvider] = useState<AdminServiceProvider | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newProvider, setNewProvider] = useState({ name: '', code: '', driverKey: '' });
+    const { addToast } = useToast();
 
     useEffect(() => {
         loadData();
@@ -39,8 +44,9 @@ export function PaymentPage() {
         try {
             await AdminProviderService.toggleProvider(id, !currentStatus);
             setProviders(prev => prev.map(p => p.id === id ? { ...p, enabled: !currentStatus } : p));
+            addToast('Status atualizado com sucesso!', 'success');
         } catch (err) {
-            alert('Erro ao atualizar status');
+            addToast('Erro ao atualizar status', 'error');
         }
     };
 
@@ -50,8 +56,9 @@ export function PaymentPage() {
             await AdminProviderService.deleteProvider(id);
             setProviders(prev => prev.filter(p => p.id !== id));
             if (editingProvider?.id === id) setEditingProvider(null);
+            addToast('Provedor removido com sucesso!', 'success');
         } catch (err) {
-            alert('Erro ao remover provedor.');
+            addToast('Erro ao remover provedor.', 'error');
         }
     };
 
@@ -67,9 +74,10 @@ export function PaymentPage() {
             });
             setIsAddModalOpen(false);
             setNewProvider({ name: '', code: '', driverKey: '' });
+            addToast('Provedor criado com sucesso!', 'success');
             loadData();
         } catch (err) {
-            alert('Erro ao criar provedor.');
+            addToast('Erro ao criar provedor.', 'error');
         }
     };
 
@@ -81,11 +89,11 @@ export function PaymentPage() {
                 configJson: JSON.stringify(config),
                 environment: 'PRODUCTION'
             });
-            alert('Configuração salva com sucesso!');
+            addToast('Configuração salva com sucesso!', 'success');
             setEditingProvider(null);
             loadData();
         } catch (err) {
-            alert('Erro ao salvar configuração profissional.');
+            addToast('Erro ao salvar configuração profissional.', 'error');
         }
     };
 
@@ -104,12 +112,13 @@ export function PaymentPage() {
                         </div>
                     </div>
                 </div>
-                <button
+                <Button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-gray-900 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition shadow-lg active:scale-95"
+                    variant="primary"
+                    className="shadow-lg"
                 >
                     <Plus size={20} /> Adicionar Provedor
-                </button>
+                </Button>
             </header>
 
             {error && (
@@ -208,90 +217,88 @@ export function PaymentPage() {
             )}
 
             {/* Modal de Adicionar Provedor */}
-            {isAddModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
-                        <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-                            <h3 className="text-xl font-bold text-gray-800">Novo Provedor de Pagamento</h3>
-                            <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition">
-                                <X size={20} />
+            <BaseModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                title="Novo Provedor de Pagamento"
+                maxWidth="max-w-md"
+            >
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-3">
+                        {RECOMMENDED_PAYMENT_PROVIDERS.map(p => (
+                            <button
+                                key={p.code}
+                                onClick={() => setNewProvider({ name: p.name, code: p.code, driverKey: p.driverKey })}
+                                className={`p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${newProvider.code === p.code
+                                    ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold'
+                                    : 'border-gray-100 hover:border-blue-200 bg-gray-50'
+                                    }`}
+                            >
+                                <span className="text-3xl">{p.icon}</span>
+                                <div>
+                                    <div className="text-[14px]">{p.name}</div>
+                                    <div className="text-[10px] opacity-60 font-medium">{p.desc}</div>
+                                </div>
                             </button>
-                        </div>
-                        <div className="p-6 space-y-6">
-                            <div className="grid grid-cols-1 gap-3">
-                                {RECOMMENDED_PAYMENT_PROVIDERS.map(p => (
-                                    <button
-                                        key={p.code}
-                                        onClick={() => setNewProvider({ name: p.name, code: p.code, driverKey: p.driverKey })}
-                                        className={`p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${newProvider.code === p.code
-                                            ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold'
-                                            : 'border-gray-100 hover:border-blue-200 bg-gray-50'
-                                            }`}
-                                    >
-                                        <span className="text-3xl">{p.icon}</span>
-                                        <div>
-                                            <div className="text-[14px]">{p.name}</div>
-                                            <div className="text-[10px] opacity-60 font-medium">{p.desc}</div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
+                        ))}
+                    </div>
 
-                            <div className="space-y-4 pt-4 border-t border-dashed">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-gray-600">Nome Amigável</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: Mercado Pago - Principal"
-                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={newProvider.name}
-                                        onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-gray-600">Código de Serviço</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: MERCADO_PAGO"
-                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono"
-                                        value={newProvider.code}
-                                        onChange={e => {
-                                            const code = e.target.value.toUpperCase();
-                                            const driverKey = code === 'MERCADO_PAGO' ? 'payment.mercadopago' : `payment.${code.toLowerCase()}`;
-                                            setNewProvider({ ...newProvider, code, driverKey });
-                                        }}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-gray-600">Driver Key</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: payment.mercadopago"
-                                        className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono"
-                                        value={newProvider.driverKey}
-                                        onChange={e => setNewProvider({ ...newProvider, driverKey: e.target.value })}
-                                    />
-                                </div>
-                            </div>
+                    <div className="space-y-4 pt-4 border-t border-dashed">
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-600">Nome Amigável</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: Mercado Pago - Principal"
+                                className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={newProvider.name}
+                                onChange={e => setNewProvider({ ...newProvider, name: e.target.value })}
+                            />
                         </div>
-                        <div className="p-6 bg-gray-50 flex gap-3">
-                            <button
-                                onClick={() => setIsAddModalOpen(false)}
-                                className="flex-1 py-3 text-gray-500 font-bold hover:text-gray-800 transition"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleAddProvider}
-                                disabled={!newProvider.name || !newProvider.code || !newProvider.driverKey}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-100 transition active:scale-95"
-                            >
-                                Ativar Provedor
-                            </button>
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-600">Código de Serviço</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: MERCADO_PAGO"
+                                className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono"
+                                value={newProvider.code}
+                                onChange={e => {
+                                    const code = e.target.value.toUpperCase();
+                                    const driverKey = code === 'MERCADO_PAGO' ? 'payment.mercadopago' : `payment.${code.toLowerCase()}`;
+                                    setNewProvider({ ...newProvider, code, driverKey });
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-semibold text-gray-600">Driver Key</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: payment.mercadopago"
+                                className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                                value={newProvider.driverKey}
+                                onChange={e => setNewProvider({ ...newProvider, driverKey: e.target.value })}
+                            />
                         </div>
                     </div>
+
+                    <div className="pt-4 border-t flex gap-3">
+                        <Button
+                            onClick={() => setIsAddModalOpen(false)}
+                            variant="secondary"
+                            className="flex-1"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleAddProvider}
+                            disabled={!newProvider.name || !newProvider.code || !newProvider.driverKey}
+                            variant="primary"
+                            className="flex-1 shadow-lg shadow-blue-100"
+                        >
+                            Ativar Provedor
+                        </Button>
+                    </div>
                 </div>
-            )}
+            </BaseModal>
         </div>
     );
 }

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { CreateCouponDTO } from '../../types/marketing';
+import BaseModal from '../../components/ui/BaseModal';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 interface CouponModalProps {
     isOpen: boolean;
@@ -18,6 +21,7 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
         usageLimitPerUser: 1,
         minPurchaseValue: 0
     });
+    const { addToast } = useToast();
     const [loading, setLoading] = useState(false);
 
     React.useEffect(() => {
@@ -42,124 +46,119 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
         try {
             setLoading(true);
             await onSave(formData);
+            addToast(initialData ? 'Cupom atualizado com sucesso!' : 'Cupom criado com sucesso!', 'success');
             onClose();
         } catch (error) {
-            alert(initialData ? 'Erro ao atualizar cupom' : 'Erro ao criar cupom');
+            addToast(initialData ? 'Erro ao atualizar cupom' : 'Erro ao criar cupom', 'error');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-                    <h2 className="text-xl font-bold text-gray-800">
-                        {initialData ? 'Editar Cupom' : 'Novo Cupom'}
-                    </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
-                        <X size={24} />
-                    </button>
+        <BaseModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={initialData ? 'Editar Cupom' : 'Novo Cupom'}
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Código do Cupom</label>
+                    <input
+                        required
+                        type="text"
+                        value={formData.code}
+                        onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                        placeholder="Ex: VERAS25"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none uppercase"
+                    />
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Código do Cupom</label>
-                        <input
-                            required
-                            type="text"
-                            value={formData.code}
-                            onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                            placeholder="Ex: VERAS25"
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none uppercase"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                        <select
+                            value={formData.type}
+                            onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        >
+                            <option value="PERCENTAGE">Porcentagem (%)</option>
+                            <option value="FIXED">Valor Fixo (R$)</option>
+                        </select>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                            <select
-                                value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            >
-                                <option value="PERCENTAGE">Porcentagem (%)</option>
-                                <option value="FIXED">Valor Fixo (R$)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                {formData.type === 'PERCENTAGE' ? 'Porcentagem (%)' : 'Valor (R$)'}
-                            </label>
-                            <input
-                                required
-                                type="number"
-                                step="0.01"
-                                value={formData.value || ''}
-                                onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
-                                placeholder={formData.type === 'PERCENTAGE' ? "10" : "50.00"}
-                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Limite Total</label>
-                            <input
-                                required
-                                type="number"
-                                value={formData.usageLimit || ''}
-                                onChange={(e) => setFormData({ ...formData, usageLimit: parseInt(e.target.value) || 0 })}
-                                placeholder="100"
-                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Limite por Usuário</label>
-                            <input
-                                required
-                                type="number"
-                                value={formData.usageLimitPerUser || ''}
-                                onChange={(e) => setFormData({ ...formData, usageLimitPerUser: parseInt(e.target.value) || 0 })}
-                                placeholder="1"
-                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            />
-                        </div>
-                    </div>
-
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Valor Mínimo da Compra (R$)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {formData.type === 'PERCENTAGE' ? 'Porcentagem (%)' : 'Valor (R$)'}
+                        </label>
                         <input
                             required
                             type="number"
                             step="0.01"
-                            value={formData.minPurchaseValue || ''}
-                            onChange={(e) => setFormData({ ...formData, minPurchaseValue: parseFloat(e.target.value) || 0 })}
-                            placeholder="0.00"
+                            value={formData.value === 0 ? '' : formData.value}
+                            onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                            placeholder={formData.type === 'PERCENTAGE' ? "10" : "50.00"}
                             className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                     </div>
+                </div>
 
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition font-medium"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            disabled={loading}
-                            type="submit"
-                            className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium disabled:opacity-50"
-                        >
-                            {loading ? (initialData ? 'Salvando...' : 'Criando...') : (initialData ? 'Salvar Alterações' : 'Criar Cupom')}
-                        </button>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Limite Total</label>
+                        <input
+                            required
+                            type="number"
+                            value={formData.usageLimit === 0 ? '' : formData.usageLimit}
+                            onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                            placeholder="100"
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
                     </div>
-                </form>
-            </div>
-        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Limite por Usuário</label>
+                        <input
+                            required
+                            type="number"
+                            value={formData.usageLimitPerUser === 0 ? '' : formData.usageLimitPerUser}
+                            onChange={(e) => setFormData({ ...formData, usageLimitPerUser: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                            placeholder="1"
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Valor Mínimo da Compra (R$)</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={formData.minPurchaseValue === 0 ? '' : formData.minPurchaseValue}
+                        onChange={(e) => setFormData({ ...formData, minPurchaseValue: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                        placeholder="0.00"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 italic">Deixe em branco ou digite 0 para ignorar o valor mínimo.</p>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                        variant="secondary"
+                        className="flex-1"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        isLoading={loading}
+                        type="submit"
+                        variant="primary"
+                        className="flex-1"
+                    >
+                        {initialData ? 'Salvar Alterações' : 'Criar Cupom'}
+                    </Button>
+                </div>
+            </form>
+        </BaseModal>
     );
 }

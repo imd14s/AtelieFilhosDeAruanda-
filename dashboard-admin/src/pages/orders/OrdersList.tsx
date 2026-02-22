@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { OrderService } from '../../services/OrderService';
 import type { Order } from '../../types/order';
 import { Ban, CheckCircle, Truck, Package, Search } from 'lucide-react';
+import BaseModal from '../../components/ui/BaseModal';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 export function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -10,6 +13,8 @@ export function OrdersPage() {
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [cancelReason, setCancelReason] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const { addToast } = useToast();
+    const [isCanceling, setIsCanceling] = useState(false);
 
     useEffect(() => {
         loadOrders();
@@ -36,12 +41,16 @@ export function OrdersPage() {
     const confirmCancel = async () => {
         if (!selectedOrderId) return;
         try {
+            setIsCanceling(true);
             await OrderService.cancel(selectedOrderId, cancelReason);
             setOrders(orders.map(o => o.id === selectedOrderId ? { ...o, status: 'CANCELED' } : o));
+            addToast('Pedido cancelado com sucesso.', 'success');
             setCancelModalOpen(false);
         } catch (error) {
             console.error('Erro ao cancelar pedido', error);
-            alert('Não foi possível cancelar o pedido. Tente novamente.');
+            addToast('Não foi possível cancelar o pedido. Tente novamente.', 'error');
+        } finally {
+            setIsCanceling(false);
         }
     };
 
@@ -49,9 +58,10 @@ export function OrdersPage() {
         try {
             await OrderService.approve(id);
             setOrders(orders.map(o => o.id === id ? { ...o, status: 'PAID' } : o));
+            addToast('Pedido aprovado!', 'success');
         } catch (error) {
             console.error('Erro ao aprovar pedido', error);
-            alert('Não foi possível aprovar o pedido. Tente novamente.');
+            addToast('Não foi possível aprovar o pedido.', 'error');
         }
     };
 
@@ -201,34 +211,39 @@ export function OrdersPage() {
             </div>
 
             {/* Cancel Modal */}
-            {cancelModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg w-96 shadow-xl">
-                        <h3 className="text-lg font-bold mb-4">Cancelar Pedido</h3>
-                        <p className="text-sm text-gray-600 mb-4">Motivo do cancelamento:</p>
-                        <textarea
-                            className="w-full border rounded p-2 mb-4"
-                            rows={3}
-                            value={cancelReason}
-                            onChange={(e) => setCancelReason(e.target.value)}
-                        />
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => setCancelModalOpen(false)}
-                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-                            >
-                                Voltar
-                            </button>
-                            <button
-                                onClick={confirmCancel}
-                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                            >
-                                Confirmar Cancelamento
-                            </button>
-                        </div>
+            <BaseModal
+                isOpen={cancelModalOpen}
+                onClose={() => setCancelModalOpen(false)}
+                title="Cancelar Pedido"
+            >
+                <div>
+                    <p className="text-sm text-gray-600 mb-4">Informe o motivo do cancelamento:</p>
+                    <textarea
+                        className="w-full border rounded-lg p-3 mb-4 focus:ring-2 focus:ring-red-500 outline-none"
+                        rows={3}
+                        placeholder="Ex: Produto fora de estoque, desistência..."
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                    />
+                    <div className="flex gap-3">
+                        <Button
+                            onClick={() => setCancelModalOpen(false)}
+                            variant="secondary"
+                            className="flex-1"
+                        >
+                            Voltar
+                        </Button>
+                        <Button
+                            onClick={confirmCancel}
+                            isLoading={isCanceling}
+                            variant="primary"
+                            className="flex-1 bg-red-600 hover:bg-red-700"
+                        >
+                            Confirmar Cancelamento
+                        </Button>
                     </div>
                 </div>
-            )}
+            </BaseModal>
         </div>
     );
 }

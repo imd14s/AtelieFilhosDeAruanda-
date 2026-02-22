@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Mail, Plus, Send, Clock, CheckCircle, AlertCircle, RefreshCcw } from 'lucide-react';
 import { api } from '../../api/axios';
 import { RichTextEditor } from '../../components/common/RichTextEditor';
+import BaseModal from '../../components/ui/BaseModal';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 export function CampaignsPage() {
     const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -17,6 +19,7 @@ export function CampaignsPage() {
         content: '',
         signatureId: ''
     });
+    const { addToast } = useToast();
 
     useEffect(() => {
         loadCampaigns();
@@ -57,13 +60,13 @@ export function CampaignsPage() {
                     ...newCampaign,
                     signatureId: newCampaign.signatureId || null
                 });
-                alert('Campanha atualizada com sucesso!');
+                addToast('Campanha atualizada com sucesso!', 'success');
             } else {
                 await api.post('/marketing/campaigns', {
                     ...newCampaign,
                     signatureId: newCampaign.signatureId || null
                 });
-                alert('Campanha criada com sucesso e está pronta para ser enviada!');
+                addToast('Campanha criada com sucesso!', 'success');
             }
 
             // Removed auto-start to allow editing before sending
@@ -81,7 +84,7 @@ export function CampaignsPage() {
             loadCampaigns();
         } catch (error) {
             console.error('Erro ao criar campanha', error);
-            alert('Erro ao criar campanha. Verifique os campos.');
+            addToast('Erro ao criar campanha. Verifique os campos.', 'error');
         } finally {
             setIsSaving(false);
         }
@@ -91,11 +94,11 @@ export function CampaignsPage() {
         if (!confirm('Deseja realmente iniciar o envio desta campanha?')) return;
         try {
             await api.post(`/marketing/campaigns/${id}/start`);
-            alert('Campanha iniciada com sucesso!');
+            addToast('Campanha iniciada com sucesso!', 'success');
             loadCampaigns();
         } catch (error) {
             console.error(error);
-            alert('Erro ao iniciar a campanha.');
+            addToast('Erro ao iniciar a campanha.', 'error');
         }
     };
 
@@ -103,11 +106,11 @@ export function CampaignsPage() {
         if (!confirm('Tem certeza? Isso irá parar o envio para os destinatários restantes.')) return;
         try {
             await api.post(`/marketing/campaigns/${id}/cancel`);
-            alert('Campanha cancelada.');
+            addToast('Campanha cancelada.', 'success');
             loadCampaigns();
         } catch (error) {
             console.error(error);
-            alert('Erro ao cancelar a campanha.');
+            addToast('Erro ao cancelar a campanha.', 'error');
         }
     };
 
@@ -115,11 +118,11 @@ export function CampaignsPage() {
         if (!confirm('Você tem certeza que deseja excluir esta campanha e todos os seus dados?')) return;
         try {
             await api.delete(`/marketing/campaigns/${id}`);
-            alert('Campanha excluída.');
+            addToast('Campanha excluída.', 'success');
             loadCampaigns();
         } catch (error) {
             console.error(error);
-            alert('Erro ao excluir a campanha.');
+            addToast('Erro ao excluir a campanha.', 'error');
         }
     };
 
@@ -144,7 +147,7 @@ export function CampaignsPage() {
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">Envio em massa com monitoramento em tempo real (atualização a cada 10min).</p>
                 </div>
-                <button
+                <Button
                     onClick={() => {
                         setEditingId(null);
                         setNewCampaign({
@@ -152,117 +155,109 @@ export function CampaignsPage() {
                         });
                         setIsModalOpen(true);
                     }}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-lg hover:bg-indigo-700 transition flex items-center gap-2"
+                    variant="primary"
+                    className="shadow-lg"
                 >
                     <Plus size={20} />
                     Nova Campanha
-                </button>
+                </Button>
             </div>
 
             {/* Modal de Nova Campanha */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <form onSubmit={handleCreateCampaign}>
-                            <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                    <Plus className="text-indigo-600" /> {editingId ? 'Editar Campanha' : 'Nova Campanha'}
-                                </h2>
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                    <Plus size={24} className="rotate-45" />
-                                </button>
-                            </div>
-
-                            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto font-sans">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nome Interno</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            placeholder="Ex: Promoção de Outono 2024"
-                                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            value={newCampaign.name}
-                                            onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Público Alvo</label>
-                                        <select
-                                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            value={newCampaign.audience}
-                                            onChange={e => setNewCampaign({ ...newCampaign, audience: e.target.value })}
-                                        >
-                                            <option value="NEWSLETTER_SUBSCRIBERS">Assinantes da Newsletter</option>
-                                            <option value="ALL_CUSTOMERS">Todos os Clientes</option>
-                                            <option value="TEST">Apenas Teste (Admin)</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Assunto do E-mail</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="Ex: Aproveite 20% de desconto em todo o site!"
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        value={newCampaign.subject}
-                                        onChange={e => setNewCampaign({ ...newCampaign, subject: e.target.value })}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Assinatura</label>
-                                    <select
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        value={newCampaign.signatureId}
-                                        onChange={e => setNewCampaign({ ...newCampaign, signatureId: e.target.value })}
-                                    >
-                                        <option value="">Sem assinatura</option>
-                                        {signatures.map(sig => (
-                                            <option key={sig.id} value={sig.id}>{sig.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Conteúdo da Mensagem</label>
-                                    <div className="bg-white">
-                                        <RichTextEditor
-                                            value={newCampaign.content}
-                                            onChange={content => setNewCampaign({ ...newCampaign, content })}
-                                            placeholder="Escreva sua mensagem aqui..."
-                                        />
-                                    </div>
-                                </div>
-
-                                <p className="text-[10px] text-gray-400 italic">
-                                    * A assinatura selecionada acima será anexada automaticamente ao final do e-mail no momento do envio.
-                                </p>
-                            </div>
-
-                            <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition disabled:bg-indigo-400 flex items-center gap-2"
-                                >
-                                    {isSaving ? <RefreshCcw size={18} className="animate-spin" /> : <Send size={18} />}
-                                    {isSaving ? (editingId ? 'Salvando...' : 'Criando...') : (editingId ? 'Salvar Alterações' : 'Criar Campanha')}
-                                </button>
-                            </div>
-                        </form>
+            <BaseModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={editingId ? 'Editar Campanha' : 'Nova Campanha'}
+                maxWidth="max-w-2xl"
+            >
+                <form onSubmit={handleCreateCampaign} className="space-y-4 font-sans">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Nome Interno</label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="Ex: Promoção de Outono 2024"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={newCampaign.name}
+                                onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Público Alvo</label>
+                            <select
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={newCampaign.audience}
+                                onChange={e => setNewCampaign({ ...newCampaign, audience: e.target.value })}
+                            >
+                                <option value="NEWSLETTER_SUBSCRIBERS">Assinantes da Newsletter</option>
+                                <option value="ALL_CUSTOMERS">Todos os Clientes</option>
+                                <option value="TEST">Apenas Teste (Admin)</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-            )}
+
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Assunto do E-mail</label>
+                        <input
+                            type="text"
+                            required
+                            placeholder="Ex: Aproveite 20% de desconto em todo o site!"
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            value={newCampaign.subject}
+                            onChange={e => setNewCampaign({ ...newCampaign, subject: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Assinatura</label>
+                        <select
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            value={newCampaign.signatureId}
+                            onChange={e => setNewCampaign({ ...newCampaign, signatureId: e.target.value })}
+                        >
+                            <option value="">Sem assinatura</option>
+                            {signatures.map(sig => (
+                                <option key={sig.id} value={sig.id}>{sig.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Conteúdo da Mensagem</label>
+                        <div className="bg-white">
+                            <RichTextEditor
+                                value={newCampaign.content}
+                                onChange={content => setNewCampaign({ ...newCampaign, content })}
+                                placeholder="Escreva sua mensagem aqui..."
+                            />
+                        </div>
+                    </div>
+
+                    <p className="text-[10px] text-gray-400 italic">
+                        * A assinatura selecionada acima será anexada automaticamente ao final do e-mail no momento do envio.
+                    </p>
+
+                    <div className="pt-4 border-t flex justify-end gap-3">
+                        <Button
+                            type="button"
+                            onClick={() => setIsModalOpen(false)}
+                            variant="secondary"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            isLoading={isSaving}
+                            variant="primary"
+                            className="px-6 shadow-lg"
+                        >
+                            <Send size={18} className="mr-2" />
+                            {editingId ? 'Salvar Alterações' : 'Criar Campanha'}
+                        </Button>
+                    </div>
+                </form>
+            </BaseModal>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-6 rounded-xl border shadow-sm">

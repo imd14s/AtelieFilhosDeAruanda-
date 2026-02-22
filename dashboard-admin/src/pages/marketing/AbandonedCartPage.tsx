@@ -4,12 +4,16 @@ import { MarketingService } from '../../services/MarketingService';
 import { api } from '../../api/axios';
 import { RichTextEditor } from '../../components/common/RichTextEditor';
 import type { AbandonedCartSettings } from '../../types/marketing';
+import BaseModal from '../../components/ui/BaseModal';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 export function AbandonedCartPage() {
     const [settings, setSettings] = useState<AbandonedCartSettings | null>(null);
     const [signatures, setSignatures] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const { addToast } = useToast();
 
     // Estado do Modal de Edição de E-mail
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -40,9 +44,9 @@ export function AbandonedCartPage() {
         try {
             setSaving(true);
             await MarketingService.updateAbandonedCartSettings(settings);
-            alert('Motor de recuperação atualizado com sucesso! 🚀');
+            addToast('Motor de recuperação atualizado com sucesso! 🚀', 'success');
         } catch (err) {
-            alert('Erro ao salvar configurações');
+            addToast('Erro ao salvar configurações', 'error');
         } finally {
             setSaving(false);
         }
@@ -124,14 +128,15 @@ export function AbandonedCartPage() {
                         </div>
                     </div>
 
-                    <button
+                    <Button
                         onClick={handleSave}
-                        disabled={saving}
-                        className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-black transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                        isLoading={saving}
+                        variant="primary"
+                        className="w-full shadow-lg"
                     >
                         <Save size={20} />
-                        {saving ? 'Gravando...' : 'Publicar Motor'}
-                    </button>
+                        Salvar Motor
+                    </Button>
                 </div>
             </div>
 
@@ -257,78 +262,67 @@ export function AbandonedCartPage() {
             </div>
 
             {/* Modal de Edição de E-mail (Gmail Style) */}
-            {isEmailModalOpen && currentTrigger && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                            <div className="flex items-center gap-2 text-indigo-600">
-                                <Mail size={20} />
-                                <h2 className="text-xl font-bold text-gray-800">Editor de Recuperação</h2>
-                            </div>
-                            <button
-                                onClick={() => setIsEmailModalOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition"
-                            >
-                                <X size={24} />
-                            </button>
+            <BaseModal
+                isOpen={isEmailModalOpen}
+                onClose={() => setIsEmailModalOpen(false)}
+                title="Editor de Recuperação"
+                maxWidth="max-w-3xl"
+            >
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Assunto do E-mail</label>
+                            <input
+                                value={currentTrigger?.subject || ''}
+                                onChange={(e) => updateTrigger(editingTriggerIndex!, 'subject', e.target.value)}
+                                className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                placeholder="Assunto cativante..."
+                            />
                         </div>
-
-                        <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Assunto do E-mail</label>
-                                    <input
-                                        value={currentTrigger.subject || ''}
-                                        onChange={(e) => updateTrigger(editingTriggerIndex!, 'subject', e.target.value)}
-                                        className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        placeholder="Assunto cativante..."
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Assinatura</label>
-                                    <select
-                                        value={currentTrigger.signatureId || ''}
-                                        onChange={(e) => updateTrigger(editingTriggerIndex!, 'signatureId', e.target.value)}
-                                        className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-                                    >
-                                        <option value="">Sem assinatura</option>
-                                        {signatures.map(sig => (
-                                            <option key={sig.id} value={sig.id}>{sig.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Corpo da Mensagem (Rich Text)</label>
-                                <div className="border rounded-xl overflow-hidden">
-                                    <RichTextEditor
-                                        value={currentTrigger.content || ''}
-                                        onChange={(content) => updateTrigger(editingTriggerIndex!, 'content', content)}
-                                        placeholder="Escreva sua mensagem de recuperação aqui..."
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-100 flex items-start gap-3">
-                                <Info size={18} className="text-yellow-600 mt-0.5" />
-                                <p className="text-xs text-yellow-700 leading-relaxed">
-                                    Dica: Os itens do carrinho do cliente serão listados automaticamente abaixo deste conteúdo. Use variáveis como <code className="bg-yellow-200 px-1 rounded">{"{{NOME_CLIENTE}}"}</code> para personalizar o envio.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="p-6 border-t bg-gray-50 flex justify-end">
-                            <button
-                                onClick={() => setIsEmailModalOpen(false)}
-                                className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition active:scale-95"
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Assinatura</label>
+                            <select
+                                value={currentTrigger?.signatureId || ''}
+                                onChange={(e) => updateTrigger(editingTriggerIndex!, 'signatureId', e.target.value)}
+                                className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                             >
-                                Aplicar Conteúdo
-                            </button>
+                                <option value="">Sem assinatura</option>
+                                {signatures.map(sig => (
+                                    <option key={sig.id} value={sig.id}>{sig.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Corpo da Mensagem (Rich Text)</label>
+                        <div className="border rounded-xl overflow-hidden">
+                            <RichTextEditor
+                                value={currentTrigger?.content || ''}
+                                onChange={(content) => updateTrigger(editingTriggerIndex!, 'content', content)}
+                                placeholder="Escreva sua mensagem de recuperação aqui..."
+                            />
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-100 flex items-start gap-3">
+                        <Info size={18} className="text-yellow-600 mt-0.5" />
+                        <p className="text-xs text-yellow-700 leading-relaxed">
+                            Dica: Os itens do carrinho do cliente serão listados automaticamente abaixo deste conteúdo. Use variáveis como <code className="bg-yellow-200 px-1 rounded">{"{{NOME_CLIENTE}}"}</code> para personalizar o envio.
+                        </p>
+                    </div>
+
+                    <div className="pt-4 border-t flex justify-end">
+                        <Button
+                            onClick={() => setIsEmailModalOpen(false)}
+                            variant="primary"
+                            className="px-8 shadow-lg"
+                        >
+                            Aplicar Conteúdo
+                        </Button>
+                    </div>
                 </div>
-            )}
+            </BaseModal>
         </div>
     );
 }

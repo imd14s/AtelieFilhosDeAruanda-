@@ -3,6 +3,9 @@ import { Plus, Edit2, Trash2, CheckCircle2, XCircle, Repeat, Package, Percent, S
 import { subscriptionService } from '../../services/subscriptionService';
 import { ProductService } from '../../services/ProductService';
 import clsx from 'clsx';
+import BaseModal from '../../components/ui/BaseModal';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 
 const getImageUrl = (url: string) => {
     if (!url) return 'https://via.placeholder.com/150';
@@ -35,6 +38,8 @@ export function SubscriptionPlansPage() {
     const [editingPlan, setEditingPlan] = useState<any>(INITIAL_PLAN_STATE);
     const [availableProducts, setAvailableProducts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const { addToast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchPlans();
@@ -60,10 +65,10 @@ export function SubscriptionPlansPage() {
             console.error('Erro ao buscar produtos:', error);
         }
     };
-
     const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         try {
+            setIsSaving(true);
             const planToSave = {
                 ...editingPlan,
                 isCouponPack: editingPlan.type === 'COUPON',
@@ -76,15 +81,19 @@ export function SubscriptionPlansPage() {
 
             if (editingPlan.id) {
                 await subscriptionService.updatePlan(editingPlan.id, planToSave);
+                addToast('Plano atualizado com sucesso!', 'success');
             } else {
                 await subscriptionService.createPlan(planToSave);
+                addToast('Plano criado com sucesso!', 'success');
             }
             fetchPlans();
             setShowModal(false);
             setEditingPlan(INITIAL_PLAN_STATE);
         } catch (error: any) {
             console.error('Erro ao salvar plano:', error);
-            alert('Erro ao salvar plano: ' + (error.response?.data?.message || error.message));
+            addToast('Erro ao salvar plano: ' + (error.response?.data?.message || error.message), 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -199,7 +208,7 @@ export function SubscriptionPlansPage() {
                             </div>
 
                             <div className="flex gap-2">
-                                <button
+                                <Button
                                     onClick={() => {
                                         setEditingPlan({
                                             ...INITIAL_PLAN_STATE,
@@ -210,17 +219,25 @@ export function SubscriptionPlansPage() {
                                         });
                                         setShowModal(true);
                                     }}
-                                    className="flex-1 flex justify-center items-center gap-2 border border-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                                    variant="secondary"
+                                    className="flex-1 py-1"
                                 >
                                     <Edit2 size={16} />
                                     Editar
-                                </button>
-                                <button
-                                    onClick={async () => { if (confirm('Excluir plano?')) { await subscriptionService.deletePlan(plan.id); fetchPlans(); } }}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition border border-transparent hover:border-red-100"
+                                </Button>
+                                <Button
+                                    onClick={async () => {
+                                        if (confirm('Excluir plano?')) {
+                                            await subscriptionService.deletePlan(plan.id);
+                                            addToast('Plano excluído.', 'success');
+                                            fetchPlans();
+                                        }
+                                    }}
+                                    variant="secondary"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                 >
                                     <Trash2 size={18} />
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -235,241 +252,235 @@ export function SubscriptionPlansPage() {
                 )}
             </div>
 
-            {showModal && editingPlan && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
-                            <h2 className="text-xl font-bold text-gray-900">Configurar Plano de Assinatura</h2>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                                <Plus size={24} className="rotate-45" />
-                            </button>
+            <BaseModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title="Configurar Plano de Assinatura"
+                maxWidth="max-w-2xl"
+            >
+                <form onSubmit={handleSave} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Tipo</label>
+                            <select
+                                value={editingPlan.type || 'FIXED'}
+                                onChange={(e) => setEditingPlan({ ...editingPlan, type: e.target.value, isCouponPack: e.target.value === 'COUPON' })}
+                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            >
+                                <option value="FIXED">Fixo (Admin escolhe)</option>
+                                <option value="COUPON">Pacote de Cupons (Venda)</option>
+                            </select>
                         </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Nome</label>
+                            <input
+                                type="text"
+                                value={editingPlan.name || ''}
+                                required
+                                onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
+                                className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Ex: Combo Axé Mensal"
+                            />
+                        </div>
+                    </div>
 
-                        <form onSubmit={handleSave} className="p-6 space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Valor (Preço Base)</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={editingPlan.basePrice || ''}
+                                    onChange={(e) => setEditingPlan({ ...editingPlan, basePrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                                    className="w-full border rounded-lg p-2 pl-9 outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="0.00"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Descrição</label>
+                        <textarea
+                            value={editingPlan.description || ''}
+                            onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
+                            className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
+                            placeholder="Explique o que o cliente recebe nesta assinatura..."
+                        />
+                    </div>
+
+                    {editingPlan.type === 'COUPON' ? (
+                        <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 space-y-4">
+                            <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
+                                <Ticket size={18} /> Configuração do Pacote de Cupons
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Tipo</label>
-                                    <select
-                                        value={editingPlan.type || 'FIXED'}
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, type: e.target.value, isCouponPack: e.target.value === 'COUPON' })}
-                                        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                                    >
-                                        <option value="FIXED">Fixo (Admin escolhe)</option>
-                                        <option value="COUPON">Pacote de Cupons (Venda)</option>
-                                    </select>
+                                    <label className="text-[10px] font-bold text-amber-600 uppercase">Qtd. Cupons</label>
+                                    <input
+                                        type="number"
+                                        value={editingPlan.couponBundleCount || ''}
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, couponBundleCount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                                        className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                                        placeholder="0"
+                                    />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Nome</label>
+                                    <label className="text-[10px] font-bold text-amber-600 uppercase">% Desconto</label>
                                     <input
-                                        type="text"
-                                        value={editingPlan.name || ''}
-                                        required
-                                        onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
-                                        className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500"
-                                        placeholder="Ex: Combo Axé Mensal"
+                                        type="number"
+                                        value={editingPlan.couponDiscountPercentage || ''}
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, couponDiscountPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                                        className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-amber-600 uppercase">Validade (Dias)</label>
+                                    <input
+                                        type="number"
+                                        value={editingPlan.couponValidityDays || ''}
+                                        onChange={(e) => setEditingPlan({ ...editingPlan, couponValidityDays: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                                        className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
+                                        placeholder="0"
                                     />
                                 </div>
                             </div>
+                            <p className="text-[10px] text-amber-600 italic">* O cliente receberá {editingPlan.couponBundleCount || 0} cupons de {editingPlan.couponDiscountPercentage || 0}% válidos por {editingPlan.couponValidityDays || 0} dias após cada ciclo de pagamento.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Produtos Selecionados</label>
+                                <span className="text-xs text-indigo-600 border border-indigo-100 bg-indigo-50 px-2 py-0.5 rounded-full">Soma do Admin</span>
+                            </div>
 
-                            <div className="grid grid-cols-1 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Valor (Preço Base)</label>
+                            <div className="space-y-2 max-h-[180px] overflow-y-auto">
+                                {(editingPlan.products || []).map((p: any) => (
+                                    <div key={p.product?.id || p.productId} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div className="flex items-center gap-3">
+                                            <img src={getImageUrl(p.product?.media?.[0]?.url || p.product?.imageUrl)} alt="" className="w-10 h-10 rounded object-cover border bg-white" />
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">{p.product?.title || p.product?.name}</p>
+                                                <p className="text-xs text-gray-500">R$ {p.product?.price?.toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={p.quantity || 1}
+                                                onChange={(e) => updateProductQuantity(p.product?.id || p.productId, Number(e.target.value))}
+                                                className="w-16 border rounded p-1 text-center text-sm"
+                                            />
+                                            <button type="button" onClick={() => toggleProduct(p.product)} className="text-red-500 hover:bg-red-50 p-1 rounded">
+                                                <Plus size={16} className="rotate-45" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(editingPlan.products || []).length === 0 && (
+                                    <div className="text-center py-4 text-gray-400 text-sm border-2 border-dashed rounded-lg">
+                                        Nenhum produto adicionado. Escolha na lista abaixo.
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Escolher Produtos</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                        <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
                                         <input
-                                            type="number"
-                                            step="0.01"
-                                            value={editingPlan.basePrice || ''}
-                                            onChange={(e) => setEditingPlan({ ...editingPlan, basePrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                                            className="w-full border rounded-lg p-2 pl-9 outline-none focus:ring-2 focus:ring-indigo-500"
-                                            placeholder="0.00"
+                                            type="text"
+                                            placeholder="Buscar produto..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="pl-8 pr-2 py-1 text-xs border rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 w-32 md:w-48"
                                         />
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Descrição</label>
-                                <textarea
-                                    value={editingPlan.description || ''}
-                                    onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
-                                    className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
-                                    placeholder="Explique o que o cliente recebe nesta assinatura..."
-                                />
-                            </div>
-
-                            {editingPlan.type === 'COUPON' ? (
-                                <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 space-y-4">
-                                    <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
-                                        <Ticket size={18} /> Configuração do Pacote de Cupons
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-amber-600 uppercase">Qtd. Cupons</label>
-                                            <input
-                                                type="number"
-                                                value={editingPlan.couponBundleCount || ''}
-                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponBundleCount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
-                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
-                                                placeholder="0"
-                                            />
+                                <div className="grid grid-cols-1 gap-1 max-h-[140px] overflow-y-auto border rounded-xl p-2 bg-white">
+                                    {filteredProducts.map(product => (
+                                        <button
+                                            key={product.id}
+                                            type="button"
+                                            onClick={() => {
+                                                toggleProduct(product);
+                                                setSearchTerm('');
+                                            }}
+                                            className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-lg text-left transition text-sm"
+                                        >
+                                            <img src={getImageUrl(product.media?.[0]?.url || product.imageUrl)} alt="" className="w-8 h-8 rounded object-cover" />
+                                            <span className="flex-1 truncate">{product.title || product.name}</span>
+                                            <Plus size={14} className="text-indigo-400" />
+                                        </button>
+                                    ))}
+                                    {searchTerm.length > 0 && filteredProducts.length === 0 && (
+                                        <p className="text-center py-2 text-xs text-gray-400">Nenhum produto encontrado.</p>
+                                    )}
+                                    {searchTerm.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center py-4 text-gray-400">
+                                            <Search size={24} className="mb-1 opacity-20" />
+                                            <p className="text-[10px]">Digite para buscar e adicionar produtos</p>
                                         </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-amber-600 uppercase">% Desconto</label>
-                                            <input
-                                                type="number"
-                                                value={editingPlan.couponDiscountPercentage || ''}
-                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponDiscountPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-amber-600 uppercase">Validade (Dias)</label>
-                                            <input
-                                                type="number"
-                                                value={editingPlan.couponValidityDays || ''}
-                                                onChange={(e) => setEditingPlan({ ...editingPlan, couponValidityDays: e.target.value === '' ? 0 : parseInt(e.target.value) })}
-                                                className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                    </div>
-                                    <p className="text-[10px] text-amber-600 italic">* O cliente receberá {editingPlan.couponBundleCount || 0} cupons de {editingPlan.couponDiscountPercentage || 0}% válidos por {editingPlan.couponValidityDays || 0} dias após cada ciclo de pagamento.</p>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Produtos Selecionados</label>
-                                        <span className="text-xs text-indigo-600 border border-indigo-100 bg-indigo-50 px-2 py-0.5 rounded-full">Soma do Admin</span>
-                                    </div>
+                            </div>
+                        </div>
+                    )}
 
-                                    <div className="space-y-2 max-h-[180px] overflow-y-auto">
-                                        {(editingPlan.products || []).map((p: any) => (
-                                            <div key={p.product?.id || p.productId} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
-                                                <div className="flex items-center gap-3">
-                                                    <img src={getImageUrl(p.product?.media?.[0]?.url || p.product?.imageUrl)} alt="" className="w-10 h-10 rounded object-cover border bg-white" />
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-900">{p.product?.title || p.product?.name}</p>
-                                                        <p className="text-xs text-gray-500">R$ {p.product?.price?.toFixed(2)}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={p.quantity || 1}
-                                                        onChange={(e) => updateProductQuantity(p.product?.id || p.productId, Number(e.target.value))}
-                                                        className="w-16 border rounded p-1 text-center text-sm"
-                                                    />
-                                                    <button type="button" onClick={() => toggleProduct(p.product)} className="text-red-500 hover:bg-red-50 p-1 rounded">
-                                                        <Plus size={16} className="rotate-45" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {(editingPlan.products || []).length === 0 && (
-                                            <div className="text-center py-4 text-gray-400 text-sm border-2 border-dashed rounded-lg">
-                                                Nenhum produto adicionado. Escolha na lista abaixo.
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Escolher Produtos</label>
-                                            <div className="relative">
-                                                <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Buscar produto..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                    className="pl-8 pr-2 py-1 text-xs border rounded-lg outline-none focus:ring-1 focus:ring-indigo-500 w-32 md:w-48"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-1 max-h-[140px] overflow-y-auto border rounded-xl p-2 bg-white">
-                                            {filteredProducts.map(product => (
-                                                <button
-                                                    key={product.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        toggleProduct(product);
-                                                        setSearchTerm('');
-                                                    }}
-                                                    className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-lg text-left transition text-sm"
-                                                >
-                                                    <img src={getImageUrl(product.media?.[0]?.url || product.imageUrl)} alt="" className="w-8 h-8 rounded object-cover" />
-                                                    <span className="flex-1 truncate">{product.title || product.name}</span>
-                                                    <Plus size={14} className="text-indigo-400" />
-                                                </button>
-                                            ))}
-                                            {searchTerm.length > 0 && filteredProducts.length === 0 && (
-                                                <p className="text-center py-2 text-xs text-gray-400">Nenhum produto encontrado.</p>
+                    <div className="space-y-4">
+                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                            <Percent size={14} /> Frequências e Descontos
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { key: 'WEEKLY', label: 'Semanal' },
+                                { key: 'BIWEEKLY', label: 'Quinzenal' },
+                                { key: 'MONTHLY', label: 'Mensal' }
+                            ].map(freq => {
+                                const frequencyRules = editingPlan.frequencyRules || [];
+                                const rule = frequencyRules.find((r: any) => r.frequency === freq.key);
+                                return (
+                                    <div key={freq.key} className="flex flex-col gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleFrequency(freq.key)}
+                                            className={clsx(
+                                                "text-[10px] text-left uppercase px-2 py-0.5 rounded-t font-bold transition",
+                                                rule ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-400"
                                             )}
-                                            {searchTerm.length === 0 && (
-                                                <div className="flex flex-col items-center justify-center py-4 text-gray-400">
-                                                    <Search size={24} className="mb-1 opacity-20" />
-                                                    <p className="text-[10px]">Digite para buscar e adicionar produtos</p>
-                                                </div>
-                                            )}
+                                        >
+                                            {freq.label}
+                                        </button>
+                                        <div className={clsx(
+                                            "flex items-center border rounded-b overflow-hidden transition",
+                                            rule ? "border-indigo-600 ring-1 ring-indigo-600" : "border-gray-100 opacity-50 pointer-events-none"
+                                        )}>
+                                            <input
+                                                type="number"
+                                                value={rule ? (rule.discountPercentage || '') : ''}
+                                                onChange={(e) => updateDiscount(freq.key, e.target.value)}
+                                                placeholder="0"
+                                                className="w-full p-2 text-sm outline-none text-center"
+                                            />
+                                            <span className="bg-gray-50 px-2 py-2 text-xs text-gray-400 font-bold">%</span>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-
-                            <div className="space-y-4">
-                                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
-                                    <Percent size={14} /> Frequências e Descontos
-                                </label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[
-                                        { key: 'WEEKLY', label: 'Semanal' },
-                                        { key: 'BIWEEKLY', label: 'Quinzenal' },
-                                        { key: 'MONTHLY', label: 'Mensal' }
-                                    ].map(freq => {
-                                        const frequencyRules = editingPlan.frequencyRules || [];
-                                        const rule = frequencyRules.find((r: any) => r.frequency === freq.key);
-                                        return (
-                                            <div key={freq.key} className="flex flex-col gap-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleFrequency(freq.key)}
-                                                    className={clsx(
-                                                        "text-[10px] text-left uppercase px-2 py-0.5 rounded-t font-bold transition",
-                                                        rule ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-400"
-                                                    )}
-                                                >
-                                                    {freq.label}
-                                                </button>
-                                                <div className={clsx(
-                                                    "flex items-center border rounded-b overflow-hidden transition",
-                                                    rule ? "border-indigo-600 ring-1 ring-indigo-600" : "border-gray-100 opacity-50 pointer-events-none"
-                                                )}>
-                                                    <input
-                                                        type="number"
-                                                        value={rule ? (rule.discountPercentage || '') : ''}
-                                                        onChange={(e) => updateDiscount(freq.key, e.target.value)}
-                                                        placeholder="0"
-                                                        className="w-full p-2 text-sm outline-none text-center"
-                                                    />
-                                                    <span className="bg-gray-50 px-2 py-2 text-xs text-gray-400 font-bold">%</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 pt-4 border-t">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition font-medium">Cancelar</button>
-                                <button type="submit" className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-bold shadow-lg shadow-indigo-100">Salvar Plano</button>
-                            </div>
-                        </form>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            )}
+
+                    <div className="flex gap-3 pt-4 border-t">
+                        <Button type="button" onClick={() => setShowModal(false)} variant="secondary" className="flex-1">Cancelar</Button>
+                        <Button type="submit" isLoading={isSaving} variant="primary" className="flex-1 shadow-lg shadow-indigo-100">Salvar Plano</Button>
+                    </div>
+                </form>
+            </BaseModal>
         </div>
     );
 }

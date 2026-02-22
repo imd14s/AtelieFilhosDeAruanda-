@@ -5,6 +5,7 @@ import { Plus, Trash2, Tag } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
 import { useToast } from '../../context/ToastContext';
+import BaseModal from '../../components/ui/BaseModal';
 
 export function CategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -133,33 +134,30 @@ export function CategoriesPage() {
                 )}
             </div>
 
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <Tag size={20} />Nova Categoria
-                        </h3>
-                        <form onSubmit={handleSave} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Nome</label>
-                                <input autoFocus required className="w-full border rounded p-2" placeholder="Ex: Roupas" value={name} onChange={e => setName(e.target.value)} />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input type="checkbox" id="active" checked={active} onChange={e => setActive(e.target.checked)} className="rounded text-indigo-600" />
-                                <label htmlFor="active" className="text-sm font-medium text-gray-700">Ativa</label>
-                            </div>
-                            <div className="flex justify-end gap-2 pt-2">
-                                <Button type="button" onClick={() => setIsModalOpen(false)} variant="ghost">
-                                    Cancelar
-                                </Button>
-                                <Button type="submit" isLoading={isSaving} variant="primary">
-                                    {isSaving ? 'Salvando...' : 'Salvar'}
-                                </Button>
-                            </div>
-                        </form>
+            <BaseModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Nova Categoria"
+            >
+                <form onSubmit={handleSave} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Nome</label>
+                        <input autoFocus required className="w-full border rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Roupas" value={name} onChange={e => setName(e.target.value)} />
                     </div>
-                </div>
-            )}
+                    <div className="flex items-center gap-2">
+                        <input type="checkbox" id="active" checked={active} onChange={e => setActive(e.target.checked)} className="rounded text-indigo-600" />
+                        <label htmlFor="active" className="text-sm font-medium text-gray-700">Ativa</label>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button type="button" onClick={() => setIsModalOpen(false)} variant="ghost">
+                            Cancelar
+                        </Button>
+                        <Button type="submit" isLoading={isSaving} variant="primary">
+                            {isSaving ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    </div>
+                </form>
+            </BaseModal>
         </div>
     );
 }
