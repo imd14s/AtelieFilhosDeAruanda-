@@ -79,9 +79,9 @@ export function CategoriesPage() {
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 border-b">
                             <tr>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Nome</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600 text-right">Ações</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Nome</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -90,13 +90,13 @@ export function CategoriesPage() {
                             ) : (
                                 categories.map((cat) => (
                                     <tr key={cat.id} className="hover:bg-gray-50 transition">
-                                        <td className="p-4 font-medium text-gray-800">{cat.name}</td>
-                                        <td className="p-4">
+                                        <td className="px-6 py-4 font-medium text-gray-800">{cat.name}</td>
+                                        <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${cat.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                 {cat.active ? 'Ativo' : 'Inativo'}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-right">
+                                        <td className="px-6 py-4 text-right">
                                             <button
                                                 onClick={() => handleDelete(cat.id)}
                                                 className="text-gray-400 hover:text-red-600 transition"
@@ -113,7 +113,6 @@ export function CategoriesPage() {
                 )}
             </div>
 
-            {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl">

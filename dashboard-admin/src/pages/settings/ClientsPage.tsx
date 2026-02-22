@@ -37,12 +37,15 @@ export function ClientsPage() {
                     <h1 className="text-2xl font-bold text-gray-800">Gestão de Clientes</h1>
                     <p className="text-sm text-gray-500 mt-1">Lista de clientes cadastrados via Loja</p>
                 </div>
-                <div className="flex bg-white rounded-lg border px-3 py-2 items-center space-x-2">
-                    <Search size={18} className="text-gray-400" />
+            </div>
+
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
                         type="text"
                         placeholder="Buscar cliente..."
-                        className="outline-none text-sm"
+                        className="w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />

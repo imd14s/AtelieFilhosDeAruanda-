@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { OrderService } from '../../services/OrderService';
 import type { Order } from '../../types/order';
-import { Ban, CheckCircle, Truck, Package } from 'lucide-react';
+import { Ban, CheckCircle, Truck, Package, Search } from 'lucide-react';
 
 export function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -9,6 +9,7 @@ export function OrdersPage() {
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [cancelReason, setCancelReason] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         loadOrders();
@@ -65,12 +66,30 @@ export function OrdersPage() {
         }
     };
 
+    const filteredOrders = orders.filter(order =>
+        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Pedidos</h1>
                     <p className="text-gray-500">Gerencie os pedidos da loja</p>
+                </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por ID ou nome do cliente..."
+                        className="w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
             </div>
 
@@ -91,17 +110,17 @@ export function OrdersPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {orders.length === 0 ? (
+                                {filteredOrders.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="p-12 text-center text-gray-400">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Package size={48} className="text-gray-200" />
-                                                <p>Nenhum pedido encontrado no momento.</p>
+                                                <p>Nenhum pedido encontrado.</p>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : (
-                                    orders.map((order) => (
+                                    filteredOrders.map((order) => (
                                         <tr key={order.id} className="hover:bg-gray-50 transition">
                                             <td className="p-4 font-mono text-xs text-gray-500">#{order.id}</td>
                                             <td className="p-4 font-medium text-gray-800">{order.customerName}</td>
