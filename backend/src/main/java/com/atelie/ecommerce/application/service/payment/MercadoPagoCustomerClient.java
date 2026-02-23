@@ -36,9 +36,15 @@ public class MercadoPagoCustomerClient {
         }
 
         String accessToken = getAccessToken();
-        if (accessToken == null)
+        if (accessToken == null) {
+            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
+                    .warn("[DEBUG] MP_ACCESS_TOKEN não configurado ou vazio.");
             return null;
+        }
         String baseUrl = getBaseUrl();
+        org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class).info(
+                "[DEBUG] Iniciando getOrCreateCustomerId para usuário: {}, usando base URL: {}", user.getEmail(),
+                baseUrl);
 
         // Tenta buscar por email
         String searchUrl = baseUrl + "/v1/customers/search?email=" + user.getEmail();
@@ -86,8 +92,11 @@ public class MercadoPagoCustomerClient {
         if (customerId == null || customerId.isBlank())
             return Collections.emptyList();
         String accessToken = getAccessToken();
-        if (accessToken == null)
+        if (accessToken == null) {
+            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
+                    .warn("[DEBUG] MP_ACCESS_TOKEN não configurado. Abortando listagem de cartões.");
             return Collections.emptyList();
+        }
         String url = getBaseUrl() + "/v1/customers/" + customerId + "/cards";
         HttpEntity<Void> entity = new HttpEntity<>(buildHeaders(accessToken));
 
@@ -105,6 +114,11 @@ public class MercadoPagoCustomerClient {
      */
     public Map<String, Object> saveCard(String customerId, String cardToken) {
         String accessToken = getAccessToken();
+        if (accessToken == null) {
+            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
+                    .error("[DEBUG] MP_ACCESS_TOKEN não configurado. Não é possível salvar cartão.");
+            return Map.of("error", "CONFIG_MISSING", "message", "Configuração de pagamento incompleta.");
+        }
         String url = getBaseUrl() + "/v1/customers/" + customerId + "/cards";
 
         Map<String, String> body = Map.of("token", cardToken);
@@ -118,6 +132,8 @@ public class MercadoPagoCustomerClient {
      */
     public void deleteCard(String customerId, String cardId) {
         String accessToken = getAccessToken();
+        if (accessToken == null)
+            return;
         String url = getBaseUrl() + "/v1/customers/" + customerId + "/cards/" + cardId;
         HttpEntity<Void> entity = new HttpEntity<>(buildHeaders(accessToken));
         restTemplate.exchange(url, HttpMethod.DELETE, entity, Void.class);

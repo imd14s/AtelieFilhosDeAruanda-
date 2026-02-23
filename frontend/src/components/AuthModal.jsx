@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Mail, Lock, User, Key } from "lucide-react";
+import { X, Mail, Lock, User, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { authService } from "../services/authService";
 import Button from "./ui/Button";
@@ -59,6 +59,7 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { addToast } = useToast();
 
   if (!isOpen) return null;
@@ -95,6 +96,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     setCode("");
     setLoading(false);
     setError(null);
+    setShowPassword(false);
   };
 
   const handleClose = () => {
@@ -207,13 +209,20 @@ const AuthModal = ({ isOpen, onClose }) => {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0f2A44]/30" size={16} />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white border border-[#0f2A44]/10 py-3 pl-10 pr-4 text-sm focus:border-[#C9A24D] outline-none transition-colors"
+                    className="w-full bg-white border border-[#0f2A44]/10 py-3 pl-10 pr-12 text-sm focus:border-[#C9A24D] outline-none transition-colors"
                     placeholder="Senha"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0f2A44]/30 hover:text-[#C9A24D] transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
 
@@ -291,13 +300,20 @@ const AuthModal = ({ isOpen, onClose }) => {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0f2A44]/30" size={16} />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white border border-[#0f2A44]/10 py-3 pl-10 pr-4 text-sm focus:border-[#C9A24D] outline-none transition-colors"
+                    className="w-full bg-white border border-[#0f2A44]/10 py-3 pl-10 pr-12 text-sm focus:border-[#C9A24D] outline-none transition-colors"
                     placeholder="Senha"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0f2A44]/30 hover:text-[#C9A24D] transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
 

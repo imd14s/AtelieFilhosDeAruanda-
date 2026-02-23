@@ -49,8 +49,10 @@ public class PublicConfigController {
                     }
                 })
                 .orElseGet(() -> {
-                    log.warn("[DEBUG] Configuração MERCADO_PAGO/PRODUCTION não encontrada no banco");
-                    return ResponseEntity.notFound().build();
+                    log.warn(
+                            "[DEBUG] Configuração MERCADO_PAGO/PRODUCTION não encontrada no banco. O administrador ainda não configurou as chaves.");
+                    return ResponseEntity.status(404).body(Map.of("error", "CONFIG_MISSING", "message",
+                            "A configuração de pagamento ainda não foi realizada pelo administrador."));
                 });
     }
 }

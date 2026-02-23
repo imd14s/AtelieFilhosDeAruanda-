@@ -15,17 +15,9 @@ const SearchPage = () => {
     const performSearch = async () => {
       setLoading(true);
       try {
-        const items = await storeService.getProducts();
-        if (query) {
-          const filtered = items.filter(
-            (p) =>
-              p.name.toLowerCase().includes(query.toLowerCase()) ||
-              p.description.toLowerCase().includes(query.toLowerCase()),
-          );
-          setResults(filtered);
-        } else {
-          setResults(items.slice(0, 12));
-        }
+        // Chamada direta à API com parâmetro de busca para ativar Stemming (velas -> vela)
+        const items = await storeService.getProducts({ search: query });
+        setResults(items);
       } catch (error) {
         console.error("Erro na busca:", error);
       } finally {
@@ -90,7 +82,7 @@ const SearchPage = () => {
           /* Grade de Resultados usando o componente oficial ProductCard */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
             {results.map((product) => (
-              <div key={product._id} className="animate-fade-in">
+              <div key={product.id} className="animate-fade-in">
                 <ProductCard product={product} />
               </div>
             ))}

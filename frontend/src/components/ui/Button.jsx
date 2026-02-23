@@ -29,7 +29,6 @@ const Button = ({
             className={`${baseStyles} ${currentVariant} ${className}`}
             {...props}
         >
-            {isLoading && <Spinner size={16} />}
             <span className={`${isLoading ? 'opacity-0' : 'opacity-100'} flex items-center justify-center gap-2`}>
                 {children}
             </span>

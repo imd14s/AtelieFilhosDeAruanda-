@@ -45,8 +45,8 @@ INSERT INTO product_variants (id, product_id, sku, stock_quantity, price, active
 -- 5. Usuários (Clientes)
 -- Senha: 12345678 (BCrypt)
 INSERT INTO users (id, name, email, password, role, active, email_verified, created_at, updated_at) VALUES 
-('55555555-5555-5555-5555-555555555555', 'João Silva', 'joao.cliente@teste.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'CUSTOMER', true, true, NOW(), NOW()),
-('66666666-6666-6666-6666-666666666666', 'Maria Souza', 'maria.cliente@teste.com', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'CUSTOMER', true, true, NOW(), NOW());
+('55555555-5555-5555-5555-555555555555', 'João Silva', 'joao.cliente@teste.com', '$2a$10$Ia36tV1OMgVeW1mxZ4feMuMC8SSNZzkh7uvLNgh9n9/Xnw7TmBYWi', 'CUSTOMER', true, true, NOW(), NOW()),
+('66666666-6666-6666-6666-666666666666', 'Maria Souza', 'maria.cliente@teste.com', '$2a$10$Ia36tV1OMgVeW1mxZ4feMuMC8SSNZzkh7uvLNgh9n9/Xnw7TmBYWi', 'CUSTOMER', true, true, NOW(), NOW());
 
 -- 6. Endereços
 INSERT INTO user_addresses (id, user_id, street, number, neighborhood, city, state, zip_code, complement, is_default, created_at, updated_at) VALUES 

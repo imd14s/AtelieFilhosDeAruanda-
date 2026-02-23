@@ -392,7 +392,13 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Page<ProductEntity> searchProducts(String query, Pageable pageable) {
-        return productRepository.findByNameContainingIgnoreCase(query, pageable);
+        // Full-text search com stemming pt-BR (velas → vela, ervas → erva)
+        Page<ProductEntity> results = productRepository.fullTextSearch(query, pageable);
+        // Fallback: busca parcial por substring caso o full-text não retorne resultados
+        if (results.isEmpty()) {
+            results = productRepository.findByNameContainingIgnoreCase(query, pageable);
+        }
+        return results;
     }
 
     private void syncMarketplaces(ProductEntity product) {

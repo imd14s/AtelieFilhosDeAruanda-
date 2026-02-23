@@ -8,7 +8,7 @@ import { Loader2, SlidersHorizontal, LayoutGrid } from 'lucide-react';
 
 const ShopPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryFilter = searchParams.get('categoria');
+  const categoryFilter = searchParams.get('categoryId') || searchParams.get('categoria');
   const sortFilter = searchParams.get('sort') || 'newest';
 
   const [products, setProducts] = useState([]);

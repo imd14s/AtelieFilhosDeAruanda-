@@ -43,6 +43,7 @@ const CheckoutPage = () => {
     const [shippingOptions, setShippingOptions] = useState([]);
     const [shippingLoading, setShippingLoading] = useState(false);
     const [currentShipping, setCurrentShipping] = useState(shippingSelected || null);
+    const [configMissing, setConfigMissing] = useState({ mp: false, shipping: false });
 
     React.useEffect(() => {
         const initCheckout = async () => {
@@ -75,27 +76,39 @@ const CheckoutPage = () => {
                 }
             }
 
-            // Injeta SDK Mercado Pago e busca chave dinâmica
-            // TODO:
-            // - [/] Migrar `VITE_MP_PUBLIC_KEY` para ser dinâmica via API
-            // - [x] Criar `PublicConfigController` no backend
-            // - [x] Liberar rota no `SecurityConfig`
-            // - [/] Atualizar `storeService` e `CheckoutPage`
+            // Recalcula frete se já houver um CEP definido e itens no carrinho
+            if (formData.cep && formData.cep.length === 8 && currentCart.length > 0) {
+                handleCalculateShipping(formData.cep);
+            }
+
+            // Injeta SDK Mercado Pago...
             if (!window.MercadoPago) {
                 const script = document.createElement('script');
                 script.src = 'https://sdk.mercadopago.com/js/v2';
                 script.onload = async () => {
-                    const pk = await storeService.config.getMercadoPagoPublicKey();
-                    if (pk) {
-                        setMp(new window.MercadoPago(pk));
-                        console.log("[MercadoPago] SDK inicializado dinamicamente.");
+                    try {
+                        const pk = await storeService.config.getMercadoPagoPublicKey();
+                        if (pk) {
+                            setMp(new window.MercadoPago(pk));
+                            console.log("[MercadoPago] SDK inicializado dinamicamente.");
+                        }
+                    } catch (e) {
+                        if (e.response?.status === 404) {
+                            setConfigMissing(prev => ({ ...prev, mp: true }));
+                        }
                     }
                 };
                 document.body.appendChild(script);
             } else if (!mp) {
-                const pk = await storeService.config.getMercadoPagoPublicKey();
-                if (pk) {
-                    setMp(new window.MercadoPago(pk));
+                try {
+                    const pk = await storeService.config.getMercadoPagoPublicKey();
+                    if (pk) {
+                        setMp(new window.MercadoPago(pk));
+                    }
+                } catch (e) {
+                    if (e.response?.status === 404) {
+                        setConfigMissing(prev => ({ ...prev, mp: true }));
+                    }
                 }
             }
 
@@ -103,7 +116,18 @@ const CheckoutPage = () => {
                 handleCalculateShipping(cep);
             }
         };
+        // Registra listener para atualizações externas do carrinho
+        const handleCartChange = () => {
+            console.log("[DEBUG] Evento 'cart-updated' recebido no Checkout. Re-sincronizando...");
+            initCheckout();
+        };
+        window.addEventListener('cart-updated', handleCartChange);
+
         initCheckout();
+
+        return () => {
+            window.removeEventListener('cart-updated', handleCartChange);
+        };
     }, []);
 
     const handleCalculateShipping = async (targetCep) => {
@@ -112,9 +136,17 @@ const CheckoutPage = () => {
         try {
             const items = await storeService.cart.get();
             const options = await storeService.calculateShipping(targetCep, items);
-            setShippingOptions(options);
 
-            // Tenta manter a opção anterior se o provedor ainda existir
+            // Verifica se a resposta indica falta de configuração no backend
+            const isMissing = options.some(o => o.provider === 'CONFIG_MISSING');
+            if (isMissing) {
+                setConfigMissing(prev => ({ ...prev, shipping: true }));
+                setShippingOptions([]);
+            } else {
+                setConfigMissing(prev => ({ ...prev, shipping: false }));
+                setShippingOptions(options);
+            }
+
             if (currentShipping) {
                 const stillAvailable = options.find(o => o.provider === currentShipping.provider);
                 if (stillAvailable) setCurrentShipping(stillAvailable);
@@ -128,6 +160,7 @@ const CheckoutPage = () => {
     };
 
     const handleSelectAddress = (addr) => {
+        const normalizedCep = addr.zipCode.replace(/\D/g, '');
         setSelectedAddressId(addr.id);
         setIsAddingNewAddress(false);
         setFormData(prev => ({
@@ -135,9 +168,9 @@ const CheckoutPage = () => {
             endereco: addr.street + (addr.number ? `, ${addr.number}` : '') + (addr.complement ? ` - ${addr.complement}` : ''),
             cidade: addr.city,
             estado: addr.state,
-            cep: addr.zipCode
+            cep: normalizedCep
         }));
-        handleCalculateShipping(addr.zipCode);
+        handleCalculateShipping(normalizedCep);
     };
 
     const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
@@ -261,6 +294,21 @@ const CheckoutPage = () => {
     return (
         <div className="min-h-screen bg-[var(--branco-off-white)] pt-12 pb-24 px-4">
             <SEO title="Checkout" description="Finalize sua compra com segurança no Ateliê Filhos de Aruanda." />
+
+            {(configMissing.mp || configMissing.shipping) && (
+                <div className="max-w-6xl mx-auto mb-12 p-6 border border-amber-200 bg-amber-50 flex items-start gap-4 animate-in fade-in slide-in-from-top-4">
+                    <AlertCircle className="text-amber-600 shrink-0" size={20} />
+                    <div>
+                        <h3 className="font-lato text-xs font-bold uppercase tracking-widest text-amber-900 mb-1">Aviso do Sistema</h3>
+                        <p className="font-lato text-xs text-amber-800/80 leading-relaxed">
+                            Estamos finalizando os últimos ajustes técnicos em nosso checkout.
+                            {configMissing.mp && " Os métodos de pagamento via Cartão e Mercado Pago estão temporariamente indisponíveis."}
+                            {configMissing.shipping && " O cálculo de frete automático está em manutenção."}
+                            <br />Pedimos desculpas pelo transtorno. Por favor, tente novamente em alguns instantes ou entre em contato com nosso suporte.
+                        </p>
+                    </div>
+                </div>
+            )}
             <div className="max-w-7xl mx-auto">
 
                 <Link to="/" className="inline-flex items-center gap-2 text-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)] transition-colors mb-12">
@@ -415,7 +463,10 @@ const CheckoutPage = () => {
                                 <div className="bg-gray-50 p-8 border border-[var(--azul-profundo)]/5 flex flex-col items-center gap-4 text-center">
                                     <Truck size={32} className="text-[var(--azul-profundo)]/10" />
                                     <p className="font-lato text-xs text-[var(--azul-profundo)]/40 uppercase tracking-widest max-w-[200px]">
-                                        {formData.cep.length === 8 ? "Nenhuma opção de frete disponível para este CEP." : "Insira um CEP válido para ver as opções de frete."}
+                                        {configMissing.shipping
+                                            ? "Cálculo de frete em manutenção. Por favor, tente novamente mais tarde."
+                                            : (formData.cep.length === 8 ? "Nenhuma opção de frete disponível para este CEP." : "Insira um CEP válido para ver as opções de frete.")
+                                        }
                                     </p>
                                 </div>
                             )}

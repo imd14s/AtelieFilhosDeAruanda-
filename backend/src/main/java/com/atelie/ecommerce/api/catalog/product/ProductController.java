@@ -51,16 +51,20 @@ public class ProductController {
                     .orElse(ResponseEntity.notFound().build());
         }
 
+        if (q != null && !q.isBlank()) {
+            return ResponseEntity.ok(productService.searchProducts(q, pageable));
+        }
+
         if (marketplace != null && !marketplace.isBlank()) {
+            if (categoryId != null) {
+                return ResponseEntity.ok(productRepository
+                        .findByMarketplaces_CodeAndCategory_IdAndActiveTrue(marketplace, categoryId, pageable));
+            }
             return ResponseEntity.ok(productRepository.findByMarketplaces_CodeAndActiveTrue(marketplace, pageable));
         }
 
         if (categoryId != null) {
             return ResponseEntity.ok(productRepository.findByCategory_Id(categoryId, pageable));
-        }
-
-        if (q != null && !q.isBlank()) {
-            return ResponseEntity.ok(productService.searchProducts(q, pageable));
         }
 
         return ResponseEntity.ok(productRepository.findAll(pageable));

@@ -40,13 +40,16 @@ public class ShippingService {
             request.put("forced_provider", forcedProvider);
         }
 
-        log.debug("[DEBUG] Chamando orquestrador para frete no ambiente: {}", activeProfile);
+        log.debug("[DEBUG] Chamando orquestrador para frete no ambiente: {}. Request: {}", activeProfile, request);
         ServiceResult result = orchestrator.execute(ServiceType.SHIPPING, request, activeProfile);
-        log.debug("[DEBUG] Resultado do orquestrador: success={}", result.success());
+        log.info("[DEBUG] Resultado do orquestrador de frete: success={}, provider={}, error={}",
+                result.success(), result.providerCode(), result.error());
 
         if (!result.success()) {
-            log.warn("[DEBUG] Erro ao orquestrar frete: {}", result.error());
-            return new ShippingQuoteResponse("ERROR", false, false, BigDecimal.ZERO, BigDecimal.ZERO);
+            log.warn("[DEBUG] Erro ao orquestrar frete: {}. Informando frontend sobre indisponibilidade.",
+                    result.error());
+            // Retorna um provedor especial para indicar que o serviço não está configurado
+            return new ShippingQuoteResponse("CONFIG_MISSING", false, false, BigDecimal.ZERO, BigDecimal.ZERO);
         }
 
         Map<String, Object> payload = result.payload();

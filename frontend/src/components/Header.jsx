@@ -109,7 +109,7 @@ const Header = () => {
                   </div>
 
                   {/* Dropdown Menu Meli Style */}
-                  <div className="absolute top-full right-5 mt-[-8px] w-72 bg-white rounded-md shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="absolute top-full right-5 mt-[-8px] w-72 bg-white rounded-md shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[60]">
                     <div className="p-4 border-b border-gray-100 flex items-center gap-3">
                       {user.photoURL ? (
                         <img src={user.photoURL} alt={user.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
