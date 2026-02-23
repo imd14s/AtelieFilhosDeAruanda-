@@ -27,12 +27,14 @@ public class CheckoutController {
 
         @PostMapping("/process")
         public ResponseEntity<?> processOrder(@RequestBody Map<String, Object> payload) {
-                // 1. Extrair dados do cliente e itens
+                // 1. Extrair dados básicos
                 String customerName = (String) payload.get("customerName");
                 String customerEmail = (String) payload.get("customerEmail");
-                // CPF/CNPJ opcional para o OrderEntity mas necessário para alguns drivers de
-                // pagamento
+                String paymentMethodId = (String) payload.getOrDefault("paymentMethod", "pix");
+                String paymentToken = (String) payload.get("paymentToken");
+                String cardId = (String) payload.get("cardId");
 
+                // 2. Extrair itens
                 List<Map<String, Object>> itemsRaw = (List<Map<String, Object>>) payload.get("items");
                 List<CreateOrderItemRequest> items = itemsRaw.stream().map(item -> new CreateOrderItemRequest(
                                 java.util.UUID.fromString((String) item.get("productId")),
@@ -41,24 +43,48 @@ public class CheckoutController {
                                                 : null,
                                 (Integer) item.get("quantity"))).collect(Collectors.toList());
 
-                // 2. Criar o pedido (Status PENDING)
+                // 3. Extrair dados de frete estruturados ou do campo genérico
+                Map<String, Object> shippingRaw = (Map<String, Object>) payload.get("shipping");
+                String street = null, number = null, complement = null, neighborhood = null, city = null, state = null,
+                                zip = null, provider = null;
+                java.math.BigDecimal cost = java.math.BigDecimal.ZERO;
+
+                if (shippingRaw != null) {
+                        street = (String) shippingRaw.get("street");
+                        number = (String) shippingRaw.get("number");
+                        complement = (String) shippingRaw.get("complement");
+                        neighborhood = (String) shippingRaw.get("neighborhood");
+                        city = (String) shippingRaw.get("city");
+                        state = (String) shippingRaw.get("state");
+                        zip = (String) shippingRaw.get("zipCode");
+                        provider = (String) shippingRaw.get("service");
+                        Object costObj = shippingRaw.get("price");
+                        if (costObj instanceof Number)
+                                cost = new java.math.BigDecimal(costObj.toString());
+                }
+
+                // 4. Criar o pedido (Status PENDING)
                 CreateOrderRequest orderRequest = new CreateOrderRequest(
                                 "STOREFRONT",
-                                null, // externalId gerado pelo sistema
+                                null,
                                 customerName,
                                 customerEmail,
-                                items);
+                                items,
+                                street, number, complement, neighborhood, city, state, zip, cost, provider);
 
                 OrderEntity order = orderService.createOrder(orderRequest);
 
-                // 3. Gerar o pagamento (PIX)
-                PaymentResponse payment = paymentService.createPixPayment(
+                // 5. Gerar o pagamento
+                PaymentResponse payment = paymentService.processPayment(
                                 order.getId(),
                                 customerName,
                                 customerEmail,
-                                order.getTotalAmount());
+                                order.getTotalAmount(),
+                                paymentMethodId,
+                                paymentToken,
+                                cardId);
 
-                // 4. Retornar dados combinados
+                // 6. Retornar dados combinados
                 return ResponseEntity.ok(Map.of(
                                 "orderId", order.getId().toString(),
                                 "status", order.getStatus(),

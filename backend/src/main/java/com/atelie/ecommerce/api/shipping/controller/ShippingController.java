@@ -5,12 +5,16 @@ import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteRequest;
 import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteResponse;
 import com.atelie.ecommerce.api.shipping.service.ShippingService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/shipping")
 public class ShippingController {
+
+    private static final Logger log = LoggerFactory.getLogger(ShippingController.class);
 
     private final ShippingService shippingService;
     private final DynamicConfigService dynamicConfigService;
@@ -22,12 +26,19 @@ public class ShippingController {
 
     @PostMapping("/quote")
     public ResponseEntity<ShippingQuoteResponse> quote(@Valid @RequestBody ShippingQuoteRequest req) {
-        return ResponseEntity
-                .ok(shippingService.quote(req.getCep(), req.getSubtotal(), req.getProvider(), req.getItems()));
+        log.info("[DEBUG] Requisição de frete para o CEP: {}", req.getCep());
+        try {
+            ShippingQuoteResponse response = shippingService.quote(req.getCep(), req.getSubtotal(), req.getProvider(),
+                    req.getItems());
+            log.info("[DEBUG] Cálculo de frete concluído. Provider: {}, Preço: {}", response.getProvider(),
+                    response.getShippingCost());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("[DEBUG] Erro crítico no cálculo de frete: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
-    // Endpoint operacional: recarrega cache sem restart (pode depois proteger via
-    // auth/admin)
     @PostMapping("/configs/refresh")
     public ResponseEntity<Void> refreshConfigs() {
         dynamicConfigService.refresh();

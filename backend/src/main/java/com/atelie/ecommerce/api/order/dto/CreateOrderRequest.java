@@ -6,13 +6,23 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 public record CreateOrderRequest(
-        @NotBlank(message = "Source é obrigatório") String source,
+                @NotBlank(message = "Source é obrigatório") String source,
 
-        @NotBlank(message = "External ID é obrigatório") String externalId,
+                @NotBlank(message = "External ID é obrigatório") String externalId,
 
-        @NotBlank(message = "Nome do cliente é obrigatório") String customerName,
+                @NotBlank(message = "Nome do cliente é obrigatório") String customerName,
 
-        @NotBlank(message = "E-mail do cliente é obrigatório") String customerEmail,
+                @NotBlank(message = "E-mail do cliente é obrigatório") String customerEmail,
 
-        @NotEmpty(message = "Lista de itens não pode ser vazia") @Valid List<CreateOrderItemRequest> items) {
+                @NotEmpty(message = "Lista de itens não pode ser vazia") @Valid List<CreateOrderItemRequest> items,
+
+                String shippingStreet,
+                String shippingNumber,
+                String shippingComplement,
+                String shippingNeighborhood,
+                String shippingCity,
+                String shippingState,
+                String shippingZipCode,
+                java.math.BigDecimal shippingCost,
+                String shippingProvider) {
 }

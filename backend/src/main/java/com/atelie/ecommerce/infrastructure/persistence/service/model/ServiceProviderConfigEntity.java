@@ -5,6 +5,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -24,7 +27,8 @@ public class ServiceProviderConfigEntity {
     @Column(name = "secrets_ref", length = 200)
     private String secretsRef;
 
-    @Column(name = "config_json", nullable = false, columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "config_json", nullable = false)
     private String configJson;
 
     @Column(name = "version", nullable = false)
@@ -37,27 +41,67 @@ public class ServiceProviderConfigEntity {
     @jakarta.persistence.Transient
     private String providerCode;
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public UUID getProviderId() { return providerId; }
-    public void setProviderId(UUID providerId) { this.providerId = providerId; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getEnvironment() { return environment; }
-    public void setEnvironment(String environment) { this.environment = environment; }
+    public UUID getProviderId() {
+        return providerId;
+    }
 
-    public String getSecretsRef() { return secretsRef; }
-    public void setSecretsRef(String secretsRef) { this.secretsRef = secretsRef; }
+    public void setProviderId(UUID providerId) {
+        this.providerId = providerId;
+    }
 
-    public String getConfigJson() { return configJson; }
-    public void setConfigJson(String configJson) { this.configJson = configJson; }
+    public String getEnvironment() {
+        return environment;
+    }
 
-    public int getVersion() { return version; }
-    public void setVersion(int version) { this.version = version; }
+    public void setEnvironment(String environment) {
+        this.environment = environment;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getSecretsRef() {
+        return secretsRef;
+    }
 
-    public String getProviderCode() { return providerCode; }
-    public void setProviderCode(String providerCode) { this.providerCode = providerCode; }
+    public void setSecretsRef(String secretsRef) {
+        this.secretsRef = secretsRef;
+    }
+
+    public String getConfigJson() {
+        return configJson;
+    }
+
+    public void setConfigJson(String configJson) {
+        this.configJson = configJson;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getProviderCode() {
+        return providerCode;
+    }
+
+    public void setProviderCode(String providerCode) {
+        this.providerCode = providerCode;
+    }
 }

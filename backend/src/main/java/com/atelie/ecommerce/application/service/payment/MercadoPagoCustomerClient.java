@@ -36,6 +36,8 @@ public class MercadoPagoCustomerClient {
         }
 
         String accessToken = getAccessToken();
+        if (accessToken == null)
+            return null;
         String baseUrl = getBaseUrl();
 
         // Tenta buscar por email
@@ -74,14 +76,18 @@ public class MercadoPagoCustomerClient {
             return customerId;
         }
 
-        throw new IllegalStateException("Não foi possível criar customer no Mercado Pago.");
+        return null; // Falha silenciosa se não configurado ou erro na API
     }
 
     /**
      * Lista os cartões salvos de um Customer no Mercado Pago.
      */
     public List<Map<String, Object>> listCards(String customerId) {
+        if (customerId == null || customerId.isBlank())
+            return Collections.emptyList();
         String accessToken = getAccessToken();
+        if (accessToken == null)
+            return Collections.emptyList();
         String url = getBaseUrl() + "/v1/customers/" + customerId + "/cards";
         HttpEntity<Void> entity = new HttpEntity<>(buildHeaders(accessToken));
 
@@ -127,7 +133,7 @@ public class MercadoPagoCustomerClient {
     private String getAccessToken() {
         String token = env.getProperty("MP_ACCESS_TOKEN");
         if (token == null || token.isBlank()) {
-            throw new IllegalStateException("MP_ACCESS_TOKEN não configurado no ambiente.");
+            return null;
         }
         return token;
     }

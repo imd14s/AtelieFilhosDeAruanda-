@@ -50,7 +50,9 @@ public class CartService {
 
         for (Map<String, Object> itemData : items) {
             UUID productId = UUID.fromString((String) itemData.get("id"));
-            UUID variantId = itemData.get("variantId") != null ? UUID.fromString((String) itemData.get("variantId"))
+            Object variantIdObj = itemData.get("variantId");
+            UUID variantId = (variantIdObj != null && !variantIdObj.toString().isBlank())
+                    ? UUID.fromString(variantIdObj.toString())
                     : null;
             Integer quantity = (Integer) itemData.get("quantity");
 

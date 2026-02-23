@@ -23,13 +23,23 @@ public class PaymentService {
 
     public PaymentResponse createPixPayment(UUID orderId, String customerName, String customerEmail,
             BigDecimal amount) {
+        return processPayment(orderId, customerName, customerEmail, amount, "pix", null, null);
+    }
+
+    public PaymentResponse processPayment(UUID orderId, String customerName, String customerEmail,
+            BigDecimal amount, String paymentMethod, String paymentToken, String cardId) {
 
         Map<String, Object> request = new HashMap<>();
         request.put("orderId", orderId.toString());
         request.put("customerName", customerName);
         request.put("email", customerEmail);
         request.put("amount", amount);
-        request.put("payment_method", "pix");
+        request.put("payment_method", paymentMethod);
+
+        if (paymentToken != null)
+            request.put("token", paymentToken);
+        if (cardId != null)
+            request.put("cardId", cardId);
 
         ServiceResult result = orchestrator.execute(ServiceType.PAYMENT, request, "dev");
 
@@ -42,7 +52,7 @@ public class PaymentService {
                 (String) result.payload().getOrDefault("status", "pending"),
                 result.providerCode(),
                 amount,
-                true, // Defaulting to sandbox for dev branch as discussed
+                true,
                 result.payload());
     }
 

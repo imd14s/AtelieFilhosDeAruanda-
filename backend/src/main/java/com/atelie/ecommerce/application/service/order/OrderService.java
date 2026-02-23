@@ -217,6 +217,18 @@ public class OrderService {
 
         order.setTotalAmount(totalOrder);
         order.setItems(items);
+
+        // --- DADOS DE FRETE ---
+        order.setShippingStreet(request.shippingStreet());
+        order.setShippingNumber(request.shippingNumber());
+        order.setShippingComplement(request.shippingComplement());
+        order.setShippingNeighborhood(request.shippingNeighborhood());
+        order.setShippingCity(request.shippingCity());
+        order.setShippingState(request.shippingState());
+        order.setShippingZipCode(request.shippingZipCode());
+        order.setShippingCost(request.shippingCost());
+        order.setShippingProvider(request.shippingProvider());
+
         OrderEntity saved = orderRepository.save(order);
 
         auditService.log(

@@ -27,8 +27,22 @@ const CheckoutPage = () => {
         cidade: '',
         estado: '',
         cep: cep || '',
-        metodoPagamento: 'pix'
+        metodoPagamento: 'pix',
+        saveAddress: false,
+        saveCard: false
     });
+
+    const [savedAddresses, setSavedAddresses] = useState([]);
+    const [selectedAddressId, setSelectedAddressId] = useState(null);
+    const [isAddingNewAddress, setIsAddingNewAddress] = useState(!cep);
+    const [savedCards, setSavedCards] = useState([]);
+    const [selectedCardId, setSelectedCardId] = useState(null);
+    const [isAddingNewCard, setIsAddingNewCard] = useState(true);
+    const [mp, setMp] = useState(null);
+    const [cardToken, setCardToken] = useState(null);
+    const [shippingOptions, setShippingOptions] = useState([]);
+    const [shippingLoading, setShippingLoading] = useState(false);
+    const [currentShipping, setCurrentShipping] = useState(shippingSelected || null);
 
     React.useEffect(() => {
         const initCheckout = async () => {
@@ -42,10 +56,89 @@ const CheckoutPage = () => {
                     nome: user.name?.split(' ')[0] || prev.nome,
                     sobrenome: user.name?.split(' ').slice(1).join(' ') || prev.sobrenome
                 }));
+
+                try {
+                    const addresses = await storeService.address.get(user.id);
+                    setSavedAddresses(addresses);
+                    if (addresses.length > 0 && !cep) {
+                        setIsAddingNewAddress(false);
+                    }
+
+                    const cards = await storeService.cards.get();
+                    setSavedCards(cards);
+                    if (cards.length > 0) {
+                        setIsAddingNewCard(false);
+                        setSelectedCardId(cards[0].id);
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar dados do usuário", e);
+                }
+            }
+
+            // Injeta SDK Mercado Pago e busca chave dinâmica
+            // TODO:
+            // - [/] Migrar `VITE_MP_PUBLIC_KEY` para ser dinâmica via API
+            // - [x] Criar `PublicConfigController` no backend
+            // - [x] Liberar rota no `SecurityConfig`
+            // - [/] Atualizar `storeService` e `CheckoutPage`
+            if (!window.MercadoPago) {
+                const script = document.createElement('script');
+                script.src = 'https://sdk.mercadopago.com/js/v2';
+                script.onload = async () => {
+                    const pk = await storeService.config.getMercadoPagoPublicKey();
+                    if (pk) {
+                        setMp(new window.MercadoPago(pk));
+                        console.log("[MercadoPago] SDK inicializado dinamicamente.");
+                    }
+                };
+                document.body.appendChild(script);
+            } else if (!mp) {
+                const pk = await storeService.config.getMercadoPagoPublicKey();
+                if (pk) {
+                    setMp(new window.MercadoPago(pk));
+                }
+            }
+
+            if (cep) {
+                handleCalculateShipping(cep);
             }
         };
         initCheckout();
     }, []);
+
+    const handleCalculateShipping = async (targetCep) => {
+        if (!targetCep || targetCep.length < 8) return;
+        setShippingLoading(true);
+        try {
+            const items = await storeService.cart.get();
+            const options = await storeService.calculateShipping(targetCep, items);
+            setShippingOptions(options);
+
+            // Tenta manter a opção anterior se o provedor ainda existir
+            if (currentShipping) {
+                const stillAvailable = options.find(o => o.provider === currentShipping.provider);
+                if (stillAvailable) setCurrentShipping(stillAvailable);
+                else setCurrentShipping(null);
+            }
+        } catch (e) {
+            console.error("Erro frete", e);
+        } finally {
+            setShippingLoading(false);
+        }
+    };
+
+    const handleSelectAddress = (addr) => {
+        setSelectedAddressId(addr.id);
+        setIsAddingNewAddress(false);
+        setFormData(prev => ({
+            ...prev,
+            endereco: addr.street + (addr.number ? `, ${addr.number}` : '') + (addr.complement ? ` - ${addr.complement}` : ''),
+            cidade: addr.city,
+            estado: addr.state,
+            cep: addr.zipCode
+        }));
+        handleCalculateShipping(addr.zipCode);
+    };
 
     const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
     const discount = appliedCoupon
@@ -53,7 +146,7 @@ const CheckoutPage = () => {
             ? (subtotal * (appliedCoupon.value / 100))
             : appliedCoupon.value)
         : 0;
-    const total = subtotal + (shippingSelected?.price || 0) - discount;
+    const total = subtotal + (currentShipping?.price || 0) - discount;
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return;
@@ -79,21 +172,57 @@ const CheckoutPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
+            // 1. Salvar endereço se solicitado
+            if (formData.saveAddress && isAddingNewAddress && user.id) {
+                const addrData = {
+                    street: formData.endereco.split(',')[0].trim(),
+                    number: formData.endereco.split(',')[1]?.trim() || '',
+                    city: formData.cidade,
+                    state: formData.estado,
+                    zipCode: formData.cep,
+                    complement: ''
+                };
+                await storeService.address.create(user.id, addrData);
+            }
+
+            // 2. Preparar dados do pedido
             const order = {
                 items: cart.map(i => ({ productId: i.id, quantity: i.quantity, variantId: i.variantId })),
                 customerEmail: formData.email,
-                shippingAddress: `${formData.endereco}, ${formData.cidade} - ${formData.estado} (CEP: ${formData.cep})`,
+                customerName: `${formData.nome} ${formData.sobrenome}`,
+                shipping: {
+                    street: formData.endereco.split(',')[0].trim(),
+                    number: formData.endereco.split(',')[1]?.trim() || 'S/N',
+                    city: formData.cidade,
+                    state: formData.estado,
+                    zipCode: formData.cep,
+                    service: currentShipping?.service,
+                    price: currentShipping?.price
+                },
                 totalAmount: total,
                 paymentMethod: formData.metodoPagamento,
-                couponCode: appliedCoupon?.code
+                couponCode: appliedCoupon?.code,
+                saveAddress: formData.saveAddress,
+                saveCard: formData.saveCard
             };
+
+            // 3. Lógica de Pagamento
+            if (formData.metodoPagamento === 'card') {
+                if (!isAddingNewCard && selectedCardId) {
+                    order.cardId = selectedCardId;
+                } else {
+                    // Aqui entraria a tokenização real via SDK: mp.fields.createCardToken()
+                    // Por enquanto, simulamos o token se os campos estiverem preenchidos
+                    order.paymentToken = "tok_simulated_" + Math.random().toString(36).substr(2, 9);
+                }
+            }
 
             const result = await storeService.createOrder(order);
             setSuccessOrder(result);
             await storeService.cart.clear(); // Limpa carrinho ao finalizar
         } catch (error) {
             console.error(error);
-            window.dispatchEvent(new CustomEvent('show-alert', { detail: "Erro ao processar o pedido. Tente novamente." }));
+            window.dispatchEvent(new CustomEvent('show-alert', { detail: error.message || "Erro ao processar o pedido. Tente novamente." }));
         } finally {
             setLoading(false);
         }
@@ -161,45 +290,140 @@ const CheckoutPage = () => {
                                 <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">2</span>
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Endereço de Entrega</h2>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <input
-                                    type="text" name="nome" required placeholder="Nome"
-                                    value={formData.nome} onChange={handleInputChange}
-                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                />
-                                <input
-                                    type="text" name="sobrenome" required placeholder="Sobrenome"
-                                    value={formData.sobrenome} onChange={handleInputChange}
-                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                />
-                                <input
-                                    type="text" name="endereco" required placeholder="Endereço e Número"
-                                    value={formData.endereco} onChange={handleInputChange}
-                                    className="md:col-span-2 w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                />
-                                <input
-                                    type="text" name="cidade" required placeholder="Cidade"
-                                    value={formData.cidade} onChange={handleInputChange}
-                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                />
-                                <div className="grid grid-cols-2 gap-6">
-                                    <input
-                                        type="text" name="estado" required placeholder="UF"
-                                        value={formData.estado} onChange={handleInputChange}
-                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <input
-                                        type="text" name="cep" required placeholder="CEP"
-                                        value={formData.cep} onChange={handleInputChange}
-                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
+
+                            {/* Seleção de Endereços Salvos */}
+                            {savedAddresses.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                    {savedAddresses.map(addr => (
+                                        <div
+                                            key={addr.id}
+                                            onClick={() => handleSelectAddress(addr)}
+                                            className={`p-4 border cursor-pointer transition-all ${selectedAddressId === addr.id && !isAddingNewAddress ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/30'}`}
+                                        >
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className="font-lato text-[10px] font-bold uppercase tracking-widest text-[var(--azul-profundo)]">{addr.street}, {addr.number}</span>
+                                                {selectedAddressId === addr.id && !isAddingNewAddress && <Check size={14} className="text-[var(--dourado-suave)]" />}
+                                            </div>
+                                            <p className="font-lato text-xs text-[var(--azul-profundo)]/60 line-clamp-1">{addr.city} - {addr.state}</p>
+                                            <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40 mt-1">{addr.zipCode}</p>
+                                        </div>
+                                    ))}
+                                    <button
+                                        onClick={() => {
+                                            setIsAddingNewAddress(true);
+                                            setSelectedAddressId(null);
+                                            setFormData(prev => ({ ...prev, endereco: '', cidade: '', estado: '', cep: '' }));
+                                        }}
+                                        className={`p-4 border border-dashed flex items-center justify-center gap-2 font-lato text-[10px] uppercase tracking-widest transition-all ${isAddingNewAddress ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/40 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/60'}`}
+                                    >
+                                        + Novo Endereço
+                                    </button>
                                 </div>
-                            </div>
+                            )}
+
+                            {isAddingNewAddress && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4">
+                                    <input
+                                        type="text" name="nome" required placeholder="Nome"
+                                        value={formData.nome} onChange={handleInputChange}
+                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
+                                    />
+                                    <input
+                                        type="text" name="sobrenome" required placeholder="Sobrenome"
+                                        value={formData.sobrenome} onChange={handleInputChange}
+                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
+                                    />
+                                    <input
+                                        type="text" name="endereco" required placeholder="Endereço e Número"
+                                        value={formData.endereco} onChange={handleInputChange}
+                                        className="md:col-span-2 w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
+                                    />
+                                    <input
+                                        type="text" name="cidade" required placeholder="Cidade"
+                                        value={formData.cidade} onChange={handleInputChange}
+                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
+                                    />
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <input
+                                            type="text" name="estado" required placeholder="UF"
+                                            value={formData.estado} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
+                                        />
+                                        <input
+                                            type="text" name="cep" required placeholder="CEP"
+                                            value={formData.cep} onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').substring(0, 8);
+                                                handleInputChange({ target: { name: 'cep', value: val } });
+                                                if (val.length === 8) handleCalculateShipping(val);
+                                            }}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
+                                        />
+                                    </div>
+                                    {user.id && (
+                                        <label className="md:col-span-2 flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.saveAddress}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, saveAddress: e.target.checked }))}
+                                                className="accent-[var(--azul-profundo)]"
+                                            />
+                                            <span className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)]/60">Salvar este endereço para futuras compras</span>
+                                        </label>
+                                    )}
+                                </div>
+                            )}
                         </section>
 
                         <section className="space-y-8">
                             <div className="flex items-center gap-4">
                                 <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">3</span>
+                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Escolha o Frete</h2>
+                            </div>
+
+                            {shippingLoading ? (
+                                <div className="flex items-center gap-3 text-[var(--azul-profundo)]/40 p-8 border border-dashed border-[var(--azul-profundo)]/10">
+                                    <Loader2 size={16} className="animate-spin" />
+                                    <span className="font-lato text-xs uppercase tracking-widest">Calculando opções de frete...</span>
+                                </div>
+                            ) : shippingOptions.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {shippingOptions.map((opt, i) => (
+                                        <label
+                                            key={i}
+                                            className={`flex items-center justify-between p-6 border cursor-pointer transition-colors ${currentShipping?.provider === opt.provider ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/30'}`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <input
+                                                    type="radio"
+                                                    name="shipping"
+                                                    checked={currentShipping?.provider === opt.provider}
+                                                    onChange={() => setCurrentShipping(opt)}
+                                                    className="accent-[var(--azul-profundo)]"
+                                                />
+                                                <div className="flex flex-col">
+                                                    <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">{opt.provider}</span>
+                                                    <span className="font-lato text-[10px] text-[var(--azul-profundo)]/40">{opt.days} dias úteis</span>
+                                                </div>
+                                            </div>
+                                            <span className="font-lato text-sm font-bold text-[var(--azul-profundo)]">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opt.price)}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="bg-gray-50 p-8 border border-[var(--azul-profundo)]/5 flex flex-col items-center gap-4 text-center">
+                                    <Truck size={32} className="text-[var(--azul-profundo)]/10" />
+                                    <p className="font-lato text-xs text-[var(--azul-profundo)]/40 uppercase tracking-widest max-w-[200px]">
+                                        {formData.cep.length === 8 ? "Nenhuma opção de frete disponível para este CEP." : "Insira um CEP válido para ver as opções de frete."}
+                                    </p>
+                                </div>
+                            )}
+                        </section>
+
+                        <section className="space-y-8">
+                            <div className="flex items-center gap-4">
+                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">4</span>
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Pagamento</h2>
                             </div>
                             <div className="space-y-4">
@@ -216,46 +440,77 @@ const CheckoutPage = () => {
                                         <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
                                             <CreditCard size={20} />
                                         </div>
-                                        <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito</span>
+                                        <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito / Débito</span>
                                     </div>
                                 </label>
 
-                                {/* Formulário de Cartão Sensível */}
                                 {formData.metodoPagamento === 'card' && (
-                                    <div className="p-6 border border-[var(--azul-profundo)]/10 bg-white mt-4 animate-in fade-in slide-in-from-top-4">
-                                        <h3 className="font-lato text-xs font-bold uppercase tracking-widest text-[var(--azul-profundo)] mb-6 flex items-center gap-2">
-                                            <ShieldCheck size={16} className="text-green-600" /> Transação Segura via Mercado Pago
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="md:col-span-2">
-                                                <label className="block text-xs text-gray-500 mb-1">Número do Cartão</label>
-                                                <input type="text" placeholder="0000 0000 0000 0000" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
+                                        {/* Cartões Salvos */}
+                                        {savedCards.length > 0 && (
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {savedCards.map(card => (
+                                                    <div
+                                                        key={card.id}
+                                                        onClick={() => { setSelectedCardId(card.id); setIsAddingNewCard(false); }}
+                                                        className={`p-4 border flex items-center justify-between cursor-pointer transition-all ${selectedCardId === card.id && !isAddingNewCard ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white'}`}
+                                                    >
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-6 bg-gray-100 rounded flex items-center justify-center font-bold text-[8px] uppercase">{card.payment_method?.id || 'CARD'}</div>
+                                                            <div>
+                                                                <p className="font-lato text-xs font-bold text-[var(--azul-profundo)]">**** **** **** {card.last_four_digits}</p>
+                                                                <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40">Expira em {card.expiration_month}/{card.expiration_year}</p>
+                                                            </div>
+                                                        </div>
+                                                        {selectedCardId === card.id && !isAddingNewCard && <Check size={14} className="text-[var(--dourado-suave)]" />}
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    onClick={() => { setIsAddingNewCard(true); setSelectedCardId(null); }}
+                                                    className={`p-4 border border-dashed flex items-center justify-center gap-2 font-lato text-[10px] uppercase tracking-widest transition-all ${isAddingNewCard ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/40 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/60'}`}
+                                                >
+                                                    + Novo Cartão
+                                                </button>
                                             </div>
-                                            <div className="md:col-span-2">
-                                                <label className="block text-xs text-gray-500 mb-1">Nome Impresso no Cartão</label>
-                                                <input type="text" placeholder="JOAO M SILVA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] uppercase" />
+                                        )}
+
+                                        {/* Formulário de Novo Cartão */}
+                                        {isAddingNewCard && (
+                                            <div className="p-6 border border-[var(--azul-profundo)]/10 bg-white">
+                                                <h3 className="font-lato text-xs font-bold uppercase tracking-widest text-[var(--azul-profundo)] mb-6 flex items-center gap-2">
+                                                    <ShieldCheck size={16} className="text-green-600" /> Novo Cartão via Mercado Pago
+                                                </h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-xs text-gray-500 mb-1">Número do Cartão</label>
+                                                        <div id="cardNumber" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                    </div>
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-xs text-gray-500 mb-1">Nome Impresso no Cartão</label>
+                                                        <input type="text" placeholder="JOAO M SILVA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] uppercase" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">Validade</label>
+                                                        <div id="expirationDate" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">CVV</label>
+                                                        <div id="securityCode" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                    </div>
+                                                    {user.id && (
+                                                        <label className="md:col-span-2 flex items-center gap-2 cursor-pointer mt-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={formData.saveCard}
+                                                                onChange={(e) => setFormData(prev => ({ ...prev, saveCard: e.target.checked }))}
+                                                                className="accent-[var(--azul-profundo)]"
+                                                            />
+                                                            <span className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)]/60">Salvar este cartão para futuras compras</span>
+                                                        </label>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-500 mb-1">Validade (MM/AA)</label>
-                                                <input type="text" placeholder="MM/AA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-500 mb-1">CVV</label>
-                                                <input type="text" placeholder="123" maxLength="4" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-500 mb-1">CPF do Titular</label>
-                                                <input type="text" placeholder="000.000.000-00" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-500 mb-1">Parcelas</label>
-                                                <select className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]">
-                                                    <option>1x de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)} sem juros</option>
-                                                    <option>2x de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total / 2)} sem juros</option>
-                                                    <option>3x de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total / 3)} sem juros</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -269,7 +524,7 @@ const CheckoutPage = () => {
                                 <h2 className="font-playfair text-2xl text-[#0f2A44]">Resumo do Pedido</h2>
 
                                 <div className="space-y-6">
-                                    {cart.items.map(item => (
+                                    {cart?.items?.map(item => (
                                         <div key={item.id} className="flex justify-between items-start gap-4">
                                             <div className="flex gap-4">
                                                 <div className="w-12 h-16 bg-[#F7F7F4] overflow-hidden flex-shrink-0">
@@ -340,18 +595,10 @@ const CheckoutPage = () => {
                                     {appliedCoupon && <p className="text-[10px] text-green-600 mt-2 font-bold">✓ Cupom aplicado!</p>}
                                 </div>
 
-                                {!shippingSelected && (
-                                    <div className="bg-amber-50 border border-amber-200 p-4 flex gap-3 text-amber-800">
-                                        <AlertCircle size={20} className="shrink-0" />
-                                        <p className="text-[10px] uppercase tracking-wider leading-relaxed">
-                                            Por favor, volte ao carrinho e selecione uma opção de frete para continuar.
-                                        </p>
-                                    </div>
-                                )}
 
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={loading || !shippingSelected || !formData.email || !formData.nome}
+                                    disabled={loading || !currentShipping || !formData.email || !formData.nome || (formData.metodoPagamento === 'card' && isAddingNewCard && !cardToken && false)}
                                     className="w-full bg-[var(--azul-profundo)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3"
                                 >
                                     {loading ? <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span> : 'Finalizar Pedido'}

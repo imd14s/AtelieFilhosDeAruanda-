@@ -27,7 +27,10 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
 
     Page<ProductEntity> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
-    Page<ProductEntity> findByMarketplaces_CodeAndActiveTrue(String code, Pageable pageable);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "marketplaces", "images" })
+    @Query("SELECT p FROM ProductEntity p JOIN p.marketplaces m WHERE m.code = :code AND p.active = true")
+    Page<ProductEntity> findByMarketplaces_CodeAndActiveTrue(
+            @org.springframework.data.repository.query.Param("code") String code, Pageable pageable);
 
     long countByActiveTrue();
 }

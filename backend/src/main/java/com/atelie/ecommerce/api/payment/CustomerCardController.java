@@ -31,6 +31,9 @@ public class CustomerCardController {
     public ResponseEntity<List<Map<String, Object>>> listCards(@AuthenticationPrincipal UserDetails userDetails) {
         UserEntity user = findUser(userDetails);
         String customerId = mpClient.getOrCreateCustomerId(user);
+        if (customerId == null) {
+            return ResponseEntity.ok(java.util.Collections.emptyList());
+        }
         List<Map<String, Object>> cards = mpClient.listCards(customerId);
         return ResponseEntity.ok(cards);
     }

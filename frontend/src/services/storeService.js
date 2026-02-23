@@ -230,6 +230,68 @@ export const storeService = {
     }
   },
 
+  // --- ENDEREÇOS (API) ---
+  address: {
+    get: async (userId) => {
+      if (!userId) return [];
+      try {
+        const response = await api.get(`/addresses/user/${userId}`, {
+          headers: TENANT_HEADER
+        });
+        return response.data || [];
+      } catch (e) {
+        console.error("[storeService] Erro ao buscar endereços", e);
+        return [];
+      }
+    },
+    create: async (userId, addressData) => {
+      try {
+        const response = await api.post(`/addresses/user/${userId}`, addressData, {
+          headers: TENANT_HEADER
+        });
+        return response.data;
+      } catch (e) {
+        console.error("[storeService] Erro ao salvar endereço", e);
+        throw e;
+      }
+    },
+    delete: async (userId, addressId) => {
+      try {
+        await api.delete(`/addresses/${addressId}/user/${userId}`, {
+          headers: TENANT_HEADER
+        });
+      } catch (e) {
+        console.error("[storeService] Erro ao excluir endereço", e);
+        throw e;
+      }
+    }
+  },
+
+  // --- CARTÕES / PAGAMENTO (API) ---
+  cards: {
+    get: async () => {
+      try {
+        const response = await api.get('/customer/cards', {
+          headers: TENANT_HEADER
+        });
+        return Array.isArray(response.data) ? response.data : [];
+      } catch (e) {
+        console.error("[storeService] Erro ao buscar cartões salvos", e);
+        return [];
+      }
+    },
+    delete: async (cardId) => {
+      try {
+        await api.delete(`/customer/cards/${cardId}`, {
+          headers: TENANT_HEADER
+        });
+      } catch (e) {
+        console.error("[storeService] Erro ao excluir cartão", e);
+        throw e;
+      }
+    }
+  },
+
   // --- HISTÓRICO DE NAVEGAÇÃO (API) ---
   history: {
     get: async (userId) => {
@@ -374,6 +436,10 @@ export const storeService = {
         })),
         shippingAddress: orderData.shippingAddress,
         paymentMethod: orderData.paymentMethod || 'pix',
+        paymentToken: orderData.paymentToken || null,
+        cardId: orderData.cardId || null,
+        saveCard: orderData.saveCard || false,
+        saveAddress: orderData.saveAddress || false,
         couponCode: orderData.couponCode || null
       };
 
@@ -440,6 +506,37 @@ export const storeService = {
     } catch (error) {
       console.error("[storeService] Erro ao calcular frete:", error);
       return [];
+    }
+  },
+
+  // --- AVALIAÇÕES (REVIEWS) ---
+  /**
+   * Busca as avaliações de um produto específico.
+   */
+  getReviews: async (productId) => {
+    try {
+      const response = await api.get(`/reviews/product/${productId}`, {
+        headers: TENANT_HEADER
+      });
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error(`[storeService] Erro ao buscar reviews do produto ${productId}:`, error);
+      return [];
+    }
+  },
+
+  // --- CONFIGURAÇÕES ---
+  config: {
+    getMercadoPagoPublicKey: async () => {
+      try {
+        const response = await api.get('/config/public/mercado-pago/public-key', {
+          headers: TENANT_HEADER
+        });
+        return response.data?.publicKey || null;
+      } catch (error) {
+        console.error("[storeService] Erro ao buscar chave pública do Mercado Pago:", error);
+        return null;
+      }
     }
   }
 };
