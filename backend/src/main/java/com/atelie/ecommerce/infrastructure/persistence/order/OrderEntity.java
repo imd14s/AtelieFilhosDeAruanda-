@@ -171,6 +171,78 @@ public class OrderEntity {
         this.updatedAt = updatedAt;
     }
 
+    public String getShippingStreet() {
+        return shippingStreet;
+    }
+
+    public void setShippingStreet(String shippingStreet) {
+        this.shippingStreet = shippingStreet;
+    }
+
+    public String getShippingNumber() {
+        return shippingNumber;
+    }
+
+    public void setShippingNumber(String shippingNumber) {
+        this.shippingNumber = shippingNumber;
+    }
+
+    public String getShippingComplement() {
+        return shippingComplement;
+    }
+
+    public void setShippingComplement(String shippingComplement) {
+        this.shippingComplement = shippingComplement;
+    }
+
+    public String getShippingNeighborhood() {
+        return shippingNeighborhood;
+    }
+
+    public void setShippingNeighborhood(String shippingNeighborhood) {
+        this.shippingNeighborhood = shippingNeighborhood;
+    }
+
+    public String getShippingCity() {
+        return shippingCity;
+    }
+
+    public void setShippingCity(String shippingCity) {
+        this.shippingCity = shippingCity;
+    }
+
+    public String getShippingState() {
+        return shippingState;
+    }
+
+    public void setShippingState(String shippingState) {
+        this.shippingState = shippingState;
+    }
+
+    public String getShippingZipCode() {
+        return shippingZipCode;
+    }
+
+    public void setShippingZipCode(String shippingZipCode) {
+        this.shippingZipCode = shippingZipCode;
+    }
+
+    public BigDecimal getShippingCost() {
+        return shippingCost;
+    }
+
+    public void setShippingCost(BigDecimal shippingCost) {
+        this.shippingCost = shippingCost;
+    }
+
+    public String getShippingProvider() {
+        return shippingProvider;
+    }
+
+    public void setShippingProvider(String shippingProvider) {
+        this.shippingProvider = shippingProvider;
+    }
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null)
