@@ -4,6 +4,7 @@ import SEO from '../components/SEO';
 import { useOutletContext } from 'react-router-dom';
 import ReviewForm from '../components/ReviewForm';
 import api from '../services/api';
+import { getImageUrl } from '../utils/imageUtils';
 
 // MOCK_REVIEWS removed in favor of real API data
 
@@ -69,7 +70,12 @@ const ReviewsPage = () => {
                             ✕
                         </button>
                         <div className="mb-6 flex items-center gap-4 border-b border-gray-100 pb-4">
-                            <img src={reviewItem.images?.[0] || '/images/default.png'} alt={reviewItem.name} className="w-16 h-16 object-cover border border-gray-200 rounded" />
+                            <img
+                                src={getImageUrl(reviewItem.images?.[0])}
+                                alt={reviewItem.name}
+                                onError={(e) => { e.target.src = '/images/default.png'; }}
+                                className="w-16 h-16 object-cover border border-gray-200 rounded"
+                            />
                             <div>
                                 <h3 className="font-playfair text-xl text-[var(--azul-profundo)] mb-1">Avaliar Produto</h3>
                                 <p className="font-lato text-sm text-gray-500 line-clamp-1">{reviewItem.name}</p>
@@ -134,7 +140,12 @@ const ReviewsPage = () => {
                                         {/* Imagem e Nome */}
                                         <div className="flex items-center gap-4 flex-1 w-full">
                                             <div className="w-16 h-16 shrink-0 border border-gray-200 rounded p-1 flex items-center justify-center bg-gray-50">
-                                                <img src={item.images?.[0] || '/images/default.png'} alt={item.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                                                <img
+                                                    src={getImageUrl(item.images?.[0])}
+                                                    alt={item.name}
+                                                    onError={(e) => { e.target.src = '/images/default.png'; }}
+                                                    className="max-w-full max-h-full object-contain mix-blend-multiply"
+                                                />
                                             </div>
                                             <h3 className="text-sm font-bold text-gray-800 line-clamp-2 md:pr-4">{item.name}</h3>
                                         </div>
@@ -166,7 +177,12 @@ const ReviewsPage = () => {
                                 <div key={review.id} className="bg-white rounded-md border border-gray-200 p-6 shadow-sm">
                                     <div className="flex items-center gap-4 mb-4">
                                         <div className="w-12 h-12 shrink-0 border border-gray-100 rounded p-1 flex items-center justify-center">
-                                            <img src={review.product?.images?.[0] || '/images/default.png'} alt={review.product?.name} className="max-w-full max-h-full object-contain" />
+                                            <img
+                                                src={getImageUrl(review.product?.images?.[0])}
+                                                alt={review.product?.name}
+                                                onError={(e) => { e.target.src = '/images/default.png'; }}
+                                                className="max-w-full max-h-full object-contain"
+                                            />
                                         </div>
                                         <div className="flex-1">
                                             <h3 className="text-sm font-bold text-gray-800 line-clamp-1">{review.product?.name}</h3>

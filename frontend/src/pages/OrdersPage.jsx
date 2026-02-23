@@ -5,6 +5,7 @@ import SEO from '../components/SEO';
 import ReviewForm from '../components/ReviewForm';
 import api from '../services/api';
 import { storeService } from '../services/storeService';
+import { getImageUrl } from '../utils/imageUtils';
 
 const OrdersPage = () => {
     const navigate = useNavigate();
@@ -157,7 +158,12 @@ const OrdersPage = () => {
                                                 <div key={idx} className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                                                     <div className="flex flex-1 gap-4">
                                                         <div className="w-20 h-20 shrink-0 border border-gray-200 rounded p-1 flex items-center justify-center overflow-hidden">
-                                                            <img src={item.productImage || (item.product?.images?.[0]) || '/images/default.png'} alt={item.productName || item.product?.name} className="max-w-full max-h-full object-contain" />
+                                                            <img
+                                                                src={getImageUrl(item.productImage || (item.product?.images?.[0]))}
+                                                                alt={item.productName || item.product?.name}
+                                                                onError={(e) => { e.target.src = '/images/default.png'; }}
+                                                                className="max-w-full max-h-full object-contain"
+                                                            />
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">

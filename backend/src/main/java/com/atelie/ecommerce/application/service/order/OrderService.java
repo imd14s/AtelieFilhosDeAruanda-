@@ -335,11 +335,19 @@ public class OrderService {
                 "Order canceled. Reason: " + reason);
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderEntity> getAllOrders(Pageable pageable) {
         return orderRepository.findAll(pageable);
     }
 
+    @Transactional(readOnly = true)
     public List<OrderEntity> getUserOrders(UUID userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderEntity getOrderById(UUID id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Pedido não encontrado: " + id));
     }
 }

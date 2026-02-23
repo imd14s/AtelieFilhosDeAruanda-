@@ -3,6 +3,7 @@ import { Search, MessageSquare, CornerDownRight } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useOutletContext, Link } from 'react-router-dom';
 import api from '../services/api';
+import { getImageUrl } from '../utils/imageUtils';
 
 // MOCK_QUESTIONS removed in favor of real API data
 
@@ -84,7 +85,12 @@ const QuestionsPage = () => {
                                 {/* Cabeçalho do Card (Produto) */}
                                 <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-4">
                                     <div className="w-12 h-12 shrink-0 border border-gray-200 rounded p-1 bg-white">
-                                        <img src={item.product?.images?.[0] || '/images/default.png'} alt={item.product?.name} className="w-full h-full object-contain mix-blend-multiply" />
+                                        <img
+                                            src={getImageUrl(item.product?.images?.[0])}
+                                            alt={item.product?.name}
+                                            onError={(e) => { e.target.src = '/images/default.png'; }}
+                                            className="w-full h-full object-contain mix-blend-multiply"
+                                        />
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="text-sm font-semibold text-gray-800 line-clamp-1">{item.product?.name}</h3>

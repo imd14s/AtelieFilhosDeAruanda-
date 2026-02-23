@@ -76,6 +76,7 @@ const CategoryPage = () => {
           <img
             src={collection.media.mainMedia.image.url}
             alt={collection.name}
+            onError={(e) => { e.target.src = '/images/default.png'; }}
             className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
           />
         ) : (

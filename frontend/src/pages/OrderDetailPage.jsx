@@ -3,6 +3,7 @@ import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Package, Truck, CreditCard, MapPin, Clock, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 import { storeService } from '../services/storeService';
+import { getImageUrl } from '../utils/imageUtils';
 
 const statusMap = {
     PENDING: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
@@ -90,8 +91,9 @@ const OrderDetailPage = () => {
                                 <div key={idx} className="p-6 flex items-center gap-4">
                                     <div className="w-16 h-16 shrink-0 border border-gray-200 rounded p-1 flex items-center justify-center overflow-hidden bg-gray-50">
                                         <img
-                                            src={item.productImage || item.product?.images?.[0] || '/images/default.png'}
+                                            src={getImageUrl(item.productImage || item.product?.images?.[0])}
                                             alt={item.productName || item.product?.name}
+                                            onError={(e) => { e.target.src = '/images/default.png'; }}
                                             className="max-w-full max-h-full object-contain"
                                         />
                                     </div>

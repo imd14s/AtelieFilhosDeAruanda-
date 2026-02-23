@@ -47,6 +47,11 @@ public class OrderController {
                 .collect(Collectors.toList()));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(toResponse(orderService.getOrderById(id)));
+    }
+
     @PutMapping("/{id}/approve")
     public ResponseEntity<Void> approveOrder(@PathVariable UUID id) {
         orderService.approveOrder(id);
@@ -74,19 +79,49 @@ public class OrderController {
     // Mapper Simples
     private OrderResponse toResponse(OrderEntity entity) {
         var items = entity.getItems().stream()
-                .map(i -> new OrderItemResponse(
-                        i.getProduct().getId(),
-                        i.getProduct().getName(),
-                        i.getQuantity(),
-                        i.getUnitPrice(),
-                        i.getTotalPrice(),
-                        i.getVariant() != null ? i.getVariant().getId() : null
-                // DTO doesn't have variantId yet? Let's check OrderItemResponse.
-                // If not, I won't add it to avoid error.
-                // But the user didn't ask for variantId in response.
-                // Just stick to what was there.
-                // "i.getTotalPrice()" was the last arg.
-                )).collect(Collectors.toList());
+                .map(i -> {
+                    String productName = i.getProductName();
+                    UUID productId = null;
+                    String imageUrl = "/images/default.png";
+                    UUID variantId = null;
+
+                    if (i.getProduct() != null) {
+                        productId = i.getProduct().getId();
+                        if (productName == null) {
+                            productName = i.getProduct().getName();
+                        }
+                        if (i.getProduct().getImages() != null && !i.getProduct().getImages().isEmpty()) {
+                            imageUrl = i.getProduct().getImages().get(0);
+                        }
+                    }
+
+                    if (i.getVariant() != null) {
+                        variantId = i.getVariant().getId();
+                    }
+
+                    return new OrderItemResponse(
+                            productId,
+                            productName,
+                            i.getQuantity(),
+                            i.getUnitPrice(),
+                            i.getTotalPrice(),
+                            imageUrl,
+                            variantId);
+                })
+                .collect(Collectors.toList());
+
+        String address = entity.getShippingStreet() != null
+                ? String.format("%s, %s%s - %s, %s - %s, %s",
+                        entity.getShippingStreet(),
+                        entity.getShippingNumber(),
+                        entity.getShippingComplement() != null && !entity.getShippingComplement().isEmpty()
+                                ? " (" + entity.getShippingComplement() + ")"
+                                : "",
+                        entity.getShippingNeighborhood(),
+                        entity.getShippingCity(),
+                        entity.getShippingState(),
+                        entity.getShippingZipCode())
+                : null;
 
         return new OrderResponse(
                 entity.getId(),
@@ -95,6 +130,12 @@ public class OrderController {
                 entity.getExternalId(),
                 entity.getCustomerName(),
                 entity.getTotalAmount(),
+                entity.getShippingCost(),
+                address,
+                entity.getShippingProvider(),
+                null, // paymentMethod (not yet persisted in OrderEntity)
+                null, // paymentStatus (not yet persisted in OrderEntity)
+                BigDecimal.ZERO, // discount (not yet persisted in OrderEntity)
                 entity.getCreatedAt() != null
                         ? entity.getCreatedAt().atZone(java.time.ZoneId.of("UTC")).toLocalDateTime()
                         : java.time.LocalDateTime.now(),

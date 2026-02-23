@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, CreditCard, ShoppingBag, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { storeService } from '../services/storeService';
 import marketingService from '../services/marketingService';
+import { getImageUrl } from '../utils/imageUtils';
 import SEO from '../components/SEO';
 
 const CheckoutPage = () => {
@@ -580,8 +581,8 @@ const CheckoutPage = () => {
                                             <div className="flex gap-4">
                                                 <div className="w-12 h-16 bg-[#F7F7F4] overflow-hidden flex-shrink-0">
                                                     <img
-                                                        src={item.image || '/images/default.png'}
-                                                        alt=""
+                                                        src={getImageUrl(item.image)}
+                                                        alt={item.name}
                                                         onError={(e) => { e.target.src = '/images/default.png'; }}
                                                         className="w-full h-full object-cover"
                                                     />
