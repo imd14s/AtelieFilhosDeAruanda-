@@ -3,6 +3,7 @@ export interface ProductMedia {
     url: string;
     type: 'IMAGE' | 'VIDEO';
     isMain: boolean;
+    file?: File; // Para upload diferido
 }
 
 export interface ProductVariant {

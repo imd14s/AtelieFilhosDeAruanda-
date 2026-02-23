@@ -63,11 +63,70 @@ export const ProductService = {
   },
 
   create: async (product: CreateProductDTO) => {
-    return api.post('/products', product);
+    const formData = new FormData();
+    const filesMapping: { file: File, id: string }[] = [];
+
+    // Helper to process media and collect files
+    const processMedia = (mediaList: any[]) => {
+      return (mediaList || []).map(m => {
+        if (m.file) {
+          filesMapping.push({ file: m.file, id: m.id });
+          return { ...m, url: `cid:${m.id}`, file: undefined };
+        }
+        return m;
+      });
+    };
+
+    const productToSave = {
+      ...product,
+      media: processMedia(product.media || []),
+      variants: (product.variants || []).map(v => ({
+        ...v,
+        media: processMedia(v.media || [])
+      }))
+    };
+
+    formData.append('product', new Blob([JSON.stringify(productToSave)], { type: 'application/json' }));
+    filesMapping.forEach(({ file, id }) => {
+      formData.append('images', file, id);
+    });
+
+    return api.post('/products', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   },
 
   update: async (id: string, product: Partial<CreateProductDTO>) => {
-    return api.put(`/products/${id}`, product);
+    const formData = new FormData();
+    const filesMapping: { file: File, id: string }[] = [];
+
+    const processMedia = (mediaList: any[]) => {
+      return (mediaList || []).map(m => {
+        if (m.file) {
+          filesMapping.push({ file: m.file, id: m.id });
+          return { ...m, url: `cid:${m.id}`, file: undefined };
+        }
+        return m;
+      });
+    };
+
+    const productToUpdate = {
+      ...product,
+      media: processMedia(product.media || []),
+      variants: (product.variants || []).map(v => ({
+        ...v,
+        media: processMedia(v.media || [])
+      }))
+    };
+
+    formData.append('product', new Blob([JSON.stringify(productToUpdate)], { type: 'application/json' }));
+    filesMapping.forEach(({ file, id }) => {
+      formData.append('images', file, id);
+    });
+
+    return api.put(`/products/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   },
 
   toggleActive: async (id: string) => {

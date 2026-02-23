@@ -7,10 +7,15 @@
  * @returns {string} - The full image URL.
  */
 export function getImageUrl(url) {
-    if (!url) return '/images/default.png';
-    if (url.startsWith('http') || url.startsWith('/images/') || url.startsWith('/assets/')) return url;
+    if (!url || url.startsWith('blob:') || url.startsWith('cid:') || url.startsWith('data:')) {
+        return '/images/default.png';
+    }
 
-    // Strip /api suffix to get the host base (e.g. http://localhost:8080)
+    if (url.startsWith('http') || url.startsWith('/images/') || url.startsWith('/assets/')) {
+        return url;
+    }
+
+    // Strip /api suffix to get the host base
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
     const hostBase = apiBase.split('/api')[0];
     return `${hostBase}${url}`;

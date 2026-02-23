@@ -38,6 +38,9 @@ public class SubscriptionEntity {
     @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
 
+    @Column(name = "plan_name", nullable = false)
+    private String planName;
+
     @Column(name = "next_billing_at", nullable = false)
     private LocalDateTime nextBillingAt;
 

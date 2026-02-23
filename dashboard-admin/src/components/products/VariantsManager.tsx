@@ -1,5 +1,6 @@
 import { Trash2, Pencil, Image as ImageIcon } from 'lucide-react';
 import type { ProductVariant } from '../../types/product';
+import { getImageUrl } from '../../utils/imageUtils';
 
 interface VariantsManagerProps {
     variants: ProductVariant[];
@@ -10,14 +11,6 @@ interface VariantsManagerProps {
 export function VariantsManager({ variants, onChange, onEdit }: VariantsManagerProps) {
     const removeVariant = (id: string) => {
         onChange(variants.filter(v => v.id !== id));
-    };
-
-    const getImageUrl = (url?: string) => {
-        if (!url) return '';
-        if (url.startsWith('http')) return url;
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-        const cleanBase = apiUrl.replace(/\/api$/, '');
-        return `${cleanBase}${url}`;
     };
 
     if (variants.length === 0) {
@@ -91,4 +84,3 @@ export function VariantsManager({ variants, onChange, onEdit }: VariantsManagerP
         </div>
     );
 }
-

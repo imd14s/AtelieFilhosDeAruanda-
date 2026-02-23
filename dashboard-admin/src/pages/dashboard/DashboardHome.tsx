@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnalyticsService, type DashboardMetrics } from '../../services/AnalyticsService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { DollarSign, ShoppingBag, Package, TrendingUp, AlertTriangle } from 'lucide-react';
+import Skeleton from '../../components/ui/Skeleton';
 
 export function DashboardHome() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -13,14 +14,50 @@ export function DashboardHome() {
     }, [period]);
 
     const loadMetrics = async () => {
-        setLoading(true);
-        const data = await AnalyticsService.getDashboardMetrics(period);
-        setMetrics(data);
-        setLoading(false);
+        try {
+            setLoading(true);
+            const data = await AnalyticsService.getDashboardMetrics(period);
+            setMetrics(data);
+        } catch (error) {
+            console.error('Erro ao carregar métricas', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (loading || !metrics) {
-        return <div className="p-8 text-center text-gray-500">Carregando painel...</div>;
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <Skeleton className="h-8 w-48 mb-2" variant="text" />
+                        <Skeleton className="h-4 w-64" variant="text" />
+                    </div>
+                    <Skeleton className="h-10 w-40" variant="rect" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                            <Skeleton className="w-12 h-12 rounded-lg" variant="rect" />
+                            <div className="flex-1">
+                                <Skeleton className="h-4 w-20 mb-2" variant="text" />
+                                <Skeleton className="h-6 w-32" variant="text" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[...Array(2)].map((_, i) => (
+                        <div key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[340px]">
+                            <Skeleton className="h-6 w-40 mb-4" variant="text" />
+                            <Skeleton className="h-64 w-full" variant="rect" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     const cards = [
@@ -79,13 +116,13 @@ export function DashboardHome() {
                     <h3 className="font-semibold text-gray-800 mb-4">Vendas por Dia</h3>
                     {metrics.salesByDate.length > 0 ? (
                         <div className="h-64 w-full">
-                            <ResponsiveContainer width="99%" height="100%" minWidth={0}>
-                                <LineChart data={metrics.salesByDate}>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <LineChart data={metrics.salesByDate} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                                    <YAxis axisLine={false} tickLine={false} />
-                                    <Tooltip />
-                                    <Line type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={2} dot={false} />
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                    <Line type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4, fill: '#4f46e5' }} activeDot={{ r: 6 }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
@@ -103,13 +140,13 @@ export function DashboardHome() {
                     <h3 className="font-semibold text-gray-800 mb-4">Top Produtos</h3>
                     {metrics.topProducts.length > 0 ? (
                         <div className="h-64 w-full">
-                            <ResponsiveContainer width="99%" height="100%" minWidth={0}>
-                                <BarChart data={metrics.topProducts} layout="vertical">
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={metrics.topProducts} layout="vertical" margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                                     <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} />
-                                    <Tooltip />
-                                    <Bar dataKey="quantity" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
+                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                    <Bar dataKey="quantity" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={16} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>

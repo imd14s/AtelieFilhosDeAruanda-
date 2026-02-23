@@ -137,7 +137,10 @@ public class ProductEntity {
 
     // --- MÉTODOS DE COMPATIBILIDADE ---
     public String getImageUrl() {
-        return (images != null && !images.isEmpty()) ? images.get(0) : null;
+        if (images != null && !images.isEmpty()) {
+            return images.get(0);
+        }
+        return this.imageUrl;
     }
 
     public String getMainImage() {

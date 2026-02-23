@@ -28,27 +28,26 @@ public class CloudinaryService {
 
     public String upload(byte[] bytes) {
         try {
-            Map uploadResult = cloudinary.uploader().upload(bytes, ObjectUtils.asMap("resource_type", "auto"));
+            Map uploadResult = cloudinary.uploader().upload(bytes, ObjectUtils.asMap(
+                    "resource_type", "auto",
+                    "quality", "auto",
+                    "fetch_format", "auto"));
             return (String) uploadResult.get("secure_url");
         } catch (IOException e) {
             throw new RuntimeException("Falha ao fazer upload para o Cloudinary", e);
         }
     }
 
-    public void delete(String publicId) {
+    public String delete(String publicId) {
         try {
-            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            return (String) result.get("result");
         } catch (IOException e) {
             throw new RuntimeException("Falha ao deletar do Cloudinary", e);
         }
     }
 
-    /**
-     * Extrai o public_id de uma URL do Cloudinary
-     */
     public String extractPublicId(String url) {
-        if (url == null || !url.contains("cloudinary.com"))
-            return null;
         // Exemplo:
         // https://res.cloudinary.com/dwkv9hnnk/image/upload/v12345/public_id.jpg
         String[] parts = url.split("/");

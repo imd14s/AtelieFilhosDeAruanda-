@@ -22,10 +22,10 @@ const schema = z.object({
   category: z.string().min(1, 'Categoria obrigatória'),
   tenantId: z.string(),
   marketplaceIds: z.array(z.string()).optional(),
-  weight: z.coerce.number().gt(0, 'Peso deve ser maior que zero'),
-  height: z.coerce.number().gt(0, 'Altura deve ser maior que zero'),
-  width: z.coerce.number().gt(0, 'Largura deve ser maior que zero'),
-  length: z.coerce.number().gt(0, 'Comprimento deve ser maior que zero'),
+  weight: z.coerce.number().optional().default(0),
+  height: z.coerce.number().optional().default(0),
+  width: z.coerce.number().optional().default(0),
+  length: z.coerce.number().optional().default(0),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -60,9 +60,14 @@ export function ProductForm() {
   const [isSaving, setIsSaving] = useState(false);
 
   const { register, handleSubmit, reset, setValue, getValues, watch, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       tenantId: '1',
+      weight: 0,
+      height: 0,
+      width: 0,
+      length: 0,
+      marketplaceIds: [],
     }
   });
 
@@ -132,17 +137,14 @@ export function ProductForm() {
         category: (product as any).categoryId || product.category || '',
         tenantId: product.tenantId || '1',
         marketplaceIds: product.marketplaceIds || [],
-        weight: (product as any).weight || product.dimensions?.weight || undefined,
-        height: (product as any).height || product.dimensions?.height || undefined,
-        width: (product as any).width || product.dimensions?.width || undefined,
-        length: (product as any).length || product.dimensions?.length || undefined,
+        weight: (product as any).weight || product.dimensions?.weight || 0,
+        height: (product as any).height || product.dimensions?.height || 0,
+        width: (product as any).width || product.dimensions?.width || 0,
+        length: (product as any).length || product.dimensions?.length || 0,
       });
       if (product.variants) setVariants(product.variants);
       if (product.media) {
         setAllMedia(product.media);
-        // When editing, we might want currentMedia to be empty to receive new variant images
-        // But to allow them to edit the first variant's media, we could load it here.
-        // Let's keep it empty as per step-by-step logic.
       }
       if (product.marketplaceIds) setSelectedMarketplaces(product.marketplaceIds);
     } catch (error) {
@@ -525,10 +527,10 @@ export function ProductForm() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Peso (g)</label>
               <input
                 type="number"
-                step="1"
+                step="any"
                 {...register('weight', { valueAsNumber: true })}
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
-                placeholder="Ex: 300"
+                placeholder="Ex: 300 ou 0.5"
               />
               {errors.weight && <p className="text-red-500 text-xs mt-1">{errors.weight.message}</p>}
             </div>
@@ -536,7 +538,7 @@ export function ProductForm() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Altura (cm)</label>
               <input
                 type="number"
-                step="0.1"
+                step="any"
                 {...register('height', { valueAsNumber: true })}
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
                 placeholder="Ex: 10"
@@ -547,7 +549,7 @@ export function ProductForm() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Largura (cm)</label>
               <input
                 type="number"
-                step="0.1"
+                step="any"
                 {...register('width', { valueAsNumber: true })}
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
                 placeholder="Ex: 20"
@@ -558,7 +560,7 @@ export function ProductForm() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento (cm)</label>
               <input
                 type="number"
-                step="0.1"
+                step="any"
                 {...register('length', { valueAsNumber: true })}
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
                 placeholder="Ex: 30"

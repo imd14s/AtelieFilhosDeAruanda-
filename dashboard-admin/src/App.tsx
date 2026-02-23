@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TenantProvider } from './context/TenantContext';
 import { ToastProvider } from './context/ToastContext';
+import { LoadingProvider } from './context/LoadingContext';
+import GlobalOverlay from './components/ui/GlobalOverlay';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SetupWizard } from './pages/setup/SetupWizard';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
@@ -27,9 +29,6 @@ import ProductFavoritesRanking from './pages/marketing/ProductFavoritesRanking';
 import { ClientsPage } from './pages/settings/ClientsPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
-console.log('App initialization - Routes loaded');
-
-
 const PrivateRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;
@@ -44,28 +43,40 @@ function AppRoutes() {
 
       <Route element={<PrivateRoute />}>
         <Route path="/" element={<DashboardHome />} />
+
+        {/* Produtos e Categorias */}
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/new" element={<ProductForm />} />
         <Route path="/products/edit/:id" element={<ProductForm />} />
         <Route path="/categories" element={<CategoriesPage />} />
+
+        {/* Pedidos */}
         <Route path="/orders" element={<OrdersPage />} />
+
+        {/* Marketing */}
+        <Route path="/marketing/coupons" element={<CouponList />} />
+        <Route path="/marketing/campaigns" element={<CampaignsPage />} />
+        <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
+        <Route path="/marketing/email" element={<EmailMarketingHub />} />
+        <Route path="/marketing/favorites" element={<ProductFavoritesRanking />} />
+        <Route path="/marketing/subscribers" element={<SubscribersPage />} />
+
+        {/* Automações e Assinaturas */}
+        <Route path="/automations" element={<AutomationsPage />} />
+        <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
+
+        {/* Configurações */}
         <Route path="/settings/ai" element={<AiConfigPage />} />
         <Route path="/settings/team" element={<TeamPage />} />
         <Route path="/settings/audit" element={<AuditLogPage />} />
         <Route path="/settings/shipping" element={<ShippingPage />} />
         <Route path="/settings/payment" element={<PaymentPage />} />
-        <Route path="/settings/payment" element={<PaymentPage />} />
         <Route path="/settings/stock-alerts" element={<StockAlertPage />} />
-        <Route path="/marketing/coupons" element={<CouponList />} />
-        <Route path="/marketing/campaigns" element={<CampaignsPage />} />
-        <Route path="/marketing/subscribers" element={<SubscribersPage />} />
-        <Route path="/marketing/email" element={<EmailMarketingHub />} />
-        <Route path="/marketing/favorites" element={<ProductFavoritesRanking />} />
-        <Route path="/marketing/abandoned-cart" element={<AbandonedCartPage />} />
-        <Route path="/subscriptions" element={<SubscriptionPlansPage />} />
-        <Route path="/automations" element={<AutomationsPage />} />
-        <Route path="/settings/users" element={<ClientsPage />} />
         <Route path="/settings/integrations" element={<IntegrationsPage />} />
+        <Route path="/settings/users" element={<ClientsPage />} />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );
@@ -75,11 +86,14 @@ export default function App() {
   return (
     <Router>
       <ToastProvider>
-        <AuthProvider>
-          <TenantProvider>
-            <AppRoutes />
-          </TenantProvider>
-        </AuthProvider>
+        <LoadingProvider>
+          <GlobalOverlay />
+          <AuthProvider>
+            <TenantProvider>
+              <AppRoutes />
+            </TenantProvider>
+          </AuthProvider>
+        </LoadingProvider>
       </ToastProvider>
     </Router>
   );

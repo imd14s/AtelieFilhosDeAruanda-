@@ -3,6 +3,7 @@ import { Heart, Send, Search, Image as ImageIcon } from 'lucide-react';
 import { api } from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
+import { getImageUrl } from '../../utils/imageUtils';
 
 interface FavoriteRanking {
     productId: string;
@@ -58,17 +59,6 @@ export default function ProductFavoritesRanking() {
         } finally {
             setCreatingCampaignFor(null);
         }
-    };
-
-    const getImageUrl = (url: string) => {
-        if (!url) return '';
-        if (url.startsWith('http')) return url;
-        const apiUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8080/api';
-        const cleanBase = apiUrl.replace(/\/api$/, '');
-        // Garantir que a URL comece com / se não for absoluta e nem começar com data:
-        if (url.startsWith('data:')) return url;
-        const cleanPath = url.startsWith('/') ? url : `/${url}`;
-        return `${cleanBase}${cleanPath}`;
     };
 
     const filteredRanking = ranking

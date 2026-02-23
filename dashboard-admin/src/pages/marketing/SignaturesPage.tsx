@@ -120,14 +120,6 @@ export function SignaturesPage() {
         }
     };
 
-    const getImageUrl = (url: string) => {
-        if (!url) return 'https://via.placeholder.com/150';
-        if (url.startsWith('http')) return url;
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-        const cleanBase = apiUrl.replace(/\/api$/, '');
-        return `${cleanBase}${url}`;
-    };
-
     const renderPreview = () => {
         const storeUrlLabel = formData.storeUrl.replace(/https?:\/\//, '').replace('www.', '');
         return (

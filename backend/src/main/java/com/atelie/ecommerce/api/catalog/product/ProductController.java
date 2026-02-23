@@ -4,7 +4,11 @@ import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEnt
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.application.service.catalog.product.ProductService;
 import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
+import com.atelie.ecommerce.api.common.exception.BusinessException;
+import com.atelie.ecommerce.api.common.exception.NotFoundException;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/products")
@@ -67,39 +73,83 @@ public class ProductController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public ResponseEntity<?> create(@RequestBody ProductCreateRequest request) {
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<?> create(
+            @RequestPart("product") ProductCreateRequest request,
+            @RequestPart(value = "images", required = false) MultipartFile[] images) {
+
+        validateRequest(request);
+
+        ProductEntity product = mapRequestToEntity(request);
+        product.setCreatedAt(LocalDateTime.now());
+        product.setUpdatedAt(LocalDateTime.now());
+        product.setActive(request.active() != null ? request.active() : true);
+
+        List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants = mapVariants(
+                request.variants());
+
+        ProductEntity savedProduct = productService.saveProduct(product, request.categoryId(), variants, images);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
+    }
+
+    @PutMapping(value = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<?> update(
+            @PathVariable UUID id,
+            @RequestPart("product") ProductCreateRequest request,
+            @RequestPart(value = "images", required = false) MultipartFile[] images) {
+
+        validateRequest(request);
+
+        ProductEntity existing = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Produto não encontrado"));
+
+        existing.setName(request.name());
+        existing.setDescription(request.description());
+        existing.setPrice(request.price());
+        existing.setOriginalPrice(request.originalPrice());
+        existing.setStockQuantity(request.stockQuantity());
+        existing.setWeight(request.weight());
+        existing.setHeight(request.height());
+        existing.setWidth(request.width());
+        existing.setLength(request.length());
+        existing.setCategoryId(request.categoryId());
+
+        if (request.media() != null) {
+            existing.setImages(request.media().stream()
+                    .map(ProductCreateRequest.ProductMediaItem::url)
+                    .collect(Collectors.toCollection(ArrayList::new)));
+        }
+
+        if (request.marketplaceIds() != null) {
+            existing.setMarketplaceIds(request.marketplaceIds());
+        }
+
+        List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants = mapVariants(
+                request.variants());
+
+        return ResponseEntity.ok(productService.updateProduct(id, existing, variants, images));
+    }
+
+    private void validateRequest(ProductCreateRequest request) {
         if (request.categoryId() == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "A categoria é obrigatória."));
+            throw new BusinessException("A categoria é obrigatória.");
         }
 
         if (request.weight() == null || request.weight().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
                 request.height() == null || request.height().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
                 request.width() == null || request.width().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
                 request.length() == null || request.length().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error",
-                    "Peso e dimensões (altura, largura, comprimento) são obrigatórios e devem ser maiores que zero."));
+            throw new BusinessException(
+                    "Peso e dimensões (altura, largura, comprimento) são obrigatórios e devem ser maiores que zero.");
         }
 
         if (request.originalPrice() != null && request.price() != null
                 && request.price().compareTo(request.originalPrice()) >= 0) {
-            return ResponseEntity.badRequest()
-                    .body(java.util.Map.of("error", "O preço de venda deve ser menor que o preço original."));
+            throw new BusinessException("O preço de venda deve ser menor que o preço original.");
         }
+    }
 
-        if (request.variants() != null && !request.variants().isEmpty()) {
-            for (var v : request.variants()) {
-                if (v.imageUrl() == null || v.imageUrl().isBlank()) {
-                    return ResponseEntity.badRequest().body(java.util.Map.of("error",
-                            "Toda variante deve possuir pelo menos uma imagem associada. Por favor, anexe uma imagem antes de adicionar a variante."));
-                }
-                if (v.originalPrice() != null && v.price() != null && v.price().compareTo(v.originalPrice()) >= 0) {
-                    return ResponseEntity.badRequest().body(java.util.Map.of("error",
-                            "O preço de venda da variante deve ser menor que o preço original."));
-                }
-            }
-        }
-
+    private ProductEntity mapRequestToEntity(ProductCreateRequest request) {
         ProductEntity product = new ProductEntity();
         product.setName(request.name());
         product.setDescription(request.description());
@@ -112,204 +162,85 @@ public class ProductController {
         product.setLength(request.length());
 
         if (request.media() != null) {
-            List<String> imageUrls = request.media().stream()
+            product.setImages(request.media().stream()
                     .map(ProductCreateRequest.ProductMediaItem::url)
-                    .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
-            product.setImages(imageUrls);
+                    .collect(Collectors.toCollection(ArrayList::new)));
         }
 
         if (request.marketplaceIds() != null) {
             product.setMarketplaceIds(request.marketplaceIds());
         }
 
-        product.setCreatedAt(LocalDateTime.now());
-        product.setUpdatedAt(LocalDateTime.now());
-        product.setActive(request.active() != null ? request.active() : true);
+        return product;
+    }
 
-        // Map variants
-        List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants = null;
-        if (request.variants() != null) {
-            variants = request.variants().stream().map(v -> {
-                String attrsJson = "{}";
-                try {
-                    if (v.attributes() != null) {
-                        attrsJson = new com.fasterxml.jackson.databind.ObjectMapper()
-                                .writeValueAsString(v.attributes());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+    private List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> mapVariants(
+            List<ProductCreateRequest.ProductVariantRequest> variantRequests) {
+        if (variantRequests == null)
+            return null;
+
+        return variantRequests.stream().map(v -> {
+            var variant = new com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity();
+            variant.setId(v.id());
+            variant.setSku(v.sku());
+            variant.setPrice(v.price());
+            variant.setOriginalPrice(v.originalPrice());
+            variant.setStockQuantity(v.stock());
+            variant.setImageUrl(v.imageUrl());
+            if (v.media() != null) {
+                variant.setImages(v.media().stream().map(ProductCreateRequest.ProductMediaItem::url).toList());
+            }
+            try {
+                if (v.attributes() != null) {
+                    variant.setAttributesJson(
+                            new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(v.attributes()));
                 }
-
-                var variant = new com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity(
-                        null,
-                        v.sku(),
-                        null,
-                        v.price(),
-                        v.stock(),
-                        attrsJson,
-                        true);
-                variant.setImageUrl(v.imageUrl());
-                variant.setOriginalPrice(v.originalPrice());
-                if (v.media() != null) {
-                    variant.setImages(v.media().stream().map(ProductCreateRequest.ProductMediaItem::url)
-                            .collect(java.util.stream.Collectors.toList()));
-                }
-                return variant;
-            }).toList();
-        }
-
-        ProductEntity savedProduct = productService.saveProduct(product, request.categoryId(), variants);
-
-        return ResponseEntity.ok(savedProduct);
+            } catch (Exception e) {
+            }
+            variant.setActive(true);
+            return variant;
+        }).toList();
     }
 
     @PostMapping("/upload-image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
             var mediaAsset = mediaStorageService.upload(file, "product-image", true);
-            return ResponseEntity.ok(new HashMap<String, String>() {
-                {
-                    put("id", mediaAsset.getId().toString());
-                    put("url", "/api/media/public/" + mediaAsset.getId());
-                }
-            });
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            Map<String, String> response = new HashMap<>();
+            response.put("id", mediaAsset.getId().toString());
+            response.put("url", "/api/media/public/" + mediaAsset.getId());
+            return ResponseEntity.ok(response);
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body("Falha no upload: " + ex.getMessage());
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody ProductCreateRequest request) {
-        if (request.originalPrice() != null && request.price() != null
-                && request.price().compareTo(request.originalPrice()) >= 0) {
-            return ResponseEntity.badRequest()
-                    .body(java.util.Map.of("error", "O preço de venda deve ser menor que o preço original."));
-        }
-
-        if (request.weight() == null || request.weight().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
-                request.height() == null || request.height().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
-                request.width() == null || request.width().compareTo(java.math.BigDecimal.ZERO) <= 0 ||
-                request.length() == null || request.length().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error",
-                    "Peso e dimensões (altura, largura, comprimento) são obrigatórios e devem ser maiores que zero."));
-        }
-
-        if (request.variants() != null && !request.variants().isEmpty()) {
-            for (var v : request.variants()) {
-                if (v.imageUrl() == null || v.imageUrl().isBlank()) {
-                    return ResponseEntity.badRequest().body(java.util.Map.of("error",
-                            "Todas as variantes devem possuir pelo menos uma imagem associada. Por favor, certifique-se de não haver variantes sem capa."));
-                }
-                if (v.originalPrice() != null && v.price() != null && v.price().compareTo(v.originalPrice()) >= 0) {
-                    return ResponseEntity.badRequest().body(java.util.Map.of("error",
-                            "O preço de venda da variante deve ser menor que o preço original."));
-                }
-            }
-        }
-
-        ProductEntity existing = productRepository.findById(id)
-                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
-                        "Produto não encontrado"));
-
-        existing.setName(request.name());
-        existing.setDescription(request.description());
-        existing.setPrice(request.price());
-        existing.setOriginalPrice(request.originalPrice());
-        existing.setStockQuantity(request.stockQuantity());
-        existing.setWeight(request.weight());
-        existing.setHeight(request.height());
-        existing.setWidth(request.width());
-        existing.setLength(request.length());
-
-        if (request.media() != null) {
-            existing.setImages(request.media().stream()
-                    .map(ProductCreateRequest.ProductMediaItem::url)
-                    .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new)));
-        }
-
-        if (request.marketplaceIds() != null) {
-            existing.setMarketplaceIds(request.marketplaceIds());
-        }
-
-        if (request.categoryId() != null) {
-            existing.setCategoryId(request.categoryId());
-        }
-
-        List<com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity> variants = null;
-        if (request.variants() != null) {
-            variants = request.variants().stream().map(v -> {
-                var variant = new com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity();
-                variant.setId(v.id());
-                variant.setSku(v.sku());
-                variant.setPrice(v.price());
-                variant.setOriginalPrice(v.originalPrice());
-                variant.setStockQuantity(v.stock());
-                variant.setImageUrl(v.imageUrl());
-                if (v.media() != null) {
-                    variant.setImages(v.media().stream().map(ProductCreateRequest.ProductMediaItem::url)
-                            .collect(java.util.stream.Collectors.toList()));
-                }
-                try {
-                    if (v.attributes() != null) {
-                        variant.setAttributesJson(new com.fasterxml.jackson.databind.ObjectMapper()
-                                .writeValueAsString(v.attributes()));
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                variant.setActive(true);
-                return variant;
-            }).toList();
-        }
-
-        return ResponseEntity.ok(productService.updateProduct(id, existing, variants));
-    }
-
     @PutMapping("/{id}/toggle-alert")
     public ResponseEntity<Void> toggleAlert(@PathVariable UUID id) {
-        try {
-            productService.toggleAlert(id);
-            return ResponseEntity.ok().build();
-        } catch (com.atelie.ecommerce.api.common.exception.NotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        productService.toggleAlert(id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/generate-description")
-    public ResponseEntity<?> generateDescription(@RequestBody java.util.Map<String, String> payload) {
+    public ResponseEntity<?> generateDescription(@RequestBody Map<String, String> payload) {
         String title = payload.get("title");
         String imageUrl = payload.get("imageUrl");
 
-        if (title == null || title.isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(java.util.Map.of("error", "O título é obrigatório para gerar a descrição."));
-        }
-
-        if (imageUrl == null || imageUrl.isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(java.util.Map.of("error",
-                            "É necessário inserir uma imagem de capa da variante para que a IA possa analisar e extrair os dados adequadamente."));
+        if (title == null || title.isBlank() || imageUrl == null || imageUrl.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Título e imagem são obrigatórios."));
         }
 
         try {
-            java.util.Map<String, String> desc = productService.generateProductInfo(title, imageUrl);
+            Map<String, String> desc = productService.generateProductInfo(title, imageUrl);
             return ResponseEntity.ok(desc);
-        } catch (com.atelie.ecommerce.api.common.exception.BusinessException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body(java.util.Map.of("error", "Erro ao processar requisição de IA."));
+            return ResponseEntity.internalServerError().body(Map.of("error", "Erro ao processar IA."));
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        if (productRepository.existsById(id)) {
-            productRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 }

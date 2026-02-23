@@ -93,6 +93,8 @@ const SMTP_PROVIDERS = [
     { name: 'Custom', host: '', port: 587 }
 ];
 
+import { getImageUrl } from '../../utils/imageUtils';
+
 export default function EmailMarketingHub() {
     const [activeTab, setActiveTab] = useState<'analytics' | 'design' | 'config'>('analytics');
     const [activeDesignSubTab, setActiveDesignSubTab] = useState<'templates' | 'signatures' | 'campaigns'>('templates');
@@ -440,19 +442,6 @@ export default function EmailMarketingHub() {
         }
     };
 
-    const getImageUrl = (url: string) => {
-        if (!url) return 'https://via.placeholder.com/150';
-        if (url.startsWith('http')) return url;
-
-        // Evita erro de rede se a URL for apenas um número (como 150 do placeholder)
-        if (/^\d+$/.test(url)) return `https://via.placeholder.com/${url}`;
-
-        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-        const cleanBase = apiUrl.replace(/\/api$/, '');
-
-        return `${cleanBase}${cleanUrl}`;
-    };
 
     const renderSignaturePreview = () => {
         const storeUrlLabel = signatureForm.storeUrl.replace(/https?:\/\//, '').replace('www.', '');

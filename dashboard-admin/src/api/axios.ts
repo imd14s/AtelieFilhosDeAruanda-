@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { startLoading, stopLoading } from '../context/LoadingContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -8,20 +9,33 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
 api.interceptors.request.use(
   (config) => {
+    // Escritas (POST, PUT, DELETE) mostram overlay global
+    // Leituras (GET) mostram apenas barra de progresso
+    const isWriteOperation = ['post', 'put', 'delete', 'patch'].includes(config.method?.toLowerCase() || '');
+    startLoading(isWriteOperation);
+
     const token = localStorage.getItem('auth_token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    stopLoading();
+    return Promise.reject(error);
+  }
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    stopLoading();
+    return response;
+  },
   (error) => {
+    stopLoading();
     if (error.response?.status === 401) {
       console.warn('Sessão expirada ou não autorizada. Redirecionando para login.');
       localStorage.removeItem('auth_token');
@@ -33,3 +47,4 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
