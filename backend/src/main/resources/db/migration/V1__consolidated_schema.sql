@@ -89,6 +89,7 @@ CREATE TABLE products (
     width DECIMAL(10, 2),
     length DECIMAL(10, 2),
     last_notified_price DECIMAL(19, 2),
+    alert_enabled BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_product_category FOREIGN KEY (category_id) REFERENCES categories(id)
@@ -105,10 +106,14 @@ CREATE TABLE product_variants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL,
     sku VARCHAR(100),
+    gtin VARCHAR(100),
     size VARCHAR(50),
     color VARCHAR(50),
     stock_quantity INTEGER NOT NULL DEFAULT 0,
     price DECIMAL(19, 2),
+    original_price DECIMAL(19, 2),
+    attributes_json JSONB,
+    image_url VARCHAR(512),
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -332,6 +337,8 @@ CREATE TABLE subscription_plans (
     type VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
+    detailed_description TEXT,
+    image_url VARCHAR(512),
     base_price NUMERIC(19, 2),
     min_products INTEGER DEFAULT 1,
     max_products INTEGER DEFAULT 10,
@@ -474,6 +481,8 @@ CREATE TABLE product_marketplaces (
 CREATE TABLE marketplace_integrations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     provider VARCHAR(50) NOT NULL UNIQUE,
+    account_name VARCHAR(255),
+    external_seller_id VARCHAR(255),
     encrypted_credentials TEXT,
     auth_payload TEXT,
     is_active BOOLEAN DEFAULT TRUE,
@@ -541,7 +550,22 @@ CREATE INDEX idx_product_questions_product ON product_questions(product_id);
 CREATE INDEX idx_product_questions_user ON product_questions(user_id);
 
 -- =============================================
--- 23. FAVORITOS E HISTÓRICO
+-- 23. ASSINATURAS DE PRODUTO
+-- =============================================
+CREATE TABLE product_subscriptions (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    frequency_days INTEGER NOT NULL DEFAULT 30,
+    next_delivery  DATE NOT NULL DEFAULT CURRENT_DATE,
+    status      VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    price       DECIMAL(19, 2) NOT NULL DEFAULT 0,
+    created_at  TIMESTAMP,
+    updated_at  TIMESTAMP
+);
+
+-- =============================================
+-- 24. FAVORITOS E HISTÓRICO
 -- =============================================
 CREATE TABLE product_favorites (
     user_id UUID NOT NULL,

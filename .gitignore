@@ -26,5 +26,4 @@ yarn-error.log*
 # --- DOCKER ---
 postgres_data/
 _audit/
-images/
 
