@@ -27,6 +27,7 @@ import { SubscribersPage } from './pages/marketing/SubscribersPage';
 import EmailMarketingHub from './pages/marketing/EmailMarketingHub';
 import ProductFavoritesRanking from './pages/marketing/ProductFavoritesRanking';
 import { ClientsPage } from './pages/settings/ClientsPage';
+import { FiscalSettings } from './pages/settings/FiscalSettings';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 const PrivateRoute = () => {
@@ -73,6 +74,7 @@ function AppRoutes() {
         <Route path="/settings/payment" element={<PaymentPage />} />
         <Route path="/settings/stock-alerts" element={<StockAlertPage />} />
         <Route path="/settings/integrations" element={<IntegrationsPage />} />
+        <Route path="/settings/fiscal" element={<FiscalSettings />} />
         <Route path="/settings/users" element={<ClientsPage />} />
 
         {/* Fallback */}

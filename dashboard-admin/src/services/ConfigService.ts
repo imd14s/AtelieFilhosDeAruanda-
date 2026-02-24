@@ -13,5 +13,10 @@ export const ConfigService = {
 
     delete: async (key: string) => {
         return api.delete(`/admin/configs/${key}`);
+    },
+
+    get: async (key: string): Promise<SystemConfig | null> => {
+        const configs = await ConfigService.getAll();
+        return configs.find(c => c.configKey === key) || null;
     }
 };

@@ -5,6 +5,7 @@ import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
 import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
 import com.atelie.ecommerce.application.service.inventory.InventoryService;
 import com.atelie.ecommerce.application.service.marketing.CommunicationService;
+import com.atelie.ecommerce.application.service.fiscal.InvoiceService;
 import com.atelie.ecommerce.domain.marketing.model.AutomationType;
 import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.domain.order.OrderStatus;
@@ -36,19 +37,25 @@ public class OrderService {
     private final InventoryService inventoryService;
     private final com.atelie.ecommerce.application.service.audit.AuditService auditService;
     private final CommunicationService communicationService;
+    private final InvoiceService invoiceService;
+    private final ShippingAutomationService shippingAutomationService;
 
     public OrderService(OrderRepository orderRepository,
             ProductRepository productRepository,
             ProductVariantRepository variantRepository,
             InventoryService inventoryService,
             com.atelie.ecommerce.application.service.audit.AuditService auditService,
-            CommunicationService communicationService) {
+            CommunicationService communicationService,
+            InvoiceService invoiceService,
+            ShippingAutomationService shippingAutomationService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.inventoryService = inventoryService;
         this.auditService = auditService;
         this.communicationService = communicationService;
+        this.invoiceService = invoiceService;
+        this.shippingAutomationService = shippingAutomationService;
     }
 
     @Transactional
@@ -266,6 +273,10 @@ public class OrderService {
                             "customer_name", order.getCustomerName(),
                             "order_id", order.getExternalId()));
         }
+
+        // Trigger automatisations
+        invoiceService.emitInvoiceForOrder(orderId);
+        shippingAutomationService.automateShipping(order);
     }
 
     @Transactional

@@ -71,6 +71,24 @@ public class OrderEntity {
     @Column(name = "shipping_provider")
     private String shippingProvider;
 
+    @Column(name = "label_url_me")
+    private String labelUrlMe;
+
+    @Column(name = "label_url_custom")
+    private String labelUrlCustom;
+
+    @Column(name = "invoice_url")
+    private String invoiceUrl;
+
+    @Column(name = "tracking_code", length = 100)
+    private String trackingCode;
+
+    @Column(name = "shipping_id_external")
+    private String shippingIdExternal;
+
+    @Column(name = "document_expiry_date")
+    private Instant documentExpiryDate;
+
     public OrderEntity() {
     }
 
@@ -241,6 +259,54 @@ public class OrderEntity {
 
     public void setShippingProvider(String shippingProvider) {
         this.shippingProvider = shippingProvider;
+    }
+
+    public String getLabelUrlMe() {
+        return labelUrlMe;
+    }
+
+    public void setLabelUrlMe(String labelUrlMe) {
+        this.labelUrlMe = labelUrlMe;
+    }
+
+    public String getLabelUrlCustom() {
+        return labelUrlCustom;
+    }
+
+    public void setLabelUrlCustom(String labelUrlCustom) {
+        this.labelUrlCustom = labelUrlCustom;
+    }
+
+    public String getInvoiceUrl() {
+        return invoiceUrl;
+    }
+
+    public void setInvoiceUrl(String invoiceUrl) {
+        this.invoiceUrl = invoiceUrl;
+    }
+
+    public String getTrackingCode() {
+        return trackingCode;
+    }
+
+    public void setTrackingCode(String trackingCode) {
+        this.trackingCode = trackingCode;
+    }
+
+    public String getShippingIdExternal() {
+        return shippingIdExternal;
+    }
+
+    public void setShippingIdExternal(String shippingIdExternal) {
+        this.shippingIdExternal = shippingIdExternal;
+    }
+
+    public Instant getDocumentExpiryDate() {
+        return documentExpiryDate;
+    }
+
+    public void setDocumentExpiryDate(Instant documentExpiryDate) {
+        this.documentExpiryDate = documentExpiryDate;
     }
 
     @PrePersist

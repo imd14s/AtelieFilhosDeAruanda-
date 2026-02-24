@@ -6,7 +6,7 @@ import clsx from 'clsx';
 
 const {
   LayoutDashboard, ShoppingBag, Settings, LogOut, Package,
-  Zap, Users, Shield, Truck, CreditCard, Ticket, Mail,
+  Zap, Users, Shield, Truck, CreditCard, Ticket, Mail, FileText,
   ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X, Bell
 } = Icons;
 
@@ -75,6 +75,7 @@ export function DashboardLayout() {
         { icon: Shield, label: 'Auditoria', path: '/settings/audit' },
         { icon: Truck, label: 'Frete', path: '/settings/shipping' },
         { icon: CreditCard, label: 'Pagamentos', path: '/settings/payment' },
+        { icon: FileText, label: 'Documentos Fiscais', path: '/settings/fiscal' },
         { icon: Bell, label: 'Alerta de Estoque', path: '/settings/stock-alerts' },
       ]
     },

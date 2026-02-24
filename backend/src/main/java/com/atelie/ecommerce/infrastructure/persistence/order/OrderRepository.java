@@ -28,4 +28,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
     boolean existsByUserIdAndStatusAndProductId(UUID userId, String status, UUID productId);
 
     java.util.List<OrderEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    @Query("SELECT o FROM OrderEntity o WHERE o.documentExpiryDate <= :now")
+    java.util.List<OrderEntity> findOrdersWithExpiredDocuments(java.time.Instant now);
 }

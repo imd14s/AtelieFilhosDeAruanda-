@@ -140,6 +140,11 @@ public class OrderController {
                 entity.getCreatedAt() != null
                         ? entity.getCreatedAt().atZone(java.time.ZoneId.of("UTC")).toLocalDateTime()
                         : java.time.LocalDateTime.now(),
-                items);
+                items,
+                entity.getInvoiceUrl(),
+                entity.getLabelUrlMe(),
+                entity.getLabelUrlCustom(),
+                entity.getTrackingCode(),
+                entity.getShippingIdExternal());
     }
 }

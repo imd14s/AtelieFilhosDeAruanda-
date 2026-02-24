@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { OrderService } from '../../services/OrderService';
 import type { Order } from '../../types/order';
-import { Ban, CheckCircle, Truck, Package, Search } from 'lucide-react';
+import { Ban, CheckCircle, Truck, Package, Search, FileText } from 'lucide-react';
 import BaseModal from '../../components/ui/BaseModal';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
 import Skeleton from '../../components/ui/Skeleton';
+import OrderDetailModal from './OrderDetailModal';
 
 export function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -16,6 +17,8 @@ export function OrdersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const { addToast } = useToast();
     const [isCanceling, setIsCanceling] = useState(false);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
 
     useEffect(() => {
         loadOrders();
@@ -33,10 +36,16 @@ export function OrdersPage() {
         }
     };
 
-    const handleCancelClick = (id: string) => {
+    const handleCancelClick = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
         setSelectedOrderId(id);
         setCancelReason('');
         setCancelModalOpen(true);
+    };
+
+    const handleOrderDetail = (order: Order) => {
+        setViewingOrder(order);
+        setIsDetailModalOpen(true);
     };
 
     const confirmCancel = async () => {
@@ -55,7 +64,8 @@ export function OrdersPage() {
         }
     };
 
-    const handleApproveClick = async (id: string) => {
+    const handleApproveClick = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
         try {
             await OrderService.approve(id);
             setOrders(orders.map(o => o.id === id ? { ...o, status: 'PAID' } : o));
@@ -66,7 +76,8 @@ export function OrdersPage() {
         }
     };
 
-    const handleShipClick = async (id: string) => {
+    const handleShipClick = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
         if (!confirm('Confirma o envio deste pedido?')) return;
         try {
             await OrderService.ship(id);
@@ -113,6 +124,7 @@ export function OrdersPage() {
                                 <th className="p-4 text-sm font-semibold text-gray-600">Cliente</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Total</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
+                                <th className="p-4 text-sm font-semibold text-gray-600">Documentos</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600">Data</th>
                                 <th className="p-4 text-sm font-semibold text-gray-600 text-right">Ações</th>
                             </tr>
@@ -143,7 +155,11 @@ export function OrdersPage() {
                                 </tr>
                             ) : (
                                 filteredOrders.map((order) => (
-                                    <tr key={order.id} className="hover:bg-gray-50 transition">
+                                    <tr
+                                        key={order.id}
+                                        onClick={() => handleOrderDetail(order)}
+                                        className="hover:bg-gray-50 transition cursor-pointer"
+                                    >
                                         <td className="p-4 font-mono text-xs text-gray-500">#{order.id}</td>
                                         <td className="p-4 font-medium text-gray-800">{order.customerName}</td>
                                         <td className="p-4 text-gray-600">
@@ -160,13 +176,42 @@ export function OrdersPage() {
                                                 {order.status}
                                             </span>
                                         </td>
+                                        <td className="p-4">
+                                            <div className="flex gap-2">
+                                                {order.labelUrlMe && (
+                                                    <a
+                                                        href={order.labelUrlMe}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
+                                                        title="Etiqueta Mejor Envio"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Truck size={16} />
+                                                    </a>
+                                                )}
+                                                {order.invoiceUrl && (
+                                                    <a
+                                                        href={order.invoiceUrl}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
+                                                        title="Nota Fiscal (NFe)"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <FileText size={16} />
+                                                    </a>
+                                                )}
+                                                {!order.labelUrlMe && !order.invoiceUrl && <span className="text-gray-300 text-xs">-</span>}
+                                            </div>
+                                        </td>
                                         <td className="p-4 text-sm text-gray-500">
                                             {new Date(order.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="p-4 text-right flex justify-end gap-2">
                                             {order.status === 'PENDING' && (
                                                 <button
-                                                    onClick={() => handleApproveClick(order.id)}
+                                                    onClick={(e) => handleApproveClick(e, order.id)}
                                                     className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
                                                     title="Aprovar Pedido"
                                                 >
@@ -176,7 +221,7 @@ export function OrdersPage() {
                                             )}
                                             {order.status === 'PAID' && (
                                                 <button
-                                                    onClick={() => handleShipClick(order.id)}
+                                                    onClick={(e) => handleShipClick(e, order.id)}
                                                     className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
                                                     title="Marcar como Enviado"
                                                 >
@@ -186,7 +231,8 @@ export function OrdersPage() {
                                             )}
                                             {order.status === 'SHIPPED' && (
                                                 <button
-                                                    onClick={async () => {
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
                                                         if (!confirm('Deseja marcar como ENTREGUE?')) return;
                                                         try {
                                                             await OrderService.delivered(order.id);
@@ -204,7 +250,7 @@ export function OrdersPage() {
                                             )}
                                             {order.status !== 'CANCELED' && order.status !== 'SHIPPED' && order.status !== 'DELIVERED' && (
                                                 <button
-                                                    onClick={() => handleCancelClick(order.id)}
+                                                    onClick={(e) => handleCancelClick(e, order.id)}
                                                     className="text-red-500 hover:text-red-700 transition flex items-center gap-1"
                                                     title="Cancelar Pedido"
                                                 >
@@ -255,6 +301,13 @@ export function OrdersPage() {
                     </div>
                 </div>
             </BaseModal>
+
+            {/* Order Detail Modal */}
+            <OrderDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                order={viewingOrder}
+            />
         </div>
     );
 }

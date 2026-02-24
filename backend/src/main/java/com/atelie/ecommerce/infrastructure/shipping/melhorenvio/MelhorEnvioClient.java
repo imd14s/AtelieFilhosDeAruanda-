@@ -29,4 +29,40 @@ public class MelhorEnvioClient {
                 .body(new org.springframework.core.ParameterizedTypeReference<List<Map<String, Object>>>() {
                 });
     }
+
+    public Map<String, Object> addToCart(String token, Map<String, Object> payload) {
+        return restClient.post()
+                .uri("/api/v2/me/cart")
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/json")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .body(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                });
+    }
+
+    public Map<String, Object> checkout(String token, Map<String, Object> payload) {
+        return restClient.post()
+                .uri("/api/v2/me/shipment/checkout")
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/json")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .body(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                });
+    }
+
+    public Map<String, Object> generatePrint(String token, Map<String, Object> payload) {
+        return restClient.post()
+                .uri("/api/v2/me/shipment/print")
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/json")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .body(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                });
+    }
 }

@@ -129,4 +129,29 @@ class OrderControllerIntegrationTest {
                 int stock = inventoryRepository.auditCalculatedStockByVariant(variant.getId());
                 assertThat(stock).isEqualTo(8); // 10 - 2
         }
+
+        @Test
+        @WithMockUser
+        @Transactional
+        void approveOrder_WithMelhorEnvio_ShouldAutomateShipping() throws Exception {
+                // 1. Criar um pedido inicial
+                OrderEntity order = new OrderEntity();
+                order.setId(UUID.randomUUID());
+                order.setCustomerName("Test User");
+                order.setStatus("PENDING");
+                order.setShippingProvider("Melhor Envio");
+                orderRepository.save(order);
+
+                // 2. Aprovar o pedido (Status -> APPROVED)
+                mockMvc.perform(put("/api/orders/" + order.getId() + "/approve"))
+                                .andExpect(status().isNoContent());
+
+                // 3. Verificar resultados
+                OrderEntity updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
+                assertThat(updatedOrder.getStatus()).isEqualTo("PAID");
+
+                // Nota: Sem token real, a automação deve apenas logar e NÃO falhar
+                // Se houvesse um token sandbox, labelUrlMe estaria preenchido.
+                // Aqui validamos que o processo não quebrou.
+        }
 }

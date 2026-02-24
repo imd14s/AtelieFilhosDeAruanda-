@@ -1,0 +1,2 @@
+-- Placeholder para sincronização de esquema consolidado
+-- Esta migração foi aplicada anteriormente mas o arquivo foi removido/consolidado.
