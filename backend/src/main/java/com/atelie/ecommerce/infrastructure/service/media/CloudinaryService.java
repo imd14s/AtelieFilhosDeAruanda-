@@ -2,6 +2,7 @@ package com.atelie.ecommerce.infrastructure.service.media;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class CloudinaryService {
 
     private final Cloudinary cloudinary;
@@ -34,6 +36,7 @@ public class CloudinaryService {
                     "fetch_format", "auto"));
             return (String) uploadResult.get("secure_url");
         } catch (IOException e) {
+            log.error("Erro fatal no upload Cloudinary: {}", e.getMessage(), e);
             throw new RuntimeException("Falha ao fazer upload para o Cloudinary", e);
         }
     }

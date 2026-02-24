@@ -101,6 +101,7 @@ export function ShippingPage() {
         if (!editingProvider) return;
         try {
             await AdminProviderService.saveProviderConfig({
+                providerId: editingProvider.id,
                 configJson: JSON.stringify(configData),
                 environment: 'PRODUCTION'
             });

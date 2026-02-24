@@ -39,8 +39,13 @@ const SubscriptionCheckoutPage = () => {
                 const planData = await subscriptionService.getPlan(id);
                 setPlan(planData);
 
-                // Default frequency
-                if (planData.frequencyRules?.[0]) {
+                const params = new URLSearchParams(window.location.search);
+                const freqParam = params.get('frequency');
+
+                // Set frequency: query param > first available
+                if (freqParam && planData.frequencyRules?.some(r => r.frequency === freqParam)) {
+                    setSelectedFrequency(freqParam);
+                } else if (planData.frequencyRules?.[0]) {
                     setSelectedFrequency(planData.frequencyRules[0].frequency);
                 }
 

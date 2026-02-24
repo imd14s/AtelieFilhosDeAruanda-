@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -54,40 +55,33 @@ class MarketplaceCoreServiceTest {
     }
 
     @Test
-    void testSaveCredentials_NewIntegration_ShouldCreateAndEncrypt() throws Exception {
+    void testCreateIntegration_NewIntegration_ShouldCreateIntegrationRecord() {
         // Arrange
         String provider = "mercadolivre";
-        Map<String, String> credentials = new HashMap<>();
-        credentials.put("appId", "ML123456");
-        credentials.put("clientSecret", "secret123");
+        String accountName = "ML Principal";
 
-        String credentialsJson = objectMapper.writeValueAsString(credentials);
-        String encryptedCredentials = "encrypted_data_123";
-
-        when(repository.findByProvider(provider)).thenReturn(Optional.empty());
-        when(encryptionUtility.encrypt(credentialsJson)).thenReturn(encryptedCredentials);
         when(repository.save(any(MarketplaceIntegrationEntity.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        MarketplaceIntegrationEntity result = coreService.saveCredentials(provider, credentials);
+        MarketplaceIntegrationEntity result = coreService.createIntegration(provider, accountName);
 
         // Assert
         assertNotNull(result);
         assertEquals(provider, result.getProvider());
-        assertEquals(encryptedCredentials, result.getEncryptedCredentials());
+        assertEquals(accountName, result.getAccountName());
         assertFalse(result.isActive(), "New integration should not be active until OAuth is completed");
 
-        verify(encryptionUtility).encrypt(credentialsJson);
         verify(repository).save(any(MarketplaceIntegrationEntity.class));
     }
 
     @Test
-    void testGetAuthorizationUrl_ValidProvider_ShouldReturnUrl() throws Exception {
+    void testGetAuthorizationUrl_ValidIntegration_ShouldReturnUrl() throws Exception {
         // Arrange
+        UUID integrationId = UUID.randomUUID();
         String provider = "tiktok";
         String redirectUri = "https://atelie.com/callback";
-        String expectedUrl = "https://auth.tiktok-shop.com/authorize?app_key=TT123";
+        String expectedUrl = "https://auth.tiktok-shop.com/authorize?app_key=TT123&state=" + integrationId.toString();
 
         MarketplaceIntegrationEntity integration = new MarketplaceIntegrationEntity(provider, false);
         integration.setEncryptedCredentials("encrypted_creds");
@@ -95,17 +89,17 @@ class MarketplaceCoreServiceTest {
         Map<String, String> decryptedCreds = Map.of("appId", "TT123", "appSecret", "secret");
         String decryptedJson = objectMapper.writeValueAsString(decryptedCreds);
 
-        when(repository.findByProvider(provider)).thenReturn(Optional.of(integration));
+        when(repository.findById(integrationId)).thenReturn(Optional.of(integration));
         when(factory.getAdapter(provider)).thenReturn(Optional.of(mockAdapter));
         when(encryptionUtility.decrypt("encrypted_creds")).thenReturn(decryptedJson);
-        when(mockAdapter.getAuthUrl(any(), eq(redirectUri))).thenReturn(expectedUrl);
+        when(mockAdapter.getAuthUrl(any(), eq(redirectUri), eq(integrationId.toString()))).thenReturn(expectedUrl);
 
         // Act
-        String result = coreService.getAuthorizationUrl(provider, redirectUri);
+        String result = coreService.getAuthorizationUrl(integrationId, redirectUri);
 
         // Assert
         assertEquals(expectedUrl, result);
-        verify(mockAdapter).getAuthUrl(any(), eq(redirectUri));
+        verify(mockAdapter).getAuthUrl(any(), eq(redirectUri), eq(integrationId.toString()));
     }
 
     @Test
@@ -114,6 +108,8 @@ class MarketplaceCoreServiceTest {
         String provider = "mercadolivre";
         String code = "auth_code_123";
         String redirectUri = "https://atelie.com/callback";
+        UUID integrationId = UUID.randomUUID();
+        String state = integrationId.toString();
 
         MarketplaceIntegrationEntity integration = new MarketplaceIntegrationEntity(provider, false);
         integration.setEncryptedCredentials("encrypted_creds");
@@ -126,7 +122,7 @@ class MarketplaceCoreServiceTest {
         authPayload.put("refreshToken", "refresh_xyz");
         authPayload.put("expiresAt", System.currentTimeMillis() + 3600000);
 
-        when(repository.findByProvider(provider)).thenReturn(Optional.of(integration));
+        when(repository.findById(integrationId)).thenReturn(Optional.of(integration));
         when(factory.getAdapter(provider)).thenReturn(Optional.of(mockAdapter));
         when(encryptionUtility.decrypt("encrypted_creds")).thenReturn(decryptedJson);
         when(mockAdapter.handleAuthCallback(eq(code), any(), eq(redirectUri))).thenReturn(authPayload);
@@ -134,7 +130,7 @@ class MarketplaceCoreServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        coreService.handleCallback(provider, code, redirectUri);
+        coreService.handleCallback(provider, code, redirectUri, state);
 
         // Assert
         ArgumentCaptor<MarketplaceIntegrationEntity> captor = ArgumentCaptor
@@ -149,22 +145,23 @@ class MarketplaceCoreServiceTest {
     @Test
     void testGetAuthorizationUrl_IntegrationNotFound_ShouldThrowException() {
         // Arrange
-        String provider = "unknown_provider";
+        UUID integrationId = UUID.randomUUID();
         String redirectUri = "https://atelie.com/callback";
 
-        when(repository.findByProvider(provider)).thenReturn(Optional.empty());
+        when(repository.findById(integrationId)).thenReturn(Optional.empty());
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            coreService.getAuthorizationUrl(provider, redirectUri);
+            coreService.getAuthorizationUrl(integrationId, redirectUri);
         });
 
-        assertTrue(exception.getMessage().contains("Integration not configured"));
+        assertTrue(exception.getMessage().contains("Integration not found for ID " + integrationId));
     }
 
     @Test
     void testEnsureValidToken_TokenExpiringSoon_ShouldRefresh() throws Exception {
         // Arrange
+        UUID integrationId = UUID.randomUUID();
         String provider = "mercadolivre";
         long expiresAt = System.currentTimeMillis() + 300000; // 5 minutes from now (within 10min buffer)
 
@@ -183,7 +180,7 @@ class MarketplaceCoreServiceTest {
         newPayload.put("accessToken", "new_token");
         newPayload.put("expiresAt", System.currentTimeMillis() + 3600000);
 
-        when(repository.findByProvider(provider)).thenReturn(Optional.of(integration));
+        when(repository.findById(integrationId)).thenReturn(Optional.of(integration));
         when(factory.getAdapter(provider)).thenReturn(Optional.of(mockAdapter));
         when(encryptionUtility.decrypt("encrypted_creds")).thenReturn(decryptedJson);
         when(mockAdapter.refreshToken(eq(integration), any())).thenReturn(newPayload);
@@ -191,7 +188,7 @@ class MarketplaceCoreServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        coreService.ensureValidToken(provider);
+        coreService.ensureValidToken(integrationId);
 
         // Assert
         verify(mockAdapter).refreshToken(eq(integration), any());

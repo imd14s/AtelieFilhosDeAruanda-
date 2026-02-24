@@ -19,7 +19,8 @@ public class StockSyncListener {
         this.integrationRepository = integrationRepository;
     }
 
-    // CORREÇÃO: TransactionalEventListener garante que só executamos se o banco confirmou a transação.
+    // CORREÇÃO: TransactionalEventListener garante que só executamos se o banco
+    // confirmou a transação.
     // O @Async garante que não travamos a thread original após o commit.
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -30,11 +31,11 @@ public class StockSyncListener {
         }
 
         links.forEach(link -> {
-             log.info("SYNC [CONFIRMADO]: Enviando update para {}. Produto: {}, Novo Saldo: {}", 
-                     link.getIntegrationType(), 
-                     link.getExternalId(), 
-                     event.newQuantity());
-             // Lógica de envio HTTP
+            log.info("SYNC [CONFIRMADO]: Enviando update para {}. Produto: {}, Novo Saldo: {}",
+                    link.getIntegration().getProvider(),
+                    link.getExternalProductId(),
+                    event.newQuantity());
+            // Lógica de envio HTTP
         });
     }
 }

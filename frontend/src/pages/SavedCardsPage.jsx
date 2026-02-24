@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { CreditCard, Plus, Trash2, ShieldCheck, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { CreditCard, Plus, Trash2, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useOutletContext } from 'react-router-dom';
 import cardService from '../services/cardService';
+import { useMercadoPago } from '../hooks/useMercadoPago';
 
 const brandLogos = {
     visa: '💳 Visa',
@@ -14,11 +15,13 @@ const brandLogos = {
 
 const SavedCardsPage = () => {
     const { user } = useOutletContext();
+    const { mp, loading: mpLoading, isConfigured, error: mpError } = useMercadoPago();
     const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const cardFormRef = useRef(null);
 
     useEffect(() => {
         const userId = user?.id || user?.googleId;
@@ -28,6 +31,58 @@ const SavedCardsPage = () => {
             setLoading(false);
         }
     }, [user]);
+
+    // Inicializa CardForm quando o formulário é exibido e MP está pronto
+    useEffect(() => {
+        if (showAddForm && mp && isConfigured && !cardFormRef.current) {
+            try {
+                cardFormRef.current = mp.cardForm({
+                    amount: '1.0', // Valor simbólico para validação
+                    iframe: true,
+                    form: {
+                        id: 'mp-card-form',
+                        cardNumber: { id: 'mp-card-number', placeholder: '0000 0000 0000 0000' },
+                        expirationDate: { id: 'mp-expiration-date', placeholder: 'MM/AA' },
+                        securityCode: { id: 'mp-security-code', placeholder: 'CVV' },
+                        cardholderName: { id: 'mp-cardholder-name' },
+                        identificationType: { id: 'mp-identification-type' },
+                        identificationNumber: { id: 'mp-identification-number' },
+                    },
+                    callbacks: {
+                        onFormMounted: (error) => {
+                            if (error) console.error('Erro ao montar form:', error);
+                        },
+                        onSubmit: async (event) => {
+                            event.preventDefault();
+                            setSaving(true);
+                            setError('');
+
+                            try {
+                                const formData = cardFormRef.current.getCardFormData();
+                                if (formData.token) {
+                                    await cardService.saveCard(formData.token);
+                                    fetchCards();
+                                    setShowAddForm(false);
+                                    cardFormRef.current = null;
+                                }
+                            } catch (err) {
+                                setError(err.message || 'Erro ao salvar cartão.');
+                            } finally {
+                                setSaving(false);
+                            }
+                        },
+                        onError: (errors) => {
+                            const errorMsg = errors.find(e => e.message)?.message || 'Verifique os dados do cartão.';
+                            setError(errorMsg);
+                            setSaving(false);
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Erro ao inicializar CardForm:', e);
+            }
+        }
+    }, [showAddForm, mp, isConfigured]);
 
     const fetchCards = () => {
         setLoading(true);
@@ -47,75 +102,11 @@ const SavedCardsPage = () => {
         }
     };
 
-    const handleAddCard = async () => {
-        setError('');
-        setSaving(true);
-
-        try {
-            // MercadoPago.js SDK gera o card_token no frontend
-            // Verifica se o SDK está carregado
-            if (!window.MercadoPago) {
-                setError('SDK do Mercado Pago não carregado. Verifique a configuração.');
-                setSaving(false);
-                return;
-            }
-
-            const mp = new window.MercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY, { locale: 'pt-BR' });
-            const cardForm = mp.cardForm({
-                amount: '100',
-                iframe: false,
-                form: {
-                    id: 'mp-card-form',
-                    cardNumber: { id: 'mp-card-number' },
-                    expirationDate: { id: 'mp-expiration-date' },
-                    securityCode: { id: 'mp-security-code' },
-                    cardholderName: { id: 'mp-cardholder-name' },
-                    identificationType: { id: 'mp-identification-type' },
-                    identificationNumber: { id: 'mp-identification-number' },
-                },
-                callbacks: {
-                    onFormMounted: () => { },
-                    onSubmit: async (event) => {
-                        event.preventDefault();
-                        const { token } = cardForm.getCardFormData();
-                        if (token) {
-                            await cardService.saveCard(token);
-                            fetchCards();
-                            setShowAddForm(false);
-                        }
-                    },
-                    onError: (errors) => {
-                        setError('Erro na validação do cartão.');
-                        console.error(errors);
-                    }
-                }
-            });
-        } catch (err) {
-            // Fallback: form manual com token
-            setError('Integração com SDK indisponível. Use o formulário manual abaixo.');
-        }
-        setSaving(false);
-    };
-
-    // Formulário simplificado para token manual (dev/sandbox)
-    const handleManualToken = async (e) => {
+    const handleFormSubmit = (e) => {
         e.preventDefault();
-        const token = e.target.elements.cardToken.value.trim();
-        if (!token) {
-            setError('Token obrigatório.');
-            return;
+        if (cardFormRef.current) {
+            cardFormRef.current.submit();
         }
-        setSaving(true);
-        setError('');
-        try {
-            await cardService.saveCard(token);
-            fetchCards();
-            setShowAddForm(false);
-            e.target.reset();
-        } catch (err) {
-            setError('Erro ao salvar cartão.');
-        }
-        setSaving(false);
     };
 
     if (!user) return null;
@@ -140,16 +131,31 @@ const SavedCardsPage = () => {
                     </button>
                 </div>
 
-                {/* Banner de Segurança */}
-                <div className="bg-white rounded-md p-4 mb-6 shadow-sm border border-gray-200 flex items-center gap-4">
-                    <div className="w-12 h-12 flex items-center justify-center bg-green-50 text-green-600 rounded-full shrink-0">
-                        <ShieldCheck size={24} />
+                {/* Banner de Segurança / Aviso de Configuração */}
+                {!isConfigured && !mpLoading ? (
+                    <div className="bg-amber-50 rounded-md p-6 mb-8 border border-amber-200 flex items-start gap-4 animate-in fade-in slide-in-from-top-4">
+                        <div className="w-12 h-12 flex items-center justify-center bg-amber-100 text-amber-600 rounded-full shrink-0">
+                            <AlertTriangle size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm text-amber-900 font-bold uppercase tracking-widest mb-1">Atenção: Configuração Pendente</h3>
+                            <p className="text-xs text-amber-800/80 leading-relaxed">
+                                A integração com o Mercado Pago ainda não foi concluída pelo administrador.
+                                O salvamento de novos cartões estará disponível assim que as chaves de API forem configuradas no Dashboard.
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-800 font-semibold mb-1">Seus dados estão seguros</p>
-                        <p className="text-xs text-gray-500">Os cartões são tokenizados pelo Mercado Pago. Nunca armazenamos dados sensíveis do cartão diretamente.</p>
+                ) : (
+                    <div className="bg-white rounded-md p-4 mb-6 shadow-sm border border-gray-200 flex items-center gap-4">
+                        <div className="w-12 h-12 flex items-center justify-center bg-green-50 text-green-600 rounded-full shrink-0">
+                            <ShieldCheck size={24} />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-800 font-semibold mb-1">Seus dados estão seguros</p>
+                            <p className="text-xs text-gray-500">Os cartões são tokenizados pelo Mercado Pago. Nunca armazenamos dados sensíveis do cartão diretamente.</p>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Erro */}
                 {error && (
@@ -159,32 +165,84 @@ const SavedCardsPage = () => {
                     </div>
                 )}
 
-                {/* Formulário para Adicionar Cartão (Sandbox) */}
+                {/* Formulário para Adicionar Cartão */}
                 {showAddForm && (
-                    <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 mb-6">
-                        <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <CreditCard size={16} />
-                            Adicionar Novo Cartão
+                    <div className="bg-white rounded-md shadow-sm border border-gray-200 p-8 mb-6 animate-in fade-in slide-in-from-top-4">
+                        <h3 className="text-sm font-bold text-[var(--azul-profundo)] mb-6 flex items-center gap-2">
+                            <CreditCard size={18} />
+                            Novo Cartão de Crédito
                         </h3>
-                        <p className="text-xs text-gray-500 mb-4">
-                            Em produção, o formulário do MercadoPago.js SDK será exibido aqui para capturar os dados do cartão de forma segura.
-                            No ambiente sandbox, cole o <code className="bg-gray-100 px-1 rounded">card_token</code> gerado.
-                        </p>
-                        <form onSubmit={handleManualToken} className="flex gap-3">
-                            <input
-                                name="cardToken"
-                                type="text"
-                                placeholder="Cole o card_token aqui..."
-                                className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            />
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="bg-[var(--azul-profundo)] text-white px-6 py-2 rounded-md text-sm font-semibold hover:bg-[#0a1e33] transition disabled:opacity-50"
-                            >
-                                {saving ? 'Salvando...' : 'Salvar'}
-                            </button>
-                        </form>
+
+                        {mpLoading ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                                <Loader2 size={32} className="animate-spin mb-2" />
+                                <p className="text-xs font-medium uppercase tracking-widest">Carregando Mercado Pago...</p>
+                            </div>
+                        ) : !isConfigured ? (
+                            <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
+                                <AlertTriangle size={32} className="mx-auto text-amber-500 mb-4 opacity-40" />
+                                <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Os campos seguros serão carregados automaticamente <br /> após a configuração da Chave Pública no Dashboard.</p>
+                            </div>
+                        ) : (
+                            <form id="mp-card-form" onSubmit={handleFormSubmit} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Número do Cartão</label>
+                                        <div id="mp-card-number" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nome do Titular</label>
+                                        <input type="text" id="mp-cardholder-name" placeholder="Como impresso no cartão" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm uppercase" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Vencimento</label>
+                                        <div id="mp-expiration-date" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Código de Segurança</label>
+                                        <div id="mp-security-code" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Tipo de Documento</label>
+                                        <select id="mp-identification-type" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm"></select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Número do Documento</label>
+                                        <input type="text" id="mp-identification-number" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm" />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddForm(false)}
+                                        className="flex-1 px-6 py-3 border border-gray-300 rounded-md text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        id="mp-form-submit"
+                                        disabled={saving}
+                                        className="flex-1 bg-[var(--azul-profundo)] text-white px-6 py-3 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-[#0a1e33] transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <Loader2 size={16} className="animate-spin" />
+                                                Validando...
+                                            </>
+                                        ) : (
+                                            'Salvar Cartão'
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </div>
                 )}
 

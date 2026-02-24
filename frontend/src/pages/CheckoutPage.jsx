@@ -5,6 +5,7 @@ import { storeService } from '../services/storeService';
 import marketingService from '../services/marketingService';
 import { getImageUrl } from '../utils/imageUtils';
 import SEO from '../components/SEO';
+import { useMercadoPago } from '../hooks/useMercadoPago';
 
 const CheckoutPage = () => {
     const location = useLocation();
@@ -39,12 +40,22 @@ const CheckoutPage = () => {
     const [savedCards, setSavedCards] = useState([]);
     const [selectedCardId, setSelectedCardId] = useState(null);
     const [isAddingNewCard, setIsAddingNewCard] = useState(true);
-    const [mp, setMp] = useState(null);
-    const [cardToken, setCardToken] = useState(null);
     const [shippingOptions, setShippingOptions] = useState([]);
     const [shippingLoading, setShippingLoading] = useState(false);
     const [currentShipping, setCurrentShipping] = useState(shippingSelected || null);
     const [configMissing, setConfigMissing] = useState({ mp: false, shipping: false });
+
+    const { mp, loading: mpLoading, isConfigured } = useMercadoPago();
+    const [cardForm, setCardForm] = useState(null);
+
+    // Cálculos de preço - movidos para o escopo do componente
+    const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
+    const discount = appliedCoupon
+        ? (appliedCoupon.type === 'PERCENTAGE'
+            ? (subtotal * (appliedCoupon.value / 100))
+            : appliedCoupon.value)
+        : 0;
+    const total = subtotal + (currentShipping?.price || 0) - discount;
 
     React.useEffect(() => {
         const initCheckout = async () => {
@@ -82,42 +93,11 @@ const CheckoutPage = () => {
                 handleCalculateShipping(formData.cep);
             }
 
-            // Injeta SDK Mercado Pago...
-            if (!window.MercadoPago) {
-                const script = document.createElement('script');
-                script.src = 'https://sdk.mercadopago.com/js/v2';
-                script.onload = async () => {
-                    try {
-                        const pk = await storeService.config.getMercadoPagoPublicKey();
-                        if (pk) {
-                            setMp(new window.MercadoPago(pk));
-                            console.log("[MercadoPago] SDK inicializado dinamicamente.");
-                        }
-                    } catch (e) {
-                        if (e.response?.status === 404) {
-                            setConfigMissing(prev => ({ ...prev, mp: true }));
-                        }
-                    }
-                };
-                document.body.appendChild(script);
-            } else if (!mp) {
-                try {
-                    const pk = await storeService.config.getMercadoPagoPublicKey();
-                    if (pk) {
-                        setMp(new window.MercadoPago(pk));
-                    }
-                } catch (e) {
-                    if (e.response?.status === 404) {
-                        setConfigMissing(prev => ({ ...prev, mp: true }));
-                    }
-                }
-            }
-
             if (cep) {
                 handleCalculateShipping(cep);
             }
         };
-        // Registra listener para atualizações externas do carrinho
+
         const handleCartChange = () => {
             console.log("[DEBUG] Evento 'cart-updated' recebido no Checkout. Re-sincronizando...");
             initCheckout();
@@ -131,14 +111,52 @@ const CheckoutPage = () => {
         };
     }, []);
 
+    // Inicializa/Reseta CardForm
+    React.useEffect(() => {
+        if (mp && isConfigured && isAddingNewCard && formData.metodoPagamento === 'card') {
+            if (!cardForm) {
+                try {
+                    const cf = mp.cardForm({
+                        amount: total.toString(),
+                        iframe: true,
+                        form: {
+                            id: 'form-checkout',
+                            cardNumber: { id: 'cardNumber', placeholder: '0000 0000 0000 0000' },
+                            expirationDate: { id: 'expirationDate', placeholder: 'MM/AA' },
+                            securityCode: { id: 'securityCode', placeholder: 'CVV' },
+                            cardholderName: { id: 'cardholderName' },
+                            identificationType: { id: 'identificationType' },
+                            identificationNumber: { id: 'identificationNumber' },
+                        },
+                        callbacks: {
+                            onFormMounted: (error) => {
+                                if (error) console.error('Erro ao montar fields:', error);
+                            },
+                            onSubmit: (event) => {
+                                event.preventDefault();
+                            },
+                            onError: (errors) => {
+                                console.error('Erros no cardForm:', errors);
+                            }
+                        }
+                    });
+                    setCardForm(cf);
+                } catch (e) {
+                    console.error("Erro ao inicializar CardForm", e);
+                }
+            }
+        } else if (cardForm) {
+            // O SDK v2 não expõe destroy explícito, mas limpamos a referência.
+            setCardForm(null);
+        }
+    }, [mp, isConfigured, isAddingNewCard, formData.metodoPagamento]);
+
     const handleCalculateShipping = async (targetCep) => {
         if (!targetCep || targetCep.length < 8) return;
         setShippingLoading(true);
         try {
             const items = await storeService.cart.get();
             const options = await storeService.calculateShipping(targetCep, items);
-
-            // Verifica se a resposta indica falta de configuração no backend
             const isMissing = options.some(o => o.provider === 'CONFIG_MISSING');
             if (isMissing) {
                 setConfigMissing(prev => ({ ...prev, shipping: true }));
@@ -173,14 +191,6 @@ const CheckoutPage = () => {
         }));
         handleCalculateShipping(normalizedCep);
     };
-
-    const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
-    const discount = appliedCoupon
-        ? (appliedCoupon.type === 'PERCENTAGE'
-            ? (subtotal * (appliedCoupon.value / 100))
-            : appliedCoupon.value)
-        : 0;
-    const total = subtotal + (currentShipping?.price || 0) - discount;
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return;
@@ -245,15 +255,19 @@ const CheckoutPage = () => {
                 if (!isAddingNewCard && selectedCardId) {
                     order.cardId = selectedCardId;
                 } else {
-                    // Aqui entraria a tokenização real via SDK: mp.fields.createCardToken()
-                    // Por enquanto, simulamos o token se os campos estiverem preenchidos
-                    order.paymentToken = "tok_simulated_" + Math.random().toString(36).substr(2, 9);
+                    if (!cardForm) throw new Error("Sistema de pagamento não inicializado.");
+
+                    const cardData = cardForm.getCardFormData();
+                    if (!cardData.token) {
+                        throw new Error("Verifique os dados do cartão de crédito.");
+                    }
+                    order.paymentToken = cardData.token;
                 }
             }
 
             const result = await storeService.createOrder(order);
             setSuccessOrder(result);
-            await storeService.cart.clear(); // Limpa carrinho ao finalizar
+            await storeService.cart.clear();
         } catch (error) {
             console.error(error);
             window.dispatchEvent(new CustomEvent('show-alert', { detail: error.message || "Erro ao processar o pedido. Tente novamente." }));
@@ -533,22 +547,43 @@ const CheckoutPage = () => {
                                                     <ShieldCheck size={16} className="text-green-600" /> Novo Cartão via Mercado Pago
                                                 </h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="md:col-span-2">
-                                                        <label className="block text-xs text-gray-500 mb-1">Número do Cartão</label>
-                                                        <div id="cardNumber" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
-                                                    </div>
-                                                    <div className="md:col-span-2">
-                                                        <label className="block text-xs text-gray-500 mb-1">Nome Impresso no Cartão</label>
-                                                        <input type="text" placeholder="JOAO M SILVA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] uppercase" />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">Validade</label>
-                                                        <div id="expirationDate" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">CVV</label>
-                                                        <div id="securityCode" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
-                                                    </div>
+                                                    {!isConfigured && !mpLoading ? (
+                                                        <div className="md:col-span-2 bg-amber-50 border border-amber-200 p-4 rounded text-amber-800 text-xs flex items-start gap-3">
+                                                            <AlertTriangle size={18} className="shrink-0" />
+                                                            <div>
+                                                                <p className="font-bold uppercase tracking-widest mb-1">Pagamento com Cartão Indisponível</p>
+                                                                <p className="opacity-80">A configuração do Mercado Pago está pendente. Por favor, utilize PIX ou aguarde a ativação pelo administrador.</p>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="md:col-span-2">
+                                                                <label className="block text-xs text-gray-500 mb-1">Número do Cartão</label>
+                                                                <div id="cardNumber" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                            </div>
+                                                            <div className="md:col-span-2">
+                                                                <label className="block text-xs text-gray-500 mb-1">Nome Impresso no Cartão</label>
+                                                                <input type="text" id="cardholderName" placeholder="JOAO M SILVA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] uppercase" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs text-gray-500 mb-1">Validade</label>
+                                                                <div id="expirationDate" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs text-gray-500 mb-1">CVV</label>
+                                                                <div id="securityCode" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs text-gray-500 mb-1">Tipo de Doc.</label>
+                                                                <select id="identificationType" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"></select>
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs text-gray-500 mb-1">Número do Doc.</label>
+                                                                <input type="text" id="identificationNumber" placeholder="CPF/CNPJ" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
+                                                            </div>
+                                                        </>
+                                                    )}
+
                                                     {user.id && (
                                                         <label className="md:col-span-2 flex items-center gap-2 cursor-pointer mt-2">
                                                             <input

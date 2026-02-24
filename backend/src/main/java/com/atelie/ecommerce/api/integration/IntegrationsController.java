@@ -5,7 +5,9 @@ import com.atelie.ecommerce.infrastructure.persistence.integration.entity.Market
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/integrations")
@@ -20,18 +22,30 @@ public class IntegrationsController {
         this.productRepository = productRepository;
     }
 
-    @PostMapping("/{provider}/credentials")
-    public ResponseEntity<MarketplaceIntegrationEntity> saveCredentials(
-            @PathVariable String provider,
-            @RequestBody Map<String, String> credentials) {
-        return ResponseEntity.ok(coreService.saveCredentials(provider, credentials));
+    @PostMapping("/accounts")
+    public ResponseEntity<MarketplaceIntegrationEntity> createAccount(@RequestBody Map<String, String> body) {
+        String provider = body.get("provider");
+        String accountName = body.get("accountName");
+        return ResponseEntity.ok(coreService.createIntegration(provider, accountName));
     }
 
-    @GetMapping("/{provider}/auth-url")
+    @GetMapping("/accounts")
+    public ResponseEntity<List<MarketplaceIntegrationEntity>> getAccounts() {
+        return ResponseEntity.ok(coreService.getAllIntegrations());
+    }
+
+    @PutMapping("/accounts/{integrationId}/credentials")
+    public ResponseEntity<MarketplaceIntegrationEntity> saveCredentials(
+            @PathVariable UUID integrationId,
+            @RequestBody Map<String, String> credentials) {
+        return ResponseEntity.ok(coreService.saveCredentials(integrationId, credentials));
+    }
+
+    @GetMapping("/accounts/{integrationId}/auth-url")
     public ResponseEntity<Map<String, String>> getAuthUrl(
-            @PathVariable String provider,
+            @PathVariable UUID integrationId,
             @RequestParam String redirectUri) {
-        String url = coreService.getAuthorizationUrl(provider, redirectUri);
+        String url = coreService.getAuthorizationUrl(integrationId, redirectUri);
         return ResponseEntity.ok(Map.of("url", url));
     }
 
@@ -39,39 +53,39 @@ public class IntegrationsController {
     public ResponseEntity<String> handleCallback(
             @PathVariable String provider,
             @RequestParam String code,
-            @RequestParam String redirectUri) {
-        coreService.handleCallback(provider, code, redirectUri);
+            @RequestParam String redirectUri,
+            @RequestParam(required = false) String state) {
+        coreService.handleCallback(provider, code, redirectUri, state);
         return ResponseEntity.ok("Autenticação finalizada com sucesso! Você pode fechar esta janela.");
     }
 
-    @GetMapping("/{provider}/status")
-    public ResponseEntity<Map<String, Object>> getStatus(@PathVariable String provider) {
-        return coreService.getIntegration(provider)
+    @GetMapping("/accounts/{integrationId}/status")
+    public ResponseEntity<Map<String, Object>> getStatus(@PathVariable UUID integrationId) {
+        return coreService.getIntegrationById(integrationId)
                 .map(i -> {
                     java.util.Map<String, Object> response = new java.util.HashMap<>();
+                    response.put("id", i.getId());
                     response.put("provider", i.getProvider());
+                    response.put("accountName", i.getAccountName());
                     response.put("active", i.isActive());
                     response.put("configured", i.getEncryptedCredentials() != null);
                     response.put("updatedAt", i.getUpdatedAt());
                     return ResponseEntity.ok(response);
                 })
-                .orElse(ResponseEntity.ok(java.util.Map.of(
-                        "provider", provider,
-                        "active", false,
-                        "configured", false)));
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/{provider}/export-product/{productId}")
+    @PostMapping("/accounts/{integrationId}/export-product/{productId}")
     public ResponseEntity<Map<String, String>> exportProduct(
-            @PathVariable String provider,
+            @PathVariable UUID integrationId,
             @PathVariable java.util.UUID productId) {
 
         com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity product = productRepository
                 .findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found: " + productId));
 
-        coreService.exportProduct(provider, product);
-        return ResponseEntity.ok(Map.of("message", "Product exported successfully to " + provider));
+        coreService.exportProduct(integrationId, product);
+        return ResponseEntity.ok(Map.of("message", "Product exported successfully"));
     }
 
     @PostMapping("/{provider}/test-connection")
@@ -81,9 +95,9 @@ public class IntegrationsController {
         return ResponseEntity.ok(Map.of("message", "Conexão testada com sucesso para " + provider));
     }
 
-    @PostMapping("/{provider}/sync")
-    public ResponseEntity<Map<String, Object>> syncProducts(@PathVariable String provider) {
-        int count = coreService.syncProducts(provider);
+    @PostMapping("/accounts/{integrationId}/sync")
+    public ResponseEntity<Map<String, Object>> syncProducts(@PathVariable UUID integrationId) {
+        int count = coreService.syncProducts(integrationId);
         return ResponseEntity.ok(Map.of(
                 "message", "Sincronização concluída com sucesso",
                 "count", count));

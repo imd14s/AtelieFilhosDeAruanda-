@@ -22,7 +22,9 @@ export const authService = {
                 name: response.data.name,
                 email: response.data.email,
                 role: response.data.role,
-                emailVerified: response.data.emailVerified
+                emailVerified: response.data.emailVerified,
+                photoUrl: response.data.photoUrl,
+                googleId: response.data.googleId
             }));
         }
         return response.data;
@@ -51,7 +53,8 @@ export const authService = {
                     email: response.data.email,
                     role: response.data.role,
                     emailVerified: response.data.emailVerified,
-                    photoURL: userInfo.picture || null,
+                    photoUrl: response.data.photoUrl,
+                    googleId: response.data.googleId
                 }));
             }
             return response.data;

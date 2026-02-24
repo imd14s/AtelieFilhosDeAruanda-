@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
 import type { CreateCouponDTO } from '../../types/marketing';
 import BaseModal from '../../components/ui/BaseModal';
 import Button from '../../components/ui/Button';

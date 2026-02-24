@@ -79,7 +79,7 @@ const SubscriptionsPage = () => {
                         <h1 className="text-2xl font-bold text-[var(--azul-profundo)]">Assinaturas</h1>
                         <p className="text-gray-500 text-sm mt-1">Gerencie seu plano e produtos recorrentes.</p>
                     </div>
-                    <Link to="/store" className="bg-[var(--dourado-suave)] text-white px-5 py-2.5 rounded text-sm font-semibold hover:opacity-90 transition-opacity">
+                    <Link to="/assinaturas" className="bg-[var(--dourado-suave)] text-white px-5 py-2.5 rounded text-sm font-semibold hover:opacity-90 transition-opacity">
                         Explorar Mais Planos
                     </Link>
                 </div>

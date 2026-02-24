@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Mail, Plus, Send, Clock, CheckCircle, AlertCircle, RefreshCcw } from 'lucide-react';
 import { api } from '../../api/axios';
 import { RichTextEditor } from '../../components/common/RichTextEditor';
@@ -44,7 +45,7 @@ export function CampaignsPage() {
             const { data } = await api.get('/marketing/signatures');
             setSignatures(data);
             if (data.length > 0) {
-                setNewCampaign(prev => ({ ...prev, signatureId: data[0].id }));
+                setNewCampaign((prev: any) => ({ ...prev, signatureId: data[0].id }));
             }
         } catch (error) {
             console.error('Erro ao carregar assinaturas', error);
@@ -217,7 +218,7 @@ export function CampaignsPage() {
                             onChange={e => setNewCampaign({ ...newCampaign, signatureId: e.target.value })}
                         >
                             <option value="">Sem assinatura</option>
-                            {signatures.map(sig => (
+                            {signatures.map((sig: any) => (
                                 <option key={sig.id} value={sig.id}>{sig.name}</option>
                             ))}
                         </select>
@@ -262,11 +263,11 @@ export function CampaignsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-6 rounded-xl border shadow-sm">
                     <h3 className="text-gray-500 text-sm font-medium">Total de Envios</h3>
-                    <p className="text-2xl font-bold mt-2">{campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0)}</p>
+                    <p className="text-2xl font-bold mt-2">{campaigns.reduce((acc: number, c: any) => acc + (c.sentCount || 0), 0)}</p>
                 </div>
                 <div className="bg-white p-6 rounded-xl border shadow-sm">
                     <h3 className="text-gray-500 text-sm font-medium">Campanhas Ativas</h3>
-                    <p className="text-2xl font-bold mt-2 text-blue-600">{campaigns.filter(c => c.status === 'SENDING').length}</p>
+                    <p className="text-2xl font-bold mt-2 text-blue-600">{campaigns.filter((c: any) => c.status === 'SENDING').length}</p>
                 </div>
                 <div className="bg-white p-6 rounded-xl border shadow-sm">
                     <h3 className="text-gray-500 text-sm font-medium">Taxa de Verificação</h3>

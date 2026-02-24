@@ -9,7 +9,9 @@ import java.util.UUID;
 
 @Repository
 public interface MarketplaceIntegrationRepository extends JpaRepository<MarketplaceIntegrationEntity, UUID> {
-    Optional<MarketplaceIntegrationEntity> findByProvider(String provider);
+    List<MarketplaceIntegrationEntity> findAllByProvider(String provider);
+
+    Optional<MarketplaceIntegrationEntity> findByProviderAndExternalSellerId(String provider, String externalSellerId);
 
     List<MarketplaceIntegrationEntity> findByProviderAndActiveTrue(String provider);
 }

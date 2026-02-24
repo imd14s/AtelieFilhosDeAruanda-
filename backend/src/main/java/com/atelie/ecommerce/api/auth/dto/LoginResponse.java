@@ -14,6 +14,8 @@ public class LoginResponse {
     private String email;
     private String role;
     private boolean emailVerified;
+    private String photoUrl;
+    private String googleId;
 
     // Construtor preventivo: permite criar apenas com o token sem quebrar o
     // Controller

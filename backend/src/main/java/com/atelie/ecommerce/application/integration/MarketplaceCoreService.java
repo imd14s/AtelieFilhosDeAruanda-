@@ -19,6 +19,7 @@ import com.atelie.ecommerce.infrastructure.persistence.category.CategoryReposito
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
+import com.atelie.ecommerce.api.common.exception.NotFoundException;
 
 @Service
 public class MarketplaceCoreService {
@@ -50,70 +51,99 @@ public class MarketplaceCoreService {
     }
 
     @Transactional
-    public MarketplaceIntegrationEntity saveCredentials(String provider, Map<String, String> credentials) {
+    public MarketplaceIntegrationEntity createIntegration(String provider, String accountName) {
+        MarketplaceIntegrationEntity integration = new MarketplaceIntegrationEntity(provider, false);
+        integration.setAccountName(accountName);
+        return repository.save(integration);
+    }
+
+    public List<MarketplaceIntegrationEntity> getAllIntegrations() {
+        return repository.findAll();
+    }
+
+    public Optional<MarketplaceIntegrationEntity> getIntegrationById(UUID id) {
+        return repository.findById(id);
+    }
+
+    @Transactional
+    public MarketplaceIntegrationEntity saveCredentials(UUID integrationId, Map<String, String> credentials) {
         try {
-            MarketplaceIntegrationEntity integration = repository.findByProvider(provider)
-                    .orElse(new MarketplaceIntegrationEntity(provider, false));
+            MarketplaceIntegrationEntity integration = repository.findById(integrationId)
+                    .orElseThrow(() -> new NotFoundException("Integration not found: " + integrationId));
 
             String jsonCredentials = objectMapper.writeValueAsString(credentials);
             integration.setEncryptedCredentials(encryptionUtility.encrypt(jsonCredentials));
 
             return repository.save(integration);
         } catch (Exception e) {
-            log.error("Error saving credentials for {}", provider, e);
+            log.error("Error saving credentials for ID {}", integrationId, e);
             throw new RuntimeException("Failed to save credentials", e);
         }
     }
 
     public void testConnection(String provider, Map<String, String> credentials) {
         IMarketplaceAdapter adapter = factory.getAdapter(provider)
-                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
-                        "Adapter not found for " + provider));
+                .orElseThrow(() -> new NotFoundException("Adapter not found for " + provider));
         adapter.testConnection(credentials);
     }
 
-    public String getAuthorizationUrl(String provider, String redirectUri) {
-        MarketplaceIntegrationEntity integration = repository.findByProvider(provider)
-                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
-                        "Integration not configured for " + provider));
+    public String getAuthorizationUrl(UUID integrationId, String redirectUri) {
+        MarketplaceIntegrationEntity integration = repository.findById(integrationId)
+                .orElseThrow(() -> new NotFoundException("Integration not found for ID " + integrationId));
 
-        IMarketplaceAdapter adapter = factory.getAdapter(provider)
-                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
-                        "Adapter not found for " + provider));
+        IMarketplaceAdapter adapter = factory.getAdapter(integration.getProvider())
+                .orElseThrow(() -> new NotFoundException("Adapter not found for " + integration.getProvider()));
 
-        Map<String, String> credentials = getDecryptedCredentials(integration);
-        return adapter.getAuthUrl(credentials, redirectUri);
+        Map<String, String> credentials = integration.getEncryptedCredentials() != null
+                ? getDecryptedCredentials(integration)
+                : Map.of();
+
+        // Passando integrationId como state do Oauth2
+        return adapter.getAuthUrl(credentials, redirectUri, integrationId.toString());
     }
 
     @Transactional
-    public void handleCallback(String provider, String code, String redirectUri) {
-        MarketplaceIntegrationEntity integration = repository.findByProvider(provider)
-                .orElseThrow(() -> new RuntimeException("Integration not configured for " + provider));
+    public void handleCallback(String provider, String code, String redirectUri, String state) {
+        if (state == null || state.isBlank() || state.equals("auth")) {
+            throw new RuntimeException("Invalid state representing Integration ID from Callback");
+        }
 
-        IMarketplaceAdapter adapter = factory.getAdapter(provider)
-                .orElseThrow(() -> new RuntimeException("Adapter not found for " + provider));
+        UUID integrationId = UUID.fromString(state);
 
-        Map<String, String> credentials = getDecryptedCredentials(integration);
+        MarketplaceIntegrationEntity integration = repository.findById(integrationId)
+                .orElseThrow(() -> new RuntimeException("Integration not found for ID " + integrationId));
+
+        IMarketplaceAdapter adapter = factory.getAdapter(integration.getProvider())
+                .orElseThrow(() -> new RuntimeException("Adapter not found for " + integration.getProvider()));
+
+        Map<String, String> credentials = integration.getEncryptedCredentials() != null
+                ? getDecryptedCredentials(integration)
+                : Map.of();
         Map<String, Object> authPayload = adapter.handleAuthCallback(code, credentials, redirectUri);
 
         try {
             integration.setAuthPayload(objectMapper.writeValueAsString(authPayload));
             integration.setActive(true);
+
+            // Tenta resgatar identificador do Seller ID vindo do payload (ex: "user_id" do
+            // ML)
+            if (authPayload.containsKey("user_id")) {
+                integration.setExternalSellerId(String.valueOf(authPayload.get("user_id")));
+            }
+            if (authPayload.containsKey("seller_id")) {
+                integration.setExternalSellerId(String.valueOf(authPayload.get("seller_id")));
+            }
+
             repository.save(integration);
         } catch (Exception e) {
-            log.error("Error saving auth payload for {}", provider, e);
+            log.error("Error saving auth payload for ID {}", integrationId, e);
             throw new RuntimeException("Failed to save auth payload", e);
         }
     }
 
-    /**
-     * Middleware de Renovação Automática (CRÍTICO)
-     * Se (agora >= data_expiracao - 10min) ENTÃO execute refreshToken() e atualize
-     * o banco.
-     */
-    public void ensureValidToken(String provider) {
-        MarketplaceIntegrationEntity integration = repository.findByProvider(provider)
-                .orElseThrow(() -> new RuntimeException("Integration not configured for " + provider));
+    public void ensureValidToken(UUID integrationId) {
+        MarketplaceIntegrationEntity integration = repository.findById(integrationId)
+                .orElseThrow(() -> new RuntimeException("Integration not found for ID " + integrationId));
 
         if (!integration.isActive() || integration.getAuthPayload() == null) {
             return;
@@ -125,8 +155,8 @@ public class MarketplaceCoreService {
 
             if (expiresAtObj instanceof Long expiresAt) {
                 if (System.currentTimeMillis() >= (expiresAt - 600000)) { // 10 minutes buffer
-                    log.info("Token expiring soon for {}. Refreshing...", provider);
-                    IMarketplaceAdapter adapter = factory.getAdapter(provider)
+                    log.info("Token expiring soon for ID {}. Refreshing...", integrationId);
+                    IMarketplaceAdapter adapter = factory.getAdapter(integration.getProvider())
                             .orElseThrow(() -> new RuntimeException("Adapter not found"));
 
                     Map<String, String> credentials = getDecryptedCredentials(integration);
@@ -134,12 +164,12 @@ public class MarketplaceCoreService {
                     if (!newPayload.isEmpty()) {
                         integration.setAuthPayload(objectMapper.writeValueAsString(newPayload));
                         repository.save(integration);
-                        log.info("Token refreshed successfully for {}", provider);
+                        log.info("Token refreshed successfully for ID {}", integrationId);
                     }
                 }
             }
         } catch (Exception e) {
-            log.error("Error during token refresh check for {}", provider, e);
+            log.error("Error during token refresh check for ID {}", integrationId, e);
         }
     }
 
@@ -149,55 +179,58 @@ public class MarketplaceCoreService {
             String decrypted = encryptionUtility.decrypt(integration.getEncryptedCredentials());
             return objectMapper.readValue(decrypted, Map.class);
         } catch (Exception e) {
-            log.error("Error decrypting credentials for {}", integration.getProvider(), e);
+            log.error("Error decrypting credentials for ID {}", integration.getId(), e);
             throw new RuntimeException("Failed to decrypt credentials", e);
         }
     }
 
-    public Optional<MarketplaceIntegrationEntity> getIntegration(String provider) {
-        return repository.findByProvider(provider);
-    }
-
     public void handleWebhook(String provider, Map<String, Object> payload) {
         IMarketplaceAdapter adapter = factory.getAdapter(provider)
-                .orElseThrow(() -> new RuntimeException("Adapter not found for " + provider)); // Added orElseThrow for
-                                                                                               // adapter
+                .orElseThrow(() -> new RuntimeException("Adapter not found for " + provider));
+
         List<MarketplaceIntegrationEntity> integrations = repository.findByProviderAndActiveTrue(provider);
 
-        // Para webhooks, geralmente precisamos identificar qual conta disparou o
-        // evento.
-        // Se o payload contém o seller_id ou similar, filtramos por ele.
-        // Por simplicidade, passamos para todas as integrações ativas do provedor
-        // ou a lógica interna do adapter filtra.
+        // Se tiver seller_id no json (ML envia user_id)
+        String incomingSellerId = null;
+        if (payload.containsKey("user_id"))
+            incomingSellerId = String.valueOf(payload.get("user_id"));
+        if (payload.containsKey("seller_id"))
+            incomingSellerId = String.valueOf(payload.get("seller_id"));
+
+        if (incomingSellerId != null) {
+            MarketplaceIntegrationEntity specificIntegration = repository
+                    .findByProviderAndExternalSellerId(provider, incomingSellerId).orElse(null);
+            if (specificIntegration != null && specificIntegration.isActive()) {
+                adapter.handleWebhook(specificIntegration, payload);
+                return;
+            }
+        }
+
         for (MarketplaceIntegrationEntity integration : integrations) {
             adapter.handleWebhook(integration, payload);
         }
     }
 
     @Transactional
-    public int syncProducts(String provider) {
-        log.info("Starting product sync for provider: {}", provider);
+    public int syncProducts(UUID integrationId) {
+        log.info("Starting product sync for Integration ID: {}", integrationId);
 
-        MarketplaceIntegrationEntity integration = repository.findByProvider(provider)
-                .orElseThrow(() -> new RuntimeException("Integration not configured for " + provider));
+        MarketplaceIntegrationEntity integration = repository.findById(integrationId)
+                .orElseThrow(() -> new RuntimeException("Integration not configured for ID " + integrationId));
 
         if (!integration.isActive()) {
-            throw new RuntimeException("Integration is not active for " + provider);
+            throw new RuntimeException("Integration is not active for ID " + integrationId);
         }
 
-        IMarketplaceAdapter adapter = factory.getAdapter(provider)
-                .orElseThrow(() -> new RuntimeException("Adapter not found for " + provider));
+        IMarketplaceAdapter adapter = factory.getAdapter(integration.getProvider())
+                .orElseThrow(() -> new RuntimeException("Adapter not found for " + integration.getProvider()));
 
-        // Busca produtos no marketplace (TikTok Shop no caso)
         List<ProductEntity> remoteProducts = adapter.fetchProducts(integration);
 
-        // Identifica o provedor "Ecommerce" para marcar o canal
-        // (driver_key='ecommerce')
         ServiceProviderEntity ecommerceProvider = providerRepository.findByCode("LOJA_VIRTUAL")
                 .orElseThrow(() -> new RuntimeException(
                         "Provedor Ecommerce não encontrado no sistema. Verifique o seed data."));
 
-        // Busca uma categoria padrão se não houver
         CategoryEntity defaultCategory = categoryRepository.findAll().stream()
                 .filter(CategoryEntity::getActive)
                 .findFirst()
@@ -206,14 +239,11 @@ public class MarketplaceCoreService {
 
         int count = 0;
         for (ProductEntity remote : remoteProducts) {
-            // Verifica se o produto já existe pelo nome (Heurística simples para o teste)
-            // Em produção buscaríamos por external_id na tabela de links
             if (productRepository.findByNameContainingIgnoreCase(remote.getName(),
                     org.springframework.data.domain.Pageable.unpaged()).isEmpty()) {
                 remote.setCategory(defaultCategory);
                 remote.setActive(true);
 
-                // Marca como Ecommerce (Dashboard 'ecommerce' check)
                 Set<ServiceProviderEntity> platforms = new HashSet<>();
                 platforms.add(ecommerceProvider);
                 remote.setMarketplaces(platforms);
@@ -229,23 +259,19 @@ public class MarketplaceCoreService {
         return count;
     }
 
-    /**
-     * Exporta um produto para um marketplace específico.
-     * Valida o token antes de exportar e retorna o resultado da operação.
-     */
-    public void exportProduct(String provider,
+    public void exportProduct(UUID integrationId,
             com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity product) {
-        ensureValidToken(provider);
+        ensureValidToken(integrationId);
 
-        MarketplaceIntegrationEntity integration = repository.findByProvider(provider)
-                .orElseThrow(() -> new RuntimeException("Integration not configured for " + provider));
+        MarketplaceIntegrationEntity integration = repository.findById(integrationId)
+                .orElseThrow(() -> new RuntimeException("Integration not configured for ID " + integrationId));
 
         if (!integration.isActive()) {
-            throw new RuntimeException("Integration is not active for " + provider);
+            throw new RuntimeException("Integration is not active for ID " + integrationId);
         }
 
-        IMarketplaceAdapter adapter = factory.getAdapter(provider)
-                .orElseThrow(() -> new RuntimeException("Adapter not found for " + provider));
+        IMarketplaceAdapter adapter = factory.getAdapter(integration.getProvider())
+                .orElseThrow(() -> new RuntimeException("Adapter not found for " + integration.getProvider()));
 
         adapter.exportProduct(product, integration);
     }

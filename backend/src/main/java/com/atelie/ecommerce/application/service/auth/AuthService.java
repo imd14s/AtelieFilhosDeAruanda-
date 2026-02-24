@@ -90,6 +90,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .emailVerified(user.getEmailVerified())
+                .photoUrl(user.getPhotoUrl())
+                .googleId(user.getGoogleId())
                 .build();
     }
 
@@ -191,9 +193,22 @@ public class AuthService {
             return userRepository.save(newUser);
         });
 
-        // Atualiza o nome se mudou no Google
-        if (name != null && !name.equals(user.getName())) {
-            user.setName(name);
+        // Atualiza o nome, foto e googleId se mudou no Google
+        boolean changed = false;
+        if (resolvedName != null && !resolvedName.equals(user.getName())) {
+            user.setName(resolvedName);
+            changed = true;
+        }
+        if (request.getPicture() != null && !request.getPicture().equals(user.getPhotoUrl())) {
+            user.setPhotoUrl(request.getPicture());
+            changed = true;
+        }
+        if (request.getGoogleId() != null && !request.getGoogleId().equals(user.getGoogleId())) {
+            user.setGoogleId(request.getGoogleId());
+            changed = true;
+        }
+
+        if (changed) {
             userRepository.save(user);
         }
 
@@ -211,6 +226,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .emailVerified(user.getEmailVerified())
+                .photoUrl(user.getPhotoUrl())
+                .googleId(user.getGoogleId())
                 .build();
     }
 

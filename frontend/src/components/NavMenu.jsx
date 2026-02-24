@@ -28,6 +28,7 @@ const NavMenu = ({ isMobile, closeMenu }) => {
 
   const mainLinks = [
     { name: 'Home', path: '/' },
+    { name: 'Assinaturas', path: '/assinaturas' },
     { name: 'Nossa História', path: '/about' },
     { name: 'Axé & Ética', path: '/ethics' }
   ];

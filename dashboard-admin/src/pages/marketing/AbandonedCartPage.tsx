@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Mail, Clock, Save, Plus, Trash2, Zap, Settings2, BellRing, ArrowRight, X, PenTool, Info, Sparkles } from 'lucide-react';
+import { Mail, Clock, Save, Plus, Trash2, Zap, Settings2, BellRing, ArrowRight, PenTool, Info, Sparkles } from 'lucide-react';
 import { MarketingService } from '../../services/MarketingService';
 import { api } from '../../api/axios';
 import { RichTextEditor } from '../../components/common/RichTextEditor';

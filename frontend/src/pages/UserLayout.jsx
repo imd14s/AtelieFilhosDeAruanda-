@@ -9,31 +9,30 @@ const UserLayout = () => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const token = localStorage.getItem('auth_token');
-        const userData = localStorage.getItem('user');
+        const refreshUser = () => {
+            const userData = localStorage.getItem('user');
+            if (userData) {
+                setUser(JSON.parse(userData));
+            } else {
+                setUser(null);
+                navigate('/', { replace: true });
+            }
+        };
 
-        if (!token || !userData) {
-            navigate('/', { replace: true });
-            return;
-        }
-
-        try {
-            setUser(JSON.parse(userData));
-        } catch {
-            navigate('/', { replace: true });
-        }
+        refreshUser();
+        window.addEventListener('auth-changed', refreshUser);
+        return () => window.removeEventListener('auth-changed', refreshUser);
     }, [navigate]);
 
     if (!user) return null;
 
     const navItems = [
+        { label: 'Meu perfil', icon: User, path: '/perfil', exact: true },
         { label: 'Compras', icon: ShoppingBag, path: '/perfil/compras' },
         { label: 'Cupons e Benefícios', icon: Tag, path: '/perfil/beneficios' },
         { label: 'Opiniões', icon: MessageCircle, path: '/perfil/opinioes' },
         { label: 'Assinaturas', icon: Star, path: '/perfil/assinaturas' },
         { label: 'Cartões', icon: CreditCard, path: '/perfil/cartoes' },
-        { label: 'Meu perfil', icon: User, path: '/perfil', exact: true },
-        { label: 'Configurações', icon: Settings, path: '#', hasSub: true },
     ];
 
     return (

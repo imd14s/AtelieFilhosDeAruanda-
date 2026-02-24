@@ -16,9 +16,12 @@ import java.util.UUID;
 public class SubscriptionPlanService {
 
     private final SubscriptionPlanRepository planRepository;
+    private final com.atelie.ecommerce.infrastructure.service.media.MediaStorageService mediaStorageService;
 
-    public SubscriptionPlanService(SubscriptionPlanRepository planRepository) {
+    public SubscriptionPlanService(SubscriptionPlanRepository planRepository,
+            com.atelie.ecommerce.infrastructure.service.media.MediaStorageService mediaStorageService) {
         this.planRepository = planRepository;
+        this.mediaStorageService = mediaStorageService;
     }
 
     public List<SubscriptionPlanEntity> listAll() {
@@ -37,9 +40,19 @@ public class SubscriptionPlanService {
 
     @CacheEvict(value = "subscription-plans", allEntries = true)
     @Transactional
-    public SubscriptionPlanEntity save(SubscriptionPlanEntity plan) {
+    public SubscriptionPlanEntity save(SubscriptionPlanEntity plan,
+            org.springframework.web.multipart.MultipartFile image) {
         if (plan.getId() == null) {
             plan.setId(UUID.randomUUID());
+        }
+
+        if (image != null && !image.isEmpty()) {
+            try {
+                var mediaAsset = mediaStorageService.upload(image, "subscription-plan", true);
+                plan.setImageUrl("/api/media/public/" + mediaAsset.getId());
+            } catch (Exception e) {
+                throw new RuntimeException("Falha ao salvar imagem do plano: " + e.getMessage());
+            }
         }
 
         if (plan.getFrequencyRules() != null) {

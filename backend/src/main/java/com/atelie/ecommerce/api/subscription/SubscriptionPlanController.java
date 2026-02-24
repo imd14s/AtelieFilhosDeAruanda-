@@ -2,8 +2,11 @@ package com.atelie.ecommerce.api.subscription;
 
 import com.atelie.ecommerce.application.service.subscription.SubscriptionPlanService;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.entity.SubscriptionPlanEntity;
+import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,9 +16,11 @@ import java.util.UUID;
 public class SubscriptionPlanController {
 
     private final SubscriptionPlanService planService;
+    private final MediaStorageService mediaStorageService;
 
-    public SubscriptionPlanController(SubscriptionPlanService planService) {
+    public SubscriptionPlanController(SubscriptionPlanService planService, MediaStorageService mediaStorageService) {
         this.planService = planService;
+        this.mediaStorageService = mediaStorageService;
     }
 
     @GetMapping
@@ -33,16 +38,20 @@ public class SubscriptionPlanController {
         return ResponseEntity.ok(planService.getById(id));
     }
 
-    @PostMapping
-    public ResponseEntity<SubscriptionPlanEntity> create(@RequestBody SubscriptionPlanEntity plan) {
-        return ResponseEntity.ok(planService.save(plan));
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<SubscriptionPlanEntity> create(
+            @RequestPart("plan") SubscriptionPlanEntity plan,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return ResponseEntity.ok(planService.save(plan, image));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<SubscriptionPlanEntity> update(@PathVariable UUID id,
-            @RequestBody SubscriptionPlanEntity plan) {
+    @PutMapping(value = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<SubscriptionPlanEntity> update(
+            @PathVariable UUID id,
+            @RequestPart("plan") SubscriptionPlanEntity plan,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
         plan.setId(id);
-        return ResponseEntity.ok(planService.save(plan));
+        return ResponseEntity.ok(planService.save(plan, image));
     }
 
     @DeleteMapping("/{id}")

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { PenTool, Save, Trash2, Eye, Plus, CheckCircle, Info, Upload, RefreshCcw } from 'lucide-react';
 import { api } from '../../api/axios';
 import { MediaService } from '../../services/MediaService';
+import { getImageUrl } from '../../utils/imageUtils';
 
 interface Signature {
     id?: string;

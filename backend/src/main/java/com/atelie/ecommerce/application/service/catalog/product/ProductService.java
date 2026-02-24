@@ -32,6 +32,12 @@ import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 public class ProductService {
@@ -111,6 +117,7 @@ public class ProductService {
             MultipartFile[] images) {
         ProductEntity existing = findById(id);
         Set<String> oldUrls = collectAllImageUrls(existing);
+        Set<ServiceProviderEntity> oldMarketplaces = new HashSet<>(existing.getMarketplaces());
 
         Map<String, String> cidMap = uploadAndMapImages(images);
         sanitizeAndMapEntityImages(details, variants, cidMap);
@@ -150,8 +157,40 @@ public class ProductService {
         ProductEntity saved = productRepository.save(existing);
 
         eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), false));
+
+        // Sincroniza adições (envia para novos) e deleções (remove dos velhos)
+        handleRemovedMarketplaces(oldMarketplaces, saved);
         syncMarketplaces(saved);
+
         return saved;
+    }
+
+    private void handleRemovedMarketplaces(Set<ServiceProviderEntity> oldMarketplaces, ProductEntity currentProduct) {
+        if (oldMarketplaces == null || currentProduct.getMarketplaces() == null) {
+            return;
+        }
+
+        Set<String> currentProviderCodes = currentProduct.getMarketplaces().stream()
+                .map(p -> p.getCode().toLowerCase())
+                .collect(Collectors.toSet());
+
+        for (ServiceProviderEntity oldProvider : oldMarketplaces) {
+            if (!currentProviderCodes.contains(oldProvider.getCode().toLowerCase())) {
+                log.info("Desativando produto {} no canal removido: {}", currentProduct.getId(), oldProvider.getCode());
+                try {
+                    List<MarketplaceIntegrationEntity> integrations = marketplaceRepository
+                            .findAllByProvider(oldProvider.getCode().toLowerCase());
+                    for (MarketplaceIntegrationEntity integration : integrations) {
+                        if (integration.isActive()) {
+                            marketplaceFactory.getAdapter(integration.getProvider())
+                                    .ifPresent(adapter -> adapter.removeProduct(currentProduct, integration));
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Erro ao remover produto do canal remoto {}", oldProvider.getCode(), e);
+                }
+            }
+        }
     }
 
     private Map<String, String> uploadAndMapImages(MultipartFile[] images) {
@@ -406,12 +445,14 @@ public class ProductService {
             return;
         for (ServiceProviderEntity provider : product.getMarketplaces()) {
             try {
-                marketplaceRepository.findByProvider(provider.getCode().toLowerCase()).ifPresent(integration -> {
+                List<MarketplaceIntegrationEntity> integrations = marketplaceRepository
+                        .findAllByProvider(provider.getCode().toLowerCase());
+                for (MarketplaceIntegrationEntity integration : integrations) {
                     if (integration.isActive()) {
                         marketplaceFactory.getAdapter(integration.getProvider())
                                 .ifPresent(adapter -> adapter.exportProduct(product, integration));
                     }
-                });
+                }
             } catch (Exception e) {
                 log.error("Error syncing to marketplace {}", provider.getCode(), e);
             }

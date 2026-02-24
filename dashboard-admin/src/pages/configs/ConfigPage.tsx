@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ConfigService } from '../../services/ConfigService';
 
 import type { SystemConfig } from '../../types/config';
-import { Settings, Trash2, Plus, Save } from 'lucide-react';
+import { Trash2, Plus, Save } from 'lucide-react';
 import BaseModal from '../../components/ui/BaseModal';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';

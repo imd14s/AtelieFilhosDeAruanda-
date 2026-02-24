@@ -383,7 +383,9 @@ export const storeService = {
             name: response.data.name,
             email: response.data.email,
             role: response.data.role,
-            emailVerified: response.data.emailVerified
+            emailVerified: response.data.emailVerified,
+            photoUrl: response.data.photoUrl,
+            googleId: response.data.googleId
           };
           localStorage.setItem('user', JSON.stringify(userObj));
 

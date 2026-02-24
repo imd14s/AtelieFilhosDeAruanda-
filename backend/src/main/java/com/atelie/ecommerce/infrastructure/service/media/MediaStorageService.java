@@ -39,23 +39,27 @@ public class MediaStorageService {
     public MediaAssetEntity upload(MultipartFile file, String category, boolean isPublic) {
         String secureUrl = storeImage(file);
 
-        MediaAssetEntity asset = ReflectionPropertyUtils.instantiate(MediaAssetEntity.class);
+        // Check for existing asset with the same storageKey to avoid unique constraint
+        // violations
+        return repo.findByStorageKey(secureUrl).orElseGet(() -> {
+            MediaAssetEntity asset = ReflectionPropertyUtils.instantiate(MediaAssetEntity.class);
 
-        asset.setStorageKey(secureUrl);
-        asset.setOriginalFilename(file.getOriginalFilename());
-        asset.setMimeType(file.getContentType());
-        asset.setSizeBytes(file.getSize());
-        asset.setPublic(isPublic);
-        asset.setCreatedAt(Instant.now());
+            asset.setStorageKey(secureUrl);
+            asset.setOriginalFilename(file.getOriginalFilename());
+            asset.setMimeType(file.getContentType());
+            asset.setSizeBytes(file.getSize());
+            asset.setPublic(isPublic);
+            asset.setCreatedAt(Instant.now());
 
-        // Determine type explicitly
-        MediaAssetType type = MediaAssetType.IMAGE;
-        if (file.getContentType() != null && file.getContentType().startsWith("video/")) {
-            type = MediaAssetType.VIDEO;
-        }
-        asset.setType(type);
+            // Determine type explicitly
+            MediaAssetType type = MediaAssetType.IMAGE;
+            if (file.getContentType() != null && file.getContentType().startsWith("video/")) {
+                type = MediaAssetType.VIDEO;
+            }
+            asset.setType(type);
 
-        return repo.save(asset);
+            return repo.save(asset);
+        });
     }
 
     /**

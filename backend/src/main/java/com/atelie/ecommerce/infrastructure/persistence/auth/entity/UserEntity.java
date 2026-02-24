@@ -57,6 +57,12 @@ public class UserEntity {
     @Column(name = "subscribed_newsletter")
     private Boolean subscribedNewsletter = false;
 
+    @Column(name = "photo_url")
+    private String photoUrl;
+
+    @Column(name = "google_id")
+    private String googleId;
+
     // --- CONSTRUTOR DE COMPATIBILIDADE (Resgate) ---
     // Necessário para AuthService e AdminBootstrap funcionarem sem refatoração
     // profunda
@@ -194,5 +200,21 @@ public class UserEntity {
 
     public void setSubscribedNewsletter(Boolean subscribedNewsletter) {
         this.subscribedNewsletter = subscribedNewsletter;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
     }
 }

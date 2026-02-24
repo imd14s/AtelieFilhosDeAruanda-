@@ -34,6 +34,7 @@ import UnsubscribeNewsletter from "./pages/UnsubscribeNewsletter";
 import PasswordResetPage from "./pages/PasswordResetPage";
 import UserLayout from "./pages/UserLayout";
 import SubscriptionCheckoutPage from "./pages/SubscriptionCheckoutPage";
+import SubscriptionDetailPage from "./pages/SubscriptionDetailPage";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -59,6 +60,7 @@ function App() {
               <Route path="/termos" element={<TermsOfUsePage />} />
               <Route path="/contato" element={<ContactPage />} />
               <Route path="/assinaturas" element={<AtelieSubscribePage />} />
+              <Route path="/assinaturas/:id" element={<SubscriptionDetailPage />} />
               <Route path="/verify-newsletter" element={<VerifyNewsletter />} />
               <Route path="/unsubscribe" element={<UnsubscribeNewsletter />} />
               <Route path="/assinar/:id" element={<SubscriptionCheckoutPage />} />

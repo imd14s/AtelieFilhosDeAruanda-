@@ -4,6 +4,7 @@ import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
@@ -18,14 +19,17 @@ public class MediaController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<MediaResponse> upload(@RequestParam("file") MultipartFile file,
+    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file,
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "public", defaultValue = "false") boolean isPublic) {
-        var saved = media.upload(file, category, isPublic);
-
-        return ResponseEntity
-                .ok(new MediaResponse(String.valueOf(saved.getId()), saved.getStorageKey(), saved.getType().name(),
-                        saved.getOriginalFilename()));
+        try {
+            var saved = media.upload(file, category, isPublic);
+            return ResponseEntity
+                    .ok(new MediaResponse(String.valueOf(saved.getId()), saved.getStorageKey(), saved.getType().name(),
+                            saved.getOriginalFilename()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
     }
 
     public record MediaResponse(String id, String url, String type, String filename) {

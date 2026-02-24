@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Zap, CreditCard, Settings, ChevronDown, ChevronUp, AlertCircle, Check } from 'lucide-react';
+import { Shield, Zap, CreditCard, Settings, ChevronDown, ChevronUp, AlertCircle, Check, Copy } from 'lucide-react';
 import type { MercadoPagoConfig } from '../../../types/store-settings';
 
 interface Props {
@@ -61,6 +61,13 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
     });
 
     const [activeSection, setActiveSection] = useState<string | null>('creds');
+    const [copied, setCopied] = useState(false);
+    const handleCopy = () => {
+        if (!config.webhooks.url) return;
+        navigator.clipboard.writeText(config.webhooks.url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     const toggleSection = (id: string) => setActiveSection(activeSection === id ? null : id);
 
@@ -190,8 +197,34 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                             <input type="text" className="w-full border p-2 rounded-lg text-sm" value={config.identification.name} onChange={e => setConfig({ ...config, identification: { ...config.identification, name: e.target.value } })} />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-medium text-gray-500">URL de Notificação (Webhook)</label>
-                            <input type="text" className="w-full border p-2 rounded-lg text-sm" placeholder="https://..." value={config.webhooks.url} onChange={e => setConfig({ ...config, webhooks: { ...config.webhooks, url: e.target.value } })} />
+                            <label className="text-xs font-medium text-gray-500">API Host (Domínio do Backend)</label>
+                            <div className="flex bg-gray-50 border rounded-lg overflow-hidden group focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                                <input
+                                    type="text"
+                                    className="w-full bg-transparent p-2 text-sm text-gray-700 font-mono outline-none"
+                                    placeholder="https://api.seudominio.com.br"
+                                    value={config.webhooks.url.replace('/api/webhooks/mercadopago', '')}
+                                    onChange={e => {
+                                        let base = e.target.value.trim();
+                                        // Remove trailing slashes and common duplicate paths for real-time preview
+                                        base = base.replace(/\/+$/, '').replace(/\/api$/, '');
+                                        const final = base ? `${base}/api/webhooks/mercadopago`.replace(/\/+/g, '/').replace(':/', '://') : '';
+                                        setConfig({ ...config, webhooks: { ...config.webhooks, url: final } });
+                                    }}
+                                />
+                                <button
+                                    onClick={handleCopy}
+                                    type="button"
+                                    title="Copiar URL Final"
+                                    className="px-4 py-2 hover:bg-gray-200 text-gray-600 transition flex items-center justify-center border-l bg-white"
+                                >
+                                    {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
+                            </div>
+                            <div className="flex flex-col gap-1 mt-1">
+                                <span className="text-[10px] text-gray-400 font-mono truncate">Final: {config.webhooks.url || 'Aguardando host...'}</span>
+                                <span className="text-[10px] text-blue-500">Insira apenas o domínio. O caminho /api/webhooks/mercadopago será adicionado automaticamente.</span>
+                            </div>
                         </div>
                     </div>
                 </div>

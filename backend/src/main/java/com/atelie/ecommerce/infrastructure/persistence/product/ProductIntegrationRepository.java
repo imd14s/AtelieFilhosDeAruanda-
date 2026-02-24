@@ -8,7 +8,11 @@ import java.util.List;
 
 @Repository
 public interface ProductIntegrationRepository extends JpaRepository<ProductIntegrationEntity, UUID> {
-    // Busca flexível por String
-    Optional<ProductIntegrationEntity> findByExternalIdAndIntegrationType(String externalId, String integrationType);
+    // Busca flexível via JOIN
+    Optional<ProductIntegrationEntity> findByExternalProductIdAndIntegration_Id(String externalProductId,
+            UUID integrationId);
+
+    Optional<ProductIntegrationEntity> findByProduct_IdAndIntegration_Id(UUID productId, UUID integrationId);
+
     List<ProductIntegrationEntity> findByProductId(UUID productId);
 }

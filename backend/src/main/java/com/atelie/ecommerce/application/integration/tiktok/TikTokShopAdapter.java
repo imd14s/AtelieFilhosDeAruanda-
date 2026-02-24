@@ -51,9 +51,9 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
     }
 
     @Override
-    public String getAuthUrl(Map<String, String> credentials, String redirectUri) {
+    public String getAuthUrl(Map<String, String> credentials, String redirectUri, String state) {
         String appId = credentials.get("appId");
-        return String.format("https://services.tiktokshop.com/open/authorize?app_key=%s&state=auth", appId);
+        return String.format("https://services.tiktokshop.com/open/authorize?app_key=%s&state=%s", appId, state);
     }
 
     @Override
@@ -195,6 +195,41 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
     }
 
     @Override
+    public void removeProduct(ProductEntity product, MarketplaceIntegrationEntity integration) {
+        if (integration.getAuthPayload() == null) {
+            log.warn("Cannot remove product from TikTok: No auth payload for integration {}", integration.getId());
+            return;
+        }
+
+        integrationRepository.findByProduct_IdAndIntegration_Id(product.getId(), integration.getId())
+                .ifPresent(link -> {
+                    try {
+                        JsonNode payloadJson = objectMapper.readTree(integration.getAuthPayload());
+                        String token = payloadJson.path("accessToken").asText();
+
+                        String url = "https://open-api.tiktokglobalshop.com/product/202309/products/"
+                                + link.getExternalProductId() + "/deactivate";
+                        Map<String, Object> payload = new HashMap<>();
+
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+                        headers.set("x-tts-access-token", token);
+
+                        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+                        ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+                                JsonNode.class);
+
+                        if (response.getStatusCode().is2xxSuccessful()) {
+                            log.info("Anúncio {} (Produto: {}) foi desativado no TikTok com sucesso.",
+                                    link.getExternalProductId(), product.getId());
+                        }
+                    } catch (Exception e) {
+                        log.error("Erro ao desativar produto do TikTok Shop", e);
+                    }
+                });
+    }
+
+    @Override
     public void handleWebhook(MarketplaceIntegrationEntity integration, Map<String, Object> payload) {
         log.info("Recebido webhook do TikTok para integração {}: {}", integration.getId(), payload);
 
@@ -292,8 +327,11 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
                     String tiktokProductId = body.path("data").path("product_id").asText();
                     log.info("Produto exportado para TikTok com sucesso! ID: {}", tiktokProductId);
 
-                    if (integrationRepository.findByExternalIdAndIntegrationType(tiktokProductId, "tiktok").isEmpty()) {
-                        ProductIntegrationEntity link = new ProductIntegrationEntity(product, "tiktok", tiktokProductId,
+                    if (integrationRepository
+                            .findByExternalProductIdAndIntegration_Id(tiktokProductId, integration.getId())
+                            .isEmpty()) {
+                        ProductIntegrationEntity link = new ProductIntegrationEntity(product, integration,
+                                tiktokProductId,
                                 null);
                         integrationRepository.save(link);
                     }
@@ -308,32 +346,90 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
 
     @Override
     public List<ProductEntity> fetchProducts(MarketplaceIntegrationEntity integration) {
-        log.info("Fetching products from TikTok Shop for integration {}", integration.getId());
+        log.info("Buscando produtos reais do TikTok Shop para a integração {}", integration.getId());
+        if (integration.getAuthPayload() == null) {
+            log.warn("Integração sem AuthPayload válido para buscar produtos no TikTok.");
+            return Collections.emptyList();
+        }
 
-        // Simulação de busca de produtos do TikTok Shop
-        // Em uma implementação real, faríamos a chamada à API correspondente
-        List<ProductEntity> products = new ArrayList<>();
+        try {
+            JsonNode payloadJson = objectMapper.readTree(integration.getAuthPayload());
+            String token = payloadJson.path("accessToken").asText();
 
-        ProductEntity p1 = new ProductEntity();
-        p1.setName("TikTok Product 1");
-        p1.setDescription("Description for TikTok Product 1");
-        p1.setPrice(new java.math.BigDecimal("99.90"));
-        p1.setStockQuantity(50);
-        p1.setImageUrl("https://placehold.co/600x400/000000/FFFFFF?text=TikTok+P1");
-        // Usamos MarketplaceIds transiente para sinalizar origem se necessário,
-        // ou salvamos o ID externo no ProductIntegrationEntity depois.
-        products.add(p1);
+            if (token.isEmpty()) {
+                return Collections.emptyList();
+            }
 
-        ProductEntity p2 = new ProductEntity();
-        p2.setName("TikTok Product 2");
-        p2.setDescription("Description for TikTok Product 2");
-        p2.setPrice(new java.math.BigDecimal("149.90"));
-        p2.setStockQuantity(20);
-        p2.setImageUrl("https://placehold.co/600x400/000000/FFFFFF?text=TikTok+P2");
-        products.add(p2);
+            // TikTok Shop Open API v2 - List Products
+            String url = "https://open-api.tiktokglobalshop.com/product/202309/products/search";
 
-        log.info("Fetched {} products from TikTok Shop", products.size());
-        return products;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("x-tts-access-token", token);
+
+            // Payload padrão para trazer lista ativa
+            Map<String, Object> requestPayload = new HashMap<>();
+            requestPayload.put("page_size", 50);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestPayload, headers);
+            ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.POST, entity, JsonNode.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                JsonNode body = response.getBody();
+
+                if (body.path("code").asInt(1) == 0 && body.has("data") && body.path("data").has("products")) {
+                    List<ProductEntity> products = new ArrayList<>();
+
+                    for (JsonNode productNode : body.path("data").path("products")) {
+                        ProductEntity p = new ProductEntity();
+                        p.setName(productNode.path("title").asText("Produto Importado TikTok"));
+                        p.setDescription(productNode.path("description").asText(""));
+
+                        // Busca o preço base e estoque no primeiro SKU disponível
+                        if (productNode.has("skus") && productNode.path("skus").isArray()
+                                && productNode.path("skus").size() > 0) {
+                            JsonNode firstSku = productNode.path("skus").get(0);
+                            if (firstSku.has("price") && firstSku.path("price").has("original_price")) {
+                                p.setPrice(new java.math.BigDecimal(
+                                        firstSku.path("price").path("original_price").asText("0")));
+                            } else {
+                                p.setPrice(java.math.BigDecimal.ZERO);
+                            }
+
+                            if (firstSku.has("inventory") && firstSku.path("inventory").isArray()
+                                    && firstSku.path("inventory").size() > 0) {
+                                p.setStockQuantity(firstSku.path("inventory").get(0).path("quantity").asInt(0));
+                            } else {
+                                p.setStockQuantity(0);
+                            }
+                        } else {
+                            p.setPrice(java.math.BigDecimal.ZERO);
+                            p.setStockQuantity(0);
+                        }
+
+                        // Busca Imagem Principal
+                        if (productNode.has("main_images") && productNode.path("main_images").isArray()
+                                && productNode.path("main_images").size() > 0) {
+                            JsonNode firstImageList = productNode.path("main_images").get(0);
+                            if (firstImageList.has("urls") && firstImageList.path("urls").isArray()
+                                    && firstImageList.path("urls").size() > 0) {
+                                p.setImageUrl(firstImageList.path("urls").get(0).asText());
+                            }
+                        }
+
+                        // Marca flag transiente se quiser usar na fachada para PIM (Opcional, bom pra
+                        // logs)
+                        products.add(p);
+                    }
+                    log.info("Total de {} produtos reais listados do TikTok Shop", products.size());
+                    return products;
+                }
+            }
+        } catch (Exception e) {
+            log.error("Erro fatal ao sincronizar produtos reais do TikTok", e);
+        }
+
+        return Collections.emptyList();
     }
 
     /**

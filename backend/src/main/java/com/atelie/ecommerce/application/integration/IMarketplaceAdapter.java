@@ -14,7 +14,7 @@ public interface IMarketplaceAdapter {
     /**
      * Gera a URL de login OAuth.
      */
-    String getAuthUrl(Map<String, String> credentials, String redirectUri);
+    String getAuthUrl(Map<String, String> credentials, String redirectUri, String state);
 
     /**
      * Troca o code pelo Access Token e Refresh Token.
@@ -30,6 +30,11 @@ public interface IMarketplaceAdapter {
      * Exporta ou atualiza um produto no marketplace.
      */
     void exportProduct(ProductEntity product, MarketplaceIntegrationEntity integration);
+
+    /**
+     * Remove ou inativa um produto remotamente do marketplace.
+     */
+    void removeProduct(ProductEntity product, MarketplaceIntegrationEntity integration);
 
     /**
      * Busca padronizada de pedidos.

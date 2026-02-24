@@ -85,10 +85,16 @@ public class ProductControllerIntegrationTest {
                 List.of() // marketplaceIds
         );
 
-        mockMvc.perform(post("/api/products")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+        org.springframework.mock.web.MockMultipartFile productPart = new org.springframework.mock.web.MockMultipartFile(
+                "product",
+                "",
+                "application/json",
+                objectMapper.writeValueAsString(request).getBytes());
+
+        mockMvc.perform(multipart("/api/products")
+                .file(productPart)
+                .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.title").value("Test Product"));
     }

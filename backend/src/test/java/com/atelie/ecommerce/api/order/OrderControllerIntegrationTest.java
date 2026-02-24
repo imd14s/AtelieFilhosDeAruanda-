@@ -108,7 +108,10 @@ class OrderControllerIntegrationTest {
                                 "ORDER-EXT-001",
                                 "Customer A",
                                 "customer@test.com",
-                                List.of(itemReq));
+                                List.of(itemReq),
+                                "Rua A", "123", null, "Centro",
+                                "São Paulo", "SP", "01000-000",
+                                new BigDecimal("15.00"), "correios");
 
                 mockMvc.perform(post("/api/orders")
                                 .contentType(MediaType.APPLICATION_JSON)

@@ -22,8 +22,14 @@ public class MarketplaceIntegrationEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
-    private String provider;
+    @Column(nullable = false)
+    private String provider; // Ex: 'mercadolivre', 'tiktok'
+
+    @Column(name = "account_name")
+    private String accountName; // Nome amigável no Dashboard (ex: 'Minha Loja SP')
+
+    @Column(name = "external_seller_id")
+    private String externalSellerId; // ID do lojista na plataforma externa (usado p/ webhooks)
 
     @Column(name = "encrypted_credentials")
     private String encryptedCredentials;
@@ -92,6 +98,22 @@ public class MarketplaceIntegrationEntity {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getAccountName() {
+        return accountName;
+    }
+
+    public void setAccountName(String accountName) {
+        this.accountName = accountName;
+    }
+
+    public String getExternalSellerId() {
+        return externalSellerId;
+    }
+
+    public void setExternalSellerId(String externalSellerId) {
+        this.externalSellerId = externalSellerId;
     }
 
     public LocalDateTime getCreatedAt() {

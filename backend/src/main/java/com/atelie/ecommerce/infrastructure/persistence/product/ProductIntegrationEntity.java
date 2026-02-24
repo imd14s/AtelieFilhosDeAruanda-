@@ -21,11 +21,12 @@ public class ProductIntegrationEntity {
     @JoinColumn(name = "product_id")
     private ProductEntity product;
 
-    @Column(name = "integration_type", nullable = false)
-    private String integrationType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "integration_id", nullable = false)
+    private com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity integration;
 
-    @Column(name = "external_id")
-    private String externalId;
+    @Column(name = "external_product_id")
+    private String externalProductId;
 
     @Column(name = "sku_external")
     private String skuExternal;
@@ -49,20 +50,21 @@ public class ProductIntegrationEntity {
         this.product = product;
     }
 
-    public String getIntegrationType() {
-        return integrationType;
+    public com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity getIntegration() {
+        return integration;
     }
 
-    public void setIntegrationType(String integrationType) {
-        this.integrationType = integrationType;
+    public void setIntegration(
+            com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity integration) {
+        this.integration = integration;
     }
 
-    public String getExternalId() {
-        return externalId;
+    public String getExternalProductId() {
+        return externalProductId;
     }
 
-    public void setExternalId(String externalId) {
-        this.externalId = externalId;
+    public void setExternalProductId(String externalProductId) {
+        this.externalProductId = externalProductId;
     }
 
     public String getSkuExternal() {
@@ -81,11 +83,13 @@ public class ProductIntegrationEntity {
         this.createdAt = createdAt;
     }
 
-    public ProductIntegrationEntity(ProductEntity product, String integrationType, String externalId,
+    public ProductIntegrationEntity(ProductEntity product,
+            com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity integration,
+            String externalProductId,
             String skuExternal) {
         this.product = product;
-        this.integrationType = integrationType;
-        this.externalId = externalId;
+        this.integration = integration;
+        this.externalProductId = externalProductId;
         this.skuExternal = skuExternal;
         this.createdAt = LocalDateTime.now();
     }

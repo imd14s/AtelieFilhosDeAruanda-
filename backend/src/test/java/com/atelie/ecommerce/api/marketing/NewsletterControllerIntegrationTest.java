@@ -40,14 +40,12 @@ public class NewsletterControllerIntegrationTest {
     }
 
     @Test
-    void shouldSubscribe_ValidEmail() throws Exception {
-        String json = "{\"email\": \"test@example.com\"}";
-
-        mockMvc.perform(post("/api/newsletter/subscribe")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+    @org.springframework.security.test.context.support.WithMockUser(username = "test@example.com", roles = "USER")
+    void shouldSubscribe_AuthenticatedUser() throws Exception {
+        mockMvc.perform(post("/api/newsletter/subscribe"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Inscrição realizada! Verifique seu e-mail para confirmar."));
+                .andExpect(jsonPath("$.message")
+                        .value("Assinatura realizada com sucesso! Você receberá nossas novidades por e-mail."));
 
         Optional<NewsletterSubscriber> subscriber = repository.findByEmail("test@example.com");
         assertThat(subscriber).isPresent();
@@ -57,13 +55,9 @@ public class NewsletterControllerIntegrationTest {
     }
 
     @Test
-    void shouldReturnBadRequest_InvalidEmail() throws Exception {
-        String json = "{\"email\": \"invalid-email\"}";
-
-        mockMvc.perform(post("/api/newsletter/subscribe")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("E-mail inválido"));
+    void shouldReturnUnauthorized_AnonymousUser() throws Exception {
+        mockMvc.perform(post("/api/newsletter/subscribe"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Você precisa estar logado para assinar a newsletter."));
     }
 }

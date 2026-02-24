@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -82,10 +82,16 @@ public class RealProductCreateIntegrationTest {
                 }
                 """.formatted(categoryId.toString());
 
-        mockMvc.perform(post("/api/products")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(frontendPayload))
+        org.springframework.mock.web.MockMultipartFile productPart = new org.springframework.mock.web.MockMultipartFile(
+                "product",
+                "",
+                "application/json",
+                frontendPayload.getBytes());
+
+        mockMvc.perform(multipart("/api/products")
+                .file(productPart)
+                .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
     }
 }

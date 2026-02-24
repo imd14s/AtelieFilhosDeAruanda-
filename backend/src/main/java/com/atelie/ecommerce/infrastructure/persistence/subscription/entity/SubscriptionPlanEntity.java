@@ -28,6 +28,12 @@ public class SubscriptionPlanEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "detailed_description", columnDefinition = "TEXT")
+    private String detailedDescription;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Column(name = "base_price")
     private BigDecimal basePrice;
 

@@ -12,6 +12,8 @@ const INITIAL_PLAN_STATE = {
     type: 'FIXED',
     name: '',
     description: '',
+    detailedDescription: '',
+    imageUrl: '',
     active: true,
     frequencyRules: [],
     products: [],
@@ -33,6 +35,8 @@ export function SubscriptionPlansPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const { addToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
         fetchPlans();
@@ -73,15 +77,17 @@ export function SubscriptionPlansPage() {
             };
 
             if (editingPlan.id) {
-                await subscriptionService.updatePlan(editingPlan.id, planToSave);
+                await subscriptionService.updatePlan(editingPlan.id, planToSave, imageFile || undefined);
                 addToast('Plano atualizado com sucesso!', 'success');
             } else {
-                await subscriptionService.createPlan(planToSave);
+                await subscriptionService.createPlan(planToSave, imageFile || undefined);
                 addToast('Plano criado com sucesso!', 'success');
             }
             fetchPlans();
             setShowModal(false);
             setEditingPlan(INITIAL_PLAN_STATE);
+            setImageFile(null);
+            setImagePreview(null);
         } catch (error: any) {
             console.error('Erro ao salvar plano:', error);
             addToast('Erro ao salvar plano: ' + (error.response?.data?.message || error.message), 'error');
@@ -128,14 +134,12 @@ export function SubscriptionPlansPage() {
         setEditingPlan({ ...editingPlan, frequencyRules: newRules });
     };
 
-    const filteredProducts = searchTerm.length > 0
-        ? availableProducts.filter(ap => {
-            const isNotSelected = !(editingPlan?.products || []).some((p: any) => (p.product?.id || p.productId) === ap.id);
-            const productName = ap.title || ap.name || '';
-            const matchesSearch = productName.toLowerCase().includes(searchTerm.toLowerCase());
-            return isNotSelected && matchesSearch;
-        }).slice(0, 10)
-        : [];
+    const filteredProducts = availableProducts.filter(ap => {
+        const isNotSelected = !(editingPlan?.products || []).some((p: any) => (p.product?.id || p.productId) === ap.id);
+        const productName = ap.title || ap.name || '';
+        const matchesSearch = productName.toLowerCase().includes(searchTerm.toLowerCase());
+        return isNotSelected && matchesSearch;
+    }).slice(0, 15);
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center p-20 space-y-4">
@@ -210,6 +214,7 @@ export function SubscriptionPlansPage() {
                                             frequencyRules: plan.frequencyRules ? [...plan.frequencyRules] : [],
                                             products: plan.products ? [...plan.products] : []
                                         });
+                                        setImagePreview(plan.imageUrl ? getImageUrl(plan.imageUrl) : null);
                                         setShowModal(true);
                                     }}
                                     variant="secondary"
@@ -295,13 +300,63 @@ export function SubscriptionPlansPage() {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Descrição</label>
+                        <label className="text-xs font-bold text-gray-500 uppercase">Resumo (Descrição Curta)</label>
                         <textarea
                             value={editingPlan.description || ''}
                             onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
-                            className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
-                            placeholder="Explique o que o cliente recebe nesta assinatura..."
+                            className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px]"
+                            placeholder="Breve resumo para o card do plano..."
                         />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Descrição Detalhada</label>
+                        <textarea
+                            value={editingPlan.detailedDescription || ''}
+                            onChange={(e) => setEditingPlan({ ...editingPlan, detailedDescription: e.target.value })}
+                            className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px]"
+                            placeholder="Descreva todos os detalhes, benefícios e o que está incluído no plano..."
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Imagem de Capa</label>
+                        <div className="flex items-center gap-4">
+                            <div className="relative flex-1">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            setImageFile(file);
+                                            setImagePreview(URL.createObjectURL(file));
+                                        }
+                                    }}
+                                    className="hidden"
+                                    id="plan-image-upload"
+                                />
+                                <label
+                                    htmlFor="plan-image-upload"
+                                    className="flex items-center justify-center gap-2 w-full border-2 border-dashed border-gray-200 rounded-lg p-4 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition"
+                                >
+                                    <Package className="text-gray-400" size={20} />
+                                    <span className="text-sm text-gray-500 font-medium">
+                                        {imageFile ? imageFile.name : 'Selecionar imagem...'}
+                                    </span>
+                                </label>
+                            </div>
+                            {(imagePreview || editingPlan.imageUrl) && (
+                                <div className="h-16 w-16 rounded-lg overflow-hidden border bg-gray-50">
+                                    <img
+                                        src={imagePreview || getImageUrl(editingPlan.imageUrl)}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-[10px] text-gray-400 italic mt-1">* Se não selecionar uma nova imagem, a atual será mantida.</p>
                     </div>
 
                     {editingPlan.type === 'COUPON' ? (
@@ -350,32 +405,32 @@ export function SubscriptionPlansPage() {
                                 <span className="text-xs text-indigo-600 border border-indigo-100 bg-indigo-50 px-2 py-0.5 rounded-full">Soma do Admin</span>
                             </div>
 
-                            <div className="space-y-2 max-h-[180px] overflow-y-auto">
+                            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar border rounded-xl p-2 bg-gray-50/50">
                                 {(editingPlan.products || []).map((p: any) => (
-                                    <div key={p.product?.id || p.productId} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
-                                        <div className="flex items-center gap-3">
-                                            <img src={getImageUrl(p.product?.media?.[0]?.url || p.product?.imageUrl)} alt="" className="w-10 h-10 rounded object-cover border bg-white" />
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">{p.product?.title || p.product?.name}</p>
+                                    <div key={p.product?.id || p.productId} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <img src={getImageUrl(p.product?.media?.[0]?.url || p.product?.imageUrl)} alt="" className="w-10 h-10 rounded object-cover border bg-white flex-shrink-0" />
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 truncate">{p.product?.title || p.product?.name}</p>
                                                 <p className="text-xs text-gray-500">R$ {p.product?.price?.toFixed(2)}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2 flex-shrink-0">
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={p.quantity || 1}
                                                 onChange={(e) => updateProductQuantity(p.product?.id || p.productId, Number(e.target.value))}
-                                                className="w-16 border rounded p-1 text-center text-sm"
+                                                className="w-12 border rounded p-1 text-center text-sm outline-none focus:ring-1 focus:ring-indigo-500"
                                             />
-                                            <button type="button" onClick={() => toggleProduct(p.product)} className="text-red-500 hover:bg-red-50 p-1 rounded">
+                                            <button type="button" onClick={() => toggleProduct(p.product)} className="text-red-500 hover:bg-red-50 p-1 rounded transition">
                                                 <Plus size={16} className="rotate-45" />
                                             </button>
                                         </div>
                                     </div>
                                 ))}
                                 {(editingPlan.products || []).length === 0 && (
-                                    <div className="text-center py-4 text-gray-400 text-sm border-2 border-dashed rounded-lg">
+                                    <div className="text-center py-6 text-gray-400 text-xs border-2 border-dashed rounded-lg bg-white/50">
                                         Nenhum produto adicionado. Escolha na lista abaixo.
                                     </div>
                                 )}
@@ -395,7 +450,7 @@ export function SubscriptionPlansPage() {
                                         />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 gap-1 max-h-[140px] overflow-y-auto border rounded-xl p-2 bg-white">
+                                <div className="grid grid-cols-1 gap-1 min-h-[140px] max-h-[180px] overflow-y-auto border rounded-xl p-2 bg-white shadow-inner custom-scrollbar">
                                     {filteredProducts.map(product => (
                                         <button
                                             key={product.id}
@@ -404,21 +459,15 @@ export function SubscriptionPlansPage() {
                                                 toggleProduct(product);
                                                 setSearchTerm('');
                                             }}
-                                            className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-lg text-left transition text-sm"
+                                            className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-lg text-left transition text-sm group"
                                         >
-                                            <img src={getImageUrl(product.media?.[0]?.url || product.imageUrl)} alt="" className="w-8 h-8 rounded object-cover" />
-                                            <span className="flex-1 truncate">{product.title || product.name}</span>
-                                            <Plus size={14} className="text-indigo-400" />
+                                            <img src={getImageUrl(product.media?.[0]?.url || product.imageUrl)} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                                            <span className="flex-1 truncate font-medium text-gray-700 group-hover:text-indigo-600">{product.title || product.name}</span>
+                                            <Plus size={14} className="text-indigo-400 group-hover:scale-110 transition" />
                                         </button>
                                     ))}
                                     {searchTerm.length > 0 && filteredProducts.length === 0 && (
                                         <p className="text-center py-2 text-xs text-gray-400">Nenhum produto encontrado.</p>
-                                    )}
-                                    {searchTerm.length === 0 && (
-                                        <div className="flex flex-col items-center justify-center py-4 text-gray-400">
-                                            <Search size={24} className="mb-1 opacity-20" />
-                                            <p className="text-[10px]">Digite para buscar e adicionar produtos</p>
-                                        </div>
                                     )}
                                 </div>
                             </div>

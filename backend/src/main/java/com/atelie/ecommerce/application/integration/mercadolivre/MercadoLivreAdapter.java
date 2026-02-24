@@ -57,11 +57,11 @@ public class MercadoLivreAdapter implements IMarketplaceAdapter {
     }
 
     @Override
-    public String getAuthUrl(Map<String, String> credentials, String redirectUri) {
+    public String getAuthUrl(Map<String, String> credentials, String redirectUri, String state) {
         String clientId = credentials.get("appId");
         return String.format(
-                "https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=%s&redirect_uri=%s",
-                clientId, redirectUri);
+                "https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=%s&redirect_uri=%s&state=%s",
+                clientId, redirectUri, state);
     }
 
     @Override
@@ -179,18 +179,57 @@ public class MercadoLivreAdapter implements IMarketplaceAdapter {
                 String mlId = response.getBody().get("id").asText();
                 String permalink = response.getBody().get("permalink").asText();
                 log.info("Produto exportado para ML com sucesso! ID: {}, Link: {}", mlId, permalink);
-                saveIntegrationLink(product, mlId);
+                saveIntegrationLink(product, mlId, integration);
             }
         } catch (Exception e) {
             log.error("Erro ao exportar produto para Mercado Livre", e);
         }
     }
 
-    private void saveIntegrationLink(ProductEntity product, String externalId) {
-        if (integrationRepository.findByExternalIdAndIntegrationType(externalId, "mercadolivre").isEmpty()) {
-            ProductIntegrationEntity link = new ProductIntegrationEntity(product, "mercadolivre", externalId, null);
+    private void saveIntegrationLink(ProductEntity product, String externalId,
+            MarketplaceIntegrationEntity integration) {
+        if (integrationRepository.findByExternalProductIdAndIntegration_Id(externalId, integration.getId())
+                .isEmpty()) {
+            ProductIntegrationEntity link = new ProductIntegrationEntity(product, integration, externalId, null);
             integrationRepository.save(link);
         }
+    }
+
+    @Override
+    public void removeProduct(ProductEntity product, MarketplaceIntegrationEntity integration) {
+        if (integration.getAuthPayload() == null) {
+            log.warn("Cannot remove product from ML: No auth payload for integration {}", integration.getId());
+            return;
+        }
+
+        integrationRepository.findByProduct_IdAndIntegration_Id(product.getId(), integration.getId())
+                .ifPresent(link -> {
+                    try {
+                        JsonNode payloadJson = objectMapper.readTree(integration.getAuthPayload());
+                        String token = payloadJson.path("accessToken").asText();
+
+                        String url = mlBaseUrl() + "/items/" + link.getExternalProductId();
+                        Map<String, Object> payload = new HashMap<>();
+                        payload.put("status", "closed"); // Anúncios fechados desaparecem das buscas
+
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+                        headers.setBearerAuth(token);
+
+                        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+                        ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.PUT, entity,
+                                JsonNode.class);
+
+                        if (response.getStatusCode().is2xxSuccessful()) {
+                            log.info("Anúncio {} (Produto: {}) foi pausado/removido do ML com sucesso.",
+                                    link.getExternalProductId(), product.getId());
+                            // Opcional: remover o ProductIntegrationEntity
+                            // integrationRepository.delete(link);
+                        }
+                    } catch (Exception e) {
+                        log.error("Erro ao pausar/remover produto do Mercado Livre", e);
+                    }
+                });
     }
 
     @Override
@@ -253,7 +292,7 @@ public class MercadoLivreAdapter implements IMarketplaceAdapter {
                         int quantity = itemNode.path("quantity").asInt();
 
                         // Find local product based on ML ID
-                        integrationRepository.findByExternalIdAndIntegrationType(mlItemId, "mercadolivre")
+                        integrationRepository.findByExternalProductIdAndIntegration_Id(mlItemId, integration.getId())
                                 .ifPresentOrElse(link -> {
                                     // Found corresponding local product
                                     items.add(new CreateOrderItemRequest(link.getProduct().getId(), null, quantity));
@@ -305,10 +344,84 @@ public class MercadoLivreAdapter implements IMarketplaceAdapter {
 
     @Override
     public List<ProductEntity> fetchProducts(MarketplaceIntegrationEntity integration) {
-        log.info("Fetching products from Mercado Livre for integration {}", integration.getId());
-        // Implementação real exigiria paginação na API /users/{user_id}/items/search
-        // e depois detalhamento de cada item. Por enquanto, retornamos lista vazia ou
-        // simulada para manter a consistência da interface.
+        log.info("Buscando catálogo real do Mercado Livre para a integração {}", integration.getId());
+        if (integration.getAuthPayload() == null) {
+            log.warn("Integração sem AuthPayload válido para buscar produtos no ML.");
+            return Collections.emptyList();
+        }
+
+        try {
+            JsonNode payloadJson = objectMapper.readTree(integration.getAuthPayload());
+            String token = payloadJson.path("accessToken").asText();
+            String sellerId = payloadJson.path("sellerId").asText();
+
+            if (token.isEmpty() || sellerId.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            // 1. Buscar os IDs dos anúncios do vendedor
+            String searchUrl = mlBaseUrl() + "/users/" + sellerId + "/items/search";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(token);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<JsonNode> searchResponse = restTemplate.exchange(searchUrl, HttpMethod.GET, entity,
+                    JsonNode.class);
+
+            if (searchResponse.getStatusCode().is2xxSuccessful() && searchResponse.getBody() != null) {
+                JsonNode resultsNode = searchResponse.getBody().path("results");
+                if (resultsNode.isArray() && resultsNode.size() > 0) {
+                    List<String> itemIds = new ArrayList<>();
+                    for (JsonNode idNode : resultsNode) {
+                        itemIds.add(idNode.asText());
+                    }
+
+                    // 2. Multiget items details (Limite do ML é 20 por chamada no Multiget, mas
+                    // faremos a query com CSV para a lista principal)
+                    // Para catálogos massivos num PIM real, isto rodaria num loop ou batch,
+                    // limitaremos aos top 20 para sincronia inicial.
+                    String joinedIds = String.join(",", itemIds.subList(0, Math.min(itemIds.size(), 20)));
+                    String itemsUrl = mlBaseUrl() + "/items?ids=" + joinedIds;
+
+                    ResponseEntity<JsonNode> itemsResponse = restTemplate.exchange(itemsUrl, HttpMethod.GET, entity,
+                            JsonNode.class);
+
+                    if (itemsResponse.getStatusCode().is2xxSuccessful() && itemsResponse.getBody() != null) {
+                        List<ProductEntity> products = new ArrayList<>();
+                        for (JsonNode itemWrapper : itemsResponse.getBody()) {
+                            if (itemWrapper.path("code").asInt() == 200 && itemWrapper.has("body")) {
+                                JsonNode itemContent = itemWrapper.path("body");
+
+                                ProductEntity p = new ProductEntity();
+                                p.setName(itemContent.path("title").asText("Produto Importado ML"));
+                                p.setPrice(new java.math.BigDecimal(itemContent.path("price").asText("0")));
+                                p.setStockQuantity(itemContent.path("available_quantity").asInt(0));
+
+                                // Pega a primeira thumbnail de boa qualidade (ou a principal source)
+                                if (itemContent.has("pictures") && itemContent.path("pictures").isArray()
+                                        && itemContent.path("pictures").size() > 0) {
+                                    p.setImageUrl(itemContent.path("pictures").get(0).path("secure_url").asText());
+                                } else if (itemContent.has("secure_thumbnail")) {
+                                    p.setImageUrl(itemContent.path("secure_thumbnail").asText());
+                                }
+
+                                // Usamos a descrição fixa porque pra buscar a longa precisaria de 1 request
+                                // extra por ID /items/id/description. Optamos pela performance.
+                                p.setDescription("Produto integrado via Sincronização Mercado Livre.");
+
+                                products.add(p);
+                            }
+                        }
+                        log.info("Total de {} produtos reais listados do Mercado Livre", products.size());
+                        return products;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Erro fatal ao buscar catálogo real do Mercado Livre", e);
+        }
+
         return Collections.emptyList();
     }
 

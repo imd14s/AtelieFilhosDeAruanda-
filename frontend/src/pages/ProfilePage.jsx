@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { User, Shield, CreditCard, ChevronRight, MapPin, Bell, Lock, Gift, Mail, AlertTriangle, X, Loader2 } from 'lucide-react';
+import { User, Shield, CreditCard, ChevronRight, MapPin, Bell, Lock, Gift, Mail, AlertTriangle, X, Loader2, Camera } from 'lucide-react';
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from '../utils/imageUtils';
 import { useOutletContext, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { authService } from '../services/authService';
@@ -8,9 +10,19 @@ const ProfilePage = () => {
     const { user } = useOutletContext();
     const navigate = useNavigate();
 
-    const [modal, setModal] = useState(null); // 'info', 'security', 'privacy', 'communications', 'cancel', null
+    const [modal, setModal] = useState(null); // 'info', 'security', 'cancel', 'crop', null
     const [loading, setLoading] = useState(false);
     const [actionMsg, setActionMsg] = useState('');
+
+    // State for Cropping
+    const [image, setImage] = useState(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+    const onCropComplete = (croppedArea, croppedAreaPixels) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    };
 
     const handleAction = async (endpoint, payload, successMsg) => {
         setLoading(true);
@@ -37,6 +49,58 @@ const ProfilePage = () => {
         }
     };
 
+    const onFileChange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.addEventListener('load', () => {
+                setImage(reader.result);
+                setModal('crop');
+            });
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleUploadCrop = async () => {
+        setLoading(true);
+        try {
+            const croppedImageBlob = await getCroppedImg(image, croppedAreaPixels);
+            const file = new File([croppedImageBlob], 'profile-photo.jpg', { type: 'image/jpeg' });
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', 'avatars');
+            formData.append('public', 'true');
+
+            // 1. Upload da imagem
+            const uploadResp = await api.post('/media/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            // 2. A url retornada pode ser o storageKey. 
+            const photoUrl = `${api.defaults.baseURL}/media/public/${uploadResp.data.id}`;
+
+            // 3. Atualizar o perfil do usuário
+            await api.patch('/users/profile/photo', { photoUrl });
+
+            // 4. Atualizar localStorage e estado global
+            const updatedUser = { ...user, photoUrl };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            window.dispatchEvent(new Event('auth-changed'));
+
+            setActionMsg('Foto atualizada com sucesso!');
+            setModal(null);
+            setTimeout(() => setActionMsg(''), 3000);
+        } catch (err) {
+            console.error('Erro ao atualizar foto:', err);
+            const detail = err.response?.data?.error || err.response?.data?.message || 'Erro ao atualizar foto.';
+            console.log('Detalhes da falha no upload:', err.response?.data);
+            setActionMsg(detail);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (!user) return null;
 
     return (
@@ -44,16 +108,49 @@ const ProfilePage = () => {
             <div className="max-w-4xl mx-auto px-4 pt-8">
                 {/* Header Profile */}
                 <div className="flex items-center gap-6 mb-10">
-                    <div className="w-20 h-20 rounded-full bg-[var(--azul-profundo)] text-[var(--dourado-suave)] flex items-center justify-center text-2xl font-bold font-playfair shadow-md">
-                        {user.nome?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                    <div className="relative group">
+                        <div className="w-24 h-24 rounded-full bg-[var(--azul-profundo)] text-[var(--dourado-suave)] flex items-center justify-center text-3xl font-bold font-playfair shadow-lg overflow-hidden border-2 border-[var(--dourado-suave)]">
+                            {user.photoUrl ? (
+                                <img src={user.photoUrl} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <span>{user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}</span>
+                            )}
+                        </div>
+
+                        {/* Botão de Trocar Foto (Oculto se for Google) */}
+                        {!user.googleId && (
+                            <label
+                                htmlFor="photo-upload"
+                                className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full shadow-md cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200"
+                                title="Mudar foto de perfil"
+                            >
+                                <Camera size={16} className="text-[var(--azul-profundo)]" />
+                                <input
+                                    id="photo-upload"
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={onFileChange}
+                                    disabled={loading}
+                                />
+                            </label>
+                        )}
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">{user.nome || 'Visitante'} {user.sobrenome || ''}</h1>
+                        <h1 className="text-2xl font-bold text-gray-800">{user.name || 'Visitante'}</h1>
                         <p className="text-gray-500 mt-1 flex items-center gap-2">
                             <Mail size={14} /> {user.email}
                         </p>
                     </div>
                 </div>
+
+                {/* Mensagens Globais */}
+                {actionMsg && !modal && (
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg text-sm flex items-center gap-2">
+                        <Bell size={16} />
+                        {actionMsg}
+                    </div>
+                )}
 
                 {/* Banner de Verificação (Apenas para não verificados) */}
                 {user.emailVerified === false && (
@@ -68,37 +165,25 @@ const ProfilePage = () => {
                             >
                                 {loading && modal === null ? <Loader2 size={16} className="animate-spin inline mr-2" /> : 'Validar E-mail'}
                             </button>
-                            {actionMsg && modal === null && <span className="ml-3 text-sm text-yellow-800 font-bold">{actionMsg}</span>}
                         </div>
                     </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button onClick={() => setModal('info')} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                <User size={24} />
+                    {!user.googleId && (
+                        <button onClick={() => setModal('security')} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                    <Shield size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-800">Segurança</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Senha e autenticação</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800">Informações do Perfil</h3>
-                                <p className="text-sm text-gray-500 mt-1">Dados pessoais e contato</p>
-                            </div>
-                        </div>
-                        <ChevronRight className="text-gray-300 group-hover:text-blue-500 transition-colors" />
-                    </button>
-
-                    <button onClick={() => setModal('security')} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                <Shield size={24} />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800">Segurança</h3>
-                                <p className="text-sm text-gray-500 mt-1">Senha e autenticação</p>
-                            </div>
-                        </div>
-                        <ChevronRight className="text-gray-300 group-hover:text-blue-500 transition-colors" />
-                    </button>
+                            <ChevronRight className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+                        </button>
+                    )}
 
                     <Link to="/assinaturas" className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
                         <div className="flex items-center gap-4">
@@ -139,32 +224,6 @@ const ProfilePage = () => {
                         <ChevronRight className="text-gray-300 group-hover:text-blue-500 transition-colors" />
                     </Link>
 
-                    <button onClick={() => setModal('privacy')} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                <Lock size={24} />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800">Privacidade</h3>
-                                <p className="text-sm text-gray-500 mt-1">Controle de uso dos seus dados</p>
-                            </div>
-                        </div>
-                        <ChevronRight className="text-gray-300 group-hover:text-blue-500 transition-colors" />
-                    </button>
-
-                    <button onClick={() => setModal('communications')} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                <Bell size={24} />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800">Comunicações</h3>
-                                <p className="text-sm text-gray-500 mt-1">E-mails promocionais e ofertas</p>
-                            </div>
-                        </div>
-                        <ChevronRight className="text-gray-300 group-hover:text-blue-500 transition-colors" />
-                    </button>
-
                 </div>
 
                 <div className="mt-12 text-center">
@@ -177,8 +236,8 @@ const ProfilePage = () => {
             {/* Modals Extras */}
             {modal && (
                 <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-md rounded shadow-2xl p-6 relative">
-                        <button onClick={() => { setModal(null); setActionMsg(''); }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800">
+                    <div className={`${modal === 'crop' ? 'max-w-xl' : 'max-w-md'} bg-white w-full rounded shadow-2xl p-6 relative`}>
+                        <button onClick={() => { setModal(null); setActionMsg(''); }} className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-800 bg-white rounded-full p-1">
                             <X size={20} />
                         </button>
 
@@ -205,31 +264,53 @@ const ProfilePage = () => {
                             </div>
                         )}
 
-                        {modal === 'privacy' && (
-                            <div>
-                                <h2 className="text-xl font-bold mb-4 text-gray-800">Privacidade</h2>
-                                <p className="text-sm text-gray-600 mb-4 tracking-wide leading-relaxed">De acordo com a LGPD, seus dados estão seguros. Nós usamos suas informações apenas para processamento de pedidos e emissão de notas fiscais.</p>
-                                <button onClick={() => setModal(null)} className="w-full border border-gray-300 text-gray-700 py-2 rounded font-bold hover:bg-gray-50">Entendi</button>
+                        {modal === 'crop' && (
+                            <div className="flex flex-col">
+                                <h2 className="text-xl font-bold mb-4 text-gray-800">Ajustar Foto</h2>
+                                <div className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden mb-4">
+                                    <Cropper
+                                        image={image}
+                                        crop={crop}
+                                        zoom={zoom}
+                                        aspect={1}
+                                        onCropChange={setCrop}
+                                        onCropComplete={onCropComplete}
+                                        onZoomChange={setZoom}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-sm text-gray-500">Zoom</span>
+                                        <input
+                                            type="range"
+                                            value={zoom}
+                                            min={1}
+                                            max={3}
+                                            step={0.1}
+                                            onChange={(e) => setZoom(parseFloat(e.target.value))}
+                                            className="grow accent-[var(--azul-profundo)]"
+                                        />
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => setModal(null)}
+                                            className="flex-1 border border-gray-300 text-gray-700 py-2 rounded font-bold hover:bg-gray-50"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            onClick={handleUploadCrop}
+                                            disabled={loading}
+                                            className="flex-1 bg-[var(--azul-profundo)] text-white py-2 rounded font-bold hover:bg-[#0a1e33] flex items-center justify-center gap-2"
+                                        >
+                                            {loading ? <Loader2 size={16} className="animate-spin" /> : 'Salvar Foto'}
+                                        </button>
+                                    </div>
+                                    {actionMsg && <p className="text-sm font-bold text-red-600 text-center">{actionMsg}</p>}
+                                </div>
                             </div>
                         )}
 
-                        {modal === 'communications' && (
-                            <div>
-                                <h2 className="text-xl font-bold mb-4 text-gray-800">Comunicações</h2>
-                                <div className="space-y-4 mb-6">
-                                    <label className="flex items-center gap-3">
-                                        <input type="checkbox" defaultChecked className="w-4 h-4 accent-blue-600" />
-                                        <span className="text-sm text-gray-700">Receber e-mails do Ateliê</span>
-                                    </label>
-                                    <label className="flex items-center gap-3">
-                                        <input type="checkbox" defaultChecked className="w-4 h-4 accent-blue-600" />
-                                        <span className="text-sm text-gray-700">Notificações pelo WhatsApp</span>
-                                    </label>
-                                </div>
-                                <button onClick={() => { setActionMsg('Preferências salvas!'); setTimeout(() => setModal(null), 1000); }} className="w-full bg-[var(--azul-profundo)] text-white py-2 rounded font-bold hover:bg-[#0a1e33]">Salvar Preferências</button>
-                                {actionMsg && <p className="mt-3 text-sm font-bold text-green-600 text-center">{actionMsg}</p>}
-                            </div>
-                        )}
 
                         {modal === 'cancel' && (
                             <div>

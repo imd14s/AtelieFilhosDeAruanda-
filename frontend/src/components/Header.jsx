@@ -99,8 +99,8 @@ const Header = () => {
                         {user.name || 'Membro'} <ChevronDown size={14} className="opacity-50" />
                       </p>
                     </div>
-                    {user.photoURL ? (
-                      <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-[var(--dourado-suave)] shadow-sm" />
+                    {user.photoUrl ? (
+                      <img src={user.photoUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-[var(--dourado-suave)] shadow-sm" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-[var(--dourado-suave)] flex items-center justify-center font-playfair font-bold text-sm shadow-sm border border-[var(--dourado-suave)]">
                         {user.name ? user.name.charAt(0).toUpperCase() : 'M'}
@@ -111,8 +111,8 @@ const Header = () => {
                   {/* Dropdown Menu Meli Style */}
                   <div className="absolute top-full right-5 mt-[-8px] w-72 bg-white rounded-md shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[60]">
                     <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-                      {user.photoURL ? (
-                        <img src={user.photoURL} alt={user.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
+                      {user.photoUrl ? (
+                        <img src={user.photoUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-xl">
                           {user.name ? user.name.charAt(0).toUpperCase() : 'M'}

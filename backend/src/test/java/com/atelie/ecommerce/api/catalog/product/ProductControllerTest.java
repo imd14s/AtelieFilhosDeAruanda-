@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -28,96 +29,145 @@ import static org.hamcrest.Matchers.*;
 @ActiveProfiles("test")
 public class ProductControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+        @Autowired
+        private CategoryRepository categoryRepository;
 
-    @Autowired
-    private ProductRepository productRepository;
+        @Autowired
+        private ProductRepository productRepository;
 
-    @Autowired
-    private com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository variantRepository;
+        @Autowired
+        private com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository variantRepository;
 
-    private UUID categoryId;
+        private UUID categoryId;
 
-    @BeforeEach
-    void setup() {
-        variantRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
+        @BeforeEach
+        void setup() {
+                variantRepository.deleteAll();
+                productRepository.deleteAll();
+                categoryRepository.deleteAll();
 
-        CategoryEntity category = new CategoryEntity();
-        category.setName("Test Category");
-        category.setId(UUID.randomUUID());
-        categoryId = categoryRepository.save(category).getId();
-    }
+                CategoryEntity category = new CategoryEntity();
+                category.setName("Test Category");
+                category.setId(UUID.randomUUID());
+                categoryId = categoryRepository.save(category).getId();
+        }
 
-    @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
-    void createProduct_ValidPayload_ShouldReturn200AndCreatedProduct() throws Exception {
-        ProductCreateRequest request = new ProductCreateRequest(
-                "Integration Product",
-                "Desc",
-                BigDecimal.valueOf(100.00),
-                null, // originalPrice
-                10,
-                categoryId,
-                new java.util.ArrayList<>(), // media
-                new java.util.ArrayList<>(), // variants
-                true, // active
-                null, // weight
-                null, // height
-                null, // width
-                null, // length
-                new java.util.ArrayList<>() // marketplaceIds
-        );
-        mockMvc.perform(post("/api/products")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", notNullValue()))
-                .andExpect(jsonPath("$.title", is("Integration Product")));
-    }
+        @Test
+        @WithMockUser(username = "admin", roles = { "ADMIN" })
+        void createProduct_ValidPayload_ShouldReturn200AndCreatedProduct() throws Exception {
+                ProductCreateRequest request = new ProductCreateRequest(
+                                "Integration Product",
+                                "Desc",
+                                BigDecimal.valueOf(100.00),
+                                null, // originalPrice
+                                10,
+                                categoryId,
+                                new ArrayList<>(), // media
+                                new ArrayList<>(), // variants
+                                true, // active
+                                BigDecimal.valueOf(1.0), // weight
+                                BigDecimal.valueOf(1.0), // height
+                                BigDecimal.valueOf(1.0), // width
+                                BigDecimal.valueOf(1.0), // length
+                                new ArrayList<>() // marketplaceIds
+                );
+                org.springframework.mock.web.MockMultipartFile productPart = new org.springframework.mock.web.MockMultipartFile(
+                                "product",
+                                "",
+                                "application/json",
+                                objectMapper.writeValueAsString(request).getBytes());
 
-    @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
-    void updateProduct_ExistingProduct_ShouldUpdateAndReturn200() throws Exception {
-        // Arrange
-        ProductEntity existing = new ProductEntity();
-        existing.setName("Old Name");
-        existing.setPrice(BigDecimal.TEN);
-        existing.setCategory(categoryRepository.findById(categoryId).get());
-        ProductEntity saved = productRepository.save(existing);
+                mockMvc.perform(multipart("/api/products")
+                                .file(productPart)
+                                .contentType(MediaType.MULTIPART_FORM_DATA))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id", notNullValue()))
+                                .andExpect(jsonPath("$.title", is("Integration Product")));
+        }
 
-        ProductEntity updatePayload = new ProductEntity();
-        updatePayload.setName("Updated Name");
-        updatePayload.setDescription("Updated Desc");
-        updatePayload.setPrice(BigDecimal.valueOf(200.00));
-        updatePayload.setStockQuantity(50);
+        @Test
+        @WithMockUser(username = "admin", roles = { "ADMIN" })
+        void updateProduct_ExistingProduct_ShouldUpdateAndReturn200() throws Exception {
+                // Arrange
+                ProductEntity existing = new ProductEntity();
+                existing.setName("Old Name");
+                existing.setPrice(BigDecimal.TEN);
+                existing.setCategory(categoryRepository.findById(categoryId).get());
+                ProductEntity saved = productRepository.save(existing);
 
-        // Act & Assert
-        mockMvc.perform(put("/api/products/" + saved.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updatePayload)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title", is("Updated Name")))
-                .andExpect(jsonPath("$.price", is(200.00)));
-    }
+                ProductCreateRequest updatePayload = new ProductCreateRequest(
+                                "Updated Name",
+                                "Updated Desc",
+                                BigDecimal.valueOf(200.00),
+                                null,
+                                50,
+                                categoryId,
+                                new ArrayList<>(),
+                                new ArrayList<>(),
+                                true,
+                                BigDecimal.valueOf(1.0),
+                                BigDecimal.valueOf(1.0),
+                                BigDecimal.valueOf(1.0),
+                                BigDecimal.valueOf(1.0),
+                                new ArrayList<>());
 
-    @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
-    void updateProduct_NonExistent_ShouldReturn404() throws Exception {
-        ProductEntity updatePayload = new ProductEntity();
-        updatePayload.setName("Ghost");
+                // Act & Assert
+                org.springframework.mock.web.MockMultipartFile updatePart = new org.springframework.mock.web.MockMultipartFile(
+                                "product",
+                                "",
+                                "application/json",
+                                objectMapper.writeValueAsString(updatePayload).getBytes());
 
-        mockMvc.perform(put("/api/products/" + UUID.randomUUID())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updatePayload)))
-                .andExpect(status().isNotFound());
-    }
+                mockMvc.perform(multipart("/api/products/" + saved.getId())
+                                .file(updatePart)
+                                .with(request -> {
+                                        request.setMethod("PUT");
+                                        return request;
+                                })
+                                .contentType(MediaType.MULTIPART_FORM_DATA))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.title", is("Updated Name")))
+                                .andExpect(jsonPath("$.price", is(200.00)));
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = { "ADMIN" })
+        void updateProduct_NonExistent_ShouldReturn404() throws Exception {
+                ProductCreateRequest updatePayload = new ProductCreateRequest(
+                                "Ghost",
+                                "Ghost Desc",
+                                BigDecimal.valueOf(100.00),
+                                null,
+                                10,
+                                categoryId,
+                                new ArrayList<>(),
+                                new ArrayList<>(),
+                                true,
+                                BigDecimal.valueOf(1.0),
+                                BigDecimal.valueOf(1.0),
+                                BigDecimal.valueOf(1.0),
+                                BigDecimal.valueOf(1.0),
+                                new ArrayList<>());
+
+                org.springframework.mock.web.MockMultipartFile updateGhostPart = new org.springframework.mock.web.MockMultipartFile(
+                                "product",
+                                "",
+                                "application/json",
+                                objectMapper.writeValueAsString(updatePayload).getBytes());
+
+                mockMvc.perform(multipart("/api/products/" + UUID.randomUUID())
+                                .file(updateGhostPart)
+                                .with(request -> {
+                                        request.setMethod("PUT");
+                                        return request;
+                                })
+                                .contentType(MediaType.MULTIPART_FORM_DATA))
+                                .andExpect(status().isNotFound());
+        }
 }
