@@ -32,7 +32,7 @@ public class UserEntity {
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
-    @Column(name = "verification_code")
+    @Column(name = "verification_token")
     private String verificationCode;
 
     @Column(name = "reset_password_token")
