@@ -134,6 +134,14 @@ CREATE TABLE product_images (
 
 CREATE INDEX idx_product_images_product ON product_images(product_id);
 
+CREATE TABLE product_variant_images (
+    variant_id UUID NOT NULL,
+    image_url VARCHAR(512) NOT NULL,
+    CONSTRAINT fk_variant_images_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_variant_images_variant ON product_variant_images(variant_id);
+
 -- =============================================
 -- 7. PEDIDOS
 -- =============================================
