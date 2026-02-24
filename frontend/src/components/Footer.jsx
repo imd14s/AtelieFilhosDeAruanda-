@@ -175,10 +175,10 @@ const Footer = () => {
 
           {/* Selos de Pagamento */}
           <div className="flex gap-4 items-center grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-all duration-500">
-            <img src="./images/visa.svg" alt="Visa" className="h-3" />
-            <img src="./images/mastercard.svg" alt="Mastercard" className="h-6" />
-            <img src="./images/pix.svg" alt="Pix" className="h-4" />
-            <img src="./images/mercadopago.svg" alt="Mercado Pago" className="h-10" />
+            <img src="/images/visa.svg" alt="Visa" className="h-3" />
+            <img src="/images/mastercard.svg" alt="Mastercard" className="h-6" />
+            <img src="/images/pix.svg" alt="Pix" className="h-4" />
+            <img src="/images/mercadopago.svg" alt="Mercado Pago" className="h-10" />
           </div>
         </div>
       </div>
