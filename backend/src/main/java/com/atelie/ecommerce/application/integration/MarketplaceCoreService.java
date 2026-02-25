@@ -65,6 +65,10 @@ public class MarketplaceCoreService {
         return repository.findById(id);
     }
 
+    public Optional<MarketplaceIntegrationEntity> getIntegrationByProvider(String provider) {
+        return repository.findAllByProvider(provider).stream().findFirst();
+    }
+
     @Transactional
     public MarketplaceIntegrationEntity saveCredentials(UUID integrationId, Map<String, String> credentials) {
         try {
@@ -81,6 +85,22 @@ public class MarketplaceCoreService {
         }
     }
 
+    @Transactional
+    public MarketplaceIntegrationEntity saveCredentialsByProvider(String provider, Map<String, String> credentials) {
+        try {
+            MarketplaceIntegrationEntity integration = getIntegrationByProvider(provider)
+                    .orElseGet(() -> createIntegration(provider, provider));
+
+            String jsonCredentials = objectMapper.writeValueAsString(credentials);
+            integration.setEncryptedCredentials(encryptionUtility.encrypt(jsonCredentials));
+
+            return repository.save(integration);
+        } catch (Exception e) {
+            log.error("Error saving credentials for provider {}", provider, e);
+            throw new RuntimeException("Failed to save credentials", e);
+        }
+    }
+
     public void testConnection(String provider, Map<String, String> credentials) {
         IMarketplaceAdapter adapter = factory.getAdapter(provider)
                 .orElseThrow(() -> new NotFoundException("Adapter not found for " + provider));
@@ -91,6 +111,17 @@ public class MarketplaceCoreService {
         MarketplaceIntegrationEntity integration = repository.findById(integrationId)
                 .orElseThrow(() -> new NotFoundException("Integration not found for ID " + integrationId));
 
+        return buildAuthorizationUrl(integration, redirectUri);
+    }
+
+    public String getAuthorizationUrlByProvider(String provider, String redirectUri) {
+        MarketplaceIntegrationEntity integration = getIntegrationByProvider(provider)
+                .orElseThrow(() -> new NotFoundException("Integration not found for " + provider));
+
+        return buildAuthorizationUrl(integration, redirectUri);
+    }
+
+    private String buildAuthorizationUrl(MarketplaceIntegrationEntity integration, String redirectUri) {
         IMarketplaceAdapter adapter = factory.getAdapter(integration.getProvider())
                 .orElseThrow(() -> new NotFoundException("Adapter not found for " + integration.getProvider()));
 
@@ -98,8 +129,7 @@ public class MarketplaceCoreService {
                 ? getDecryptedCredentials(integration)
                 : Map.of();
 
-        // Passando integrationId como state do Oauth2
-        return adapter.getAuthUrl(credentials, redirectUri, integrationId.toString());
+        return adapter.getAuthUrl(credentials, redirectUri, integration.getId().toString());
     }
 
     @Transactional
@@ -257,6 +287,13 @@ public class MarketplaceCoreService {
         }
 
         return count;
+    }
+
+    @Transactional
+    public int syncProductsByProvider(String provider) {
+        MarketplaceIntegrationEntity integration = getIntegrationByProvider(provider)
+                .orElseThrow(() -> new RuntimeException("Integration not configured for " + provider));
+        return syncProducts(integration.getId());
     }
 
     public void exportProduct(UUID integrationId,

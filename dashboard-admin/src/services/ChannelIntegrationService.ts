@@ -1,6 +1,7 @@
 import { api } from '../api/axios';
 
 export const ChannelIntegrationService = {
+    apiBase: api.defaults.baseURL,
     async getStatus(provider: string) {
         const response = await api.get(`/integrations/${provider}/status`);
         return response.data;

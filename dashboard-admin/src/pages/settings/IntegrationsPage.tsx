@@ -118,7 +118,9 @@ export function IntegrationsPage() {
             await ChannelIntegrationService.saveCredentials(selectedProvider, { appId, appSecret });
 
             // 2. Obter URL de Autenticação
-            const redirectUri = `${window.location.protocol}//${window.location.host}/api/integrations/${selectedProvider}/callback?redirectUri=${encodeURIComponent(window.location.href)}`;
+            // Usamos a URL base da API (backend) para o callback, pois é o backend que processa o código do TikTok
+            const apiBase = (ChannelIntegrationService as any).apiBase || `${window.location.protocol}//${window.location.host}/api`;
+            const redirectUri = `${apiBase}/integrations/${selectedProvider}/callback?redirectUri=${encodeURIComponent(window.location.href)}`;
             const { url } = await ChannelIntegrationService.getAuthUrl(selectedProvider, encodeURIComponent(redirectUri));
 
             // 3. Redirecionar para OAuth

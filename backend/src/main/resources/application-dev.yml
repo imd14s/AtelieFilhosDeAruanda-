@@ -30,3 +30,4 @@ ALLOWED_IMAGE_MIME: image/png,image/jpeg,image/webp
 
 # --- INTEGRAÇÕES ---
 # WEBHOOK_SECRET deve ser configurado via ENV.
+server.address: 127.0.0.1

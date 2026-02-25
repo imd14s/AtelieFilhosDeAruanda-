@@ -32,6 +32,11 @@ public class AdminProviderController {
 
     @PostMapping
     public ResponseEntity<ServiceProviderEntity> create(@RequestBody ServiceProviderEntity entity) {
+        java.util.Optional<ServiceProviderEntity> existing = repository.findByCode(entity.getCode());
+        if (existing.isPresent()) {
+            return ResponseEntity.ok(existing.get());
+        }
+
         if (entity.getId() == null)
             entity.setId(UUID.randomUUID());
         entity.setCreatedAt(LocalDateTime.now());

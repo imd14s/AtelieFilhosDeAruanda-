@@ -36,13 +36,49 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
     private final RestTemplate restTemplate;
     private final ProductIntegrationRepository integrationRepository;
     private final OrderService orderService;
+    private final com.atelie.ecommerce.infrastructure.security.EncryptionUtility encryptionUtility;
 
     public TikTokShopAdapter(ObjectMapper objectMapper, RestTemplate restTemplate,
-            ProductIntegrationRepository integrationRepository, OrderService orderService) {
+            ProductIntegrationRepository integrationRepository, OrderService orderService,
+            com.atelie.ecommerce.infrastructure.security.EncryptionUtility encryptionUtility) {
         this.objectMapper = objectMapper;
         this.restTemplate = restTemplate;
         this.integrationRepository = integrationRepository;
         this.orderService = orderService;
+        this.encryptionUtility = encryptionUtility;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, String> getDecryptedCredentials(MarketplaceIntegrationEntity integration) {
+        try {
+            if (integration.getEncryptedCredentials() == null)
+                return Collections.emptyMap();
+            String decrypted = encryptionUtility.decrypt(integration.getEncryptedCredentials());
+            return objectMapper.readValue(decrypted, Map.class);
+        } catch (Exception e) {
+            log.error("Erro ao decriptar credenciais", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private String buildAuthenticatedUrl(String domain, String path, MarketplaceIntegrationEntity integration) {
+        Map<String, String> creds = getDecryptedCredentials(integration);
+        String appKey = creds.get("appId");
+        String appSecret = creds.get("appSecret");
+
+        if (appKey == null || appSecret == null) {
+            throw new RuntimeException("Credenciais do TikTok ausentes");
+        }
+
+        long timestamp = System.currentTimeMillis() / 1000;
+
+        Map<String, String> params = new HashMap<>();
+        params.put("app_key", appKey);
+        params.put("timestamp", String.valueOf(timestamp));
+
+        String sign = generateSignature(appSecret, path, params);
+
+        return domain + path + "?app_key=" + appKey + "&timestamp=" + timestamp + "&sign=" + sign;
     }
 
     @Override
@@ -158,7 +194,9 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
                 return Collections.emptyList();
             }
 
-            String url = "https://open-api.tiktokglobalshop.com/order/202309/orders/search";
+            String domain = "https://open-api.tiktokglobalshop.com";
+            String path = "/order/202309/orders/search";
+            String url = buildAuthenticatedUrl(domain, path, integration);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -207,8 +245,9 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
                         JsonNode payloadJson = objectMapper.readTree(integration.getAuthPayload());
                         String token = payloadJson.path("accessToken").asText();
 
-                        String url = "https://open-api.tiktokglobalshop.com/product/202309/products/"
-                                + link.getExternalProductId() + "/deactivate";
+                        String domain = "https://open-api.tiktokglobalshop.com";
+                        String path = "/product/202309/products/" + link.getExternalProductId() + "/deactivate";
+                        String url = buildAuthenticatedUrl(domain, path, integration);
                         Map<String, Object> payload = new HashMap<>();
 
                         HttpHeaders headers = new HttpHeaders();
@@ -286,10 +325,9 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
                 return;
             }
 
-            // TikTok Shop API v2 add product endpoint
-            // Documentation for this is normally region-specific, assuming generic domain
-            // here
-            String url = "https://open-api.tiktokglobalshop.com/product/202309/products";
+            String domain = "https://open-api.tiktokglobalshop.com";
+            String path = "/product/202309/products";
+            String url = buildAuthenticatedUrl(domain, path, integration);
 
             // Simplified Payload for TikTok Shop Product API
             Map<String, Object> payload = new HashMap<>();
@@ -314,8 +352,6 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("x-tts-access-token", token);
-            // Request signature would be required here normally but omitting for brevity
-            // and lack of appSecret access without db fetch
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
             ResponseEntity<JsonNode> response = restTemplate.postForEntity(url, entity, JsonNode.class);
@@ -360,8 +396,9 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
                 return Collections.emptyList();
             }
 
-            // TikTok Shop Open API v2 - List Products
-            String url = "https://open-api.tiktokglobalshop.com/product/202309/products/search";
+            String domain = "https://open-api.tiktokglobalshop.com";
+            String path = "/product/202309/products/search";
+            String url = buildAuthenticatedUrl(domain, path, integration);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -435,14 +472,14 @@ public class TikTokShopAdapter implements IMarketplaceAdapter {
     /**
      * Gera a assinatura HMAC-SHA256 necessária para o TikTok Shop.
      */
-    public String generateSignature(String appSecret, Map<String, String> params) {
+    public String generateSignature(String appSecret, String path, Map<String, String> params) {
         try {
             String baseString = params.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .map(e -> e.getKey() + e.getValue())
                     .collect(Collectors.joining());
 
-            baseString = appSecret + baseString + appSecret;
+            baseString = appSecret + path + baseString + appSecret;
 
             Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
             SecretKeySpec secretKey = new SecretKeySpec(appSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");

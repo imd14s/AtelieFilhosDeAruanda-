@@ -34,18 +34,18 @@ public class IntegrationsController {
         return ResponseEntity.ok(coreService.getAllIntegrations());
     }
 
-    @PutMapping("/accounts/{integrationId}/credentials")
+    @PostMapping("/{provider}/credentials")
     public ResponseEntity<MarketplaceIntegrationEntity> saveCredentials(
-            @PathVariable UUID integrationId,
+            @PathVariable String provider,
             @RequestBody Map<String, String> credentials) {
-        return ResponseEntity.ok(coreService.saveCredentials(integrationId, credentials));
+        return ResponseEntity.ok(coreService.saveCredentialsByProvider(provider, credentials));
     }
 
-    @GetMapping("/accounts/{integrationId}/auth-url")
+    @GetMapping("/{provider}/auth-url")
     public ResponseEntity<Map<String, String>> getAuthUrl(
-            @PathVariable UUID integrationId,
+            @PathVariable String provider,
             @RequestParam String redirectUri) {
-        String url = coreService.getAuthorizationUrl(integrationId, redirectUri);
+        String url = coreService.getAuthorizationUrlByProvider(provider, redirectUri);
         return ResponseEntity.ok(Map.of("url", url));
     }
 
@@ -59,9 +59,9 @@ public class IntegrationsController {
         return ResponseEntity.ok("Autenticação finalizada com sucesso! Você pode fechar esta janela.");
     }
 
-    @GetMapping("/accounts/{integrationId}/status")
-    public ResponseEntity<Map<String, Object>> getStatus(@PathVariable UUID integrationId) {
-        return coreService.getIntegrationById(integrationId)
+    @GetMapping("/{provider}/status")
+    public ResponseEntity<Map<String, Object>> getStatus(@PathVariable String provider) {
+        return coreService.getIntegrationByProvider(provider)
                 .map(i -> {
                     java.util.Map<String, Object> response = new java.util.HashMap<>();
                     response.put("id", i.getId());
@@ -72,7 +72,7 @@ public class IntegrationsController {
                     response.put("updatedAt", i.getUpdatedAt());
                     return ResponseEntity.ok(response);
                 })
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.ok(Map.of("provider", provider, "active", false, "configured", false)));
     }
 
     @PostMapping("/accounts/{integrationId}/export-product/{productId}")
@@ -95,9 +95,9 @@ public class IntegrationsController {
         return ResponseEntity.ok(Map.of("message", "Conexão testada com sucesso para " + provider));
     }
 
-    @PostMapping("/accounts/{integrationId}/sync")
-    public ResponseEntity<Map<String, Object>> syncProducts(@PathVariable UUID integrationId) {
-        int count = coreService.syncProducts(integrationId);
+    @PostMapping("/{provider}/sync")
+    public ResponseEntity<Map<String, Object>> syncProducts(@PathVariable String provider) {
+        int count = coreService.syncProductsByProvider(provider);
         return ResponseEntity.ok(Map.of(
                 "message", "Sincronização concluída com sucesso",
                 "count", count));
