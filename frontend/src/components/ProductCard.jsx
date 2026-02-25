@@ -65,37 +65,39 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
       <button
         onClick={handleToggleFavorite}
         disabled={favLoading}
-        className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${isFavorite
-          ? 'bg-white text-red-500 hover:bg-gray-50'
-          : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'
-          }`}
+        className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-white/90 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-110 active:scale-95 group/fav ${isFavorite ? 'text-red-500' : 'text-[var(--azul-profundo)]/30 hover:text-red-500'}`}
         title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
       >
         {favLoading ? (
           <Spinner size={14} className="text-gray-300" />
         ) : (
-          <Heart size={16} className={isFavorite ? "fill-current" : ""} />
+          <Heart size={18} className={`${isFavorite ? 'fill-current' : 'transition-colors'}`} />
         )}
       </button>
 
-      <Link to={`/produto/${product.id}`} className="relative aspect-square overflow-hidden bg-gray-50">
+      <Link to={`/produto/${product.id}`} className="relative aspect-square overflow-hidden bg-[var(--branco-off-white)] group-hover:opacity-95 transition-opacity">
         <img
           src={imageUrl}
           alt={product.title || product.name}
           onError={(e) => { e.target.src = '/images/default.png'; }}
-          className="h-full w-full object-contain object-center transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-contain object-center transition-transform duration-700 group-hover:scale-110 px-4"
         />
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-            <span className="bg-[var(--azul-profundo)] text-white text-[10px] px-3 py-1 uppercase tracking-widest">Esgotado</span>
+          <div className="absolute inset-0 bg-white/60 flex items-center justify-center backdrop-blur-[1px]">
+            <span className="bg-[var(--marron-terra)] text-white text-[9px] font-lato font-bold px-4 py-1.5 uppercase tracking-[0.2em] shadow-lg">Esgotado</span>
           </div>
         )}
       </Link>
 
-      <div className="p-3 flex flex-col flex-1">
-        <Link to={`/produto/${product.id}`} className="mb-2">
+      <div className="p-4 flex flex-col flex-1">
+        {/* Marca em Dourado */}
+        <span className="font-lato text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--dourado-suave)] mb-3 text-center block">
+          Ateliê Aruanda
+        </span>
+
+        <Link to={`/produto/${product.id}`} className="mb-1 block">
           <h3
-            className="font-playfair text-sm text-[var(--azul-profundo)] line-clamp-2 h-[2.8rem] leading-[1.4rem] hover:text-[var(--dourado-suave)] transition-colors overflow-hidden"
+            className="font-playfair text-base text-[var(--azul-profundo)] line-clamp-1 h-6 leading-6 text-center group-hover:text-[var(--dourado-suave)] transition-colors duration-300"
             title={product.title || product.name}
           >
             {product.title || product.name}
@@ -103,20 +105,20 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
         </Link>
 
         <div className="mt-auto">
-          <div className="flex flex-col mb-3">
+          <div className="flex flex-col mb-4">
             {hasDiscount && (
-              <span className="text-[10px] text-gray-400 line-through">
+              <span className="text-xs text-gray-400 line-through font-lato mb-0.5">
                 {originalPriceFormatted}
               </span>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="font-lato text-xl font-black text-[var(--azul-profundo)]">
                 {priceFormatted}
               </span>
               {hasDiscount && (
-                <div className="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm shadow-sm whitespace-nowrap">
+                <span className="text-[var(--verde-musgo)] font-lato text-xs font-bold tracking-tight">
                   {discountPercentage}% OFF
-                </div>
+                </span>
               )}
             </div>
           </div>
@@ -125,15 +127,21 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
             onClick={handleAddToCart}
             isLoading={loading}
             disabled={isOutOfStock}
-            variant={added ? 'primary' : 'primary'}
-            className={`w-full py-2 px-3 text-[10px] ${added ? 'bg-green-700 hover:bg-green-800' : ''}`}
+            variant="primary"
+            className={`w-full py-3 px-4 font-lato text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${added ? 'bg-[var(--verde-musgo)] border-[var(--verde-musgo)]' : ''}`}
           >
             {added ? (
-              <><Check size={14} /> Na Sacola</>
+              <div className="flex items-center justify-center gap-2">
+                <Check size={14} strokeWidth={3} />
+                <span>Na Sacola</span>
+              </div>
             ) : isOutOfStock ? (
               'Indisponível'
             ) : (
-              <><ShoppingBag size={14} /> Comprar</>
+              <div className="flex items-center justify-center gap-2">
+                <ShoppingBag size={14} />
+                <span>Comprar</span>
+              </div>
             )}
           </Button>
         </div>
