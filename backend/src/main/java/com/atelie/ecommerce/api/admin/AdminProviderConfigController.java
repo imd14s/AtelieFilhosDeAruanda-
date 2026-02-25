@@ -18,7 +18,7 @@ public class AdminProviderConfigController {
     private final ServiceProviderConfigGateway gateway; // Injeta o gateway para limpar cache
 
     public AdminProviderConfigController(ServiceProviderConfigJpaRepository repository,
-                                         ServiceProviderConfigGateway gateway) {
+            ServiceProviderConfigGateway gateway) {
         this.repository = repository;
         this.gateway = gateway;
     }
@@ -32,19 +32,21 @@ public class AdminProviderConfigController {
 
     @PostMapping
     public ResponseEntity<ServiceProviderConfigEntity> upsert(@RequestBody ServiceProviderConfigEntity config) {
-        if (config.getId() == null) config.setId(UUID.randomUUID());
-        
+        if (config.getId() == null)
+            config.setId(UUID.randomUUID());
+
         Optional<ServiceProviderConfigEntity> current = repository
-            .findTopByProviderIdAndEnvironmentOrderByVersionDesc(config.getProviderId(), config.getEnvironment());
-            
+                .findTopByProviderIdAndEnvironmentOrderByVersionDesc(config.getProviderId(), config.getEnvironment());
+
         config.setVersion(current.map(c -> c.getVersion() + 1).orElse(1));
         config.setUpdatedAt(LocalDateTime.now());
-        
+        config.setActive(true);
+
         ServiceProviderConfigEntity saved = repository.save(config);
-        
+
         // --- LIMPEZA DE CACHE IMEDIATA ---
         gateway.refresh();
-        
+
         return ResponseEntity.ok(saved);
     }
 }

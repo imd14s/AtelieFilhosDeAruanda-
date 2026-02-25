@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -27,7 +28,7 @@ public class PublicConfigController {
     }
 
     @GetMapping("/mercado-pago/public-key")
-    public ResponseEntity<Map<String, String>> getMercadoPagoPublicKey() {
+    public ResponseEntity<Map<String, Object>> getMercadoPagoPublicKey() {
         log.info("[DEBUG] Iniciando busca da chave pública do Mercado Pago");
         return configGateway.findConfigJson("MERCADO_PAGO", "PRODUCTION")
                 .map(json -> {
@@ -39,20 +40,46 @@ public class PublicConfigController {
 
                         if (publicKey == null || publicKey.isBlank()) {
                             log.warn("[DEBUG] Chave pública encontrada está vazia ou nula no JSON");
-                            return ResponseEntity.notFound().<Map<String, String>>build();
+                            return ResponseEntity.notFound().<Map<String, Object>>build();
                         }
 
-                        return ResponseEntity.ok(Map.of("publicKey", publicKey));
+                        boolean pixActive = false;
+                        boolean cardActive = false;
+                        int maxInstallments = 12;
+
+                        JsonNode methodsNode = root.path("methods").path("enabled");
+                        if (!methodsNode.isMissingNode()) {
+                            JsonNode pixNode = methodsNode.path("pix");
+                            if (!pixNode.isMissingNode()) {
+                                pixActive = pixNode.path("active").asBoolean(false);
+                            }
+
+                            JsonNode cardNode = methodsNode.path("card");
+                            if (!cardNode.isMissingNode()) {
+                                cardActive = cardNode.path("active").asBoolean(false);
+                                maxInstallments = cardNode.path("maxInstallments").asInt(12);
+                            }
+                        }
+
+                        Map<String, Object> responseConfig = new HashMap<>();
+                        responseConfig.put("publicKey", publicKey);
+                        responseConfig.put("pixActive", pixActive);
+                        responseConfig.put("cardActive", cardActive);
+                        responseConfig.put("maxInstallments", maxInstallments);
+
+                        return ResponseEntity.ok(responseConfig);
                     } catch (Exception e) {
                         log.error("[DEBUG] Erro catastrófico ao processar JSON: {}", e.getMessage(), e);
-                        return ResponseEntity.internalServerError().<Map<String, String>>build();
+                        return ResponseEntity.internalServerError().<Map<String, Object>>build();
                     }
                 })
                 .orElseGet(() -> {
                     log.warn(
                             "[DEBUG] Configuração MERCADO_PAGO/PRODUCTION não encontrada no banco. O administrador ainda não configurou as chaves.");
-                    return ResponseEntity.status(404).body(Map.of("error", "CONFIG_MISSING", "message",
-                            "A configuração de pagamento ainda não foi realizada pelo administrador."));
+                    Map<String, Object> errorMap = new HashMap<>();
+                    errorMap.put("error", "CONFIG_MISSING");
+                    errorMap.put("message", "A configuração de pagamento ainda não foi realizada pelo administrador.");
+                    return ResponseEntity.status(404).body(errorMap);
                 });
     }
 }

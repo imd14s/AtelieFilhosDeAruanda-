@@ -72,14 +72,19 @@ public class MercadoPagoCustomerClient {
             body.put("last_name", user.getName().substring(user.getName().indexOf(' ') + 1));
         }
 
-        HttpEntity<Map<String, Object>> createEntity = new HttpEntity<>(body, buildHeaders(accessToken));
-        Map createResponse = restTemplate.postForObject(createUrl, createEntity, Map.class);
+        try {
+            HttpEntity<Map<String, Object>> createEntity = new HttpEntity<>(body, buildHeaders(accessToken));
+            Map createResponse = restTemplate.postForObject(createUrl, createEntity, Map.class);
 
-        if (createResponse != null) {
-            String customerId = String.valueOf(createResponse.get("id"));
-            user.setMpCustomerId(customerId);
-            userRepository.save(user);
-            return customerId;
+            if (createResponse != null) {
+                String customerId = String.valueOf(createResponse.get("id"));
+                user.setMpCustomerId(customerId);
+                userRepository.save(user);
+                return customerId;
+            }
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
+                    .error("[DEBUG] Erro ao criar customer no Mercado Pago: {}", e.getMessage());
         }
 
         return null; // Falha silenciosa se não configurado ou erro na API

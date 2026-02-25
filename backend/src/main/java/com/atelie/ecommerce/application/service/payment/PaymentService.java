@@ -41,7 +41,7 @@ public class PaymentService {
         if (cardId != null)
             request.put("cardId", cardId);
 
-        ServiceResult result = orchestrator.execute(ServiceType.PAYMENT, request, "dev");
+        ServiceResult result = orchestrator.execute(ServiceType.PAYMENT, request, "PRODUCTION");
 
         if (!result.success()) {
             throw new RuntimeException("Falha ao processar pagamento com " + result.providerCode() + ": "

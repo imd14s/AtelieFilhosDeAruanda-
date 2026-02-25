@@ -34,54 +34,78 @@ const SavedCardsPage = () => {
 
     // Inicializa CardForm quando o formulário é exibido e MP está pronto
     useEffect(() => {
-        if (showAddForm && mp && isConfigured && !cardFormRef.current) {
-            try {
-                cardFormRef.current = mp.cardForm({
-                    amount: '1.0', // Valor simbólico para validação
-                    iframe: true,
-                    form: {
-                        id: 'mp-card-form',
-                        cardNumber: { id: 'mp-card-number', placeholder: '0000 0000 0000 0000' },
-                        expirationDate: { id: 'mp-expiration-date', placeholder: 'MM/AA' },
-                        securityCode: { id: 'mp-security-code', placeholder: 'CVV' },
-                        cardholderName: { id: 'mp-cardholder-name' },
-                        identificationType: { id: 'mp-identification-type' },
-                        identificationNumber: { id: 'mp-identification-number' },
-                    },
-                    callbacks: {
-                        onFormMounted: (error) => {
-                            if (error) console.error('Erro ao montar form:', error);
-                        },
-                        onSubmit: async (event) => {
-                            event.preventDefault();
-                            setSaving(true);
-                            setError('');
+        let mounted = true;
 
-                            try {
-                                const formData = cardFormRef.current.getCardFormData();
-                                if (formData.token) {
-                                    await cardService.saveCard(formData.token);
-                                    fetchCards();
-                                    setShowAddForm(false);
-                                    cardFormRef.current = null;
+        const initCardForm = () => {
+            if (showAddForm && mp && isConfigured && !cardFormRef.current) {
+                // Pequeno timeout para garantir que os elementos ID estão no DOM
+                setTimeout(() => {
+                    if (!mounted) return;
+
+                    const container = document.getElementById('mp-card-number');
+                    if (!container) return;
+
+                    try {
+                        console.log("[SavedCardsPage] Inicializando CardForm...");
+                        cardFormRef.current = mp.cardForm({
+                            amount: '1.0',
+                            iframe: true,
+                            form: {
+                                id: 'mp-card-form',
+                                cardNumber: { id: 'mp-card-number', placeholder: '0000 0000 0000 0000' },
+                                expirationDate: { id: 'mp-expiration-date', placeholder: 'MM/AA' },
+                                securityCode: { id: 'mp-security-code', placeholder: 'CVV' },
+                                cardholderName: { id: 'mp-cardholder-name' },
+                                identificationType: { id: 'mp-identification-type' },
+                                identificationNumber: { id: 'mp-identification-number' },
+                            },
+                            callbacks: {
+                                onFormMounted: (error) => {
+                                    if (error) {
+                                        console.error('Erro ao montar form:', error);
+                                        setError('Erro ao carregar campos seguros. Tente recarregar a página.');
+                                    } else {
+                                        console.log('CardForm montado com sucesso.');
+                                    }
+                                },
+                                onSubmit: async (event) => {
+                                    event.preventDefault();
+                                    setSaving(true);
+                                    setError('');
+
+                                    try {
+                                        const formData = cardFormRef.current.getCardFormData();
+                                        if (formData.token) {
+                                            await cardService.saveCard(formData.token);
+                                            fetchCards();
+                                            setShowAddForm(false);
+                                            cardFormRef.current = null;
+                                        }
+                                    } catch (err) {
+                                        setError(err.message || 'Erro ao salvar cartão.');
+                                    } finally {
+                                        setSaving(false);
+                                    }
+                                },
+                                onError: (errors) => {
+                                    const errorMsg = errors.find(e => e.message)?.message || 'Verifique os dados do cartão.';
+                                    setError(errorMsg);
+                                    setSaving(false);
                                 }
-                            } catch (err) {
-                                setError(err.message || 'Erro ao salvar cartão.');
-                            } finally {
-                                setSaving(false);
                             }
-                        },
-                        onError: (errors) => {
-                            const errorMsg = errors.find(e => e.message)?.message || 'Verifique os dados do cartão.';
-                            setError(errorMsg);
-                            setSaving(false);
-                        }
+                        });
+                    } catch (e) {
+                        console.error('Erro ao inicializar CardForm:', e);
                     }
-                });
-            } catch (e) {
-                console.error('Erro ao inicializar CardForm:', e);
+                }, 200);
             }
-        }
+        };
+
+        initCardForm();
+
+        return () => {
+            mounted = false;
+        };
     }, [showAddForm, mp, isConfigured]);
 
     const fetchCards = () => {

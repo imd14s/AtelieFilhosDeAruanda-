@@ -62,6 +62,10 @@ public class UserAddressEntity {
         updatedAt = LocalDateTime.now();
         if (isDefault == null)
             isDefault = false;
+        if (label == null || label.isBlank())
+            label = "Principal";
+        if (neighborhood == null || neighborhood.isBlank())
+            neighborhood = "Centro";
     }
 
     @PreUpdate

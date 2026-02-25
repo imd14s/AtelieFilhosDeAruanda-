@@ -45,8 +45,10 @@ const CheckoutPage = () => {
     const [currentShipping, setCurrentShipping] = useState(shippingSelected || null);
     const [configMissing, setConfigMissing] = useState({ mp: false, shipping: false });
 
-    const { mp, loading: mpLoading, isConfigured } = useMercadoPago();
+    const { mp, loading: mpLoading, isConfigured, paymentConfig } = useMercadoPago();
     const [cardForm, setCardForm] = useState(null);
+    const cardFormRef = React.useRef(null);
+    const pendingOrderRef = React.useRef(null);
 
     // Cálculos de preço - movidos para o escopo do componente
     const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
@@ -111,45 +113,105 @@ const CheckoutPage = () => {
         };
     }, []);
 
+    // Helper functions (sem refs)
+
     // Inicializa/Reseta CardForm
     React.useEffect(() => {
-        if (mp && isConfigured && isAddingNewCard && formData.metodoPagamento === 'card') {
-            if (!cardForm) {
-                try {
-                    const cf = mp.cardForm({
-                        amount: total.toString(),
-                        iframe: true,
-                        form: {
-                            id: 'form-checkout',
-                            cardNumber: { id: 'cardNumber', placeholder: '0000 0000 0000 0000' },
-                            expirationDate: { id: 'expirationDate', placeholder: 'MM/AA' },
-                            securityCode: { id: 'securityCode', placeholder: 'CVV' },
-                            cardholderName: { id: 'cardholderName' },
-                            identificationType: { id: 'identificationType' },
-                            identificationNumber: { id: 'identificationNumber' },
-                        },
-                        callbacks: {
-                            onFormMounted: (error) => {
-                                if (error) console.error('Erro ao montar fields:', error);
-                            },
-                            onSubmit: (event) => {
-                                event.preventDefault();
-                            },
-                            onError: (errors) => {
-                                console.error('Erros no cardForm:', errors);
-                            }
+        let mounted = true;
+
+        const initCardForm = () => {
+            if (mp && isConfigured && isAddingNewCard && formData.metodoPagamento === 'card') {
+                if (!cardForm) {
+                    // Pequeno timeout para garantir que os elementos ID estão no DOM
+                    setTimeout(() => {
+                        if (!mounted) return;
+
+                        const container = document.getElementById('cardNumber');
+                        if (!container) return;
+
+                        try {
+                            console.log("[CheckoutPage] Inicializando CardForm...");
+                            const cf = mp.cardForm({
+                                amount: total.toString(),
+                                iframe: true,
+                                form: {
+                                    id: 'form-checkout',
+                                    cardNumber: { id: 'cardNumber', placeholder: '0000 0000 0000 0000' },
+                                    expirationDate: { id: 'expirationDate', placeholder: 'MM/AA' },
+                                    securityCode: { id: 'securityCode', placeholder: 'CVV' },
+                                    cardholderName: { id: 'cardholderName' },
+                                    identificationType: { id: 'identificationType' },
+                                    identificationNumber: { id: 'identificationNumber' },
+                                    issuer: { id: 'issuer' },
+                                    installments: { id: 'installments' },
+                                    cardholderEmail: { id: 'cardholderEmail' }
+                                },
+                                callbacks: {
+                                    onFormMounted: (error) => {
+                                        if (error) {
+                                            console.error('Erro ao montar fields:', error);
+                                        } else {
+                                            console.log('Checkout CardForm montado com sucesso.');
+                                        }
+                                    },
+                                    onSubmit: async (event) => {
+                                        event.preventDefault();
+                                        try {
+                                            // cardFormRef.current funciona aqui porque Refs são mutáveis
+                                            // (lidas no momento da execução, não na captura da closure)
+                                            const cf = cardFormRef.current;
+                                            if (!cf) throw new Error("CardForm não finalizou.");
+                                            const cardData = cf.getCardFormData();
+                                            if (!cardData || !cardData.token) {
+                                                throw new Error("Erro na tokenização do cartão.");
+                                            }
+                                            const order = pendingOrderRef.current;
+                                            if (order) {
+                                                order.paymentToken = cardData.token;
+                                                order.installments = cardData.installments ? parseInt(cardData.installments) : 1;
+                                                order.issuerId = cardData.issuer || null;
+                                                // Processa o pedido
+                                                const result = await storeService.createOrder(order);
+                                                setSuccessOrder(result);
+                                                await storeService.cart.clear();
+                                            }
+                                        } catch (error) {
+                                            console.error(error);
+                                            window.dispatchEvent(new CustomEvent('show-alert', {
+                                                detail: error.message || "Erro ao processar pagamento."
+                                            }));
+                                        } finally {
+                                            setLoading(false);
+                                            pendingOrderRef.current = null;
+                                        }
+                                    },
+                                    onError: (errors) => {
+                                        console.error('Erros no cardForm:', errors);
+                                    }
+                                }
+                            });
+                            setCardForm(cf);
+                            cardFormRef.current = cf;
+                        } catch (e) {
+                            console.error("Erro ao inicializar CardForm", e);
                         }
-                    });
-                    setCardForm(cf);
-                } catch (e) {
-                    console.error("Erro ao inicializar CardForm", e);
+                    }, 200);
                 }
+            } else if (cardFormRef.current) {
+                // O SDK v2 não expõe destroy explícito, mas limpamos a referência.
+                setCardForm(null);
+                cardFormRef.current = null;
             }
-        } else if (cardForm) {
-            // O SDK v2 não expõe destroy explícito, mas limpamos a referência.
-            setCardForm(null);
+        };
+
+        if (formData.metodoPagamento === 'card') {
+            initCardForm();
         }
-    }, [mp, isConfigured, isAddingNewCard, formData.metodoPagamento]);
+
+        return () => {
+            mounted = false;
+        };
+    }, [mp, isConfigured, isAddingNewCard, formData.metodoPagamento, total]);
 
     const handleCalculateShipping = async (targetCep) => {
         if (!targetCep || targetCep.length < 8) return;
@@ -219,8 +281,10 @@ const CheckoutPage = () => {
             // 1. Salvar endereço se solicitado
             if (formData.saveAddress && isAddingNewAddress && user.id) {
                 const addrData = {
+                    label: 'Principal',
                     street: formData.endereco.split(',')[0].trim(),
-                    number: formData.endereco.split(',')[1]?.trim() || '',
+                    number: formData.endereco.split(',')[1]?.trim() || 'S/N',
+                    neighborhood: 'Centro',
                     city: formData.cidade,
                     state: formData.estado,
                     zipCode: formData.cep,
@@ -253,24 +317,36 @@ const CheckoutPage = () => {
             // 3. Lógica de Pagamento
             if (formData.metodoPagamento === 'card') {
                 if (!isAddingNewCard && selectedCardId) {
+                    // Cartão salvo: envia direto com o ID
                     order.cardId = selectedCardId;
+                    const result = await storeService.createOrder(order);
+                    setSuccessOrder(result);
+                    await storeService.cart.clear();
                 } else {
-                    if (!cardForm) throw new Error("Sistema de pagamento não inicializado.");
-
-                    const cardData = cardForm.getCardFormData();
-                    if (!cardData.token) {
-                        throw new Error("Verifique os dados do cartão de crédito.");
+                    // Cartão novo: armazena order e dispara submit do SDK
+                    // O SDK gera o token e chama onSubmit, que processa o pedido
+                    const cf = cardFormRef.current;
+                    if (!cf) throw new Error("Sistema de pagamento não inicializado. Aguarde.");
+                    pendingOrderRef.current = order;
+                    const form = document.getElementById('form-checkout');
+                    if (form) {
+                        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    } else {
+                        throw new Error("Formulário de cartão não encontrado.");
                     }
-                    order.paymentToken = cardData.token;
+                    return; // onSubmit do SDK cuida do resto
                 }
+            } else {
+                // PIX: envia direto
+                const result = await storeService.createOrder(order);
+                setSuccessOrder(result);
+                await storeService.cart.clear();
             }
-
-            const result = await storeService.createOrder(order);
-            setSuccessOrder(result);
-            await storeService.cart.clear();
         } catch (error) {
             console.error(error);
-            window.dispatchEvent(new CustomEvent('show-alert', { detail: error.message || "Erro ao processar o pedido. Tente novamente." }));
+            window.dispatchEvent(new CustomEvent('show-alert', {
+                detail: error.message || "Erro ao processar o pedido. Tente novamente."
+            }));
         } finally {
             setLoading(false);
         }
@@ -492,115 +568,142 @@ const CheckoutPage = () => {
                                 <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">4</span>
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Pagamento</h2>
                             </div>
-                            <div className="space-y-4">
-                                <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'pix' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
-                                    <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange} className="accent-[var(--azul-profundo)]" />
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
-                                        <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Pix com 5% de desconto</span>
-                                    </div>
-                                </label>
-                                <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'card' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
-                                    <input type="radio" name="metodoPagamento" value="card" checked={formData.metodoPagamento === 'card'} onChange={handleInputChange} className="accent-[var(--azul-profundo)]" />
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
-                                            <CreditCard size={20} />
-                                        </div>
-                                        <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito / Débito</span>
-                                    </div>
-                                </label>
-
-                                {formData.metodoPagamento === 'card' && (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
-                                        {/* Cartões Salvos */}
-                                        {savedCards.length > 0 && (
-                                            <div className="grid grid-cols-1 gap-3">
-                                                {savedCards.map(card => (
-                                                    <div
-                                                        key={card.id}
-                                                        onClick={() => { setSelectedCardId(card.id); setIsAddingNewCard(false); }}
-                                                        className={`p-4 border flex items-center justify-between cursor-pointer transition-all ${selectedCardId === card.id && !isAddingNewCard ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white'}`}
-                                                    >
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-6 bg-gray-100 rounded flex items-center justify-center font-bold text-[8px] uppercase">{card.payment_method?.id || 'CARD'}</div>
-                                                            <div>
-                                                                <p className="font-lato text-xs font-bold text-[var(--azul-profundo)]">**** **** **** {card.last_four_digits}</p>
-                                                                <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40">Expira em {card.expiration_month}/{card.expiration_year}</p>
-                                                            </div>
-                                                        </div>
-                                                        {selectedCardId === card.id && !isAddingNewCard && <Check size={14} className="text-[var(--dourado-suave)]" />}
-                                                    </div>
-                                                ))}
-                                                <button
-                                                    onClick={() => { setIsAddingNewCard(true); setSelectedCardId(null); }}
-                                                    className={`p-4 border border-dashed flex items-center justify-center gap-2 font-lato text-[10px] uppercase tracking-widest transition-all ${isAddingNewCard ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/40 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/60'}`}
-                                                >
-                                                    + Novo Cartão
-                                                </button>
+                            {mpLoading ? (
+                                <div className="p-8 flex justify-center">
+                                    <Loader2 size={32} className="animate-spin text-[var(--dourado-suave)]" />
+                                </div>
+                            ) : (!paymentConfig || (!paymentConfig.pixActive && !paymentConfig.cardActive)) ? (
+                                <div className="bg-amber-50 border border-amber-200 p-8 flex flex-col items-center gap-4 text-center rounded-xl">
+                                    <AlertCircle size={32} className="text-amber-500" />
+                                    <p className="font-lato text-sm text-amber-800 uppercase tracking-widest max-w-[300px]">
+                                        Nenhum método de pagamento disponível no momento. Por favor, tente novamente mais tarde.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {paymentConfig.pixActive && (
+                                        <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'pix' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
+                                            <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange} className="accent-[var(--azul-profundo)]" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
+                                                <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Pix com 5% de desconto</span>
                                             </div>
-                                        )}
+                                        </label>
+                                    )}
 
-                                        {/* Formulário de Novo Cartão */}
-                                        {isAddingNewCard && (
-                                            <div className="p-6 border border-[var(--azul-profundo)]/10 bg-white">
-                                                <h3 className="font-lato text-xs font-bold uppercase tracking-widest text-[var(--azul-profundo)] mb-6 flex items-center gap-2">
-                                                    <ShieldCheck size={16} className="text-green-600" /> Novo Cartão via Mercado Pago
-                                                </h3>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {!isConfigured && !mpLoading ? (
-                                                        <div className="md:col-span-2 bg-amber-50 border border-amber-200 p-4 rounded text-amber-800 text-xs flex items-start gap-3">
-                                                            <AlertTriangle size={18} className="shrink-0" />
-                                                            <div>
-                                                                <p className="font-bold uppercase tracking-widest mb-1">Pagamento com Cartão Indisponível</p>
-                                                                <p className="opacity-80">A configuração do Mercado Pago está pendente. Por favor, utilize PIX ou aguarde a ativação pelo administrador.</p>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <div className="md:col-span-2">
-                                                                <label className="block text-xs text-gray-500 mb-1">Número do Cartão</label>
-                                                                <div id="cardNumber" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
-                                                            </div>
-                                                            <div className="md:col-span-2">
-                                                                <label className="block text-xs text-gray-500 mb-1">Nome Impresso no Cartão</label>
-                                                                <input type="text" id="cardholderName" placeholder="JOAO M SILVA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] uppercase" />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs text-gray-500 mb-1">Validade</label>
-                                                                <div id="expirationDate" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs text-gray-500 mb-1">CVV</label>
-                                                                <div id="securityCode" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs text-gray-500 mb-1">Tipo de Doc.</label>
-                                                                <select id="identificationType" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"></select>
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs text-gray-500 mb-1">Número do Doc.</label>
-                                                                <input type="text" id="identificationNumber" placeholder="CPF/CNPJ" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
-                                                            </div>
-                                                        </>
-                                                    )}
-
-                                                    {user.id && (
-                                                        <label className="md:col-span-2 flex items-center gap-2 cursor-pointer mt-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={formData.saveCard}
-                                                                onChange={(e) => setFormData(prev => ({ ...prev, saveCard: e.target.checked }))}
-                                                                className="accent-[var(--azul-profundo)]"
-                                                            />
-                                                            <span className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)]/60">Salvar este cartão para futuras compras</span>
-                                                        </label>
-                                                    )}
+                                    {paymentConfig.cardActive && (
+                                        <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'card' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
+                                            <input type="radio" name="metodoPagamento" value="card" checked={formData.metodoPagamento === 'card'} onChange={handleInputChange} className="accent-[var(--azul-profundo)]" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
+                                                    <CreditCard size={20} />
                                                 </div>
+                                                <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito / Débito</span>
                                             </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                                        </label>
+                                    )}
+
+                                    {formData.metodoPagamento === 'card' && (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
+                                            {/* Cartões Salvos */}
+                                            {savedCards.length > 0 && (
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    {savedCards.map(card => (
+                                                        <div
+                                                            key={card.id}
+                                                            onClick={() => { setSelectedCardId(card.id); setIsAddingNewCard(false); }}
+                                                            className={`p-4 border flex items-center justify-between cursor-pointer transition-all ${selectedCardId === card.id && !isAddingNewCard ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white'}`}
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-6 bg-gray-100 rounded flex items-center justify-center font-bold text-[8px] uppercase">{card.payment_method?.id || 'CARD'}</div>
+                                                                <div>
+                                                                    <p className="font-lato text-xs font-bold text-[var(--azul-profundo)]">**** **** **** {card.last_four_digits}</p>
+                                                                    <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40">Expira em {card.expiration_month}/{card.expiration_year}</p>
+                                                                </div>
+                                                            </div>
+                                                            {selectedCardId === card.id && !isAddingNewCard && <Check size={14} className="text-[var(--dourado-suave)]" />}
+                                                        </div>
+                                                    ))}
+                                                    <button
+                                                        onClick={() => { setIsAddingNewCard(true); setSelectedCardId(null); }}
+                                                        className={`p-4 border border-dashed flex items-center justify-center gap-2 font-lato text-[10px] uppercase tracking-widest transition-all ${isAddingNewCard ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/40 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/60'}`}
+                                                    >
+                                                        + Novo Cartão
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* Formulário de Novo Cartão */}
+                                            {isAddingNewCard && (
+                                                <div className="p-6 border border-[var(--azul-profundo)]/10 bg-white">
+                                                    <h3 className="font-lato text-xs font-bold uppercase tracking-widest text-[var(--azul-profundo)] mb-6 flex items-center gap-2">
+                                                        <ShieldCheck size={16} className="text-green-600" /> Novo Cartão via Mercado Pago
+                                                    </h3>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {!isConfigured && !mpLoading ? (
+                                                            <div className="md:col-span-2 bg-amber-50 border border-amber-200 p-4 rounded text-amber-800 text-xs flex items-start gap-3">
+                                                                <AlertTriangle size={18} className="shrink-0" />
+                                                                <div>
+                                                                    <p className="font-bold uppercase tracking-widest mb-1">Pagamento com Cartão Indisponível</p>
+                                                                    <p className="opacity-80">A configuração do Mercado Pago está pendente. Por favor, utilize PIX ou aguarde a ativação pelo administrador.</p>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <form id="form-checkout" className="contents">
+                                                                <input type="hidden" id="cardholderEmail" value={formData.email} />
+                                                                <div className="md:col-span-2">
+                                                                    <label className="block text-xs text-gray-500 mb-1">Número do Cartão</label>
+                                                                    <div id="cardNumber" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                                </div>
+                                                                <div className="md:col-span-2">
+                                                                    <label className="block text-xs text-gray-500 mb-1">Nome Impresso no Cartão</label>
+                                                                    <input type="text" id="cardholderName" placeholder="JOAO M SILVA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] uppercase" />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs text-gray-500 mb-1">Validade</label>
+                                                                    <div id="expirationDate" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs text-gray-500 mb-1">CVV</label>
+                                                                    <div id="securityCode" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3"></div>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs text-gray-500 mb-1">Tipo de Doc.</label>
+                                                                    <select id="identificationType" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"></select>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs text-gray-500 mb-1">Número do Doc.</label>
+                                                                    <input type="text" id="identificationNumber" placeholder="CPF/CNPJ" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]" />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs text-gray-500 mb-1">Banco Emissor</label>
+                                                                    <select id="issuer" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"></select>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs text-gray-500 mb-1">Parcelamento</label>
+                                                                    <select id="installments" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"></select>
+                                                                </div>
+                                                            </form>
+                                                        )}
+
+                                                        {user.id && (
+                                                            <label className="md:col-span-2 flex items-center gap-2 cursor-pointer mt-2">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={formData.saveCard}
+                                                                    onChange={(e) => setFormData(prev => ({ ...prev, saveCard: e.target.checked }))}
+                                                                    className="accent-[var(--azul-profundo)]"
+                                                                />
+                                                                <span className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)]/60">Salvar este cartão para futuras compras</span>
+                                                            </label>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </section>
                     </div>
 
@@ -685,7 +788,7 @@ const CheckoutPage = () => {
 
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={loading || !currentShipping || !formData.email || !formData.nome || (formData.metodoPagamento === 'card' && isAddingNewCard && !cardToken && false)}
+                                    disabled={loading || !currentShipping || !formData.email || !formData.nome || (formData.metodoPagamento === 'card' && isAddingNewCard && false) || (!paymentConfig || (!paymentConfig.pixActive && !paymentConfig.cardActive))}
                                     className="w-full bg-[var(--azul-profundo)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3"
                                 >
                                     {loading ? <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span> : 'Finalizar Pedido'}

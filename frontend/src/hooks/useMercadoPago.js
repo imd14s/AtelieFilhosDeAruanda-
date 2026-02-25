@@ -8,7 +8,8 @@ export const useMercadoPago = () => {
     const [mp, setMp] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isConfigured, setIsConfigured] = useState(true);
+    const [isConfigured, setIsConfigured] = useState(false);
+    const [paymentConfig, setPaymentConfig] = useState(null);
 
     useEffect(() => {
         const loadSdk = async () => {
@@ -29,11 +30,12 @@ export const useMercadoPago = () => {
 
         const initMp = async () => {
             try {
-                const publicKey = await storeService.config.getMercadoPagoPublicKey();
-                if (publicKey) {
-                    const instance = new window.MercadoPago(publicKey, { locale: 'pt-BR' });
+                const configData = await storeService.config.getMercadoPagoPublicKey();
+                if (configData && configData.publicKey) {
+                    const instance = new window.MercadoPago(configData.publicKey, { locale: 'pt-BR' });
                     setMp(instance);
                     setIsConfigured(true);
+                    setPaymentConfig(configData);
                 } else {
                     // Se o service retornar null, provavelmente é 404/vazio
                     setIsConfigured(false);
@@ -50,5 +52,5 @@ export const useMercadoPago = () => {
         loadSdk();
     }, []);
 
-    return { mp, loading, error, isConfigured };
+    return { mp, loading, error, isConfigured, paymentConfig };
 };

@@ -534,7 +534,7 @@ export const storeService = {
         const response = await api.get('/config/public/mercado-pago/public-key', {
           headers: TENANT_HEADER
         });
-        return response.data?.publicKey || null;
+        return response.data || null;
       } catch (error) {
         console.error("[storeService] Erro ao buscar chave pública do Mercado Pago:", error);
         return null;

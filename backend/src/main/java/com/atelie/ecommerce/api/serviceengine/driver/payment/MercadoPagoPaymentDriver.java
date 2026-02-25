@@ -15,8 +15,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Component
 public class MercadoPagoPaymentDriver implements ServiceDriver {
+    private static final Logger log = LoggerFactory.getLogger(MercadoPagoPaymentDriver.class);
 
     private final RestTemplate restTemplate;
     private final Environment env;
@@ -38,14 +42,29 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
 
     @Override
     public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
-        String accessToken = DriverConfigReader.requireNonBlank(
-                (String) config.get("access_token"), "access_token (Config MP)");
+        String paymentMethodId = (String) request.getOrDefault("payment_method_id", "pix");
+        String accessToken = null;
 
+        if (config.get("credentials") instanceof Map) {
+            Map<String, Object> credentials = (Map<String, Object>) config.get("credentials");
+            accessToken = (String) credentials.get("accessToken");
+            log.info("[DEBUG-MP] Token extraído das configurações do banco: {}",
+                    accessToken != null ? accessToken.substring(0, Math.min(accessToken.length(), 10)) + "..."
+                            : "nulo");
+        }
+
+        if (accessToken == null || accessToken.isBlank()) {
+            accessToken = env.getProperty("MP_ACCESS_TOKEN");
+            log.info("[DEBUG-MP] Fallback para variável de ambiente MP_ACCESS_TOKEN: {}",
+                    accessToken != null ? accessToken.substring(0, Math.min(accessToken.length(), 10)) + "..."
+                            : "nulo");
+        }
+
+        accessToken = DriverConfigReader.requireNonBlank(accessToken, "access_token (Config MP)");
         String notificationUrl = (String) config.get("notification_url");
         BigDecimal amount = (BigDecimal) request.get("amount");
         String email = (String) request.get("email");
         String externalRef = (String) request.get("orderId");
-        String paymentMethodId = (String) request.getOrDefault("payment_method_id", "pix");
         String token = (String) request.get("token"); // Token do cartão se for credit_card
 
         Map<String, Object> mpRequest = new HashMap<>();

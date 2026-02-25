@@ -37,6 +37,9 @@ public class ServiceProviderConfigEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
     // Campo auxiliar (não existe no schema original) -> não mapear.
     @jakarta.persistence.Transient
     private String providerCode;
@@ -95,6 +98,14 @@ public class ServiceProviderConfigEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public String getProviderCode() {
