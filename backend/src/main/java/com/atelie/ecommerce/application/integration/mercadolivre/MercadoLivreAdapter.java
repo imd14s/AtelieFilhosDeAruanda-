@@ -320,7 +320,8 @@ public class MercadoLivreAdapter implements IMarketplaceAdapter {
                         "mercadolivre",
                         externalOrderId,
                         customerName,
-                        null, // Email could be fetched if available in orderNode.path("buyer").path("email")
+                        null, // Email
+                        null, // customerDocument (not provided by ML initially)
                         status,
                         totalAmount,
                         items);

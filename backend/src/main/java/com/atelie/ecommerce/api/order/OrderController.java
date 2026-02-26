@@ -145,6 +145,7 @@ public class OrderController {
                 entity.getLabelUrlMe(),
                 entity.getLabelUrlCustom(),
                 entity.getTrackingCode(),
-                entity.getShippingIdExternal());
+                entity.getShippingIdExternal(),
+                entity.getCustomerDocument());
     }
 }
