@@ -6,6 +6,8 @@ import { useOutletContext, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import { MaskedInput } from '../components/ui/MaskedInput';
+import { isValidCPF, isValidCNPJ, sanitizeDocument } from '../utils/fiscal';
 
 interface UserContext {
     user: User | null;
@@ -26,6 +28,13 @@ const ProfilePage: React.FC = () => {
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState<number>(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+    // Profile Edit State
+    const [profileData, setProfileData] = useState({
+        name: user?.name || '',
+        document: user?.document || ''
+    });
+    const [profileError, setProfileError] = useState('');
 
     const onCropComplete = (_croppedArea: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels);
@@ -99,7 +108,6 @@ const ProfilePage: React.FC = () => {
             localStorage.setItem('user', JSON.stringify(updatedUser));
             window.dispatchEvent(new Event('auth-changed'));
 
-            setActionMsg('Foto atualizada com sucesso!');
             setModal(null);
             setTimeout(() => setActionMsg(''), 3000);
         } catch (err: any) {
@@ -107,6 +115,36 @@ const ProfilePage: React.FC = () => {
             const detail = err.response?.data?.error || err.response?.data?.message || 'Erro ao atualizar foto.';
             console.log('Detalhes da falha no upload:', err.response?.data);
             setActionMsg(detail);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdateProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setProfileError('');
+
+        try {
+            // Validação de documento se preenchido
+            if (profileData.document) {
+                const cleanDoc = sanitizeDocument(profileData.document);
+                const isDocValid = cleanDoc.length === 11 ? isValidCPF(cleanDoc) : (cleanDoc.length === 14 ? isValidCNPJ(cleanDoc) : false);
+
+                if (!isDocValid) {
+                    setProfileError("Por favor, insira um CPF ou CNPJ válido.");
+                    setLoading(false);
+                    return;
+                }
+                profileData.document = cleanDoc;
+            }
+
+            await authService.updateProfile(profileData);
+            setActionMsg('Perfil atualizado com sucesso!');
+            setModal(null);
+            setTimeout(() => setActionMsg(''), 3000);
+        } catch (err: any) {
+            setProfileError(err.response?.data?.message || 'Erro ao atualizar perfil.');
         } finally {
             setLoading(false);
         }
@@ -182,6 +220,24 @@ const ProfilePage: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {!user.googleId && (
+                        <button onClick={() => {
+                            setProfileData({ name: user.name || '', document: user.document || '' });
+                            setModal('info');
+                        }} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                    <UserIcon size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-800">Dados Pessoais</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Nome e Identificação Fiscal</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+                        </button>
+                    )}
+
+                    {!user.googleId && (
                         <button onClick={() => setModal('security')} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group text-left">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
@@ -254,9 +310,42 @@ const ProfilePage: React.FC = () => {
 
                         {modal === 'info' && (
                             <div>
-                                <h2 className="text-xl font-bold mb-4 text-gray-800">Informações do Perfil</h2>
-                                <p className="text-sm text-gray-600 mb-4">Atualização de dados disponível direto pelo Suporte para garantir a segurança da conta.</p>
-                                <a href="https://wa.me/5511963212172" target="_blank" rel="noreferrer" className="block w-full text-center bg-[var(--azul-profundo)] text-white py-2 rounded font-bold hover:bg-[#0a1e33]">Falar com Suporte WhatsApp</a>
+                                <h2 className="text-xl font-bold mb-4 text-gray-800">Dados Pessoais</h2>
+                                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
+                                        <input
+                                            type="text"
+                                            value={profileData.name}
+                                            onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                                            className="w-full border border-gray-200 rounded px-4 py-2 focus:border-[var(--azul-profundo)] outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <MaskedInput
+                                        mask="cpf-cnpj"
+                                        label="CPF ou CNPJ"
+                                        value={profileData.document}
+                                        onChange={(val) => setProfileData({ ...profileData, document: val })}
+                                    />
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-widest leading-relaxed">
+                                        Necessário para a emissão de Notas Fiscais Eletrônicas.
+                                    </p>
+
+                                    {profileError && <p className="text-xs text-red-500 font-bold">{profileError}</p>}
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full bg-[var(--azul-profundo)] text-white py-2 rounded font-bold hover:bg-[#0a1e33] flex items-center justify-center gap-2"
+                                    >
+                                        {loading ? <Loader2 size={16} className="animate-spin" /> : 'Salvar Alterações'}
+                                    </button>
+                                </form>
+                                <div className="mt-6 pt-6 border-t border-gray-100">
+                                    <p className="text-xs text-gray-500 mb-3 text-center italic">Para outras alterações críticas, contate o suporte.</p>
+                                    <a href="https://wa.me/5511963212172" target="_blank" rel="noreferrer" className="block w-full text-center border border-gray-200 text-gray-600 py-2 rounded font-bold hover:bg-gray-50 text-sm">Falar no WhatsApp</a>
+                                </div>
                             </div>
                         )}
 

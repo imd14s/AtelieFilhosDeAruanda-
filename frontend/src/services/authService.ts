@@ -77,7 +77,8 @@ export const authService = {
             role: data.role,
             emailVerified: data.emailVerified,
             photoUrl: data.photoUrl,
-            googleId: data.googleId
+            googleId: data.googleId,
+            document: data.document
         };
         localStorage.setItem('user', JSON.stringify(userObj));
     },
@@ -207,6 +208,25 @@ export const authService = {
                 console.error("[authService] Erro ao alternar favorito na API", e);
                 throw e;
             }
+        }
+    },
+
+    updateProfile: async (userData: { name?: string; document?: string }): Promise<void> => {
+        try {
+            await api.patch('/users/profile', userData, {
+                headers: TENANT_HEADER
+            });
+
+            // Atualizar localStorage
+            const currentUser = authService.getUser();
+            if (currentUser) {
+                const updatedUser = { ...currentUser, ...userData };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                window.dispatchEvent(new Event('auth-changed'));
+            }
+        } catch (e) {
+            console.error("[authService] Erro ao atualizar perfil", e);
+            throw e;
         }
     }
 };

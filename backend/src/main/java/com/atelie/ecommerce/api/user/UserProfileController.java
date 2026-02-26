@@ -38,6 +38,7 @@ public class UserProfileController {
                 .photoUrl(user.getPhotoUrl())
                 .googleId(user.getGoogleId())
                 .emailVerified(user.getEmailVerified())
+                .document(user.getDocument())
                 .build());
     }
 
@@ -53,6 +54,26 @@ public class UserProfileController {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         user.setPhotoUrl(photoUrl);
+        userRepository.save(user);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping
+    public ResponseEntity<Void> updateProfile(@AuthenticationPrincipal UserPrincipal principal,
+            @RequestBody Map<String, String> payload) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        UserEntity user = userRepository.findById(UUID.fromString(principal.getId()))
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if (payload.containsKey("name")) {
+            user.setName(payload.get("name"));
+        }
+        if (payload.containsKey("document")) {
+            user.setDocument(payload.get("document"));
+        }
         userRepository.save(user);
 
         return ResponseEntity.ok().build();
