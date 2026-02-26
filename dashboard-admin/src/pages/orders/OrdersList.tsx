@@ -19,6 +19,7 @@ export function OrdersPage() {
     const [isCanceling, setIsCanceling] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+    const [isEmitting, setIsEmitting] = useState<string | null>(null);
 
     useEffect(() => {
         loadOrders();
@@ -73,6 +74,23 @@ export function OrdersPage() {
         } catch (error) {
             console.error('Erro ao aprovar pedido', error);
             addToast('Não foi possível aprovar o pedido.', 'error');
+        }
+    };
+
+    const handleEmitInvoice = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        try {
+            setIsEmitting(id);
+            await OrderService.emitInvoice(id);
+            addToast('NF-e enviada para processamento!', 'success');
+            // Refresh orders to get updated status/XML links
+            loadOrders();
+        } catch (error: any) {
+            console.error('Erro ao emitir NF-e', error);
+            const detail = error.response?.data?.message || 'Erro de comunicação com a SEFAZ.';
+            addToast(`Falha na NF-e: ${detail}`, 'error');
+        } finally {
+            setIsEmitting(null);
         }
     };
 
@@ -246,6 +264,17 @@ export function OrdersPage() {
                                                 >
                                                     <CheckCircle size={18} />
                                                     <span className="text-xs font-semibold">Finalizar</span>
+                                                </button>
+                                            )}
+                                            {order.status === 'PAID' && !order.invoiceUrl && (
+                                                <button
+                                                    onClick={(e) => handleEmitInvoice(e, order.id)}
+                                                    disabled={isEmitting === order.id}
+                                                    className={`${isEmitting === order.id ? 'text-gray-400' : 'text-orange-500 hover:text-orange-700'} transition flex items-center gap-1`}
+                                                    title="Emitir Nota Fiscal"
+                                                >
+                                                    <FileText size={18} className={isEmitting === order.id ? 'animate-pulse' : ''} />
+                                                    <span className="text-xs font-semibold">{isEmitting === order.id ? 'Emitindo...' : 'Faturar'}</span>
                                                 </button>
                                             )}
                                             {order.status !== 'CANCELED' && order.status !== 'SHIPPED' && order.status !== 'DELIVERED' && (

@@ -30,5 +30,17 @@ export const OrderService = {
 
     delivered: async (id: string) => {
         return await api.put(`/orders/${id}/delivered`);
+    },
+
+    emitInvoice: async (id: string) => {
+        return await api.post(`/admin/orders/${id}/invoice`);
+    },
+
+    getXmlUrl: (id: string) => {
+        return `${api.defaults.baseURL}/admin/orders/${id}/nfe/xml`;
+    },
+
+    getDanfeUrl: (id: string) => {
+        return `${api.defaults.baseURL}/admin/orders/${id}/nfe/danfe`;
     }
 };

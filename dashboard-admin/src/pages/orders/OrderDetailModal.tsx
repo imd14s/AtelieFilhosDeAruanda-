@@ -1,6 +1,9 @@
 import type { Order } from '../../types/order';
 import BaseModal from '../../components/ui/BaseModal';
-import { FileText, Truck, Calendar, CreditCard, Tag, Package, ExternalLink } from 'lucide-react';
+import { FileText, Truck, Calendar, CreditCard, Tag, Package, ExternalLink, RefreshCw, Download } from 'lucide-react';
+import { useState } from 'react';
+import { OrderService } from '../../services/OrderService';
+import { useToast } from '../../context/ToastContext';
 
 interface OrderDetailModalProps {
     isOpen: boolean;
@@ -8,7 +11,16 @@ interface OrderDetailModalProps {
     order: Order | null;
 }
 
-export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetailModalProps) {
+export default function OrderDetailModal({ isOpen, onClose, order: initialOrder }: OrderDetailModalProps) {
+    const [order, setOrder] = useState(initialOrder);
+    const [isEmitting, setIsEmitting] = useState(false);
+    const { addToast } = useToast();
+
+    // Sync state with props when modal opens
+    useState(() => {
+        setOrder(initialOrder);
+    });
+
     if (!order) return null;
 
     const getStatusBadge = (status: string) => {
@@ -68,12 +80,47 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
                                     </div>
                                     <span className="text-sm font-medium text-gray-700">Nota Fiscal (NF-e)</span>
                                 </div>
-                                <ExternalLink size={16} className="text-gray-400 group-hover:text-indigo-600" />
+                                <div className="flex gap-2">
+                                    <a
+                                        href={OrderService.getXmlUrl(order.id)}
+                                        download={`NFe_${order.id}.xml`}
+                                        className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-indigo-600"
+                                        title="Baixar XML"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Download size={16} />
+                                    </a>
+                                    <ExternalLink size={16} className="text-gray-400 group-hover:text-indigo-600" />
+                                </div>
                             </a>
                         ) : (
-                            <div className="p-3 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center gap-3 opacity-60">
-                                <FileText size={20} className="text-gray-400" />
-                                <span className="text-sm text-gray-500 italic">NF-e não emitida</span>
+                            <div className="p-3 bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-between group">
+                                <div className="flex items-center gap-3 opacity-60">
+                                    <FileText size={20} className="text-gray-400" />
+                                    <span className="text-sm text-gray-500 italic">NF-e não emitida</span>
+                                </div>
+                                {order.status === 'PAID' && (
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                setIsEmitting(true);
+                                                await OrderService.emitInvoice(order.id);
+                                                addToast(' NF-e solicitada!', 'success');
+                                                // No mundo ideal aqui buscaríamos o pedido atualizado.
+                                                // Por simplicidade, assumimos que o link externo seria o padrão.
+                                            } catch (err) {
+                                                addToast('Falha na emissão.', 'error');
+                                            } finally {
+                                                setIsEmitting(false);
+                                            }
+                                        }}
+                                        disabled={isEmitting}
+                                        className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+                                    >
+                                        <RefreshCw size={14} className={isEmitting ? 'animate-spin' : ''} />
+                                        {isEmitting ? 'Emitindo...' : 'Emitir Agora'}
+                                    </button>
+                                )}
                             </div>
                         )}
 
