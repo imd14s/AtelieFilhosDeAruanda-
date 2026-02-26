@@ -3,7 +3,7 @@ import { cn } from '../../utils/cn'; // Assuming a cn utility exists or I'll cre
 // Wait, I added cn to ProductForm.tsx locally. I should check if there is a global one.
 // list_dir showed src/utils/imageUtils.ts and src/utils/fiscal.ts. 
 // I'll define a local cn or check src/utils again.
-import { sanitizeDocument } from '../../utils/fiscal';
+import { } from '../../utils/fiscal';
 
 interface MaskedInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
     mask: 'cpf' | 'cnpj' | 'cpf-cnpj' | 'cep';

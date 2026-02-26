@@ -85,8 +85,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted })
 
     const removeMedia = (index: number) => {
         const item = media[index];
-        URL.revokeObjectURL(item.preview);
-        setMedia(prev => prev.filter((_, i) => i !== index));
+        if (item) {
+            URL.revokeObjectURL(item.preview);
+            setMedia(prev => prev.filter((_, i) => i !== index));
+        }
     };
 
     const handleSubmit = async (e: FormEvent) => {

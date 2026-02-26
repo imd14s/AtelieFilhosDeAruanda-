@@ -77,22 +77,22 @@ public class CheckoutController {
                                 customerDocument,
                                 street, number, complement, neighborhood, city, state, zip, cost, provider);
 
-                OrderEntity order = orderService.createOrder(orderRequest);
+                com.atelie.ecommerce.application.dto.order.OrderResponse order = orderService.createOrder(orderRequest);
 
                 // 5. Gerar o pagamento
                 PaymentResponse payment = paymentService.processPayment(
-                                order.getId(),
+                                order.id(),
                                 customerName,
                                 customerEmail,
-                                order.getTotalAmount(),
+                                order.totalAmount(),
                                 paymentMethodId,
                                 paymentToken,
                                 cardId);
 
                 // 6. Retornar dados combinados
                 return ResponseEntity.ok(Map.of(
-                                "orderId", order.getId().toString(),
-                                "status", order.getStatus(),
+                                "orderId", order.id().toString(),
+                                "status", order.status(),
                                 "payment", payment));
         }
 }

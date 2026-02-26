@@ -2,6 +2,8 @@ import { render, screen, fireEvent, waitFor } from '../../test-utils';
 import { ShippingPage } from './ShippingPage';
 import { AdminProviderService } from '../../services/AdminProviderService';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import type { AdminServiceProvider } from '../../types/store-settings';
 
 // Mock AdminProviderService
 vi.mock('../../services/AdminProviderService', () => ({
@@ -16,14 +18,14 @@ vi.mock('../../services/AdminProviderService', () => ({
 }));
 
 describe('ShippingPage Component', () => {
-    const mockProviders = [
-        { id: '1', name: 'Correios', code: 'CORREIOS', enabled: true, serviceType: 'SHIPPING' },
-        { id: '2', name: 'Jadlog', code: 'JADLOG', enabled: false, serviceType: 'SHIPPING' }
+    const mockProviders: AdminServiceProvider[] = [
+        { id: '1', name: 'Correios', code: 'CORREIOS', enabled: true, serviceType: 'SHIPPING', priority: 1, healthEnabled: true },
+        { id: '2', name: 'Jadlog', code: 'JADLOG', enabled: false, serviceType: 'SHIPPING', priority: 2, healthEnabled: true }
     ];
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (AdminProviderService.listProviders as any).mockResolvedValue(mockProviders);
+        vi.mocked(AdminProviderService.listProviders).mockResolvedValue(mockProviders);
     });
 
     it('should render shipping providers correctly', async () => {
@@ -36,11 +38,18 @@ describe('ShippingPage Component', () => {
     });
 
     it('should toggle provider status', async () => {
-        (AdminProviderService.toggleProvider as any).mockResolvedValue({});
+        vi.mocked(AdminProviderService.toggleProvider).mockResolvedValue({
+            data: { id: '1', name: 'Correios', code: 'CORREIOS', enabled: true, serviceType: 'SHIPPING', priority: 1, healthEnabled: true },
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config: {} as unknown as InternalAxiosRequestConfig
+        } as AxiosResponse);
         render(<ShippingPage />);
 
         const toggles = await screen.findAllByRole('checkbox');
-        fireEvent.click(toggles[0]);
+        expect(toggles[0]).toBeDefined();
+        fireEvent.click(toggles[0]!);
 
         await waitFor(() => {
             expect(AdminProviderService.toggleProvider).toHaveBeenCalledWith('1', false);
@@ -48,13 +57,20 @@ describe('ShippingPage Component', () => {
     });
 
     it('should open config editor and save config', async () => {
-        (AdminProviderService.getProviderConfig as any).mockResolvedValue({ configJson: '{"key": "value"}' });
-        (AdminProviderService.saveProviderConfig as any).mockResolvedValue({});
+        vi.mocked(AdminProviderService.getProviderConfig).mockResolvedValue({ providerId: '1', environment: 'PRODUCTION', configJson: '{"key": "value"}' });
+        vi.mocked(AdminProviderService.saveProviderConfig).mockResolvedValue({
+            data: { success: true },
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config: {} as unknown as InternalAxiosRequestConfig
+        } as AxiosResponse);
 
         render(<ShippingPage />);
 
         const configButtons = await screen.findAllByText('Configurar');
-        fireEvent.click(configButtons[0]);
+        expect(configButtons[0]).toBeDefined();
+        fireEvent.click(configButtons[0]!);
 
         expect(await screen.findByText('Payload de Configuração (JSONB)')).toBeInTheDocument();
 

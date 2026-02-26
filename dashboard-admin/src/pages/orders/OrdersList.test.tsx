@@ -19,7 +19,8 @@ describe('OrdersPage Component', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (OrderService.getAll as any).mockResolvedValue(mockOrders);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        vi.mocked(OrderService.getAll).mockResolvedValue(mockOrders as any);
     });
 
     it('should render orders list correctly', async () => {
@@ -34,11 +35,13 @@ describe('OrdersPage Component', () => {
     });
 
     it('should open cancel modal and cancel order', async () => {
-        (OrderService.cancel as any).mockResolvedValue({});
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        vi.mocked(OrderService.cancel).mockResolvedValue({ status: 200 } as any);
         render(<OrdersPage />);
 
         const cancelButtons = await screen.findAllByTitle('Cancelar Pedido');
-        fireEvent.click(cancelButtons[1]); // Cancel ORD2 (PENDING)
+        expect(cancelButtons[1]).toBeDefined();
+        fireEvent.click(cancelButtons[1]!); // Cancel ORD2 (PENDING)
 
         expect(screen.getByText('Cancelar Pedido')).toBeInTheDocument();
 

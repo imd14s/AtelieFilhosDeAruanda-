@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent } from 'react';
-import { User as UserIcon, Shield, CreditCard, ChevronRight, MapPin, Bell, Lock, Gift, Mail, AlertTriangle, X, Loader2, Camera } from 'lucide-react';
+import { User as UserIcon, Shield, CreditCard, ChevronRight, MapPin, Bell, Gift, Mail, AlertTriangle, X, Loader2, Camera } from 'lucide-react';
 import Cropper, { Area, Point } from 'react-easy-crop';
 import { getCroppedImg } from '../utils/imageUtils';
 import { useOutletContext, useNavigate, Link } from 'react-router-dom';
@@ -40,15 +40,16 @@ const ProfilePage: React.FC = () => {
         setCroppedAreaPixels(croppedAreaPixels);
     };
 
-    const handleAction = async (endpoint: string, payload: any, successMsg: string) => {
+    const handleAction = async (endpoint: string, payload: Record<string, unknown>, successMsg: string) => {
         setLoading(true);
         setActionMsg('');
         try {
             await api.post(endpoint, payload);
             setActionMsg(successMsg);
             setTimeout(() => { setModal(null); setActionMsg(''); }, 2000);
-        } catch (err: any) {
-            setActionMsg(err.response?.data?.message || 'Ocorreu um erro.');
+        } catch (err: unknown) {
+            const apiError = err as { response?: { data?: { message?: string } } };
+            setActionMsg(apiError.response?.data?.message || 'Ocorreu um erro.');
         }
         setLoading(false);
     };
@@ -69,12 +70,14 @@ const ProfilePage: React.FC = () => {
     const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.addEventListener('load', () => {
-                setImage(reader.result as string);
-                setModal('crop');
-            });
-            reader.readAsDataURL(file);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    setImage(reader.result as string);
+                    setModal('crop');
+                };
+                reader.readAsDataURL(file);
+            }
         }
     };
 
@@ -110,10 +113,10 @@ const ProfilePage: React.FC = () => {
 
             setModal(null);
             setTimeout(() => setActionMsg(''), 3000);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Erro ao atualizar foto:', err);
-            const detail = err.response?.data?.error || err.response?.data?.message || 'Erro ao atualizar foto.';
-            console.log('Detalhes da falha no upload:', err.response?.data);
+            const apiError = err as { response?: { data?: { error?: string, message?: string } } };
+            const detail = apiError.response?.data?.error || apiError.response?.data?.message || 'Erro ao atualizar foto.';
             setActionMsg(detail);
         } finally {
             setLoading(false);
@@ -143,8 +146,9 @@ const ProfilePage: React.FC = () => {
             setActionMsg('Perfil atualizado com sucesso!');
             setModal(null);
             setTimeout(() => setActionMsg(''), 3000);
-        } catch (err: any) {
-            setProfileError(err.response?.data?.message || 'Erro ao atualizar perfil.');
+        } catch (err: unknown) {
+            const apiError = err as { response?: { data?: { message?: string } } };
+            setProfileError(apiError.response?.data?.message || 'Erro ao atualizar perfil.');
         } finally {
             setLoading(false);
         }

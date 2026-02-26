@@ -3,7 +3,6 @@ import CheckoutPage from './CheckoutPage';
 import { cartService } from '../services/cartService';
 import { orderService } from '../services/orderService';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 // Mock services

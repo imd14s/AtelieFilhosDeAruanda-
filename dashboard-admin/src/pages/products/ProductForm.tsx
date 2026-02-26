@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,7 +9,7 @@ import { VariantsManager } from '../../components/products/VariantsManager';
 import { MediaGallery } from '../../components/products/MediaGallery';
 import { CreatableCategorySelect } from '../../components/products/CreatableCategorySelect';
 import { ChevronLeft, Save, Plus, Wand2, HelpCircle } from 'lucide-react';
-import type { ProductMedia, ProductVariant } from '../../types/product';
+import type { ProductMedia, ProductVariant, CreateProductDTO } from '../../types/product';
 import type { Category } from '../../types/category';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { AdminProviderService } from '../../services/AdminProviderService';
@@ -66,6 +66,7 @@ export function ProductForm() {
   const [isSaving, setIsSaving] = useState(false);
 
   const { register, handleSubmit, reset, setValue, getValues, watch, control, formState: { errors } } = useForm<FormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema) as any,
     defaultValues: {
       tenantId: '1',
@@ -86,31 +87,16 @@ export function ProductForm() {
     'LOJA_VIRTUAL': '/logo.png'
   };
 
-  useEffect(() => {
-    loadCategories();
-    loadMarketplaces();
-    if (id) {
-      loadProduct();
-    } else {
-      // Limpa TODO o estado ao criar novo produto
-      reset({
-        title: '',
-        description: '',
-        category: '',
-        tenantId: '1',
-        marketplaceIds: [],
-      });
-      setVariants([]);
-      setCurrentMedia([]);
-      setAllMedia([]);
-      setSelectedMarketplaces([]);
-      setEditingVariantId(null);
-      setNewCategoryName(null);
-      setVariantInput({ color: '', size: '', sku: '', originalPrice: '', price: '', stock: '' });
+  const loadCategories = useCallback(async () => {
+    try {
+      const data = await CategoryService.getAll();
+      setCategories(data);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
     }
-  }, [id]);
+  }, []);
 
-  const loadMarketplaces = async () => {
+  const loadMarketplaces = useCallback(async () => {
     try {
       const data = await AdminProviderService.listProviders();
       const dbMarketplaces = data.filter(p => p.serviceType === 'MARKETPLACE' && p.enabled);
@@ -123,46 +109,45 @@ export function ProductForm() {
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar marketplaces', error);
+      console.error('Erro marketplaces', error);
     }
-  };
+  }, [id]);
 
-  const loadCategories = async () => {
-    try {
-      const data = await CategoryService.getAll();
-      setCategories(data);
-    } catch (error) {
-      console.error('Erro ao carregar categorias:', error);
-    }
-  };
-
-  const loadProduct = async () => {
+  const loadProduct = useCallback(async () => {
     if (!id) return;
     try {
       const product = await ProductService.getById(id);
       reset({
-        title: product.title || (product as any).name || '',
+        title: product.title || '',
         description: product.description || '',
-        category: (product as any).categoryId || product.category || '',
+        category: product.category || '',
         tenantId: product.tenantId || '1',
         marketplaceIds: product.marketplaceIds || [],
-        weight: (product as any).weight || product.dimensions?.weight || 0,
-        height: (product as any).height || product.dimensions?.height || 0,
-        width: (product as any).width || product.dimensions?.width || 0,
-        length: (product as any).length || product.dimensions?.length || 0,
-        ncm: (product as any).ncm || '',
-        productionType: (product as any).productionType || 'REVENDA',
-        origin: (product as any).origin || 'NACIONAL',
+        weight: product.dimensions?.weight || 0,
+        height: product.dimensions?.height || 0,
+        width: product.dimensions?.width || 0,
+        length: product.dimensions?.length || 0,
+        ncm: product.ncm || '',
+        productionType: product.productionType || 'REVENDA',
+        origin: product.origin || 'NACIONAL',
       });
       if (product.variants) setVariants(product.variants);
       if (product.media) {
         setAllMedia(product.media);
       }
       if (product.marketplaceIds) setSelectedMarketplaces(product.marketplaceIds);
+      setVariantInput({ color: '', size: '', sku: '', originalPrice: '', price: '', stock: '' });
+      setCurrentMedia([]);
     } catch (error) {
       console.error('Erro ao carregar produto', error);
     }
-  };
+  }, [id, reset]);
+
+  useEffect(() => {
+    loadCategories();
+    loadMarketplaces();
+    loadProduct();
+  }, [loadCategories, loadMarketplaces, loadProduct]);
 
   const handleGenerateDescription = async () => {
     const title = getValues('title');
@@ -186,7 +171,8 @@ export function ProductForm() {
       if (productInfo.title && productInfo.title !== title) {
         setValue('title', productInfo.title);
       }
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
       console.error('Erro IA:', error);
       const msg = error.response?.data?.error || error.response?.data?.message || error.message || 'Erro desconhecido.';
       if (confirm(`Atenção: ${msg}\n\nVerifique as imagens anexadas ou se a Chave IA é válida nas Configurações.\nDeseja ir para configurações agora?`)) {
@@ -217,7 +203,7 @@ export function ProductForm() {
       if (existingMedia) {
         setCurrentMedia([{ ...existingMedia, isMain: true }]);
       } else {
-        setCurrentMedia([{ id: variant.imageUrl, url: variant.imageUrl, isMain: true, type: 'IMAGE' as any }]);
+        setCurrentMedia([{ id: variant.imageUrl, url: variant.imageUrl, isMain: true, type: 'IMAGE' }]);
       }
     } else {
       setCurrentMedia([]);
@@ -338,25 +324,31 @@ export function ProductForm() {
       });
 
       // As per backend logic, product base fields takes the first variant if price/stock are 0 
-      const basePrice = variants.length > 0 ? variants[0].price : 0;
-      const baseOriginalPrice = variants.length > 0 ? variants[0].originalPrice : undefined;
+      const basePrice = variants.length > 0 ? (variants[0]?.price ?? 0) : 0;
+      const baseOriginalPrice = variants.length > 0 ? variants[0]?.originalPrice : undefined;
       const baseStock = variants.reduce((acc, curr) => acc + curr.stock, 0);
 
-      const payload: any = {
-        ...data,
+      const payload: CreateProductDTO = {
+        title: data.title,
+        description: data.description || '',
+        active: true,
         category: finalCategoryId,
         price: basePrice,
         originalPrice: baseOriginalPrice,
         stock: baseStock,
-        active: true,
         variants,
         media: sortedMedia,
         marketplaceIds: selectedMarketplaces,
-        width: data.width,
-        length: data.length,
+        dimensions: {
+          weight: data.weight || 0,
+          width: data.width || 0,
+          height: data.height || 0,
+          length: data.length || 0
+        },
         ncm: data.ncm,
         productionType: data.productionType,
         origin: data.origin,
+        tenantId: data.tenantId || '1'
       };
 
       if (id) {
@@ -366,7 +358,8 @@ export function ProductForm() {
       }
       navigate('/products');
 
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
       console.error('Erro ao salvar produto', error);
       const msg = error.response?.data?.error || error.response?.data?.message || error.message || 'Erro interno da API';
       addToast(`Erro ao ${id ? 'atualizar' : 'criar'} produto: ${msg}`, 'error');

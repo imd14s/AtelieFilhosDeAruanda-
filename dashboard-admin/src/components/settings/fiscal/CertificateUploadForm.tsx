@@ -38,7 +38,9 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
         e.preventDefault();
         setIsDragging(false);
         const droppedFile = e.dataTransfer.files[0];
-        validateAndSetFile(droppedFile);
+        if (droppedFile) {
+            validateAndSetFile(droppedFile);
+        }
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,8 +89,9 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
             // Clear on success
             setFile(null);
             setPassword('');
-        } catch (err: any) {
-            setError(err.message || 'Erro ao processar o certificado.');
+        } catch (err) {
+            const error = err as Error;
+            setError(error.message || 'Erro ao processar o certificado.');
         }
     };
 
@@ -149,8 +152,8 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${isDragging
-                            ? 'border-blue-500 bg-blue-50'
-                            : file ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-blue-400 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-50'
+                        : file ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-blue-400 hover:bg-gray-50'
                         } ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
                 >
                     <input

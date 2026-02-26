@@ -30,11 +30,11 @@ public class AdminOrderController {
 
     @GetMapping(value = "/{id}/nfe/xml", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<String> getXml(@PathVariable UUID id) {
-        OrderEntity order = orderService.getOrderById(id);
-        if (order.getNfeReceipt() == null) {
+        com.atelie.ecommerce.application.dto.order.OrderResponse order = orderService.getOrderById(id);
+        if (order.nfeReceipt() == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(order.getNfeReceipt());
+        return ResponseEntity.ok(order.nfeReceipt());
     }
 
     @GetMapping(value = "/{id}/nfe/danfe", produces = MediaType.APPLICATION_PDF_VALUE)

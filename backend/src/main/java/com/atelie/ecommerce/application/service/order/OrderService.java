@@ -39,6 +39,7 @@ public class OrderService {
     private final CommunicationService communicationService;
     private final InvoiceService invoiceService;
     private final com.atelie.ecommerce.application.service.shipping.ShippingLabelService shippingLabelService;
+    private final com.atelie.ecommerce.application.mapper.OrderMapper orderMapper;
 
     public OrderService(OrderRepository orderRepository,
             ProductRepository productRepository,
@@ -47,7 +48,8 @@ public class OrderService {
             com.atelie.ecommerce.application.service.audit.AuditService auditService,
             CommunicationService communicationService,
             InvoiceService invoiceService,
-            com.atelie.ecommerce.application.service.shipping.ShippingLabelService shippingLabelService) {
+            com.atelie.ecommerce.application.service.shipping.ShippingLabelService shippingLabelService,
+            com.atelie.ecommerce.application.mapper.OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
@@ -56,10 +58,12 @@ public class OrderService {
         this.communicationService = communicationService;
         this.invoiceService = invoiceService;
         this.shippingLabelService = shippingLabelService;
+        this.orderMapper = orderMapper;
     }
 
     @Transactional
-    public OrderEntity processMarketplaceOrder(String source, String externalId, String customerName,
+    public com.atelie.ecommerce.application.dto.order.OrderResponse processMarketplaceOrder(String source,
+            String externalId, String customerName,
             String customerEmail, String customerDocument, String status,
             BigDecimal totalAmount, List<CreateOrderItemRequest> items) {
         // Idempotency check
@@ -76,7 +80,7 @@ public class OrderService {
                         current.getId().toString(),
                         "Marketplace Order status updated to " + status);
             }
-            return current;
+            return orderMapper.toResponse(current);
         }
 
         // New Order
@@ -153,11 +157,11 @@ public class OrderService {
                 saved.getId().toString(),
                 "Marketplace Order imported from " + source + " for " + customerName);
 
-        return saved;
+        return orderMapper.toResponse(saved);
     }
 
     @Transactional
-    public OrderEntity createOrder(CreateOrderRequest request) {
+    public com.atelie.ecommerce.application.dto.order.OrderResponse createOrder(CreateOrderRequest request) {
         OrderEntity order = new OrderEntity();
         order.setId(UUID.randomUUID());
         order.setSource(request.source());
@@ -246,7 +250,7 @@ public class OrderService {
                 saved.getId().toString(),
                 "Order created via " + request.source() + " for " + request.customerName());
 
-        return saved;
+        return orderMapper.toResponse(saved);
     }
 
     @Transactional
@@ -349,17 +353,26 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderEntity> getAllOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable);
+    public Page<com.atelie.ecommerce.application.dto.order.OrderResponse> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable).map(orderMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<OrderEntity> getUserOrders(UUID userId) {
-        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    public List<com.atelie.ecommerce.application.dto.order.OrderResponse> getUserOrders(UUID userId) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(orderMapper::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public OrderEntity getOrderById(UUID id) {
+    public com.atelie.ecommerce.application.dto.order.OrderResponse getOrderById(UUID id) {
+        return orderRepository.findById(id)
+                .map(orderMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Pedido não encontrado: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public com.atelie.ecommerce.domain.order.model.OrderModel getOrderModelById(UUID id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Pedido não encontrado: " + id));
     }

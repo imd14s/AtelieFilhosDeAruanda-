@@ -32,7 +32,7 @@ export const NcmAutocomplete = forwardRef<HTMLDivElement, NcmAutocompleteProps>(
             if (value !== undefined && value !== inputValue) {
                 setInputValue(value);
             }
-        }, [value]);
+        }, [value, inputValue]);
 
         const debouncedSearchTerm = useDebounce(inputValue, 400);
 
@@ -103,8 +103,8 @@ export const NcmAutocomplete = forwardRef<HTMLDivElement, NcmAutocompleteProps>(
                     break;
                 case 'Enter':
                     e.preventDefault();
-                    if (focusedIndex >= 0 && focusedIndex < options.length) {
-                        handleSelect(options[focusedIndex]);
+                    if (focusedIndex >= 0 && focusedIndex < options.length && options[focusedIndex]) {
+                        handleSelect(options[focusedIndex]!);
                     }
                     break;
                 case 'Escape':

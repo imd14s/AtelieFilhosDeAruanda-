@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
-import { Tag, Clock, Ticket, ChevronRight, Gift } from 'lucide-react';
+import { Clock, Ticket, ChevronRight, Gift } from 'lucide-react';
 import marketingService from '../services/marketingService';
 import { Coupon, User } from '../types';
 

@@ -23,7 +23,6 @@ const ProductPage: React.FC = () => {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [quantity, setQuantity] = useState<number>(1);
-    const [added, setAdded] = useState<boolean>(false);
     const [recommendations, setRecommendations] = useState<Product[]>([]);
     const [loadingRecs, setLoadingRecs] = useState<boolean>(false);
     const { addToast } = useToast();
@@ -52,9 +51,9 @@ const ProductPage: React.FC = () => {
                 const data = await productService.getProductById(id);
                 setProduct(data);
                 if (data?.images && data.images.length > 0) {
-                    setMainMedia(data.images[0]);
+                    setMainMedia(data.images[0] || null);
                 } else if (data?.image) {
-                    setMainMedia(data.image);
+                    setMainMedia(data.image || null);
                 }
 
                 // Registrar no histórico de navegação via API se o usuário estiver logado
@@ -97,25 +96,7 @@ const ProductPage: React.FC = () => {
             }
         };
         fetchProduct();
-    }, [id]);
-
-    const availableAttributes = useMemo(() => {
-        if (!product?.variants) return {};
-        const attrs: Record<string, Set<string>> = {};
-        product.variants.forEach(variant => {
-            if (variant.active === false) return;
-            try {
-                const parsed = JSON.parse(variant.attributesJson || '{}');
-                Object.entries(parsed).forEach(([key, value]) => {
-                    if (!attrs[key]) attrs[key] = new Set();
-                    attrs[key].add(String(value));
-                });
-            } catch (e) { }
-        });
-        const result: Record<string, string[]> = {};
-        Object.keys(attrs).forEach(k => result[k] = Array.from(attrs[k]));
-        return result;
-    }, [product]);
+    }, [id, user?.id]);
 
     // Mídias da variante selecionada
     const variantMedias = useMemo(() => {
@@ -135,28 +116,6 @@ const ProductPage: React.FC = () => {
         return product?.images ?? [];
     }, [currentVariant, product]);
 
-    const handleOptionSelect = (key: string, value: string) => {
-        const newOptions = { ...selectedOptions, [key]: value };
-        setSelectedOptions(newOptions);
-
-        if (product?.variants) {
-            const matched = product.variants.find(v => {
-                try {
-                    const attrs = JSON.parse(v.attributesJson || '{}');
-                    return Object.entries(newOptions).every(([k, val]) => attrs[k] === val);
-                } catch (e) {
-                    return false;
-                }
-            });
-
-            if (matched) {
-                setCurrentVariant(matched);
-                if (matched.imageUrl) setMainMedia(matched.imageUrl);
-            } else {
-                setCurrentVariant(null);
-            }
-        }
-    };
 
     const displayPrice = currentVariant ? currentVariant.price : product?.price || 0;
     const originalPrice = product?.originalPrice || displayPrice;
@@ -211,10 +170,9 @@ const ProductPage: React.FC = () => {
             image: currentVariant?.imageUrl || product.images?.[0] || product.image
         };
 
-        cartService.add(cartProduct as any, quantity);
+        cartService.add(cartProduct, quantity);
         addToast(`${product.name} adicionado ao carrinho!`, "success");
-        setAdded(true);
-        setTimeout(() => setAdded(false), 3000);
+        setTimeout(() => { }, 3000); // added state was unused, keeping delay logic if needed later
     };
 
     const isVideo = (url: string | null) => {

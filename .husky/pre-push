@@ -1,0 +1,31 @@
+echo "🛡️  [Push Guard] Iniciando validação do ecossistema antes do push..."
+
+# 1. Backend Validation
+echo "☕ Verificando compilação do Backend..."
+cd backend && mvn clean compile -DskipTests
+if [ $? -ne 0 ]; then
+  echo "❌ Erro de compilação no Backend! Push cancelado."
+  exit 1
+fi
+cd ..
+
+# 2. Frontend Validation
+echo "⚛️ Verificando tipos do Frontend..."
+cd frontend && npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "❌ Erro de tipagem no Frontend! Push cancelado."
+  exit 1
+fi
+cd ..
+
+# 3. Dashboard Validation
+echo "📊 Verificando tipos do Dashboard Admin..."
+cd dashboard-admin && npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "❌ Erro de tipagem no Dashboard! Push cancelado."
+  exit 1
+fi
+cd ..
+
+echo "✅ Ecossistema íntegro! Push liberado."
+exit 0

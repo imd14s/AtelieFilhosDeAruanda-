@@ -3,7 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import SEO from "../components/SEO";
 import { productService } from "../services/productService";
-import { Search, Loader2, Wind } from "lucide-react";
+import { Search, Wind } from "lucide-react";
 import { Product } from "../types";
 
 const SearchPage: React.FC = () => {

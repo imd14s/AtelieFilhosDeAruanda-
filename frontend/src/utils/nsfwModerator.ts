@@ -39,7 +39,8 @@ export const isSafeImage = async (
         results[p.className] = p.probability;
     });
 
-    const isUnsafe = results['Porn'] > threshold || results['Hentai'] > threshold;
+    if (!results) return { safe: true, reason: null, predictions: {} };
+    const isUnsafe = (results['Porn'] || 0) > threshold || (results['Hentai'] || 0) > threshold;
 
     return {
         safe: !isUnsafe,

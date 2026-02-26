@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '../test-utils';
 import AuthModal from './AuthModal';
 import { authService } from '../services/authService';
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
-import React from 'react';
 
 // Mock authService
 vi.mock('../services/authService', () => ({

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Clock } from 'lucide-react';
+import { Star } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useOutletContext } from 'react-router-dom';
 import ReviewForm from '../components/ReviewForm';
 import api from '../services/api';
 import { getImageUrl } from '../utils/imageUtils';
-import { User, Review, Product } from '../types';
+import { User, Review } from '../types';
 
 interface UserContext {
     user: User | null;
@@ -24,15 +24,6 @@ const ReviewsPage: React.FC = () => {
     const [completedReviews, setCompletedReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [reviewItem, setReviewItem] = useState<PendingReviewItem | null>(null);
-
-    useEffect(() => {
-        const userId = user?.id || user?.googleId;
-        if (userId) {
-            fetchReviews(userId);
-        } else {
-            setLoading(false);
-        }
-    }, [user, activeTab]);
 
     const fetchReviews = (userId: string) => {
         setLoading(true);
@@ -54,6 +45,15 @@ const ReviewsPage: React.FC = () => {
                 setLoading(false);
             });
     };
+
+    useEffect(() => {
+        const userId = user?.id || user?.googleId;
+        if (userId) {
+            fetchReviews(userId);
+        } else {
+            setLoading(false);
+        }
+    }, [user, activeTab]);
 
     if (!user) return null;
 

@@ -2,21 +2,26 @@ import { useState, useEffect } from 'react';
 import { configService } from '../services/orderService';
 
 // Tipagem global para o SDK do Mercado Pago
+interface MercadoPagoInstance {
+    cardForm: (config: any) => any; // Will refine config/return types later or use unknown
+    [key: string]: any;
+}
+
 declare global {
     interface Window {
-        MercadoPago: any;
+        MercadoPago: new (publicKey: string, options: { locale: string }) => MercadoPagoInstance;
     }
 }
 
 interface UseMercadoPago {
-    mp: any;
+    mp: MercadoPagoInstance | null;
     loading: boolean;
     isConfigured: boolean;
     error: string | null;
 }
 
 export const useMercadoPago = (): UseMercadoPago => {
-    const [mp, setMp] = useState<any>(null);
+    const [mp, setMp] = useState<MercadoPagoInstance | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [isConfigured, setIsConfigured] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -52,7 +57,7 @@ export const useMercadoPago = (): UseMercadoPago => {
                     setIsConfigured(true);
                     setLoading(false);
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('[useMercadoPago] Erro:', err);
                 if (mounted) {
                     setError('Erro ao carregar Mercado Pago');

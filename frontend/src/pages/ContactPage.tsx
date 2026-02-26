@@ -1,5 +1,5 @@
 import React, { useState, FormEvent, ChangeEvent } from 'react';
-import { Mail, Phone, MapPin, Send, MessageSquare, Instagram, Facebook } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Instagram, Facebook } from 'lucide-react';
 import SEO from '../components/SEO';
 import Button from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';

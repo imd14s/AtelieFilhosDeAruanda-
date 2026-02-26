@@ -41,7 +41,7 @@ public class SefazFiscalStrategy extends AbstractFiscalStrategy {
 
     @Override
     public String emitInvoice(UUID orderId) {
-        OrderEntity order = orderService.getOrderById(orderId);
+        com.atelie.ecommerce.domain.order.model.OrderModel order = orderService.getOrderModelById(orderId);
 
         // 1. Carregar credenciais cifradas do sistema
         byte[] certBytes = configService.findByKey(CONFIG_CERT_BYTES)

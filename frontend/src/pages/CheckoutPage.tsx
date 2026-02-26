@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, CreditCard, ShoppingBag, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
+import { ChevronLeft, CreditCard, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { cartService } from '../services/cartService';
 import { authService } from '../services/authService';
 import { orderService } from '../services/orderService';
@@ -28,7 +28,6 @@ interface CheckoutFormData {
 
 const CheckoutPage: React.FC = () => {
     const location = useLocation();
-    const navigate = useNavigate();
     const { shippingSelected, cep } = (location.state as { shippingSelected?: ShippingOption; cep?: string }) || {};
 
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -68,8 +67,8 @@ const CheckoutPage: React.FC = () => {
     const [configMissing, setConfigMissing] = useState<{ mp: boolean; shipping: boolean }>({ mp: false, shipping: false });
 
     const { mp, loading: mpLoading, isConfigured, error: mpError } = useMercadoPago();
-    const [cardForm, setCardForm] = useState<any>(null);
-    const cardFormRef = useRef<any>(null);
+    const [_cardForm, setCardForm] = useState<unknown>(null);
+    const cardFormRef = useRef<any>(null); // External SDK Ref usually needs any or complex interface
     const pendingOrderRef = useRef<CreateOrderData | null>(null);
 
     // Cálculos de preço
@@ -234,7 +233,7 @@ const CheckoutPage: React.FC = () => {
                 else setCurrentShipping(null);
             } else if (options.length > 0) {
                 // Seleciona o primeiro por padrão
-                setCurrentShipping(options[0]);
+                setCurrentShipping(options[0] || null);
             }
         } catch (e) {
             console.error("Erro frete", e);
@@ -300,7 +299,7 @@ const CheckoutPage: React.FC = () => {
                 const parts = formData.endereco.split(',');
                 const addrData: Address = {
                     label: 'Principal',
-                    street: parts[0].trim(),
+                    street: parts[0]?.trim() || '',
                     number: parts[1]?.trim() || 'S/N',
                     neighborhood: 'Centro',
                     city: formData.cidade,
@@ -318,7 +317,7 @@ const CheckoutPage: React.FC = () => {
                 email: formData.email,
                 customerName: `${formData.nome} ${formData.sobrenome}`,
                 shippingAddress: {
-                    street: parts[0].trim(),
+                    street: parts[0]?.trim() || '',
                     number: parts[1]?.trim() || 'S/N',
                     city: formData.cidade,
                     state: formData.estado,
@@ -745,7 +744,7 @@ const CheckoutPage: React.FC = () => {
                                                     <img
                                                         src={getImageUrl(item.image || '')}
                                                         alt={item.name}
-                                                        onError={(e: any) => { e.target.src = '/images/default.png'; }}
+                                                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = '/images/default.png'; }}
                                                         className="w-full h-full object-cover"
                                                     />
                                                 </div>

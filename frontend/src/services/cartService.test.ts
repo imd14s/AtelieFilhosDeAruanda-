@@ -32,8 +32,8 @@ describe('cartService', () => {
         await cartService.add(mockProduct, 1);
         const items = await cartService.get();
         expect(items).toHaveLength(1);
-        expect(items[0].id).toBe('1');
-        expect(items[0].quantity).toBe(1);
+        expect(items[0]?.id).toBe('1');
+        expect(items[0]?.quantity).toBe(1);
     });
 
     it('should increment quantity if product already in cart', async () => {
@@ -41,7 +41,7 @@ describe('cartService', () => {
         await cartService.add(mockProduct, 2);
         const items = await cartService.get();
         expect(items).toHaveLength(1);
-        expect(items[0].quantity).toBe(3);
+        expect(items[0]?.quantity).toBe(3);
     });
 
     it('should remove a product from the cart', async () => {
@@ -62,7 +62,6 @@ describe('cartService', () => {
         const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
         await cartService.add(mockProduct, 1);
         expect(dispatchSpy).toHaveBeenCalledWith(expect.any(Event));
-        // There might be multiple events (sync, etc.) but we care about the type
         const events = dispatchSpy.mock.calls.map(call => (call[0] as Event).type);
         expect(events).toContain('cart-updated');
     });

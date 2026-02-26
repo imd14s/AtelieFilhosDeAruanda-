@@ -20,7 +20,7 @@ export const cartService = {
     get: async (): Promise<CartItem[]> => {
         const user = getAuthUser();
         const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
-        let cartData = JSON.parse(localStorage.getItem(cartKey) || '[]');
+        const cartData = JSON.parse(localStorage.getItem(cartKey) || '[]');
         let cart = Array.isArray(cartData) ? cartData : (cartData.items || []);
 
         if (user) {
@@ -92,7 +92,7 @@ export const cartService = {
     },
 
     updateQuantity: async (productId: string, quantity: number, variantId: string | null = null): Promise<CartItem[]> => {
-        let cart = await cartService.get();
+        const cart = await cartService.get();
         const vId = variantId || "";
         const item = cart.find(item =>
             item.id === productId && item.variantId === vId
@@ -122,13 +122,13 @@ export const cartService = {
         window.dispatchEvent(new Event('cart-updated'));
     },
 
-    migrate: async (userId: string): Promise<void> => {
+    migrate: async (_userId: string): Promise<void> => {
         try {
             const guestCartJson = localStorage.getItem('cart_guest');
             const guestCart: CartItem[] = guestCartJson ? JSON.parse(guestCartJson) : [];
             if (guestCart.length === 0) return;
 
-            let userCart = await cartService.get();
+            const userCart = await cartService.get();
 
             guestCart.forEach(guestItem => {
                 const existingItem = userCart.find(item =>
@@ -143,8 +143,8 @@ export const cartService = {
 
             await cartService.save(userCart);
             localStorage.removeItem('cart_guest');
-        } catch (e) {
-            console.error("[cartService] Erro ao migrar carrinho", e);
+        } catch (error) {
+            console.error("[cartService] Erro ao migrar carrinho", error);
         }
     }
 };

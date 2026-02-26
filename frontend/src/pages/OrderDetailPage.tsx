@@ -19,6 +19,7 @@ interface StatusConfig {
 const statusMap: Record<string, StatusConfig> = {
     PENDING: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
     PAID: { label: 'Pago', color: 'bg-blue-100 text-blue-700', icon: CreditCard },
+    READY_FOR_SHIPPING: { label: 'Pronto p/ Envio', color: 'bg-orange-100 text-orange-700', icon: Package },
     SHIPPED: { label: 'Enviado', color: 'bg-indigo-100 text-indigo-700', icon: Truck },
     DELIVERED: { label: 'Entregue', color: 'bg-green-100 text-green-700', icon: CheckCircle },
     CANCELLED: { label: 'Cancelado', color: 'bg-red-100 text-red-700', icon: AlertCircle },
@@ -33,12 +34,11 @@ const OrderDetailPage: React.FC = () => {
 
     useEffect(() => {
         if (id) {
+            setLoading(true);
             orderService.getOrderById(id)
                 .then(data => setOrder(data))
                 .catch(() => setError('Pedido não encontrado.'))
                 .finally(() => setLoading(false));
-        } else {
-            setLoading(false);
         }
     }, [id]);
 
@@ -58,8 +58,8 @@ const OrderDetailPage: React.FC = () => {
         </div>
     );
 
-    const status = statusMap[order.status] || statusMap.PENDING;
-    const StatusIcon = status.icon;
+    const status = (order.status && statusMap[order.status]) || statusMap.PENDING;
+    const StatusIcon = status?.icon || Package;
     const total = order.totalAmount || order.total || 0;
     const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
@@ -82,9 +82,9 @@ const OrderDetailPage: React.FC = () => {
                             </h1>
                             <p className="text-sm text-gray-500">{createdAt}</p>
                         </div>
-                        <span className={`px-3 py-1.5 text-xs uppercase font-bold tracking-wider rounded flex items-center gap-1.5 w-fit ${status.color}`}>
-                            <StatusIcon size={14} />
-                            {status.label}
+                        <span className={`px-3 py-1.5 text-xs uppercase font-bold tracking-wider rounded flex items-center gap-1.5 w-fit ${status?.color || ''}`}>
+                            {StatusIcon && <StatusIcon size={14} />}
+                            {status?.label}
                         </span>
                     </div>
                 </div>

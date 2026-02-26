@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import { Search, Zap, MessageCircle, Star, Package } from 'lucide-react';
+import { Search, Package } from 'lucide-react';
 import SEO from '../components/SEO';
 import ReviewForm from '../components/ReviewForm';
 import api from '../services/api';
@@ -26,15 +26,6 @@ const OrdersPage: React.FC = () => {
     const [reviewedItems, setReviewedItems] = useState<Set<string>>(new Set());
     const [searchTerm, setSearchTerm] = useState<string>('');
 
-    useEffect(() => {
-        const userId = user?.id || user?.googleId;
-        if (userId) {
-            fetchOrders(userId);
-        } else {
-            setLoading(false);
-        }
-    }, [user]);
-
     const fetchOrders = (userId: string) => {
         setLoading(true);
         api.get(`/orders/user/${userId}`)
@@ -47,6 +38,15 @@ const OrdersPage: React.FC = () => {
                 setLoading(false);
             });
     };
+
+    useEffect(() => {
+        const userId = user?.id || user?.googleId;
+        if (userId) {
+            fetchOrders(userId);
+        } else {
+            setLoading(false);
+        }
+    }, [user]);
 
     const handleReviewSubmitted = (itemId: string) => {
         setReviewedItems(prev => new Set([...prev, itemId]));

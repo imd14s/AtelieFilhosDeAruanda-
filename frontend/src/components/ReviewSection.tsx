@@ -10,7 +10,7 @@ interface ReviewSectionProps {
     onReviewsLoaded?: (reviews: Review[]) => void;
 }
 
-const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewAdded, onReviewsLoaded }) => {
+const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewsLoaded }) => {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 

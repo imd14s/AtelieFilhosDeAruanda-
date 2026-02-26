@@ -96,10 +96,10 @@ export function useStockAlerts() {
         });
     };
 
-    const updatePriority = (index: number, field: keyof StockPriority, value: any) => {
+    const updatePriority = (index: number, field: keyof StockPriority, value: string | number) => {
         if (!settings) return;
         const newPriorities = [...settings.priorities];
-        newPriorities[index] = { ...newPriorities[index], [field]: value };
+        newPriorities[index] = { ...newPriorities[index], [field]: value } as StockPriority;
         setSettings({ ...settings, priorities: newPriorities });
     };
 
