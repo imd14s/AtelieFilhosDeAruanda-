@@ -80,7 +80,7 @@ export function FiscalSettings() {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {PROVIDERS.map(provider => {
+                {Array.isArray(integrations) && PROVIDERS.map(provider => {
                     const config = integrations.find(i => i.providerName === provider.slug);
                     return (
                         <div key={provider.slug} className={`p-6 bg-white rounded-3xl border-2 transition-all ${config?.active ? 'border-blue-600 shadow-xl' : 'border-gray-100 shadow-sm'}`}>

@@ -8,7 +8,7 @@ export interface NcmResponse {
 export const FiscalService = {
     async searchNcms(query: string): Promise<NcmResponse[]> {
         if (!query || query.length < 2) return [];
-        const response = await api.get<NcmResponse[]>(`/api/fiscal/ncm`, {
+        const response = await api.get<NcmResponse[]>(`/fiscal/ncm`, {
             params: { query }
         });
         return response.data;

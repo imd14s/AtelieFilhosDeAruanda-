@@ -635,7 +635,7 @@ export function ProductForm() {
                 />
                 <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
 
-                {showNcmResults && (ncmSuggestions.length > 0 || isSearchingNcm) && (
+                {showNcmResults && (Array.isArray(ncmSuggestions) && (ncmSuggestions.length > 0 || isSearchingNcm)) && (
                   <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
                     {isSearchingNcm ? (
                       <div className="p-4 text-center text-sm text-gray-500">Buscando...</div>
