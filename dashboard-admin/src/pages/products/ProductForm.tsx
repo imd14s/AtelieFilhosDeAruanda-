@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -8,16 +8,15 @@ import { CategoryService } from '../../services/CategoryService';
 import { VariantsManager } from '../../components/products/VariantsManager';
 import { MediaGallery } from '../../components/products/MediaGallery';
 import { CreatableCategorySelect } from '../../components/products/CreatableCategorySelect';
-import { ChevronLeft, Save, Plus, Wand2 } from 'lucide-react';
+import { ChevronLeft, Save, Plus, Wand2, HelpCircle } from 'lucide-react';
 import type { ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { AdminProviderService } from '../../services/AdminProviderService';
-import { FiscalService } from '../../services/FiscalService';
-import type { NcmResponse } from '../../services/FiscalService';
+// Legacy fiscal service import removed
+import { NcmAutocomplete } from '../../components/ui/NcmAutocomplete';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
-import { Search } from 'lucide-react';
 
 const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),
@@ -46,9 +45,6 @@ export function ProductForm() {
   const [marketplaces, setMarketplaces] = useState<AdminServiceProvider[]>([]);
   const [selectedMarketplaces, setSelectedMarketplaces] = useState<string[]>([]);
   const [allMedia, setAllMedia] = useState<ProductMedia[]>([]);
-  const [ncmSuggestions, setNcmSuggestions] = useState<NcmResponse[]>([]);
-  const [isSearchingNcm, setIsSearchingNcm] = useState(false);
-  const [showNcmResults, setShowNcmResults] = useState(false);
 
   // Step-by-step Variant states
   const [variants, setVariants] = useState<ProductVariant[]>([]);
@@ -68,7 +64,7 @@ export function ProductForm() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, getValues, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, reset, setValue, getValues, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
     defaultValues: {
       tenantId: '1',
@@ -200,34 +196,7 @@ export function ProductForm() {
     }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      const ncmValue = watch('ncm');
-      if (ncmValue && ncmValue.length >= 2 && !showNcmResults && !isSearchingNcm) {
-        // Apenas busca se o usuário estiver digitando e não tiver selecionado ainda
-        searchNcm(ncmValue);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [watch('ncm')]);
-
-  const searchNcm = async (query: string) => {
-    setIsSearchingNcm(true);
-    setShowNcmResults(true);
-    try {
-      const results = await FiscalService.searchNcms(query);
-      setNcmSuggestions(results);
-    } catch (error) {
-      console.error('Erro ao buscar NCM:', error);
-    } finally {
-      setIsSearchingNcm(false);
-    }
-  };
-
-  const handleSelectNcm = (ncm: NcmResponse) => {
-    setValue('ncm', ncm.code);
-    setShowNcmResults(false);
-  };
+  // (Removed legacy NCM Hooks - Component handles it)
 
   const handleEditVariant = (variant: ProductVariant) => {
     setEditingVariantId(variant.id!);
@@ -625,37 +594,17 @@ export function ProductForm() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 NCM <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <input
-                  {...register('ncm')}
-                  placeholder="Busque por código ou nome..."
-                  className="w-full p-2 pl-9 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
-                  autoComplete="off"
-                  onFocus={() => watch('ncm').length >= 2 && setShowNcmResults(true)}
-                />
-                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-
-                {showNcmResults && (Array.isArray(ncmSuggestions) && (ncmSuggestions.length > 0 || isSearchingNcm)) && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                    {isSearchingNcm ? (
-                      <div className="p-4 text-center text-sm text-gray-500">Buscando...</div>
-                    ) : (
-                      ncmSuggestions.map((ncm) => (
-                        <button
-                          key={ncm.code}
-                          type="button"
-                          className="w-full text-left p-3 hover:bg-indigo-50 border-b last:border-0 transition-colors"
-                          onClick={() => handleSelectNcm(ncm)}
-                        >
-                          <div className="font-bold text-indigo-600">{ncm.code}</div>
-                          <div className="text-xs text-gray-500 truncate">{ncm.description}</div>
-                        </button>
-                      ))
-                    )}
-                  </div>
+              <Controller
+                control={control}
+                name="ncm"
+                render={({ field }) => (
+                  <NcmAutocomplete
+                    {...field}
+                    error={errors.ncm?.message}
+                    placeholder="Ex: 71171900"
+                  />
                 )}
-              </div>
-              {errors.ncm && <p className="text-red-500 text-xs mt-1">{errors.ncm.message}</p>}
+              />
             </div>
 
             <div>
@@ -672,10 +621,16 @@ export function ProductForm() {
               {errors.productionType && <p className="text-red-500 text-xs mt-1">{errors.productionType.message}</p>}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Origem <span className="text-red-500">*</span>
-              </label>
+            <div className="relative group">
+              <div className="flex items-center gap-1 mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Origem <span className="text-red-500">*</span>
+                </label>
+                <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block w-72 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-50">
+                  O código de Origem da Mercadoria segue o manual da SEFAZ para especificar quão nacional ou importado é o produto. Utilizado nas declarações de ICMS e validação de NCM.
+                </div>
+              </div>
               <select
                 {...register('origin')}
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
