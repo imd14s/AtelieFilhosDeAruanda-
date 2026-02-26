@@ -17,12 +17,7 @@ import { AdminProviderService } from '../../services/AdminProviderService';
 import { NcmAutocomplete } from '../../components/ui/NcmAutocomplete';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../../utils/cn';
 
 const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),

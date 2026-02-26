@@ -1,4 +1,4 @@
-import React from 'react';
+import { MaskedInput } from '../../ui/MaskedInput';
 
 export interface IssuerData {
     cnpj: string;
@@ -21,31 +21,7 @@ interface IssuerDataFormProps {
 
 export function IssuerDataForm({ data, onChange, disabled }: IssuerDataFormProps) {
 
-    // Simple Maskers
-    const applyCnpjMask = (val: string) => {
-        return val
-            .replace(/\D/g, '')
-            .replace(/^(\d{2})(\d)/, '$1.$2')
-            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-            .replace(/\.(\d{3})(\d)/, '.$1/$2')
-            .replace(/(\d{4})(\d)/, '$1-$2')
-            .substring(0, 18);
-    };
 
-    const applyZipMask = (val: string) => {
-        return val
-            .replace(/\D/g, '')
-            .replace(/^(\d{5})(\d)/, '$1-$2')
-            .substring(0, 9);
-    };
-
-    const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onChange('cnpj', applyCnpjMask(e.target.value));
-    };
-
-    const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onChange('zip', applyZipMask(e.target.value));
-    };
 
     return (
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
@@ -67,14 +43,14 @@ export function IssuerDataForm({ data, onChange, disabled }: IssuerDataFormProps
                     </div>
 
                     <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase">CNPJ (Somente Números)</label>
-                        <input
-                            type="text"
+                        <MaskedInput
+                            mask="cnpj"
+                            label="CNPJ"
                             value={data.cnpj}
-                            onChange={handleCnpjChange}
+                            onChange={(val) => onChange('cnpj', val)}
                             disabled={disabled}
-                            className="w-full mt-1 p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 transition-all font-mono text-sm disabled:opacity-50"
                             placeholder="00.000.000/0000-00"
+                            className="bg-gray-50 border-gray-100 font-mono"
                         />
                     </div>
 
@@ -96,14 +72,14 @@ export function IssuerDataForm({ data, onChange, disabled }: IssuerDataFormProps
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Endereço Fiscal</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-1">
-                        <label className="text-xs font-bold text-gray-500 uppercase">CEP</label>
-                        <input
-                            type="text"
+                        <MaskedInput
+                            mask="cep"
+                            label="CEP"
                             value={data.zip}
-                            onChange={handleZipChange}
+                            onChange={(val) => onChange('zip', val)}
                             disabled={disabled}
-                            className="w-full mt-1 p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 transition-all font-mono text-sm disabled:opacity-50"
                             placeholder="00000-000"
+                            className="bg-gray-50 border-gray-100 font-mono"
                         />
                     </div>
 
