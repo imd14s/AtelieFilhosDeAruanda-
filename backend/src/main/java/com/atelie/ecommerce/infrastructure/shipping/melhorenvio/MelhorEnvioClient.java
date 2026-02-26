@@ -65,4 +65,14 @@ public class MelhorEnvioClient {
                 .body(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
                 });
     }
+
+    public Map<String, Object> getTracking(String token, String trackingCode) {
+        return restClient.get()
+                .uri("/api/v2/me/shipment/tracking/" + trackingCode)
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/json")
+                .retrieve()
+                .body(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                });
+    }
 }

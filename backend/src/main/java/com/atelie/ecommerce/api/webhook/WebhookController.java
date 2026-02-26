@@ -156,17 +156,25 @@ public class WebhookController {
         }
     }
 
-    @PostMapping("/marketplace/{provider}")
-    public ResponseEntity<?> handleMarketplaceWebhook(
-            @PathVariable String provider,
-            @RequestBody Map<String, Object> payload) {
-        log.info("Recebido webhook de marketplace para o provedor {}: {}", provider, payload);
+    @PostMapping("/shipping/melhorenvio")
+    public ResponseEntity<?> handleMelhorEnvioTracking(@RequestBody Map<String, Object> payload) {
+        log.info("Recebido webhook de rastreio Melhor Envio: {}", payload);
         try {
-            marketplaceCoreService.handleWebhook(provider, payload);
+            // No Melhor Envio, o payload costuma vir com 'tracking', 'status',
+            // 'description', etc.
+            // Precisamos do 'external_id' ou algo que mapeie para o nosso orderId
+            String trackingCode = (String) payload.get("tracking");
+            String rawStatus = (String) payload.get("status");
+            String description = (String) payload.get("description");
+
+            // Aqui buscaríamos o pedido pelo trackingCode para processar
+            // trackingService.processUpdateByTrackingCode(trackingCode, rawStatus,
+            // description, ...);
+
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Erro processando webhook do marketplace {}", provider, e);
-            return ResponseEntity.ok().build(); // Retorna 200 para evitar retentativas infinitas se for erro de lógica
+            log.error("Erro ao processar webhook de rastreio", e);
+            return ResponseEntity.ok().build();
         }
     }
 }

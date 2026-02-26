@@ -9,7 +9,8 @@ public enum AutomationType {
     ORDER_CONFIRM("Confirmação de recebimento de novo pedido."),
     PASSWORD_RESET("Recuperação de acesso e troca de senha."),
     PRODUCT_PRICE_DROP("Notificação de baixa de preço de produto favoritado."),
-    CAMPAIGN("Disparo de campanhas de marketing manuais.");
+    CAMPAIGN("Disparo de campanhas de marketing manuais."),
+    TRACKING_UPDATE("Notificação de atualização de rastreio de pedido.");
 
     private final String description;
 
