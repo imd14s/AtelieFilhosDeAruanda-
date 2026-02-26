@@ -130,6 +130,9 @@ public class ProductService {
         existing.setHeight(details.getHeight());
         existing.setWidth(details.getWidth());
         existing.setLength(details.getLength());
+        existing.setNcm(details.getNcm());
+        existing.setProductionType(details.getProductionType());
+        existing.setOrigin(details.getOrigin());
         existing.setImages(details.getImages());
 
         if (details.getCategoryId() != null) {

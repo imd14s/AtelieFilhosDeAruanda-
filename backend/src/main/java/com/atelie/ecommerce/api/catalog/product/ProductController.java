@@ -116,6 +116,9 @@ public class ProductController {
         existing.setHeight(request.height());
         existing.setWidth(request.width());
         existing.setLength(request.length());
+        existing.setNcm(request.ncm());
+        existing.setProductionType(request.productionType());
+        existing.setOrigin(request.origin());
         existing.setCategoryId(request.categoryId());
 
         if (request.media() != null) {
@@ -164,6 +167,9 @@ public class ProductController {
         product.setHeight(request.height());
         product.setWidth(request.width());
         product.setLength(request.length());
+        product.setNcm(request.ncm());
+        product.setProductionType(request.productionType());
+        product.setOrigin(request.origin());
 
         if (request.media() != null) {
             product.setImages(request.media().stream()

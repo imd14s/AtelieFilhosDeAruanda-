@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
+import com.atelie.ecommerce.domain.catalog.product.ProductionType;
+import com.atelie.ecommerce.domain.catalog.product.ProductOrigin;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -58,6 +60,16 @@ public class ProductEntity {
     private BigDecimal height;
     private BigDecimal width;
     private BigDecimal length;
+
+    private String ncm;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "production_type")
+    private ProductionType productionType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin")
+    private ProductOrigin origin;
 
     @Column(name = "image_url")
     private String imageUrl;
@@ -194,6 +206,10 @@ public class ProductEntity {
             width = BigDecimal.ZERO;
         if (length == null)
             length = BigDecimal.ZERO;
+        if (productionType == null)
+            productionType = ProductionType.REVENDA;
+        if (origin == null)
+            origin = ProductOrigin.NACIONAL;
 
         generateSlug();
         syncImageUrl();
@@ -397,5 +413,29 @@ public class ProductEntity {
 
     public void setLastNotifiedPrice(BigDecimal lastNotifiedPrice) {
         this.lastNotifiedPrice = lastNotifiedPrice;
+    }
+
+    public String getNcm() {
+        return ncm;
+    }
+
+    public void setNcm(String ncm) {
+        this.ncm = ncm;
+    }
+
+    public ProductionType getProductionType() {
+        return productionType;
+    }
+
+    public void setProductionType(ProductionType productionType) {
+        this.productionType = productionType;
+    }
+
+    public ProductOrigin getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(ProductOrigin origin) {
+        this.origin = origin;
     }
 }

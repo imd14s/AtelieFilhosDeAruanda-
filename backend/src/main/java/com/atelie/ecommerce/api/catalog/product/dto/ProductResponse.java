@@ -2,6 +2,8 @@ package com.atelie.ecommerce.api.catalog.product.dto;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import com.atelie.ecommerce.domain.catalog.product.ProductionType;
+import com.atelie.ecommerce.domain.catalog.product.ProductOrigin;
 
 public class ProductResponse {
 
@@ -14,6 +16,9 @@ public class ProductResponse {
     private String imageUrl;
     private BigDecimal originalPrice;
     private Integer discountPercentage;
+    private String ncm;
+    private ProductionType productionType;
+    private ProductOrigin origin;
 
     public ProductResponse(UUID id, String name, String description, BigDecimal price, UUID categoryId,
             Boolean active) {
@@ -23,6 +28,8 @@ public class ProductResponse {
         this.price = price;
         this.categoryId = categoryId;
         this.active = active;
+        this.productionType = ProductionType.REVENDA;
+        this.origin = ProductOrigin.NACIONAL;
     }
 
     public UUID getId() {
@@ -71,5 +78,29 @@ public class ProductResponse {
 
     public void setOriginalPrice(BigDecimal originalPrice) {
         this.originalPrice = originalPrice;
+    }
+
+    public String getNcm() {
+        return ncm;
+    }
+
+    public void setNcm(String ncm) {
+        this.ncm = ncm;
+    }
+
+    public ProductionType getProductionType() {
+        return productionType;
+    }
+
+    public void setProductionType(ProductionType productionType) {
+        this.productionType = productionType;
+    }
+
+    public ProductOrigin getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(ProductOrigin origin) {
+        this.origin = origin;
     }
 }

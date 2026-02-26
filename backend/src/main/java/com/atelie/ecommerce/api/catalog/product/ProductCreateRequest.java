@@ -25,7 +25,10 @@ public record ProductCreateRequest(
                 BigDecimal height,
                 BigDecimal width,
                 BigDecimal length,
-                @JsonProperty("marketplaceIds") List<UUID> marketplaceIds) {
+                @JsonProperty("marketplaceIds") List<UUID> marketplaceIds,
+                String ncm,
+                com.atelie.ecommerce.domain.catalog.product.ProductionType productionType,
+                com.atelie.ecommerce.domain.catalog.product.ProductOrigin origin) {
         public record ProductMediaItem(String url, String type, Boolean isMain) {
         }
 
