@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { FileText, Save, CheckCircle2, Clock, Building2, Server } from 'lucide-react';
-import { FiscalIntegrationService } from '../../services/FiscalIntegrationService';
-import type { FiscalIntegration } from '../../services/FiscalIntegrationService';
+import { FiscalIntegrationService, type CertificateMetadata, type FiscalIntegration } from '../../services/FiscalIntegrationService';
 import { ConfigService } from '../../services/ConfigService';
 import { IssuerDataForm, type IssuerData } from '../../components/settings/fiscal/IssuerDataForm';
 import { EmissionConfigForm, type EmissionConfigData } from '../../components/settings/fiscal/EmissionConfigForm';
+import { CertificateUploadForm } from '../../components/settings/fiscal/CertificateUploadForm';
 
 type Tab = 'EMITENTE' | 'INTEGRACOES';
 
@@ -22,6 +22,7 @@ export function FiscalSettings() {
     const [emissionConfig, setEmissionConfig] = useState<EmissionConfigData>({
         taxRegime: '', environment: 'HOMOLOGACAO', invoiceSeries: '1', invoiceNumber: '0'
     });
+    const [certificateMetadata, setCertificateMetadata] = useState<CertificateMetadata | null>(null);
 
     // Estado global de loading/saving
     const [loading, setLoading] = useState(true);
@@ -40,12 +41,14 @@ export function FiscalSettings() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [intData, configs] = await Promise.all([
+            const [intData, configs, certInfo] = await Promise.all([
                 FiscalIntegrationService.getAll(),
-                ConfigService.getAll()
+                ConfigService.getAll(),
+                FiscalIntegrationService.getCertificateInfo()
             ]);
 
             setIntegrations(intData);
+            setCertificateMetadata(certInfo);
 
             // Map Configs to state
             const getConfig = (key: string, fallback: string = '') => {
@@ -131,6 +134,34 @@ export function FiscalSettings() {
         }
     };
 
+    const handleUploadCertificate = async (file: File, password: string) => {
+        setSaving(true);
+        try {
+            await FiscalIntegrationService.uploadCertificate(file, password);
+            alert('Certificado enviado e cifrado com sucesso!');
+            const newCertInfo = await FiscalIntegrationService.getCertificateInfo();
+            setCertificateMetadata(newCertInfo);
+        } catch (error: any) {
+            console.error('Erro no upload de certificado', error);
+            throw new Error(error.response?.data?.message || 'Falha na comunicação com o servidor.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleRevokeCertificate = async () => {
+        setSaving(true);
+        try {
+            await FiscalIntegrationService.revokeCertificate();
+            setCertificateMetadata(null);
+            alert('Certificado revogado.');
+        } catch (error) {
+            alert('Erro ao revogar certificado.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSaveRetention = async () => {
         setSaving(true);
         try {
@@ -186,6 +217,13 @@ export function FiscalSettings() {
                         data={emissionConfig}
                         onChange={(field, value) => setEmissionConfig(prev => ({ ...prev, [field]: value }))}
                         disabled={saving}
+                    />
+
+                    <CertificateUploadForm
+                        currentMetadata={certificateMetadata}
+                        onUpload={handleUploadCertificate}
+                        onRevoke={handleRevokeCertificate}
+                        isLoading={saving}
                     />
 
                     <div className="flex justify-end pt-4">
