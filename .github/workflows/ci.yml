@@ -4,7 +4,10 @@ on:
   push:
     branches: [ main, dev ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main, develop ]
+
+permissions:
+  contents: write
 
 jobs:
   # ── Backend Validation ──
@@ -120,3 +123,11 @@ jobs:
 
       - name: Guardrail Check
         run: npm run test:guardrails
+
+      - name: Persist Manifesto Updates
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: update integrity manifesto [skip ci]"
+          file_pattern: 'MANIFESTO.md'
+          commit_user_name: "Ateliê Filhos de Aruanda (CI)"
+          commit_user_email: "ci@ateliefilhosdearuanda.com.br"
