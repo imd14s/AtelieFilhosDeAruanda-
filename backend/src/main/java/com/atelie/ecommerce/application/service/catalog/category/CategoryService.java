@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.application.service.catalog.category;
 
-import com.atelie.ecommerce.api.catalog.category.dto.CategoryResponse;
-import com.atelie.ecommerce.api.catalog.category.dto.CreateCategoryRequest;
-import com.atelie.ecommerce.api.common.exception.DuplicateResourceException;
+import com.atelie.ecommerce.application.dto.catalog.category.CategoryResponse;
+import com.atelie.ecommerce.application.dto.catalog.category.CreateCategoryRequest;
+import com.atelie.ecommerce.application.common.exception.DuplicateResourceException;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import org.springframework.cache.annotation.CacheEvict;
@@ -49,12 +49,12 @@ public class CategoryService {
     @CacheEvict(value = "categories", allEntries = true)
     public void delete(UUID id) {
         if (!repository.existsById(id)) {
-            throw new com.atelie.ecommerce.api.common.exception.NotFoundException("Categoria não encontrada.");
+            throw new com.atelie.ecommerce.application.common.exception.NotFoundException("Categoria não encontrada.");
         }
         try {
             repository.deleteById(id);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            throw new com.atelie.ecommerce.api.common.exception.DuplicateResourceException(
+            throw new com.atelie.ecommerce.application.common.exception.DuplicateResourceException(
                     "Não é possível excluir a categoria pois existem produtos associados a ela.");
         }
     }

@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.subscription;
 
-import com.atelie.ecommerce.api.subscription.dto.SubscriptionRequestDTO;
+import com.atelie.ecommerce.application.dto.subscription.SubscriptionRequestDTO;
 import com.atelie.ecommerce.application.service.subscription.UserSubscriptionService;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.entity.SubscriptionEntity;
 import org.slf4j.Logger;

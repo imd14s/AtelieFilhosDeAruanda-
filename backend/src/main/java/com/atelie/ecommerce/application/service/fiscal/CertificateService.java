@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.fiscal;
 
-import com.atelie.ecommerce.api.fiscal.dto.CertificateInfoResponse;
+import com.atelie.ecommerce.application.dto.fiscal.CertificateInfoResponse;
 import com.atelie.ecommerce.application.service.config.SystemConfigService;
 import com.atelie.ecommerce.infrastructure.security.EncryptionUtility;
 import lombok.RequiredArgsConstructor;

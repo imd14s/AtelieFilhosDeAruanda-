@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api;
 
-import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteRequest;
+import com.atelie.ecommerce.application.dto.shipping.ShippingQuoteRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +46,7 @@ public class StorefrontIntegrationTest {
                 request.setSubtotal(new BigDecimal("100.00"));
 
                 // Mock legitimate response
-                com.atelie.ecommerce.api.shipping.dto.ShippingQuoteResponse mockResponse = new com.atelie.ecommerce.api.shipping.dto.ShippingQuoteResponse(
+                com.atelie.ecommerce.application.dto.shipping.ShippingQuoteResponse mockResponse = new com.atelie.ecommerce.application.dto.shipping.ShippingQuoteResponse(
                                 "MOCK", true, false, BigDecimal.TEN, BigDecimal.TEN);
 
                 org.mockito.Mockito

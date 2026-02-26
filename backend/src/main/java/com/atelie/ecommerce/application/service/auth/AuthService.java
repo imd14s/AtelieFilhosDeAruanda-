@@ -1,11 +1,11 @@
 package com.atelie.ecommerce.application.service.auth;
 
-import com.atelie.ecommerce.api.auth.dto.LoginRequest;
-import com.atelie.ecommerce.api.auth.dto.RegisterRequest;
-import com.atelie.ecommerce.api.auth.dto.GoogleLoginRequest;
-import com.atelie.ecommerce.api.auth.dto.LoginResponse;
-import com.atelie.ecommerce.api.admin.dto.CreateUserDTO;
-import com.atelie.ecommerce.api.common.exception.ConflictException;
+import com.atelie.ecommerce.application.dto.auth.LoginRequest;
+import com.atelie.ecommerce.application.dto.auth.RegisterRequest;
+import com.atelie.ecommerce.application.dto.auth.GoogleLoginRequest;
+import com.atelie.ecommerce.application.dto.auth.LoginResponse;
+import com.atelie.ecommerce.application.dto.admin.CreateUserDTO;
+import com.atelie.ecommerce.application.common.exception.ConflictException;
 import com.atelie.ecommerce.domain.marketing.model.AutomationType;
 import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
@@ -59,11 +59,11 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
+                .orElseThrow(() -> new com.atelie.ecommerce.application.common.exception.NotFoundException(
                         "Usuário não encontrado."));
 
         if (!user.getEmailVerified()) {
-            throw new com.atelie.ecommerce.api.common.exception.BusinessException(
+            throw new com.atelie.ecommerce.application.common.exception.BusinessException(
                     "Por favor, verifique seu e-mail antes de realizar o login.");
         }
 
@@ -123,9 +123,9 @@ public class AuthService {
     }
 
     @Transactional
-    public String verifyCustomer(com.atelie.ecommerce.api.auth.dto.VerifyRequest request) {
+    public String verifyCustomer(com.atelie.ecommerce.application.dto.auth.VerifyRequest request) {
         UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new com.atelie.ecommerce.api.common.exception.NotFoundException(
+                .orElseThrow(() -> new com.atelie.ecommerce.application.common.exception.NotFoundException(
                         "Usuário não encontrado."));
 
         if (!request.getCode().equals(user.getVerificationCode())) {
@@ -233,7 +233,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void createEmployee(com.atelie.ecommerce.api.admin.dto.CreateUserDTO request) {
+    public void createEmployee(com.atelie.ecommerce.application.dto.admin.CreateUserDTO request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         // Double check admin just in case
         boolean isAdmin = auth != null

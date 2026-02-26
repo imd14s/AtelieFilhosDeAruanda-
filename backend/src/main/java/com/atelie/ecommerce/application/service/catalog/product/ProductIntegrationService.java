@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.application.service.catalog.product;
 
-import com.atelie.ecommerce.api.catalog.product.dto.LinkIntegrationRequest;
-import com.atelie.ecommerce.api.common.exception.ConflictException;
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.dto.catalog.product.LinkIntegrationRequest;
+import com.atelie.ecommerce.application.common.exception.ConflictException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 import com.atelie.ecommerce.infrastructure.persistence.integration.repository.MarketplaceIntegrationRepository;
 import com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;

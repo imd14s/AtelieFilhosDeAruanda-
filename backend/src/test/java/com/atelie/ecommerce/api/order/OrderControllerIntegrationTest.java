@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.api.order;
 
-import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
-import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
+import com.atelie.ecommerce.application.dto.order.CreateOrderItemRequest;
+import com.atelie.ecommerce.application.dto.order.CreateOrderRequest;
 import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.domain.order.OrderStatus;
 import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;

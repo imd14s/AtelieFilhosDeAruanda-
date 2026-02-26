@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.api.shipping.service;
 
-import com.atelie.ecommerce.api.serviceengine.ServiceOrchestrator;
-import com.atelie.ecommerce.api.serviceengine.ServiceResult;
-import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteResponse;
+import com.atelie.ecommerce.application.serviceengine.ServiceOrchestrator;
+import com.atelie.ecommerce.application.serviceengine.ServiceResult;
+import com.atelie.ecommerce.application.dto.shipping.ShippingQuoteResponse;
 import com.atelie.ecommerce.domain.service.model.ServiceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public class ShippingService {
     }
 
     public ShippingQuoteResponse quote(String rawCep, BigDecimal subtotal, String forcedProvider,
-            List<com.atelie.ecommerce.api.shipping.dto.ShippingQuoteRequest.ShippingItem> items) {
+            List<com.atelie.ecommerce.application.dto.shipping.ShippingQuoteRequest.ShippingItem> items) {
 
         Map<String, Object> request = new HashMap<>();
         request.put("cep", rawCep);

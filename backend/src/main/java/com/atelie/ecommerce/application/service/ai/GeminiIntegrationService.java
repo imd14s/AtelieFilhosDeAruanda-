@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.ai;
 
-import com.atelie.ecommerce.api.common.exception.BusinessException;
+import com.atelie.ecommerce.application.common.exception.BusinessException;
 import com.atelie.ecommerce.application.service.config.AiConfigService;
 import com.atelie.ecommerce.infrastructure.persistence.config.AiConfigEntity;
 import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;

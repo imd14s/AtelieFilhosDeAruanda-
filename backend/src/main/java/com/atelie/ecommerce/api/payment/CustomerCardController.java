@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.payment;
 
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 import com.atelie.ecommerce.application.service.payment.MercadoPagoCustomerClient;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;

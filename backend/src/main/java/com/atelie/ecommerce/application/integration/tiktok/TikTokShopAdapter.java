@@ -6,7 +6,7 @@ import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEnt
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductIntegrationEntity;
 import com.atelie.ecommerce.application.service.order.OrderService;
-import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
+import com.atelie.ecommerce.application.dto.order.CreateOrderItemRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;

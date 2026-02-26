@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.application.service.payment;
 
-import com.atelie.ecommerce.api.payment.dto.PaymentResponse;
-import com.atelie.ecommerce.api.serviceengine.ServiceOrchestrator;
-import com.atelie.ecommerce.api.serviceengine.ServiceResult;
+import com.atelie.ecommerce.application.dto.payment.PaymentResponse;
+import com.atelie.ecommerce.application.serviceengine.ServiceOrchestrator;
+import com.atelie.ecommerce.application.serviceengine.ServiceResult;
 import com.atelie.ecommerce.application.service.payment.dto.CreatePixPaymentRequest;
 import com.atelie.ecommerce.domain.service.model.ServiceType;
 import org.springframework.stereotype.Service;

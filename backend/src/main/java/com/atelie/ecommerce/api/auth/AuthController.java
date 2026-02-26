@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.auth;
 
-import com.atelie.ecommerce.api.auth.dto.*;
+import com.atelie.ecommerce.application.dto.auth.*;
 import com.atelie.ecommerce.application.service.auth.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

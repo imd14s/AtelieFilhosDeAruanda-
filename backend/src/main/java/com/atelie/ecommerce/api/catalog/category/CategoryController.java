@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.api.catalog.category;
 
-import com.atelie.ecommerce.api.catalog.category.dto.CreateCategoryRequest;
-import com.atelie.ecommerce.api.catalog.category.dto.CategoryResponse;
-import com.atelie.ecommerce.api.common.dto.ErrorResponse;
+import com.atelie.ecommerce.application.dto.catalog.category.CreateCategoryRequest;
+import com.atelie.ecommerce.application.dto.catalog.category.CategoryResponse;
+import com.atelie.ecommerce.application.common.dto.ErrorResponse;
 import com.atelie.ecommerce.application.service.catalog.category.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

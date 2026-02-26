@@ -6,7 +6,7 @@ import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.atelie.ecommerce.api.marketing.dto.FavoriteRankingDTO;
+import com.atelie.ecommerce.application.dto.marketing.FavoriteRankingDTO;
 import java.util.List;
 import java.util.UUID;
 

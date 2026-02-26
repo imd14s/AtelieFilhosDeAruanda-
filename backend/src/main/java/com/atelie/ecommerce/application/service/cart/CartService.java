@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.cart;
 
-import com.atelie.ecommerce.api.common.exception.BusinessException;
+import com.atelie.ecommerce.application.common.exception.BusinessException;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 import com.atelie.ecommerce.infrastructure.persistence.cart.CartEntity;
 import com.atelie.ecommerce.infrastructure.persistence.cart.CartItemEntity;

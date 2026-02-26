@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.admin;
 
-import com.atelie.ecommerce.api.auth.dto.LoginRequest;
+import com.atelie.ecommerce.application.dto.auth.LoginRequest;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

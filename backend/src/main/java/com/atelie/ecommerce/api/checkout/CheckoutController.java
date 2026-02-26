@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.api.checkout;
 
-import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
-import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
-import com.atelie.ecommerce.api.payment.dto.PaymentResponse;
+import com.atelie.ecommerce.application.dto.order.CreateOrderItemRequest;
+import com.atelie.ecommerce.application.dto.order.CreateOrderRequest;
+import com.atelie.ecommerce.application.dto.payment.PaymentResponse;
 import com.atelie.ecommerce.application.service.order.OrderService;
 import com.atelie.ecommerce.application.service.payment.PaymentService;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;

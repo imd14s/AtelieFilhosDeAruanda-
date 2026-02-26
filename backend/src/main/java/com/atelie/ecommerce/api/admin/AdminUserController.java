@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.admin;
 
-import com.atelie.ecommerce.api.admin.dto.CreateUserDTO;
+import com.atelie.ecommerce.application.dto.admin.CreateUserDTO;
 import com.atelie.ecommerce.application.service.auth.AuthService;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;

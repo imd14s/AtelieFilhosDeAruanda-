@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.fiscal;
 
-import com.atelie.ecommerce.api.fiscal.dto.CertificateInfoResponse;
+import com.atelie.ecommerce.application.dto.fiscal.CertificateInfoResponse;
 import com.atelie.ecommerce.application.service.fiscal.CertificateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

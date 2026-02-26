@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.analytics;
 
-import com.atelie.ecommerce.api.analytics.dto.DashboardMetricsResponse;
+import com.atelie.ecommerce.application.dto.analytics.DashboardMetricsResponse;
 import com.atelie.ecommerce.domain.order.OrderStatus;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemRepository;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;

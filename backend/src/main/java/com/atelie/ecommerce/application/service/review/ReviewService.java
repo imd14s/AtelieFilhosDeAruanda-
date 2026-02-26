@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.review;
 
-import com.atelie.ecommerce.api.common.exception.BusinessException;
+import com.atelie.ecommerce.application.common.exception.BusinessException;
 import com.atelie.ecommerce.application.service.ai.GeminiIntegrationService;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;

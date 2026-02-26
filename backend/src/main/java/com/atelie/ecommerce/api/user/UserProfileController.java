@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.user;
 
-import com.atelie.ecommerce.api.user.dto.UserProfileResponse;
+import com.atelie.ecommerce.application.dto.user.UserProfileResponse;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 import com.atelie.ecommerce.infrastructure.security.UserPrincipal;

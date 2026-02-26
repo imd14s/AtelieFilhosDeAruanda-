@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.payment;
 
-import com.atelie.ecommerce.api.payment.dto.PaymentResponse;
+import com.atelie.ecommerce.application.dto.payment.PaymentResponse;
 import com.atelie.ecommerce.application.service.payment.PaymentService;
 import com.atelie.ecommerce.application.service.payment.dto.CreatePixPaymentRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;

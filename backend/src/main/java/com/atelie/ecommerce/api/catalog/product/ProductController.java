@@ -4,8 +4,8 @@ import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEnt
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.application.service.catalog.product.ProductService;
 import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
-import com.atelie.ecommerce.api.common.exception.BusinessException;
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.common.exception.BusinessException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

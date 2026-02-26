@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.catalog.product;
 
-import com.atelie.ecommerce.api.catalog.product.dto.LinkIntegrationRequest;
+import com.atelie.ecommerce.application.dto.catalog.product.LinkIntegrationRequest;
 import com.atelie.ecommerce.application.service.catalog.product.ProductIntegrationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

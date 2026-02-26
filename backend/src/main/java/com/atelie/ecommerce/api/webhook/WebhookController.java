@@ -4,7 +4,7 @@ import com.atelie.ecommerce.application.service.order.OrderService;
 import com.atelie.ecommerce.application.service.fiscal.InvoiceService;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;

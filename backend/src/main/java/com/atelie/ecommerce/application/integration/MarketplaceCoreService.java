@@ -19,7 +19,7 @@ import com.atelie.ecommerce.infrastructure.persistence.category.CategoryReposito
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 
 @Service
 public class MarketplaceCoreService {

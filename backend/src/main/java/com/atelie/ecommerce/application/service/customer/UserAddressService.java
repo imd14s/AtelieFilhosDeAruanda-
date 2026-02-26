@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.customer;
 
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 import com.atelie.ecommerce.infrastructure.persistence.customer.entity.UserAddressEntity;
 import com.atelie.ecommerce.infrastructure.persistence.customer.repository.UserAddressRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;

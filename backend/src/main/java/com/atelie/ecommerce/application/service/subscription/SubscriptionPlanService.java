@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.subscription;
 
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.entity.SubscriptionPlanEntity;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.entity.SubscriptionPlanProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.subscription.repository.SubscriptionPlanRepository;

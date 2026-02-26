@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.api.fiscal.ncm;
 
-import com.atelie.ecommerce.api.fiscal.ncm.dto.NcmResponse;
-import com.atelie.ecommerce.api.fiscal.ncm.dto.PageResponseDTO;
+import com.atelie.ecommerce.application.dto.fiscal.ncm.NcmResponse;
+import com.atelie.ecommerce.application.dto.fiscal.ncm.PageResponseDTO;
 import com.atelie.ecommerce.application.service.fiscal.ncm.NcmService;
 import com.atelie.ecommerce.application.service.fiscal.ncm.NcmSyncService;
 import com.atelie.ecommerce.domain.common.pagination.PageResult;

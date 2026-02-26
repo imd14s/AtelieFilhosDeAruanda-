@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.analytics;
 
-import com.atelie.ecommerce.api.analytics.dto.DashboardMetricsResponse;
+import com.atelie.ecommerce.application.dto.analytics.DashboardMetricsResponse;
 import com.atelie.ecommerce.application.service.analytics.AnalyticsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

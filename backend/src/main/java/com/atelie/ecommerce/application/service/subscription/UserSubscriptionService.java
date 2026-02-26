@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.application.service.subscription;
 
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
-import com.atelie.ecommerce.api.subscription.dto.SubscriptionRequestDTO;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.dto.subscription.SubscriptionRequestDTO;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.customer.repository.UserAddressRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;

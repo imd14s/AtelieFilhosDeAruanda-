@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.api.auth;
 
-import com.atelie.ecommerce.api.auth.dto.LoginRequest;
-import com.atelie.ecommerce.api.auth.dto.LoginResponse;
-import com.atelie.ecommerce.api.auth.dto.RegisterRequest;
+import com.atelie.ecommerce.application.dto.auth.LoginRequest;
+import com.atelie.ecommerce.application.dto.auth.LoginResponse;
+import com.atelie.ecommerce.application.dto.auth.RegisterRequest;
 import com.atelie.ecommerce.application.service.auth.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

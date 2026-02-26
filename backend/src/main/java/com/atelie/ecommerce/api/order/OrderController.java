@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.api.order;
 
-import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
-import com.atelie.ecommerce.api.order.dto.OrderResponse;
-import com.atelie.ecommerce.api.order.dto.OrderItemResponse;
+import com.atelie.ecommerce.application.dto.order.CreateOrderRequest;
+import com.atelie.ecommerce.application.dto.order.OrderResponse;
+import com.atelie.ecommerce.application.dto.order.OrderItemResponse;
 import com.atelie.ecommerce.application.service.order.OrderService;
 import com.atelie.ecommerce.domain.order.OrderStatus;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;

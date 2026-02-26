@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.dashboard;
 
-import com.atelie.ecommerce.api.catalog.product.dto.ProductResponse;
+import com.atelie.ecommerce.application.dto.catalog.product.ProductResponse;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import org.springframework.http.ResponseEntity;

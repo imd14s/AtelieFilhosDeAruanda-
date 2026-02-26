@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.application.service.catalog.product;
 
-import com.atelie.ecommerce.api.catalog.product.dto.CreateVariantRequest;
-import com.atelie.ecommerce.api.common.exception.ConflictException;
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.dto.catalog.product.CreateVariantRequest;
+import com.atelie.ecommerce.application.common.exception.ConflictException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;

@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.catalog.product;
 
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
 import com.atelie.ecommerce.domain.catalog.event.ProductSavedEvent;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;

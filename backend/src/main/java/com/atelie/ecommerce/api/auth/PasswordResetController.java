@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.api.auth;
 
-import com.atelie.ecommerce.api.auth.dto.PasswordResetRequest;
-import com.atelie.ecommerce.api.auth.dto.ResetPasswordCommitRequest;
+import com.atelie.ecommerce.application.dto.auth.PasswordResetRequest;
+import com.atelie.ecommerce.application.dto.auth.ResetPasswordCommitRequest;
 import com.atelie.ecommerce.application.service.auth.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

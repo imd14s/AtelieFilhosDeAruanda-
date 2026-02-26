@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.application.service.order;
 
-import com.atelie.ecommerce.api.common.exception.NotFoundException;
-import com.atelie.ecommerce.api.order.dto.CreateOrderItemRequest;
-import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
+import com.atelie.ecommerce.application.common.exception.NotFoundException;
+import com.atelie.ecommerce.application.dto.order.CreateOrderItemRequest;
+import com.atelie.ecommerce.application.dto.order.CreateOrderRequest;
 import com.atelie.ecommerce.application.service.inventory.InventoryService;
 import com.atelie.ecommerce.application.service.marketing.CommunicationService;
 import com.atelie.ecommerce.application.service.fiscal.InvoiceService;

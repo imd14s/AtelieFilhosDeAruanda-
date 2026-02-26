@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.infrastructure.service.media;
 
-import com.atelie.ecommerce.api.common.util.ReflectionPropertyUtils;
+import com.atelie.ecommerce.application.common.util.ReflectionPropertyUtils;
 import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetRepository;
 import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetEntity;
 import com.atelie.ecommerce.infrastructure.persistence.media.MediaAssetType;

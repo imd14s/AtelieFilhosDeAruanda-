@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.api.inventory;
 
-import com.atelie.ecommerce.api.inventory.dto.InventoryAdjustmentRequest;
-import com.atelie.ecommerce.api.inventory.dto.InventoryBalanceResponse;
+import com.atelie.ecommerce.application.dto.inventory.InventoryAdjustmentRequest;
+import com.atelie.ecommerce.application.dto.inventory.InventoryBalanceResponse;
 import com.atelie.ecommerce.application.service.inventory.InventoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

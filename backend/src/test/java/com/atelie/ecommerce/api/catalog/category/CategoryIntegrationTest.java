@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.catalog.category;
 
-import com.atelie.ecommerce.api.catalog.category.dto.CreateCategoryRequest;
+import com.atelie.ecommerce.application.dto.catalog.category.CreateCategoryRequest;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryEntity;
 import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;

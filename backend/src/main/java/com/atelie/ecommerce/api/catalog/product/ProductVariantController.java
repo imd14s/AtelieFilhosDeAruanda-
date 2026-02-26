@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.catalog.product;
 
-import com.atelie.ecommerce.api.catalog.product.dto.CreateVariantRequest;
+import com.atelie.ecommerce.application.dto.catalog.product.CreateVariantRequest;
 import com.atelie.ecommerce.application.service.catalog.product.ProductVariantService;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
 import jakarta.validation.Valid;
