@@ -38,7 +38,7 @@ public class OrderService {
     private final com.atelie.ecommerce.application.service.audit.AuditService auditService;
     private final CommunicationService communicationService;
     private final InvoiceService invoiceService;
-    private final ShippingAutomationService shippingAutomationService;
+    private final com.atelie.ecommerce.application.service.shipping.ShippingLabelService shippingLabelService;
 
     public OrderService(OrderRepository orderRepository,
             ProductRepository productRepository,
@@ -47,7 +47,7 @@ public class OrderService {
             com.atelie.ecommerce.application.service.audit.AuditService auditService,
             CommunicationService communicationService,
             InvoiceService invoiceService,
-            ShippingAutomationService shippingAutomationService) {
+            com.atelie.ecommerce.application.service.shipping.ShippingLabelService shippingLabelService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
@@ -55,7 +55,7 @@ public class OrderService {
         this.auditService = auditService;
         this.communicationService = communicationService;
         this.invoiceService = invoiceService;
-        this.shippingAutomationService = shippingAutomationService;
+        this.shippingLabelService = shippingLabelService;
     }
 
     @Transactional
@@ -278,7 +278,7 @@ public class OrderService {
 
         // Trigger automatisations
         invoiceService.emitInvoiceForOrder(orderId);
-        shippingAutomationService.automateShipping(order);
+        shippingLabelService.generateLabelForOrder(orderId);
     }
 
     @Transactional

@@ -66,6 +66,18 @@ public class MelhorEnvioClient {
                 });
     }
 
+    public Map<String, Object> cancelLabel(String token, Map<String, Object> payload) {
+        return restClient.post()
+                .uri("/api/v2/me/shipment/cancel")
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/json")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .body(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                });
+    }
+
     public Map<String, Object> getTracking(String token, String trackingCode) {
         return restClient.get()
                 .uri("/api/v2/me/shipment/tracking/" + trackingCode)
