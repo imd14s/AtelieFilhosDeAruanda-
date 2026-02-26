@@ -57,7 +57,7 @@ export const cartService = {
         window.dispatchEvent(new Event('cart-updated'));
     },
 
-    add: async (product: Product, quantity: number = 1, variantId: string | null = null): Promise<CartItem[]> => {
+    add: async (product: Partial<Product> & { id: string; name?: string; title?: string; price: number }, quantity: number = 1, variantId: string | null = null): Promise<CartItem[]> => {
         const cart = await cartService.get();
         const vId = variantId || "";
         const existingItem = cart.find(item =>

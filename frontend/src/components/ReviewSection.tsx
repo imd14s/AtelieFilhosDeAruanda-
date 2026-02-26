@@ -6,11 +6,11 @@ import { Review } from '../types';
 
 interface ReviewSectionProps {
     productId: string;
-    onReviewAdded?: () => void;
+    onReviewAdded?: (review: Review) => void;
     onReviewsLoaded?: (reviews: Review[]) => void;
 }
 
-const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewsLoaded }) => {
+const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewAdded, onReviewsLoaded }) => {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 

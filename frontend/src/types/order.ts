@@ -5,8 +5,19 @@ export interface OrderItem {
     variantId: string | null;
     quantity: number;
     name?: string;
+    productName?: string;
     price?: number;
+    unitPrice?: number;
+    subtotal?: number;
     image?: string;
+    productImage?: string;
+    product?: {
+        id: string;
+        name: string;
+        title?: string;
+        price: number;
+        images?: string[];
+    };
 }
 
 export interface CreateOrderData {
@@ -16,7 +27,7 @@ export interface CreateOrderData {
     sobrenome?: string;
     email?: string;
     items: OrderItem[];
-    shippingAddress: Address;
+    shippingAddress: Address | string;
     paymentMethod: string;
     paymentToken?: string | null;
     cardId?: string | null;
@@ -36,10 +47,16 @@ export interface ShippingOption {
 export interface Order {
     id: string;
     number?: string;
+    externalId?: string;
     status: string;
     total: number;
+    totalAmount?: number;
+    shippingCost?: number;
+    discount?: number;
     createdAt: string;
     items: OrderItem[];
-    shippingAddress: Address;
+    shippingAddress: Address | string;
     paymentMethod: string;
+    paymentStatus?: string;
+    trackingCode?: string;
 }

@@ -26,9 +26,12 @@ const marketingService = {
         }
     },
 
-    getAvailableCoupons: async (): Promise<Coupon[]> => {
+    getAvailableCoupons: async (userId?: string): Promise<Coupon[]> => {
         try {
-            const response = await api.get('/coupons/my-coupons', { headers: TENANT_HEADER });
+            const response = await api.get('/coupons/my-coupons', {
+                params: userId ? { userId } : {},
+                headers: TENANT_HEADER
+            });
             return response.data;
         } catch (error: any) {
             throw error.response?.data || { message: 'Erro ao buscar cupons' };

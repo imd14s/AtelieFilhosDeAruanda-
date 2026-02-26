@@ -4,6 +4,14 @@ export interface Category {
     slug?: string;
     description?: string;
     active?: boolean;
+    imageUrl?: string;
+    media?: {
+        mainMedia?: {
+            image?: {
+                url?: string;
+            };
+        };
+    };
 }
 
 export interface Variant {
@@ -14,6 +22,10 @@ export interface Variant {
     sku?: string;
     color?: string;
     size?: string;
+    attributesJson?: string;
+    active?: boolean;
+    imageUrl?: string;
+    images?: string[];
 }
 
 export interface Review {
@@ -28,6 +40,8 @@ export interface Review {
     comment: string;
     createdAt: string;
     images?: string[];
+    status?: string;
+    product?: Partial<Product>;
 }
 
 export interface CreateReviewData {
@@ -60,4 +74,16 @@ export interface Product {
     totalReviews: number;
     variants: Variant[];
     active?: boolean;
+}
+
+export interface ProductQuestion {
+    id: string;
+    productId: string;
+    userId: string;
+    question: string;
+    answer?: string;
+    status: 'ANSWERED' | 'WAITING' | 'PENDING';
+    createdAt: string;
+    answeredAt?: string;
+    product?: Partial<Product>;
 }

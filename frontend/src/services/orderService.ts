@@ -1,5 +1,5 @@
 import api from './api';
-import { CreateOrderData, ShippingOption, CartItem } from '../types';
+import { CreateOrderData, ShippingOption, CartItem, Order, Product } from '../types';
 import { TENANT_HEADER } from './productService';
 
 /**
@@ -8,7 +8,7 @@ import { TENANT_HEADER } from './productService';
  */
 
 export const orderService = {
-    createOrder: async (orderData: CreateOrderData): Promise<any> => {
+    createOrder: async (orderData: CreateOrderData): Promise<Order> => {
         try {
             const payload = {
                 customerName: orderData.customerName || `${orderData.nome || ''} ${orderData.sobrenome || ''}`.trim(),
@@ -37,7 +37,7 @@ export const orderService = {
         }
     },
 
-    getOrderById: async (orderId: string): Promise<any> => {
+    getOrderById: async (orderId: string): Promise<Order> => {
         try {
             const response = await api.get(`/orders/${orderId}`, {
                 headers: TENANT_HEADER
@@ -86,7 +86,7 @@ export const orderService = {
 
     // --- HISTÓRICO ---
     history: {
-        get: async (userId: string): Promise<any[]> => {
+        get: async (userId: string): Promise<Product[]> => {
             if (!userId) return [];
             try {
                 const response = await api.get(`/history/user/${userId}`, {
@@ -122,12 +122,12 @@ export const orderService = {
 };
 
 export const configService = {
-    getMercadoPagoPublicKey: async (): Promise<string | null> => {
+    getMercadoPagoPublicKey: async (): Promise<any> => {
         try {
             const response = await api.get('/config/public/mercado-pago/public-key', {
                 headers: TENANT_HEADER
             });
-            return response.data || null;
+            return response.data;
         } catch (error) {
             console.error("[configService] Erro ao buscar chave pública do Mercado Pago:", error);
             return null;
