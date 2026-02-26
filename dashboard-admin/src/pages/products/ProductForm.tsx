@@ -13,8 +13,10 @@ import type { ProductMedia, ProductVariant } from '../../types/product';
 import type { Category } from '../../types/category';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { AdminProviderService } from '../../services/AdminProviderService';
+import { FiscalService, NcmResponse } from '../../services/FiscalService';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
+import { Search } from 'lucide-react';
 
 const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),
@@ -26,6 +28,9 @@ const schema = z.object({
   height: z.coerce.number().optional().default(0),
   width: z.coerce.number().optional().default(0),
   length: z.coerce.number().optional().default(0),
+  ncm: z.string().min(1, 'NCM é obrigatório'),
+  productionType: z.enum(['PROPRIA', 'REVENDA']).default('REVENDA'),
+  origin: z.string().min(1, 'Origem é obrigatória').default('0'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -40,6 +45,9 @@ export function ProductForm() {
   const [marketplaces, setMarketplaces] = useState<AdminServiceProvider[]>([]);
   const [selectedMarketplaces, setSelectedMarketplaces] = useState<string[]>([]);
   const [allMedia, setAllMedia] = useState<ProductMedia[]>([]);
+  const [ncmSuggestions, setNcmSuggestions] = useState<NcmResponse[]>([]);
+  const [isSearchingNcm, setIsSearchingNcm] = useState(false);
+  const [showNcmResults, setShowNcmResults] = useState(false);
 
   // Step-by-step Variant states
   const [variants, setVariants] = useState<ProductVariant[]>([]);
@@ -68,6 +76,9 @@ export function ProductForm() {
       width: 0,
       length: 0,
       marketplaceIds: [],
+      productionType: 'REVENDA',
+      origin: '0',
+      ncm: '',
     }
   });
 
@@ -141,6 +152,9 @@ export function ProductForm() {
         height: (product as any).height || product.dimensions?.height || 0,
         width: (product as any).width || product.dimensions?.width || 0,
         length: (product as any).length || product.dimensions?.length || 0,
+        ncm: (product as any).ncm || '',
+        productionType: (product as any).productionType || 'REVENDA',
+        origin: (product as any).origin || '0',
       });
       if (product.variants) setVariants(product.variants);
       if (product.media) {
@@ -183,6 +197,35 @@ export function ProductForm() {
     } finally {
       setIsGeneratingAI(false);
     }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      const ncmValue = watch('ncm');
+      if (ncmValue && ncmValue.length >= 2 && !showNcmResults && !isSearchingNcm) {
+        // Apenas busca se o usuário estiver digitando e não tiver selecionado ainda
+        searchNcm(ncmValue);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [watch('ncm')]);
+
+  const searchNcm = async (query: string) => {
+    setIsSearchingNcm(true);
+    setShowNcmResults(true);
+    try {
+      const results = await FiscalService.searchNcms(query);
+      setNcmSuggestions(results);
+    } catch (error) {
+      console.error('Erro ao buscar NCM:', error);
+    } finally {
+      setIsSearchingNcm(false);
+    }
+  };
+
+  const handleSelectNcm = (ncm: NcmResponse) => {
+    setValue('ncm', ncm.code);
+    setShowNcmResults(false);
   };
 
   const handleEditVariant = (variant: ProductVariant) => {
@@ -338,10 +381,11 @@ export function ProductForm() {
         variants,
         media: sortedMedia,
         marketplaceIds: selectedMarketplaces,
-        weight: data.weight,
-        height: data.height,
         width: data.width,
         length: data.length,
+        ncm: data.ncm,
+        productionType: data.productionType,
+        origin: data.origin,
       };
 
       if (id) {
@@ -566,6 +610,86 @@ export function ProductForm() {
                 placeholder="Ex: 30"
               />
               {errors.length && <p className="text-red-500 text-xs mt-1">{errors.length.message}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Passo 3 - Dados Fiscais (Obrigatórios para NF-e) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+          <h2 className="font-semibold text-lg text-gray-800 border-b pb-2">Dados Fiscais</h2>
+          <p className="text-sm text-gray-500">Informações essenciais para a emissão correta de notas fiscais (NF-e).</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                NCM <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  {...register('ncm')}
+                  placeholder="Busque por código ou nome..."
+                  className="w-full p-2 pl-9 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                  autoComplete="off"
+                  onFocus={() => watch('ncm').length >= 2 && setShowNcmResults(true)}
+                />
+                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+
+                {showNcmResults && (ncmSuggestions.length > 0 || isSearchingNcm) && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                    {isSearchingNcm ? (
+                      <div className="p-4 text-center text-sm text-gray-500">Buscando...</div>
+                    ) : (
+                      ncmSuggestions.map((ncm) => (
+                        <button
+                          key={ncm.code}
+                          type="button"
+                          className="w-full text-left p-3 hover:bg-indigo-50 border-b last:border-0 transition-colors"
+                          onClick={() => handleSelectNcm(ncm)}
+                        >
+                          <div className="font-bold text-indigo-600">{ncm.code}</div>
+                          <div className="text-xs text-gray-500 truncate">{ncm.description}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              {errors.ncm && <p className="text-red-500 text-xs mt-1">{errors.ncm.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Produção <span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register('productionType')}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+              >
+                <option value="REVENDA">Revenda</option>
+                <option value="PROPRIA">Própria (Fabricação)</option>
+              </select>
+              {errors.productionType && <p className="text-red-500 text-xs mt-1">{errors.productionType.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Origem <span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register('origin')}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+              >
+                <option value="0">0 - Nacional</option>
+                <option value="1">1 - Estrangeira - Importação direta</option>
+                <option value="2">2 - Estrangeira - Adquirida mercado interno</option>
+                <option value="3">3 - Nacional (Conteúdo Import. {'>'} 40%)</option>
+                <option value="4">4 - Nacional (Conf. Processos Básicos)</option>
+                <option value="5">5 - Nacional (Conteúdo Import. {'<='} 40%)</option>
+                <option value="6">6 - Estrangeira - (Importação direta s/ similar)</option>
+                <option value="7">7 - Estrangeira - (Mercado interno s/ similar)</option>
+                <option value="8">8 - Nacional (Conteúdo Import. {'>'} 70%)</option>
+              </select>
+              {errors.origin && <p className="text-red-500 text-xs mt-1">{errors.origin.message}</p>}
             </div>
           </div>
         </div>

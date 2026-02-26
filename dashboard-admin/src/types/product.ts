@@ -49,6 +49,9 @@ export interface Product {
     dimensions?: ProductDimensions;
     seo?: ProductSEO;
     tenantId: string;
+    ncm?: string;
+    productionType?: 'PROPRIA' | 'REVENDA';
+    origin?: string;
     createdAt: string;
     updatedAt: string;
 }
