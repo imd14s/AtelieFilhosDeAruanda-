@@ -12,5 +12,8 @@ public enum SystemConfigKey {
 
     // Order
     ORDER_MIN_VALUE,
-    ORDER_MAX_INSTALLMENTS
+    ORDER_MAX_INSTALLMENTS,
+
+    // Rules Engine
+    SHIPPING_RULES
 }

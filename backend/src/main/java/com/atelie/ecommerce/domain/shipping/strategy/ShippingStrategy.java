@@ -37,9 +37,13 @@ public interface ShippingStrategy {
             BigDecimal cost,
             BigDecimal threshold,
             String estimatedDays,
-            String error) {
+            String error,
+            String appliedRuleName,
+            BigDecimal originalCost,
+            String persuasiveMessage) {
         public static ShippingResult failure(String provider, String error) {
-            return new ShippingResult(provider, false, false, false, BigDecimal.ZERO, BigDecimal.ZERO, null, error);
+            return new ShippingResult(provider, false, false, false, BigDecimal.ZERO, BigDecimal.ZERO, null, error,
+                    null, null, null);
         }
     }
 }

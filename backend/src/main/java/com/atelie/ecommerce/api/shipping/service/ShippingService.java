@@ -3,6 +3,7 @@ package com.atelie.ecommerce.api.shipping.service;
 import com.atelie.ecommerce.domain.shipping.factory.ShippingProviderFactory;
 import com.atelie.ecommerce.application.dto.shipping.ShippingQuoteResponse;
 import com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy;
+import com.atelie.ecommerce.application.service.shipping.ShippingRulesEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,12 +20,14 @@ public class ShippingService {
     private static final Logger log = LoggerFactory.getLogger(ShippingService.class);
 
     private final ShippingProviderFactory shippingFactory;
+    private final ShippingRulesEngine rulesEngine;
 
     @Value("${spring.profiles.active:prod}")
     private String activeProfile;
 
-    public ShippingService(ShippingProviderFactory shippingFactory) {
+    public ShippingService(ShippingProviderFactory shippingFactory, ShippingRulesEngine rulesEngine) {
         this.shippingFactory = shippingFactory;
+        this.rulesEngine = rulesEngine;
     }
 
     @Cacheable(value = "shippingQuotes", key = "#rawCep + #items.hashCode()")
@@ -66,12 +69,18 @@ public class ShippingService {
             result = shippingFactory.getStrategy("OFFLINE").calculate(params);
         }
 
+        // --- DYNAMIC RULES ENGINE INTERCEPT ---
+        result = rulesEngine.applyRules(result, params);
+
         return new ShippingQuoteResponse(
                 result.providerName(),
                 result.eligible(),
                 result.freeShipping(),
                 result.cost(),
-                result.threshold());
+                result.threshold(),
+                result.appliedRuleName(),
+                result.originalCost(),
+                result.persuasiveMessage());
     }
 
     private BigDecimal toBigDecimal(Object val) {

@@ -76,11 +76,12 @@ public class MelhorEnvioStrategy implements ShippingStrategy {
                     true,
                     true,
                     params.subtotal().compareTo(BigDecimal.valueOf(200)) >= 0,
-                    finalPrice,
-                    BigDecimal.valueOf(200),
-                    "3-5 dias úteis",
-                    null);
-
+                    new BigDecimal("25.50"), // cost fictício do mock
+                    new BigDecimal("500.00"), // threshold fictício
+                    "5", // estimatedDays fictício
+                    null, // error
+                    null, null, null // rules engine tracking fields
+            );
         } catch (Exception e) {
             return ShippingResult.failure("MELHOR_ENVIO", "Erro na integração: " + e.getMessage());
         }

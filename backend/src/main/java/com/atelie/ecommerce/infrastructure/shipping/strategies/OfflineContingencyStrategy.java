@@ -17,16 +17,18 @@ public class OfflineContingencyStrategy implements ShippingStrategy {
     public ShippingResult calculate(ShippingParams params) {
         // Regra de frete fixo para contingência
         BigDecimal fixedCost = new BigDecimal("25.00");
-        String estimatedDays = "7-10 dias (Contingência)";
+        // BigDecimal fixedCost = new BigDecimal("25.00"); // No longer used
+        // String estimatedDays = "7-10 dias (Contingência)"; // No longer used
 
         return new ShippingResult(
                 "OFFLINE_CONTINGENCY",
                 true,
                 true,
-                false,
-                fixedCost,
+                false, // Faltava a flag freeShipping
+                new BigDecimal("50.00"), // Custo Fixo de Contingência
                 BigDecimal.ZERO,
-                estimatedDays,
-                null);
+                "15",
+                null,
+                null, null, null);
     }
 }
