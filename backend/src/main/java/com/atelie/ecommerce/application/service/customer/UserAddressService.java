@@ -58,6 +58,7 @@ public class UserAddressService {
         existing.setCity(update.getCity());
         existing.setState(update.getState());
         existing.setZipCode(update.getZipCode());
+        existing.setDocument(update.getDocument());
 
         if (Boolean.TRUE.equals(update.getIsDefault()) && !Boolean.TRUE.equals(existing.getIsDefault())) {
             clearDefaults(userId);

@@ -111,6 +111,7 @@ public class AuthService {
         newUser.setActive(false);
         newUser.setEmailVerified(false);
         newUser.setVerificationCode(code);
+        newUser.setDocument(request.getDocument());
 
         userRepository.save(newUser);
 
@@ -253,6 +254,7 @@ public class AuthService {
                 role);
         newUser.setEmailVerified(true);
         newUser.setActive(true);
+        newUser.setDocument(request.getDocument());
 
         userRepository.save(newUser);
     }
@@ -272,7 +274,7 @@ public class AuthService {
             // Admin creating generic user?
             // Map to createEmployee logic or just old logic
             CreateUserDTO dto = new CreateUserDTO(request.getName(), request.getEmail(), request.getPassword(),
-                    request.getRole());
+                    request.getRole(), request.getDocument());
             createEmployee(dto);
         } else {
             registerCustomer(request);

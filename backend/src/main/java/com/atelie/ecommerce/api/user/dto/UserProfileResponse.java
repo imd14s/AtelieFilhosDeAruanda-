@@ -19,4 +19,5 @@ public class UserProfileResponse {
     private String photoUrl;
     private String googleId;
     private Boolean emailVerified;
+    private String document;
 }

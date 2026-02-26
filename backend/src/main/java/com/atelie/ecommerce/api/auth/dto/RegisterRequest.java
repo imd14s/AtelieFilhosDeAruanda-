@@ -23,6 +23,8 @@ public class RegisterRequest {
      */
     private String role;
 
+    private String document;
+
     // Explicit getters/setters for build compatibility
     public String getName() {
         return name;
@@ -54,5 +56,13 @@ public class RegisterRequest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getDocument() {
+        return document;
+    }
+
+    public void setDocument(String document) {
+        this.document = document;
     }
 }

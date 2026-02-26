@@ -63,6 +63,9 @@ public class UserEntity {
     @Column(name = "google_id")
     private String googleId;
 
+    @Column(name = "document")
+    private String document;
+
     // --- CONSTRUTOR DE COMPATIBILIDADE (Resgate) ---
     // Necessário para AuthService e AdminBootstrap funcionarem sem refatoração
     // profunda
@@ -216,5 +219,13 @@ public class UserEntity {
 
     public void setGoogleId(String googleId) {
         this.googleId = googleId;
+    }
+
+    public String getDocument() {
+        return document;
+    }
+
+    public void setDocument(String document) {
+        this.document = document;
     }
 }

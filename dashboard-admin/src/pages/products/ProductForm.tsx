@@ -17,6 +17,12 @@ import { AdminProviderService } from '../../services/AdminProviderService';
 import { NcmAutocomplete } from '../../components/ui/NcmAutocomplete';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),
@@ -584,16 +590,28 @@ export function ProductForm() {
           </div>
         </div>
 
-        {/* Passo 3 - Dados Fiscais (Obrigatórios para NF-e) */}
+        {/* Passo 3 - Informações Fiscais (Obrigatórios para NF-e) */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
-          <h2 className="font-semibold text-lg text-gray-800 border-b pb-2">Dados Fiscais</h2>
-          <p className="text-sm text-gray-500">Informações essenciais para a emissão correta de notas fiscais (NF-e).</p>
+          <div className="flex items-center justify-between border-b pb-2">
+            <h2 className="font-semibold text-lg text-gray-800">Informações Fiscais</h2>
+            <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-100">
+              <HelpCircle size={12} />
+              Recomendado para emissão de NF-e
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">Dados técnicos essenciais para a classificação tributária e autorização da SEFAZ.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                NCM <span className="text-red-500">*</span>
-              </label>
+            <div className="relative group">
+              <div className="flex items-center gap-1 mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  NCM <span className="text-red-500">*</span>
+                </label>
+                <HelpCircle className="h-3.5 w-3.5 text-gray-400 cursor-help" />
+                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-[11px] rounded shadow-xl z-50 border border-gray-700">
+                  Nomenclatura Comum do Mercosul. Código de 8 dígitos que identifica a natureza da mercadoria. Essencial para tributação.
+                </div>
+              </div>
               <Controller
                 control={control}
                 name="ncm"
@@ -601,22 +619,31 @@ export function ProductForm() {
                   <NcmAutocomplete
                     {...field}
                     error={errors.ncm?.message}
-                    placeholder="Ex: 71171900"
+                    placeholder="Busque por código ou nome..."
                   />
                 )}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Produção <span className="text-red-500">*</span>
-              </label>
+            <div className="relative group">
+              <div className="flex items-center gap-1 mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Tipo de Produção <span className="text-red-500">*</span>
+                </label>
+                <HelpCircle className="h-3.5 w-3.5 text-gray-400 cursor-help" />
+                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-[11px] rounded shadow-xl z-50 border border-gray-700">
+                  Diferencia se o produto é fabricado pelo Ateliê ou adquirido para comercialização direta.
+                </div>
+              </div>
               <select
                 {...register('productionType')}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                className={cn(
+                  "w-full p-2 border rounded-lg focus:ring-2 bg-white text-sm transition-all",
+                  errors.productionType ? "border-red-300 focus:ring-red-500" : "border-gray-300 focus:ring-indigo-500"
+                )}
               >
-                <option value="REVENDA">Revenda</option>
                 <option value="PROPRIA">Própria (Fabricação)</option>
+                <option value="REVENDA">Revenda (Mercadoria)</option>
               </select>
               {errors.productionType && <p className="text-red-500 text-xs mt-1">{errors.productionType.message}</p>}
             </div>
@@ -624,16 +651,19 @@ export function ProductForm() {
             <div className="relative group">
               <div className="flex items-center gap-1 mb-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  Origem <span className="text-red-500">*</span>
+                  Origem da Mercadoria <span className="text-red-500">*</span>
                 </label>
-                <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
-                <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block w-72 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-50">
-                  O código de Origem da Mercadoria segue o manual da SEFAZ para especificar quão nacional ou importado é o produto. Utilizado nas declarações de ICMS e validação de NCM.
+                <HelpCircle className="h-3.5 w-3.5 text-gray-400 cursor-help" />
+                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-2 bg-gray-900 text-white text-[11px] rounded shadow-xl z-50 border border-gray-700">
+                  Define a procedência do produto (Nacional ou Importado) e influencia nas alíquotas de ICMS conforme o manual da SEFAZ.
                 </div>
               </div>
               <select
                 {...register('origin')}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                className={cn(
+                  "w-full p-2 border rounded-lg focus:ring-2 bg-white text-sm transition-all",
+                  errors.origin ? "border-red-300 focus:ring-red-500" : "border-gray-300 focus:ring-indigo-500"
+                )}
               >
                 <option value="NACIONAL">0 - Nacional</option>
                 <option value="ESTRANGEIRA_IMPORTACAO_DIRETA">1 - Estrangeira - Importação direta</option>

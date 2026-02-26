@@ -47,6 +47,7 @@ public class AdminUserController {
                     user.setEmail(details.getEmail());
                     user.setRole(details.getRole());
                     user.setActive(details.getActive());
+                    user.setDocument(details.getDocument());
                     return ResponseEntity.ok(userRepository.save(user));
                 })
                 .orElse(ResponseEntity.notFound().build());

@@ -44,6 +44,9 @@ public class UserAddressEntity {
     @Column(name = "zip_code", nullable = false, length = 10)
     private String zipCode;
 
+    @Column(name = "document")
+    private String document;
+
     @Builder.Default
     @Column(name = "is_default")
     private Boolean isDefault = false;
@@ -71,5 +74,13 @@ public class UserAddressEntity {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public String getDocument() {
+        return document;
+    }
+
+    public void setDocument(String document) {
+        this.document = document;
     }
 }

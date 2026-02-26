@@ -9,6 +9,7 @@ export interface Order {
   invoiceUrl?: string;
   trackingCode?: string;
   shippingIdExternal?: string;
+  customerDocument?: string;
   items?: OrderItem[];
 }
 

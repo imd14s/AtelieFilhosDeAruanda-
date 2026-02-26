@@ -18,6 +18,14 @@ public class CreateUserDTO {
         this.role = role;
     }
 
+    public CreateUserDTO(String name, String email, String password, String role, String document) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.document = document;
+    }
+
     @NotBlank
     private String name;
 
@@ -30,6 +38,8 @@ public class CreateUserDTO {
 
     // Optional role, defaults to EMPLOYEE in controller logic if null
     private String role;
+
+    private String document;
 
     // Explicit getters/setters for build compatibility
     public String getName() {
@@ -62,5 +72,13 @@ public class CreateUserDTO {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getDocument() {
+        return document;
+    }
+
+    public void setDocument(String document) {
+        this.document = document;
     }
 }

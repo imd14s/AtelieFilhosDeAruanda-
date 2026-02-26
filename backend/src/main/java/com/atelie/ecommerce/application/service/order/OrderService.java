@@ -60,7 +60,7 @@ public class OrderService {
 
     @Transactional
     public OrderEntity processMarketplaceOrder(String source, String externalId, String customerName,
-            String customerEmail, String status,
+            String customerEmail, String customerDocument, String status,
             BigDecimal totalAmount, List<CreateOrderItemRequest> items) {
         // Idempotency check
         java.util.Optional<OrderEntity> existing = orderRepository.findByExternalIdAndSource(externalId, source);
@@ -86,6 +86,7 @@ public class OrderService {
         order.setExternalId(externalId);
         order.setCustomerName(customerName);
         order.setCustomerEmail(customerEmail);
+        order.setCustomerDocument(customerDocument);
         order.setStatus(status);
         order.setCreatedAt(Instant.now());
         order.setTotalAmount(totalAmount);
@@ -163,6 +164,7 @@ public class OrderService {
         order.setExternalId(request.externalId() != null ? request.externalId() : order.getId().toString());
         order.setCustomerName(request.customerName());
         order.setCustomerEmail(request.customerEmail());
+        order.setCustomerDocument(request.customerDocument());
         order.setStatus(OrderStatus.PENDING.name());
         order.setCreatedAt(Instant.now());
 

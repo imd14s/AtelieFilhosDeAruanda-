@@ -12,6 +12,7 @@ export interface User {
     permissions?: string[];
     lastLogin?: string;
     avatarUrl?: string;
+    document?: string;
 }
 
 export interface CreateUserDTO {
@@ -19,4 +20,5 @@ export interface CreateUserDTO {
     email: string;
     password?: string; // Optional only if editing, strictly required for creation
     role: Role;
+    document?: string;
 }
