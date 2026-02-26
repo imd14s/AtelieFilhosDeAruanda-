@@ -10,7 +10,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { ToastProvider } from "./context/ToastContext";
 import './index.css'
-import App from './App.jsx'
+import App from './App'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
