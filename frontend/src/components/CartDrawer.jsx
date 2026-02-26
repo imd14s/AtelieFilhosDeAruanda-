@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
-import { storeService } from '../services/storeService';
+import { cartService } from '../services/cartService';
+import { orderService } from '../services/orderService';
 import { getImageUrl } from '../utils/imageUtils';
 import Button from './ui/Button';
 import { useToast } from '../context/ToastContext';
@@ -22,7 +23,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
     setCalculateLoading(true);
     setShippingError(null); // Clear previous errors
     try {
-      const options = await storeService.calculateShipping(cep); // Changed to `cep` only
+      const options = await orderService.calculateShipping(cep, cartItems);
       setShippingOptions(options);
       if (options.length === 0) {
         addToast("Nenhuma opção de frete disponível para este CEP.", "info");
@@ -38,13 +39,13 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
   };
 
   const removeItem = async (id) => {
-    const updatedCart = await storeService.cart.remove(id);
+    const updatedCart = await cartService.remove(id);
     onUpdateCart({ items: updatedCart });
   };
 
   const updateQuantity = async (id, newQty) => {
     if (newQty < 1) return;
-    const updatedCart = await storeService.cart.updateQuantity(id, newQty);
+    const updatedCart = await cartService.updateQuantity(id, newQty);
     onUpdateCart({ items: updatedCart });
   };
 

@@ -1,16 +1,21 @@
 import { render, screen, fireEvent, waitFor } from '../test-utils';
 import CheckoutPage from './CheckoutPage';
-import { storeService } from '../services/storeService';
+import { cartService } from '../services/cartService';
+import { orderService } from '../services/orderService';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 
 // Mock storeService
-vi.mock('../services/storeService', () => ({
-    storeService: {
-        cart: {
-            get: vi.fn(),
-            clear: vi.fn(),
-        },
+vi.mock('../services/cartService', () => ({
+    cartService: {
+        get: vi.fn(),
+        clear: vi.fn(),
+    },
+}));
+
+vi.mock('../services/orderService', () => ({
+    orderService: {
+        calculateShipping: vi.fn(),
         createOrder: vi.fn(),
     },
 }));
@@ -42,7 +47,7 @@ describe('CheckoutPage Component', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        storeService.cart.get.mockReturnValue(mockCart);
+        cartService.get.mockResolvedValue(mockCart);
         useLocation.mockReturnValue({
             state: { shippingSelected: mockShipping, cep: '12345-678' }
         });
@@ -60,14 +65,14 @@ describe('CheckoutPage Component', () => {
     });
 
     it('should show message when cart is empty', () => {
-        storeService.cart.get.mockReturnValue({ items: [] });
+        cartService.get.mockResolvedValue({ items: [] });
         render(<CheckoutPage />);
 
         expect(screen.getByText('Sua sacola está vazia.')).toBeInTheDocument();
     });
 
     it('should submit order successfully', async () => {
-        storeService.createOrder.mockResolvedValue({ id: 'ORD-123' });
+        orderService.createOrder.mockResolvedValue({ id: 'ORD-123' });
 
         render(<CheckoutPage />);
 
@@ -82,7 +87,7 @@ describe('CheckoutPage Component', () => {
         fireEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(storeService.createOrder).toHaveBeenCalledWith(expect.objectContaining({
+            expect(orderService.createOrder).toHaveBeenCalledWith(expect.objectContaining({
                 customerEmail: 'cliente@teste.com',
                 paymentMethod: 'pix'
             }));

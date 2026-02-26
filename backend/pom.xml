@@ -172,10 +172,10 @@
 
   <build>
     <plugins>
-      <!-- Lombok annotation processing -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
         <configuration>
           <annotationProcessorPaths>
             <path>
@@ -200,6 +200,21 @@
           <execution>
             <goals>
               <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
             </goals>
           </execution>
           <execution>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { storeService } from '../services/storeService';
+import { productService } from '../services/productService';
 
 const NavMenu = ({ isMobile, closeMenu }) => {
   const location = useLocation();
@@ -11,7 +11,7 @@ const NavMenu = ({ isMobile, closeMenu }) => {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const data = await storeService.getCategories();
+      const data = await productService.getCategories();
       // Filtra apenas ativas e ordena alfabeticamente
       setCategories(data.filter(c => c.active).sort((a, b) => a.name.localeCompare(b.name)));
     };

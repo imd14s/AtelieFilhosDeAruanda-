@@ -4,7 +4,7 @@ import { Search, Zap, MessageCircle, Star, Package } from 'lucide-react';
 import SEO from '../components/SEO';
 import ReviewForm from '../components/ReviewForm';
 import api from '../services/api';
-import { storeService } from '../services/storeService';
+import { cartService } from '../services/cartService';
 import { getImageUrl } from '../utils/imageUtils';
 
 const OrdersPage = () => {
@@ -46,7 +46,7 @@ const OrdersPage = () => {
     const handleAddAllToCart = (dateOrders) => {
         dateOrders.forEach(order => {
             (order.items || []).forEach(item => {
-                storeService.cart.add({
+                cartService.add({
                     id: item.productId || item.product?.id,
                     name: item.productName || item.product?.name,
                     price: item.unitPrice || item.product?.price,

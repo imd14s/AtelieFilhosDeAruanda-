@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Loader2 } from 'lucide-react';
 import ReviewSummary from './ReviewSummary';
-import { storeService } from '../services/storeService';
+import { productService } from '../services/productService';
 import { getImageUrl } from '../utils/imageUtils';
 
 const ReviewSection = ({ productId, onReviewAdded, onReviewsLoaded }) => {
@@ -13,7 +13,7 @@ const ReviewSection = ({ productId, onReviewAdded, onReviewsLoaded }) => {
             if (!productId) return;
             setLoading(true);
             try {
-                const data = await storeService.getReviews(productId);
+                const data = await productService.getReviews(productId);
                 setReviews(data || []);
                 onReviewsLoaded?.(data || []);
             } catch (err) {

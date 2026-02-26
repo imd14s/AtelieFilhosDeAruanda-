@@ -5,7 +5,7 @@ import { useFavorites } from '../context/FavoritesContext';
 import { useOutletContext, Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import api from '../services/api';
-import { storeService } from '../services/storeService';
+import { authService } from '../services/authService';
 
 // MOCK_FAVORITES removed in favor of real API data
 
@@ -24,7 +24,7 @@ const FavoritesPage = () => {
 
         setLoading(true);
         try {
-            const data = await storeService.favorites.get(userId);
+            const data = await authService.favorites.get(userId);
             setFavorites(data);
         } catch (err) {
             console.error("Error fetching favorites:", err);

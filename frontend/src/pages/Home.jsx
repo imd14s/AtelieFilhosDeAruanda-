@@ -4,7 +4,7 @@ import { Sparkles, Loader2 } from 'lucide-react';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
 import SEO from '../components/SEO';
-import { storeService } from '../services/storeService';
+import { productService } from '../services/productService';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -13,7 +13,7 @@ const Home = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const items = await storeService.getProducts();
+        const items = await productService.getProducts();
         setFeaturedProducts(items.slice(0, 4));
       } catch (error) {
         console.error("Erro ao carregar destaques:", error);

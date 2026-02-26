@@ -1,15 +1,13 @@
 import { render, screen, fireEvent, waitFor, act } from '../test-utils';
 import ProductCard from './ProductCard';
-import { storeService } from '../services/storeService';
+import { cartService } from '../services/cartService';
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 
 // Mock storeService
-vi.mock('../services/storeService', () => ({
-    storeService: {
-        cart: {
-            add: vi.fn((...args) => console.log('Mock add called with:', args)),
-        },
+vi.mock('../services/cartService', () => ({
+    cartService: {
+        add: vi.fn().mockResolvedValue([]),
     },
 }));
 
@@ -35,7 +33,7 @@ describe('ProductCard Component', () => {
         expect(screen.getByText('Ateliê Aruanda')).toBeInTheDocument();
     });
 
-    it('should call storeService.cart.add when clicking "Comprar"', async () => {
+    it('should call cartService.add when clicking "Comprar"', async () => {
         vi.useFakeTimers();
         render(<ProductCard product={mockProduct} />);
 
@@ -47,7 +45,7 @@ describe('ProductCard Component', () => {
             vi.advanceTimersByTime(300);
         });
 
-        expect(storeService.cart.add).toHaveBeenCalledWith(mockProduct, 1);
+        expect(cartService.add).toHaveBeenCalledWith(mockProduct, 1);
         vi.useRealTimers();
     });
 

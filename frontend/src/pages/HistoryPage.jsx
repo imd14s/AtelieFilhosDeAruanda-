@@ -3,7 +3,7 @@ import { Clock, EyeOff, Trash2, Search, History, ChevronRight } from 'lucide-rea
 import SEO from '../components/SEO';
 import { useOutletContext, Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import { storeService } from '../services/storeService';
+import { orderService } from '../services/orderService';
 
 // MOCK_HISTORY removed
 
@@ -17,7 +17,7 @@ const HistoryPage = () => {
             const userId = user?.id || user?.googleId;
             if (userId) {
                 setLoading(true);
-                const data = await storeService.history.get(userId);
+                const data = await orderService.history.get(userId);
                 setHistory(data);
                 setLoading(false);
             } else {
@@ -30,7 +30,7 @@ const HistoryPage = () => {
 
     const handleClearHistory = async () => {
         if (user?.id && window.confirm("Deseja limpar todo o seu histórico de navegação?")) {
-            await storeService.history.clear(user.id);
+            await orderService.history.clear(user.id);
             setHistory([]);
         }
     };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, User, Menu, X, LogOut, ChevronDown, ChevronRight } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { storeService } from '../services/storeService'; // Nova importação
+import { authService } from '../services/authService';
+import { cartService } from '../services/cartService';
 import CartDrawer from './CartDrawer';
 import SearchBar from './SearchBar';
 import NavMenu from './NavMenu';
@@ -21,9 +22,9 @@ const Header = () => {
   const location = useLocation();
 
   const initHeader = async () => {
-    const user = storeService.auth.getUser();
+    const user = authService.getUser();
     setUser(user);
-    const cartItems = await storeService.cart.get();
+    const cartItems = await cartService.get();
     setCart({ items: cartItems || [] });
   };
 
@@ -54,7 +55,7 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    storeService.auth.logout();
+    authService.logout();
   };
 
   useEffect(() => {

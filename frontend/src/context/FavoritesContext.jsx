@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { storeService } from '../services/storeService';
+import { authService } from '../services/authService';
 
 const FavoritesContext = createContext();
 
@@ -10,7 +10,7 @@ export const FavoritesProvider = ({ children }) => {
 
     // Busca favoritos do backend
     const refreshFavorites = useCallback(async () => {
-        const user = storeService.auth.getUser();
+        const user = authService.getUser();
         const userId = user?.id || user?.googleId;
 
         if (!userId) {
@@ -20,7 +20,7 @@ export const FavoritesProvider = ({ children }) => {
         }
 
         try {
-            const data = await storeService.favorites.get(userId);
+            const data = await authService.favorites.get(userId);
             // Armazenamos apenas os IDs para checagem rápida nos cards
             setFavorites(data.map(p => p.id));
         } catch (error) {
@@ -45,7 +45,7 @@ export const FavoritesProvider = ({ children }) => {
     }, [favorites]);
 
     const toggleFavorite = async (product) => {
-        const user = storeService.auth.getUser();
+        const user = authService.getUser();
         const token = localStorage.getItem('auth_token');
         const userId = user?.id || user?.googleId;
 
@@ -64,7 +64,7 @@ export const FavoritesProvider = ({ children }) => {
         setLoading(true);
         try {
             const isAdding = !isFavorite(product.id);
-            await storeService.favorites.toggle(userId, product.id);
+            await authService.favorites.toggle(userId, product.id);
 
             // Atualização otimista do estado local
             if (isAdding) {

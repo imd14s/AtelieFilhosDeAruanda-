@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import SEO from "../components/SEO";
 import { Loader2, ChevronLeft, Sparkles, Wind } from "lucide-react";
+import { productService } from '../services/productService';
 
 const CategoryPage = () => {
   const { slug } = useParams(); // Pega o slug da URL (ex: velas, guias, ervas)
@@ -15,13 +16,13 @@ const CategoryPage = () => {
     const fetchCategoryData = async () => {
       setLoading(true);
       try {
-        const categories = await storeService.getCategories();
+        const categories = await productService.getCategories();
         const currentCollection = categories.find(
           (c) => c.id === slug || c.name.toLowerCase() === slug,
         );
         setCollection(currentCollection);
 
-        const allProducts = await storeService.getProducts();
+        const allProducts = await productService.getProducts();
         const filtered = allProducts.filter(
           (p) => p.category?.id === currentCollection?.id,
         );

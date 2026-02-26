@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Star, Upload, X, AlertTriangle, Loader2, CheckCircle } from 'lucide-react';
 import { isSafeImage, fileToImage, loadModel } from '../utils/nsfwModerator';
-import { storeService } from '../services/storeService';
+import { productService } from '../services/productService';
 
 const ReviewForm = ({ productId, onReviewSubmitted }) => {
     const [rating, setRating] = useState(0);
@@ -103,7 +103,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
                 }))
             };
 
-            // await storeService.createReview(reviewData);
+            await productService.createReview(reviewData);
 
             setSuccess(true);
             setTimeout(() => {
@@ -144,8 +144,8 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
                             <Star
                                 size={32}
                                 className={`${s <= (hoverRating || rating)
-                                        ? "fill-[#C9A24D] text-[#C9A24D]"
-                                        : "text-gray-200"
+                                    ? "fill-[#C9A24D] text-[#C9A24D]"
+                                    : "text-gray-200"
                                     } transition-colors`}
                             />
                         </button>

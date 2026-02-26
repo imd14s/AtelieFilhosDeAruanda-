@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { storeService } from '../services/storeService';
+import { configService } from '../services/orderService';
 
 /**
  * Hook para carregar o SDK do Mercado Pago e inicializar o objeto 'mp'.
@@ -30,7 +30,7 @@ export const useMercadoPago = () => {
 
         const initMp = async () => {
             try {
-                const configData = await storeService.config.getMercadoPagoPublicKey();
+                const configData = await configService.getMercadoPagoPublicKey();
                 if (configData && configData.publicKey) {
                     const instance = new window.MercadoPago(configData.publicKey, { locale: 'pt-BR' });
                     setMp(instance);

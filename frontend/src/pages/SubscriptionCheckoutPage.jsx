@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, Package, Clock, CreditCard, ShieldCheck, CheckCircle, Search, Plus, Trash2, Loader2, MapPin } from 'lucide-react';
 import SEO from '../components/SEO';
 import subscriptionService from '../services/subscriptionService';
-import { storeService } from '../services/storeService';
+import { productService } from '../services/productService';
 import addressService from '../services/addressService';
 
 const SubscriptionCheckoutPage = () => {
@@ -79,7 +79,7 @@ const SubscriptionCheckoutPage = () => {
             setSearching(true);
             const timer = setTimeout(async () => {
                 try {
-                    const results = await storeService.getProducts({ search: searchTerm });
+                    const results = await productService.getProducts({ search: searchTerm });
                     setSearchResults(results.slice(0, 5));
                 } finally {
                     setSearching(false);

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, CreditCard, ShoppingBag, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { storeService } from '../services/storeService';
+import { cartService } from '../services/cartService';
+import { authService } from '../services/authService';
+import { orderService } from '../services/orderService';
 import marketingService from '../services/marketingService';
 import { getImageUrl } from '../utils/imageUtils';
 import SEO from '../components/SEO';
@@ -61,7 +63,7 @@ const CheckoutPage = () => {
 
     React.useEffect(() => {
         const initCheckout = async () => {
-            const currentCart = await storeService.cart.get();
+            const currentCart = await cartService.get();
             setCart(currentCart);
 
             if (user.id) {
@@ -73,13 +75,13 @@ const CheckoutPage = () => {
                 }));
 
                 try {
-                    const addresses = await storeService.address.get(user.id);
+                    const addresses = await authService.address.get(user.id);
                     setSavedAddresses(addresses);
                     if (addresses.length > 0 && !cep) {
                         setIsAddingNewAddress(false);
                     }
 
-                    const cards = await storeService.cards.get();
+                    const cards = await authService.cards.get();
                     setSavedCards(cards);
                     if (cards.length > 0) {
                         setIsAddingNewCard(false);
@@ -171,9 +173,9 @@ const CheckoutPage = () => {
                                                 order.installments = cardData.installments ? parseInt(cardData.installments) : 1;
                                                 order.issuerId = cardData.issuer || null;
                                                 // Processa o pedido
-                                                const result = await storeService.createOrder(order);
+                                                const result = await orderService.createOrder(order);
                                                 setSuccessOrder(result);
-                                                await storeService.cart.clear();
+                                                await cartService.clear();
                                             }
                                         } catch (error) {
                                             console.error(error);
@@ -217,8 +219,8 @@ const CheckoutPage = () => {
         if (!targetCep || targetCep.length < 8) return;
         setShippingLoading(true);
         try {
-            const items = await storeService.cart.get();
-            const options = await storeService.calculateShipping(targetCep, items);
+            const items = await cartService.get();
+            const options = await orderService.calculateShipping(targetCep, items);
             const isMissing = options.some(o => o.provider === 'CONFIG_MISSING');
             if (isMissing) {
                 setConfigMissing(prev => ({ ...prev, shipping: true }));
@@ -290,7 +292,7 @@ const CheckoutPage = () => {
                     zipCode: formData.cep,
                     complement: ''
                 };
-                await storeService.address.create(user.id, addrData);
+                await authService.address.create(user.id, addrData);
             }
 
             // 2. Preparar dados do pedido
@@ -319,9 +321,9 @@ const CheckoutPage = () => {
                 if (!isAddingNewCard && selectedCardId) {
                     // Cartão salvo: envia direto com o ID
                     order.cardId = selectedCardId;
-                    const result = await storeService.createOrder(order);
+                    const result = await orderService.createOrder(order);
                     setSuccessOrder(result);
-                    await storeService.cart.clear();
+                    await cartService.clear();
                 } else {
                     // Cartão novo: armazena order e dispara submit do SDK
                     // O SDK gera o token e chama onSubmit, que processa o pedido
@@ -338,9 +340,9 @@ const CheckoutPage = () => {
                 }
             } else {
                 // PIX: envia direto
-                const result = await storeService.createOrder(order);
+                const result = await orderService.createOrder(order);
                 setSuccessOrder(result);
-                await storeService.cart.clear();
+                await cartService.clear();
             }
         } catch (error) {
             console.error(error);

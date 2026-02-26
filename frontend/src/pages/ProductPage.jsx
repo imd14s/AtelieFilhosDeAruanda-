@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, Link, useOutletContext } from 'react-router-dom';
-import { storeService } from '../services/storeService';
+import { productService } from '../services/productService';
+import { cartService } from '../services/cartService';
+import { authService } from '../services/authService';
+import { orderService } from '../services/orderService';
 import SEO from '../components/SEO';
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2, Heart } from 'lucide-react';
@@ -13,7 +16,7 @@ import { useToast } from '../context/ToastContext';
 
 const ProductPage = () => {
   const { id } = useParams();
-  const user = storeService.auth.getUser();
+  const user = authService.getUser();
   const { isFavorite: checkFavorite, toggleFavorite, loading: favLoading } = useFavorites();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +46,7 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const data = await storeService.getProductById(id);
+        const data = await productService.getProductById(id);
         setProduct(data);
         if (data?.images?.length > 0) {
           setMainMedia(data.images[0]);
@@ -51,7 +54,7 @@ const ProductPage = () => {
 
         // Registrar no histórico de navegação via API se o usuário estiver logado
         if (user?.id) {
-          storeService.history.add(user.id, data.id);
+          orderService.history.add(user.id, data.id);
         }
 
         if (data?.variants?.length > 0) {
@@ -71,7 +74,7 @@ const ProductPage = () => {
         try {
           let recs = [];
           if (data?.categoryId) {
-            recs = await storeService.getProducts({ categoryId: data.categoryId });
+            recs = await productService.getProducts({ categoryId: data.categoryId });
             recs = recs.filter(r => r.id !== id);
           }
           setRecommendations(recs.slice(0, 4));
@@ -195,7 +198,7 @@ const ProductPage = () => {
       images: currentVariant?.imageUrl ? [currentVariant.imageUrl] : product.images
     };
 
-    storeService.cart.add(cartProduct, quantity);
+    cartService.add(cartProduct, quantity);
     addToast(`${product.name} adicionado ao carrinho!`, "success");
     setAdded(true);
     setTimeout(() => setAdded(false), 3000);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
-import { storeService } from '../services/storeService';
+import { cartService } from '../services/cartService';
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, Check, Heart } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
@@ -28,7 +28,7 @@ const ProductCard = ({ product, initialIsFavorite = false }) => {
     setLoading(true);
 
     setTimeout(() => {
-      storeService.cart.add(product, 1);
+      cartService.add(product, 1);
       addToast(`${product.name} adicionado!`, "success");
       setAdded(true);
       setLoading(false);

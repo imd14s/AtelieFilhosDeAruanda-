@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import SEO from "../components/SEO";
-import { storeService } from "../services/storeService";
+import { productService } from "../services/productService";
 import { Search, Loader2, Wind } from "lucide-react";
 
 const SearchPage = () => {
@@ -16,7 +16,7 @@ const SearchPage = () => {
       setLoading(true);
       try {
         // Chamada direta à API com parâmetro de busca para ativar Stemming (velas -> vela)
-        const items = await storeService.getProducts({ search: query });
+        const items = await productService.getProducts({ search: query });
         setResults(items);
       } catch (error) {
         console.error("Erro na busca:", error);

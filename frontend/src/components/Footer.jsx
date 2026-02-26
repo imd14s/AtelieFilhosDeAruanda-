@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, Instagram, Video, Youtube, ShoppingBag, Heart, Send, Loader2 } from 'lucide-react';
 import marketingService from '../services/marketingService';
-import { storeService } from '../services/storeService';
+import { authService } from '../services/authService';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -12,7 +12,7 @@ const Footer = () => {
   const [user, setUser] = useState(null);
 
   React.useEffect(() => {
-    const initUser = () => setUser(storeService.auth.getUser());
+    const initUser = () => setUser(authService.getUser());
     initUser();
     window.addEventListener('auth-changed', initUser);
     return () => window.removeEventListener('auth-changed', initUser);

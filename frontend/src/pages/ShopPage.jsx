@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { storeService } from '../services/storeService';
+import { productService } from '../services/productService';
 import ProductCard from '../components/ProductCard';
 import FilterSidebar from '../components/FilterSidebar';
 import SEO from '../components/SEO';
@@ -27,11 +27,11 @@ const ShopPage = () => {
         else if (sortFilter === 'price_desc') mappedSort = 'price,desc';
 
         const [prodData, catData] = await Promise.all([
-          storeService.getProducts({
+          productService.getProducts({
             category: categoryFilter,
             sort: mappedSort
           }),
-          storeService.getCategories()
+          productService.getCategories()
         ]);
 
         setProducts(prodData);

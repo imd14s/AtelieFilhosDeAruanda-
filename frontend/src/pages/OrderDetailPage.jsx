@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Package, Truck, CreditCard, MapPin, Clock, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import SEO from '../components/SEO';
-import { storeService } from '../services/storeService';
+import { orderService } from '../services/orderService';
 import { getImageUrl } from '../utils/imageUtils';
 
 const statusMap = {
@@ -22,7 +22,7 @@ const OrderDetailPage = () => {
 
     useEffect(() => {
         if (id) {
-            storeService.getOrderById(id)
+            orderService.getOrderById(id)
                 .then(data => setOrder(data))
                 .catch(() => setError('Pedido não encontrado.'))
                 .finally(() => setLoading(false));
