@@ -8,6 +8,7 @@ export interface Address {
     city: string;
     state: string;
     zipCode: string;
+    document?: string;
     type?: string;
     isDefault?: boolean;
 }

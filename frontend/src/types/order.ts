@@ -34,6 +34,7 @@ export interface CreateOrderData {
     saveCard?: boolean;
     saveAddress?: boolean;
     couponCode?: string | null;
+    customerDocument?: string;
 }
 
 export interface ShippingOption {
@@ -59,4 +60,5 @@ export interface Order {
     paymentMethod: string;
     paymentStatus?: string;
     trackingCode?: string;
+    customerDocument?: string;
 }

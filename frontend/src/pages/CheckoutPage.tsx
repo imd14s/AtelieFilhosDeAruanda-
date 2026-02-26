@@ -9,6 +9,8 @@ import { getImageUrl } from '../utils/imageUtils';
 import SEO from '../components/SEO';
 import { useMercadoPago } from '../hooks/useMercadoPago';
 import { User, Address, Card, Coupon, ShippingOption, CartItem, Order, CreateOrderData } from '../types';
+import { MaskedInput } from '../components/ui/MaskedInput';
+import { isValidCPF, isValidCNPJ, sanitizeDocument } from '../utils/fiscal';
 
 interface CheckoutFormData {
     email: string;
@@ -21,6 +23,7 @@ interface CheckoutFormData {
     metodoPagamento: 'pix' | 'card';
     saveAddress: boolean;
     saveCard: boolean;
+    document: string;
 }
 
 const CheckoutPage: React.FC = () => {
@@ -49,7 +52,8 @@ const CheckoutPage: React.FC = () => {
         cep: cep || '',
         metodoPagamento: 'pix',
         saveAddress: false,
-        saveCard: false
+        saveCard: false,
+        document: user.document || ''
     });
 
     const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
@@ -91,7 +95,8 @@ const CheckoutPage: React.FC = () => {
                     ...prev,
                     email: user.email || prev.email,
                     nome: user.name?.split(' ')[0] || prev.nome,
-                    sobrenome: user.name?.split(' ').slice(1).join(' ') || prev.sobrenome
+                    sobrenome: user.name?.split(' ').slice(1).join(' ') || prev.sobrenome,
+                    document: user.document || prev.document
                 }));
 
                 try {
@@ -247,7 +252,8 @@ const CheckoutPage: React.FC = () => {
             endereco: addr.street + (addr.number ? `, ${addr.number}` : '') + (addr.complement ? ` - ${addr.complement}` : ''),
             cidade: addr.city,
             estado: addr.state,
-            cep: normalizedCep
+            cep: normalizedCep,
+            document: addr.document || prev.document
         }));
         handleCalculateShipping(normalizedCep);
     };
@@ -274,6 +280,18 @@ const CheckoutPage: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validação rigorosa de documento
+        const cleanDoc = sanitizeDocument(formData.document);
+        const isDocValid = cleanDoc.length === 11 ? isValidCPF(cleanDoc) : (cleanDoc.length === 14 ? isValidCNPJ(cleanDoc) : false);
+
+        if (!isDocValid) {
+            window.dispatchEvent(new CustomEvent('show-alert', {
+                detail: "Por favor, insira um CPF ou CNPJ válido para a emissão da Nota Fiscal."
+            }));
+            return;
+        }
+
         setLoading(true);
         try {
             const userId = user.id || user.googleId;
@@ -314,6 +332,7 @@ const CheckoutPage: React.FC = () => {
                 },
                 paymentMethod: formData.metodoPagamento,
                 couponCode: appliedCoupon?.code,
+                customerDocument: sanitizeDocument(formData.document),
                 saveAddress: formData.saveAddress,
                 saveCard: formData.saveCard
             };
@@ -425,6 +444,27 @@ const CheckoutPage: React.FC = () => {
                         <section className="space-y-8">
                             <div className="flex items-center gap-4">
                                 <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">2</span>
+                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Identificação Fiscal</h2>
+                            </div>
+                            <div className="grid grid-cols-1 gap-6">
+                                <MaskedInput
+                                    mask="cpf-cnpj"
+                                    required
+                                    label="CPF ou CNPJ (para Nota Fiscal)"
+                                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                                    value={formData.document}
+                                    onChange={(val) => setFormData(prev => ({ ...prev, document: val }))}
+                                    className="border-[var(--azul-profundo)]/10"
+                                />
+                                <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40 uppercase tracking-widest leading-relaxed">
+                                    Necessário para a emissão da Nota Fiscal Eletrônica (NF-e).
+                                </p>
+                            </div>
+                        </section>
+
+                        <section className="space-y-8">
+                            <div className="flex items-center gap-4">
+                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">3</span>
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Endereço de Entrega</h2>
                             </div>
 
@@ -512,7 +552,7 @@ const CheckoutPage: React.FC = () => {
 
                         <section className="space-y-8">
                             <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">3</span>
+                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">4</span>
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Escolha o Frete</h2>
                             </div>
 
@@ -562,7 +602,7 @@ const CheckoutPage: React.FC = () => {
 
                         <section className="space-y-8">
                             <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">4</span>
+                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">5</span>
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Pagamento</h2>
                             </div>
                             {mpLoading ? (
@@ -778,7 +818,7 @@ const CheckoutPage: React.FC = () => {
 
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={loading || !currentShipping || !formData.email || !formData.nome || (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)}
+                                    disabled={loading || !currentShipping || !formData.email || !formData.nome || !formData.document || (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)}
                                     className="w-full bg-[var(--azul-profundo)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3 shadow-lg"
                                 >
                                     {loading ? <Loader2 size={20} className="animate-spin" /> : 'Finalizar Pedido'}

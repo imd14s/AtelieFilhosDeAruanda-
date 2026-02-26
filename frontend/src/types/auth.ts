@@ -6,6 +6,7 @@ export interface User {
     emailVerified: boolean;
     photoUrl?: string;
     googleId?: string;
+    document?: string;
 }
 
 export interface LoginResponse {
@@ -17,6 +18,7 @@ export interface LoginResponse {
     emailVerified: boolean;
     photoUrl?: string;
     googleId?: string;
+    document?: string;
 }
 
 export interface AuthState {
