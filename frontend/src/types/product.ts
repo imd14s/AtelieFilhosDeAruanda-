@@ -19,12 +19,25 @@ export interface Variant {
 export interface Review {
     id: string;
     productId: string;
-    userId: string;
-    userName: string;
+    userId?: string;
+    userName?: string;
+    user?: {
+        name: string;
+    };
     rating: number;
     comment: string;
     createdAt: string;
     images?: string[];
+}
+
+export interface CreateReviewData {
+    productId: string;
+    rating: number;
+    comment: string;
+    media?: {
+        url: string;
+        type: 'IMAGE' | 'VIDEO';
+    }[];
 }
 
 export interface Product {
@@ -34,6 +47,8 @@ export interface Product {
     slug: string;
     description: string;
     price: number;
+    originalPrice?: number;
+    discountPercentage?: number;
     image?: string;
     images?: string[];
     media?: { url: string }[];

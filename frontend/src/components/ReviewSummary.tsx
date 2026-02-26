@@ -1,19 +1,22 @@
 import React from 'react';
 import { Star } from 'lucide-react';
+import { Review } from '../types';
 
-const ReviewSummary = ({ reviews = [] }) => {
+interface ReviewSummaryProps {
+    reviews: Review[];
+}
+
+const ReviewSummary: React.FC<ReviewSummaryProps> = ({ reviews = [] }) => {
     const totalReviews = reviews.length;
     const averageRating = totalReviews > 0
-        ? (reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
+        ? Number((reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / totalReviews).toFixed(1))
         : 0;
 
-    const ratingCounts = [5, 4, 3, 2, 1].map(star => ({
-        star,
-        count: reviews.filter(r => r.rating === star).length,
-        percentage: totalReviews > 0
-            ? (reviews.filter(r => r.rating === star).length / totalReviews) * 100
-            : 0
-    }));
+    const ratingCounts = [5, 4, 3, 2, 1].map(star => {
+        const count = reviews.filter(r => r.rating === star).length;
+        const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+        return { star, count, percentage };
+    });
 
     return (
         <div className="flex flex-col md:flex-row gap-8 items-center md:items-start bg-white p-8 rounded-sm shadow-sm border border-gray-50">
@@ -36,7 +39,7 @@ const ReviewSummary = ({ reviews = [] }) => {
 
             {/* Barras de Distribuição */}
             <div className="flex-1 w-full space-y-3">
-                {ratingCounts.map(({ star, percentage, count }) => (
+                {ratingCounts.map(({ star, percentage }) => (
                     <div key={star} className="flex items-center gap-4 group">
                         <span className="text-xs font-lato text-gray-500 w-4">{star}</span>
                         <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">

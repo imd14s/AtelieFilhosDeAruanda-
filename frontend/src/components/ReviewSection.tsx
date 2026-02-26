@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Loader2 } from 'lucide-react';
 import ReviewSummary from './ReviewSummary';
 import { productService } from '../services/productService';
-import { getImageUrl } from '../utils/imageUtils';
+import { Review } from '../types';
 
-const ReviewSection = ({ productId, onReviewAdded, onReviewsLoaded }) => {
-    const [reviews, setReviews] = useState([]);
-    const [loading, setLoading] = useState(true);
+interface ReviewSectionProps {
+    productId: string;
+    onReviewAdded?: () => void;
+    onReviewsLoaded?: (reviews: Review[]) => void;
+}
+
+const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewsLoaded }) => {
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         const fetchReviews = async () => {
@@ -24,7 +30,7 @@ const ReviewSection = ({ productId, onReviewAdded, onReviewsLoaded }) => {
             }
         };
         fetchReviews();
-    }, [productId]);
+    }, [productId, onReviewsLoaded]);
 
     if (loading) return (
         <div className="flex justify-center py-12">
@@ -64,13 +70,13 @@ const ReviewSection = ({ productId, onReviewAdded, onReviewsLoaded }) => {
                                                 <Star key={s} size={12} className={s <= review.rating ? "fill-[#C9A24D] text-[#C9A24D]" : "text-gray-200"} />
                                             ))}
                                         </div>
-                                        <span className="font-lato text-sm font-bold text-[var(--azul-profundo)] block">{review.user.name}</span>
+                                        <span className="font-lato text-sm font-bold text-[var(--azul-profundo)] block">{review.userName || review.user?.name || 'Cliente'}</span>
                                         <span className="font-lato text-[10px] text-gray-400 uppercase tracking-widest">Compra Verificada</span>
                                     </div>
                                     <div className="flex-1 space-y-4">
                                         <p className="font-lato text-gray-600 leading-relaxed italic">"{review.comment}"</p>
                                         <span className="text-[10px] font-lato text-gray-300 uppercase tracking-widest block">
-                                            {new Date(review.createdAt).toLocaleDateString('pt-BR')}
+                                            {review.createdAt ? new Date(review.createdAt).toLocaleDateString('pt-BR') : ''}
                                         </span>
                                     </div>
                                 </div>

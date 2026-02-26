@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
-const GlobalAlertModal = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [message, setMessage] = useState("");
+const GlobalAlertModal: React.FC = () => {
+    const [isOpen, setIsOpen] = useState<boolean>(false);
+    const [message, setMessage] = useState<string>("");
 
     useEffect(() => {
-        const handleShowAlert = (e) => {
-            setMessage(e.detail);
+        const handleShowAlert = (e: Event) => {
+            const customEvent = e as CustomEvent<string>;
+            setMessage(customEvent.detail);
             setIsOpen(true);
         };
 

@@ -1,6 +1,11 @@
 import React from 'react';
 
-const Spinner = ({ size = 20, className = "" }) => {
+interface SpinnerProps {
+    size?: number;
+    className?: string;
+}
+
+const Spinner: React.FC<SpinnerProps> = ({ size = 20, className = "" }) => {
     return (
         <svg
             className={`animate-spin ${className}`}

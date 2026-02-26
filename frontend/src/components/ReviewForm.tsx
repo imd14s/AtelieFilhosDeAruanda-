@@ -1,29 +1,41 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Star, Upload, X, AlertTriangle, Loader2, CheckCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react';
+import { Star, Upload, X, AlertTriangle, Loader2, CheckCircle, Play } from 'lucide-react';
 import { isSafeImage, fileToImage, loadModel } from '../utils/nsfwModerator';
 import { productService } from '../services/productService';
+import { CreateReviewData } from '../types';
 
-const ReviewForm = ({ productId, onReviewSubmitted }) => {
-    const [rating, setRating] = useState(0);
-    const [comment, setComment] = useState('');
-    const [media, setMedia] = useState([]);
-    const [hoverRating, setHoverRating] = useState(0);
+interface ReviewFormProps {
+    productId: string;
+    onReviewSubmitted?: () => void;
+}
 
-    const [isModerating, setIsModerating] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(false);
-    const [isModelLoaded, setIsModelLoaded] = useState(false);
+interface MediaItem {
+    file: File;
+    preview: string;
+    type: 'IMAGE' | 'VIDEO';
+}
 
-    const fileInputRef = useRef(null);
+const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted }) => {
+    const [rating, setRating] = useState<number>(0);
+    const [comment, setComment] = useState<string>('');
+    const [media, setMedia] = useState<MediaItem[]>([]);
+    const [hoverRating, setHoverRating] = useState<number>(0);
+
+    const [isModerating, setIsModerating] = useState<boolean>(false);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<boolean>(false);
+    const [isModelLoaded, setIsModelLoaded] = useState<boolean>(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         // Warm up the model
         loadModel().then(() => setIsModelLoaded(true));
     }, []);
 
-    const handleFileChange = async (e) => {
-        const files = Array.from(e.target.files);
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
         if (!files.length) return;
 
         if (media.length + files.length > 5) {
@@ -34,18 +46,16 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
         setError(null);
         setIsModerating(true);
 
-        const newMedia = [];
+        const newMedia: MediaItem[] = [];
 
         for (const file of files) {
             try {
-                // Validation for videos (mocked context for 10s limit if it were a video file)
                 if (file.type.startsWith('image/')) {
                     const img = await fileToImage(file);
                     const result = await isSafeImage(img);
 
                     if (!result.safe) {
-                        setError(result.reason);
-                        // Non-blocking but alerted: clear input
+                        setError(result.reason || 'Imagem inadequada.');
                         if (fileInputRef.current) fileInputRef.current.value = '';
                         continue;
                     }
@@ -56,7 +66,6 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
                         type: 'IMAGE'
                     });
                 } else if (file.type.startsWith('video/')) {
-                    // Basic duration check if browser allows
                     newMedia.push({
                         file,
                         preview: URL.createObjectURL(file),
@@ -74,13 +83,13 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const removeMedia = (index) => {
+    const removeMedia = (index: number) => {
         const item = media[index];
         URL.revokeObjectURL(item.preview);
         setMedia(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (rating === 0) {
             setError('Por favor, selecione uma nota de 1 a 5.');
@@ -91,9 +100,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
         setError(null);
 
         try {
-            // In a real scenario, we would upload images to S3/Cloudinary first
-            // Here we simulate the process
-            const reviewData = {
+            const reviewData: CreateReviewData = {
                 productId,
                 rating,
                 comment: comment.substring(0, 300),
@@ -101,7 +108,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
                     url: m.preview, // Mock URL
                     type: m.type
                 }))
-            };
+            } as any; // Cast for compatibility with expected API structure if needed
 
             await productService.createReview(reviewData);
 
@@ -109,7 +116,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
             setTimeout(() => {
                 if (onReviewSubmitted) onReviewSubmitted();
             }, 2000);
-        } catch (err) {
+        } catch (err: any) {
             setError(err.message || 'Erro ao enviar avaliação.');
         } finally {
             setIsSubmitting(false);
@@ -157,7 +164,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
                 <label className="font-lato text-[10px] uppercase tracking-widest text-gray-500 block">Seu depoimento (Máx 300 caracteres)</label>
                 <textarea
                     value={comment}
-                    onChange={(e) => setComment(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setComment(e.target.value)}
                     maxLength={300}
                     rows={4}
                     className="w-full p-4 bg-white border border-gray-200 rounded-sm font-lato text-sm focus:border-[var(--azul-profundo)] focus:ring-0 transition-all outline-none"
@@ -242,7 +249,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
           ${(isSubmitting || !isModelLoaded || rating === 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#C9A24D] active:scale-[0.98]'}
         `}
             >
-                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRightIcon size={16} />}
                 Finalizar Avaliação
             </button>
 
@@ -253,7 +260,7 @@ const ReviewForm = ({ productId, onReviewSubmitted }) => {
     );
 };
 
-const ArrowRight = ({ size, className }) => (
+const ArrowRightIcon: React.FC<{ size: number, className?: string }> = ({ size, className }) => (
     <svg
         width={size}
         height={size}

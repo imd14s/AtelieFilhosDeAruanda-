@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { ReactNode, ButtonHTMLAttributes } from 'react';
 import Spinner from './Spinner';
 
-const Button = ({
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+    children: ReactNode;
+    variant?: 'primary' | 'outline' | 'gold';
+    isLoading?: boolean;
+}
+
+const Button: React.FC<ButtonProps> = ({
     children,
     type = 'button',
     variant = 'primary',

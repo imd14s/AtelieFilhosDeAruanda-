@@ -1,16 +1,18 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
+interface SEOProps {
+    title?: string;
+    description?: string;
+    image?: string;
+    url?: string;
+    type?: string;
+}
+
 /**
  * Componente SEO para gerenciar metadados da página de forma centralizada.
- * 
- * @param {string} title - Título da página (adicionado ao sufixo da marca)
- * @param {string} description - Descrição para SEO e redes sociais
- * @param {string} image - URL da imagem para compartilhamento (OG)
- * @param {string} url - URL canônica da página
- * @param {string} type - Tipo do conteúdo (padrão: website)
  */
-const SEO = ({
+const SEO: React.FC<SEOProps> = ({
     title,
     description = "Descubra a magia do Ateliê Filhos de Aruanda. Velas, Guias, Ervas e artigos artesanais feitos com axé e devoção.",
     image = "/og-image.jpg",
