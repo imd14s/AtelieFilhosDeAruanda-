@@ -1,5 +1,9 @@
 package com.atelie.ecommerce.api.config;
 
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
+
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
+
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;

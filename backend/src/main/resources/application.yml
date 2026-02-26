@@ -26,6 +26,7 @@ spring:
       spec: maximumSize=500,expireAfterWrite=300s
   flyway:
     enabled: true
+    out-of-order: true
     placeholders:
       PGCRYPTO_EXTENSION: ${PGCRYPTO_EXTENSION:CREATE EXTENSION IF NOT EXISTS pgcrypto;}
   mail:

@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.application.service.inventory;
 
-import com.atelie.ecommerce.domain.inventory.InventoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.inventory.InventoryRepository;
 import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
 import org.springframework.stereotype.Service;

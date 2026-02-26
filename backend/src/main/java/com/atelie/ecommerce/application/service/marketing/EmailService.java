@@ -9,7 +9,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailConfigRepository;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 

@@ -4,7 +4,7 @@ import com.atelie.ecommerce.domain.marketing.model.NewsletterSubscriber;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.NewsletterSubscriberRepository;
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

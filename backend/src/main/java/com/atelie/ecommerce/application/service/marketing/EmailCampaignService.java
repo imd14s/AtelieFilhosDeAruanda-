@@ -9,7 +9,7 @@ import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailCampaignRe
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.NewsletterSubscriberRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.ProductFavoriteRepository;
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

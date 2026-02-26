@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
-public class OrderEntity {
+public class OrderEntity implements com.atelie.ecommerce.domain.order.model.OrderModel {
 
     @Id
     private UUID id;

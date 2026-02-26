@@ -3,7 +3,7 @@ package com.atelie.ecommerce.application.service.order;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import com.atelie.ecommerce.infrastructure.shipping.melhorenvio.MelhorEnvioClient;
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "order_items")
-public class OrderItemEntity {
+public class OrderItemEntity implements com.atelie.ecommerce.domain.order.model.OrderItemModel {
 
     @Id
     private UUID id;
@@ -31,37 +31,88 @@ public class OrderItemEntity {
     private String productName;
 
     private Integer quantity;
-    
+
     @Column(name = "unit_price")
     private BigDecimal unitPrice;
 
     @Column(name = "total_price")
     private BigDecimal totalPrice;
 
-    public OrderItemEntity() {}
+    @Override
+    public String getProductNcm() {
+        return product != null ? product.getNcm() : null;
+    }
+
+    @Override
+    public Integer getProductOrigin() {
+        return (product != null && product.getOrigin() != null) ? product.getOrigin().ordinal() : 0;
+    }
+
+    public OrderItemEntity() {
+    }
 
     // Getters e Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public OrderEntity getOrder() { return order; }
-    public void setOrder(OrderEntity order) { this.order = order; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public ProductEntity getProduct() { return product; }
-    public void setProduct(ProductEntity product) { this.product = product; }
+    public OrderEntity getOrder() {
+        return order;
+    }
 
-    public ProductVariantEntity getVariant() { return variant; }
-    public void setVariant(ProductVariantEntity variant) { this.variant = variant; }
+    public void setOrder(OrderEntity order) {
+        this.order = order;
+    }
 
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
+    public ProductEntity getProduct() {
+        return product;
+    }
 
-    public Integer getQuantity() { return quantity; }
-    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public void setProduct(ProductEntity product) {
+        this.product = product;
+    }
 
-    public BigDecimal getUnitPrice() { return unitPrice; }
-    public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+    public ProductVariantEntity getVariant() {
+        return variant;
+    }
 
-    public BigDecimal getTotalPrice() { return totalPrice; }
-    public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
+    public void setVariant(ProductVariantEntity variant) {
+        this.variant = variant;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
+    }
 }

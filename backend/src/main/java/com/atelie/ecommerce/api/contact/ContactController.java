@@ -2,7 +2,7 @@ package com.atelie.ecommerce.api.contact;
 
 import com.atelie.ecommerce.application.service.marketing.EmailService;
 import com.atelie.ecommerce.domain.marketing.model.EmailQueue;
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

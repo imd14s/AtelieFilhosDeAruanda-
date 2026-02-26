@@ -27,3 +27,7 @@ yarn-error.log*
 postgres_data/
 _audit/
 
+# --- DEV STARTUP ---
+.dev-logs/
+terminal_erro.md
+

@@ -11,7 +11,7 @@ import com.atelie.ecommerce.domain.fiscal.nfe.integration.SefazIntegrationPort;
 import com.atelie.ecommerce.domain.fiscal.nfe.integration.SefazRejectionException;
 import com.atelie.ecommerce.domain.fiscal.nfe.security.NfeSignatureException;
 import com.atelie.ecommerce.domain.fiscal.nfe.security.NfeSignaturePort;
-import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.domain.order.model.OrderModel;
 import org.springframework.stereotype.Service;
 
 import java.util.logging.Level;
@@ -39,7 +39,7 @@ public class NfeEmissionOrchestrator implements NfeEmissionStrategy {
     }
 
     @Override
-    public String emit(OrderEntity order, NfeCredentials credentials) {
+    public String emit(OrderModel order, NfeCredentials credentials) {
         try {
             logger.info("Iniciando orquestração de emissão NF-e para Pedido Externo: " + order.getExternalId());
 

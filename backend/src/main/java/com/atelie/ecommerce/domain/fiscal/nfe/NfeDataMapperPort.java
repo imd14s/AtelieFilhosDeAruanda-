@@ -1,7 +1,7 @@
 package com.atelie.ecommerce.domain.fiscal.nfe;
 
-import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.domain.order.model.OrderModel;
 
 public interface NfeDataMapperPort {
-    String generateNfeXml(OrderEntity order);
+    String generateNfeXml(OrderModel order);
 }

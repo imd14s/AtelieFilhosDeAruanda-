@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.infrastructure.service;
 
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderConfigJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;

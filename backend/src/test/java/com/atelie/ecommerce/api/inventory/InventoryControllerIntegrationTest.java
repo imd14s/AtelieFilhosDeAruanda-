@@ -2,7 +2,7 @@ package com.atelie.ecommerce.api.inventory;
 
 import com.atelie.ecommerce.api.inventory.dto.InventoryAdjustmentRequest;
 import com.atelie.ecommerce.domain.inventory.MovementType;
-import com.atelie.ecommerce.domain.inventory.InventoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.inventory.InventoryRepository;
 import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;

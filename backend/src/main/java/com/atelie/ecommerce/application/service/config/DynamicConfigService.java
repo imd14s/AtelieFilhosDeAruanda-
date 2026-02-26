@@ -1,4 +1,4 @@
-package com.atelie.ecommerce.api.config;
+package com.atelie.ecommerce.application.service.config;
 
 import com.atelie.ecommerce.domain.config.SystemConfig;
 import com.atelie.ecommerce.domain.config.SystemConfigGateway;

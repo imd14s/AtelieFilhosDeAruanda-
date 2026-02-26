@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.domain.fiscal.nfe;
 
-import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.domain.order.model.OrderModel;
 
 /**
  * Porta de saída para geração de XML da Nota Fiscal Eletrônica (NF-e).
@@ -16,6 +16,6 @@ public interface NfeXmlGeneratorPort {
      * @param order O Pedido de Venda base para criação da Nota.
      * @return O XML puramente em String aprovado e estruturado.
      */
-    String generateXmlFor(OrderEntity order);
+    String generateXmlFor(OrderModel order);
 
 }

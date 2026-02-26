@@ -7,6 +7,7 @@ import com.atelie.ecommerce.application.service.order.OrderService;
 import com.atelie.ecommerce.domain.fiscal.model.FiscalProvider;
 import com.atelie.ecommerce.infrastructure.persistence.fiscal.FiscalIntegrationRepository;
 import com.atelie.ecommerce.infrastructure.security.EncryptionUtility;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,7 +23,7 @@ public class FiscalProviderFactory {
 
     public FiscalProviderFactory(FiscalIntegrationRepository repository,
             RestTemplate restTemplate,
-            OrderService orderService,
+            @Lazy OrderService orderService,
             NfeEmissionOrchestrator orchestrator,
             SystemConfigService configService,
             EncryptionUtility encryptionUtility) {

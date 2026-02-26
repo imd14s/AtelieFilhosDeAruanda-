@@ -6,7 +6,7 @@ import com.atelie.ecommerce.domain.marketing.model.NewsletterSubscriber;
 import com.atelie.ecommerce.application.service.marketing.CommunicationService;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.NewsletterSubscriberRepository;
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.infrastructure.service;
 
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import com.atelie.ecommerce.domain.service.model.ServiceRoutingRule;
 import com.atelie.ecommerce.domain.service.model.ServiceType;
 import com.atelie.ecommerce.domain.service.port.ServiceRoutingRuleGateway;

@@ -1,4 +1,4 @@
-package com.atelie.ecommerce.domain.inventory;
+package com.atelie.ecommerce.infrastructure.persistence.inventory;
 
 import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
 import org.springframework.data.jpa.repository.JpaRepository;

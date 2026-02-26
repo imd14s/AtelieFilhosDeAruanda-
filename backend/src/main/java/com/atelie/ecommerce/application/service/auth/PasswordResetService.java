@@ -8,7 +8,7 @@ import com.atelie.ecommerce.application.service.marketing.CommunicationService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 
 import java.time.LocalDateTime;
 import java.util.Map;

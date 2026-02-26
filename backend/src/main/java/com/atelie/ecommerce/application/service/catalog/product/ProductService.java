@@ -8,7 +8,7 @@ import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEnt
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import com.atelie.ecommerce.application.integration.MarketplaceIntegrationFactory;
 import com.atelie.ecommerce.application.service.ai.GeminiIntegrationService;
 import com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity;

@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.domain.fiscal.nfe;
 
-import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.domain.order.model.OrderModel;
 
 public interface NfeEmissionStrategy {
 
@@ -13,5 +13,5 @@ public interface NfeEmissionStrategy {
      * @throws NfeIssuanceException Em caso de quebras estruturais, comunicação ou
      *                              rejeições de regra de negócio.
      */
-    String emit(OrderEntity order, NfeCredentials credentials);
+    String emit(OrderModel order, NfeCredentials credentials);
 }

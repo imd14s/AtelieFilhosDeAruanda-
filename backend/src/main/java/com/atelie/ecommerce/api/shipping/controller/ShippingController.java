@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.api.shipping.controller;
 
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteRequest;
 import com.atelie.ecommerce.api.shipping.dto.ShippingQuoteResponse;
 import com.atelie.ecommerce.api.shipping.service.ShippingService;

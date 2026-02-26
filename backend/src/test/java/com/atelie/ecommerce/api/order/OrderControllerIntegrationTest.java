@@ -5,7 +5,7 @@ import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
 import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.domain.order.OrderStatus;
 import com.atelie.ecommerce.infrastructure.persistence.inventory.entity.InventoryMovementEntity;
-import com.atelie.ecommerce.domain.inventory.InventoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.inventory.InventoryRepository;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;

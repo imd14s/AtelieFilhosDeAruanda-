@@ -4,7 +4,7 @@ import com.atelie.ecommerce.infrastructure.persistence.marketing.entity.ProductF
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import com.atelie.ecommerce.api.marketing.dto.FavoriteRankingDTO;
+import com.atelie.ecommerce.infrastructure.persistence.marketing.FavoriteRankingProjection;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,10 +15,10 @@ public interface ProductFavoriteRepository
 
         List<ProductFavoriteEntity> findByProductId(UUID productId);
 
-        @Query("SELECT new com.atelie.ecommerce.api.marketing.dto.FavoriteRankingDTO(" +
-                        "p.id, p.name, p.imageUrl, p.price, COUNT(f)) " +
+        @Query("SELECT p.id as productId, p.name as productName, p.imageUrl as productImage, p.price as productPrice, COUNT(f) as favCount "
+                        +
                         "FROM ProductFavoriteEntity f JOIN f.product p " +
                         "GROUP BY p.id, p.name, p.imageUrl, p.price " +
                         "ORDER BY COUNT(f) DESC")
-        List<FavoriteRankingDTO> findFavoriteRanking();
+        List<FavoriteRankingProjection> findFavoriteRanking();
 }

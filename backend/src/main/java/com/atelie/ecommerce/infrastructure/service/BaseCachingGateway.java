@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.infrastructure.service;
 
-import com.atelie.ecommerce.api.config.DynamicConfigService;
+import com.atelie.ecommerce.application.service.config.DynamicConfigService;
 import com.atelie.ecommerce.domain.common.event.EntityChangedEvent;
 import org.springframework.context.event.EventListener;
 import java.time.Clock;

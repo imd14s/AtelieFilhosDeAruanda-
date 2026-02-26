@@ -1,8 +1,8 @@
 package com.atelie.ecommerce.infrastructure.service.fiscal.nfe;
 
 import com.atelie.ecommerce.domain.fiscal.nfe.NfeDataMapperPort;
-import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
-import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemEntity;
+import com.atelie.ecommerce.domain.order.model.OrderItemModel;
+import com.atelie.ecommerce.domain.order.model.OrderModel;
 import org.springframework.stereotype.Component;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -35,7 +35,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
     }
 
     @Override
-    public String generateNfeXml(OrderEntity order) {
+    public String generateNfeXml(OrderModel order) {
         if (order == null) {
             throw new RuntimeException("Falha catastrófica ao mapear XML da NF-e para Pedido null");
         }
@@ -69,7 +69,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
             int itemNum = 1;
             BigDecimal vProdTotal = BigDecimal.ZERO;
 
-            for (OrderItemEntity item : order.getItems()) {
+            for (OrderItemModel item : order.getItems()) {
                 infNFe.appendChild(buildDetElement(doc, itemNum++, item));
                 vProdTotal = vProdTotal.add(item.getTotalPrice());
             }
@@ -110,7 +110,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
         }
     }
 
-    private Element buildIdeElement(Document doc, OrderEntity order) {
+    private Element buildIdeElement(Document doc, OrderModel order) {
         Element ide = doc.createElement("ide");
 
         ide.appendChild(createElementWithValue(doc, "cUF", "35")); // SP por padrão do Ateliê
@@ -164,7 +164,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
         return emit;
     }
 
-    private Element buildDestElement(Document doc, OrderEntity order) {
+    private Element buildDestElement(Document doc, OrderModel order) {
         Element dest = doc.createElement("dest");
 
         String docSanitized = sanitizeDocument(order.getCustomerDocument());
@@ -199,20 +199,18 @@ public class NfeDataMapper implements NfeDataMapperPort {
         return dest;
     }
 
-    private Element buildDetElement(Document doc, int nItem, OrderItemEntity item) {
+    private Element buildDetElement(Document doc, int nItem, OrderItemModel item) {
         Element det = doc.createElement("det");
         det.setAttribute("nItem", String.valueOf(nItem));
 
         Element prod = doc.createElement("prod");
 
-        String cleanId = item.getProduct() != null ? item.getProduct().getId().toString().substring(0, 8)
-                : UUID.randomUUID().toString().substring(0, 8);
+        String cleanId = item.getId().toString().substring(0, 8);
         prod.appendChild(createElementWithValue(doc, "cProd", cleanId));
         prod.appendChild(createElementWithValue(doc, "cEAN", "SEM GTIN"));
         prod.appendChild(createElementWithValue(doc, "xProd", item.getProductName()));
 
-        String ncm = item.getProduct() != null && item.getProduct().getNcm() != null ? item.getProduct().getNcm()
-                : "84713019"; // NCM Genérico Fallback
+        String ncm = item.getProductNcm() != null ? item.getProductNcm() : "84713019"; // NCM Genérico Fallback
         prod.appendChild(createElementWithValue(doc, "NCM", ncm));
         prod.appendChild(createElementWithValue(doc, "CFOP", "5102")); // Venda dentro do estado, Simples Nacional
         prod.appendChild(createElementWithValue(doc, "uCom", "UN"));
@@ -233,9 +231,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
         Element imposto = doc.createElement("imposto");
         Element icms = doc.createElement("ICMS");
         Element icmsSn102 = doc.createElement("ICMSSN102"); // Sem permissão de crédito
-        String origin = item.getProduct() != null && item.getProduct().getOrigin() != null
-                ? String.valueOf(item.getProduct().getOrigin().ordinal())
-                : "0";
+        String origin = String.valueOf(item.getProductOrigin());
         icmsSn102.appendChild(createElementWithValue(doc, "orig", origin));
         icmsSn102.appendChild(createElementWithValue(doc, "CSOSN", "102"));
         icms.appendChild(icmsSn102);
@@ -297,7 +293,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
         return total;
     }
 
-    private Element buildTranspElement(Document doc, OrderEntity order) {
+    private Element buildTranspElement(Document doc, OrderModel order) {
         Element transp = doc.createElement("transp");
 
         // 0-Contratacao Frete Remetente (CIF), 1-Destinatario (FOB), 9-Sem Frete
@@ -309,7 +305,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
         return transp;
     }
 
-    private Element buildPagElement(Document doc, OrderEntity order) {
+    private Element buildPagElement(Document doc, OrderModel order) {
         Element pag = doc.createElement("pag");
         Element detPag = doc.createElement("detPag");
         detPag.appendChild(createElementWithValue(doc, "indPag", "0")); // A vista
