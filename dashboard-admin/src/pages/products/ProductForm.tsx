@@ -30,7 +30,7 @@ const schema = z.object({
   length: z.coerce.number().optional().default(0),
   ncm: z.string().min(1, 'NCM é obrigatório'),
   productionType: z.enum(['PROPRIA', 'REVENDA']).default('REVENDA'),
-  origin: z.string().min(1, 'Origem é obrigatória').default('0'),
+  origin: z.string().min(1, 'Origem é obrigatória').default('NACIONAL'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -74,7 +74,7 @@ export function ProductForm() {
       length: 0,
       marketplaceIds: [],
       productionType: 'REVENDA',
-      origin: '0',
+      origin: 'NACIONAL',
       ncm: '',
     }
   });
@@ -151,7 +151,7 @@ export function ProductForm() {
         length: (product as any).length || product.dimensions?.length || 0,
         ncm: (product as any).ncm || '',
         productionType: (product as any).productionType || 'REVENDA',
-        origin: (product as any).origin || '0',
+        origin: (product as any).origin || 'NACIONAL',
       });
       if (product.variants) setVariants(product.variants);
       if (product.media) {
@@ -635,15 +635,15 @@ export function ProductForm() {
                 {...register('origin')}
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
               >
-                <option value="0">0 - Nacional</option>
-                <option value="1">1 - Estrangeira - Importação direta</option>
-                <option value="2">2 - Estrangeira - Adquirida mercado interno</option>
-                <option value="3">3 - Nacional (Conteúdo Import. {'>'} 40%)</option>
-                <option value="4">4 - Nacional (Conf. Processos Básicos)</option>
-                <option value="5">5 - Nacional (Conteúdo Import. {'<='} 40%)</option>
-                <option value="6">6 - Estrangeira - (Importação direta s/ similar)</option>
-                <option value="7">7 - Estrangeira - (Mercado interno s/ similar)</option>
-                <option value="8">8 - Nacional (Conteúdo Import. {'>'} 70%)</option>
+                <option value="NACIONAL">0 - Nacional</option>
+                <option value="ESTRANGEIRA_IMPORTACAO_DIRETA">1 - Estrangeira - Importação direta</option>
+                <option value="ESTRANGEIRA_ADQUIRIDA_MERCADO_INTERNO">2 - Estrangeira - Adquirida mercado interno</option>
+                <option value="NACIONAL_CONTEUDO_IMPORTACAO_SUPERIOR_40">3 - Nacional (Conteúdo Import. {'>'} 40%)</option>
+                <option value="NACIONAL_PROCESSOS_PRODUTIVOS_BASICOS">4 - Nacional (Conf. Processos Básicos)</option>
+                <option value="NACIONAL_CONTEUDO_IMPORTACAO_INFERIOR_40">5 - Nacional (Conteúdo Import. {'<='} 40%)</option>
+                <option value="ESTRANGEIRA_IMPORTACAO_DIRETA_SEM_SIMILAR">6 - Estrangeira - (Importação direta s/ similar)</option>
+                <option value="ESTRANGEIRA_ADQUIRIDA_MERCADO_INTERNO_SEM_SIMILAR">7 - Estrangeira - (Mercado interno s/ similar)</option>
+                <option value="NACIONAL_CONTEUDO_IMPORTACAO_SUPERIOR_70">8 - Nacional (Conteúdo Import. {'>'} 70%)</option>
               </select>
               {errors.origin && <p className="text-red-500 text-xs mt-1">{errors.origin.message}</p>}
             </div>
