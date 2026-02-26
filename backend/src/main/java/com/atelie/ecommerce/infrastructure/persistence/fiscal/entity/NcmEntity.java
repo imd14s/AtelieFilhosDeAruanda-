@@ -3,7 +3,6 @@ package com.atelie.ecommerce.infrastructure.persistence.fiscal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "ncm_catalog")
@@ -15,10 +14,6 @@ import java.util.UUID;
 public class NcmEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    @Column(nullable = false, unique = true)
     private String code;
 
     @Column(nullable = false, columnDefinition = "TEXT")

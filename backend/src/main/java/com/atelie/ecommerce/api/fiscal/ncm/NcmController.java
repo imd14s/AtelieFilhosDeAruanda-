@@ -26,7 +26,7 @@ public class NcmController {
         List<Ncm> results = ncmService.searchNcms(query);
 
         List<NcmResponse> response = results.stream()
-                .map(ncm -> new NcmResponse(ncm.id(), ncm.code(), ncm.description()))
+                .map(ncm -> new NcmResponse(ncm.code(), ncm.description()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);

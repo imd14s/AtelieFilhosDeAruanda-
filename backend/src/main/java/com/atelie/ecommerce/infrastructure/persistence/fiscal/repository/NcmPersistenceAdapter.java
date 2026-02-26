@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,12 +30,7 @@ public class NcmPersistenceAdapter implements NcmRepository {
         return jpaRepository.findByCode(code).map(this::toDomain);
     }
 
-    @Override
-    public Optional<Ncm> findById(UUID id) {
-        return jpaRepository.findById(id).map(this::toDomain);
-    }
-
     private Ncm toDomain(NcmEntity entity) {
-        return new Ncm(entity.getId(), entity.getCode(), entity.getDescription());
+        return new Ncm(entity.getCode(), entity.getDescription());
     }
 }
