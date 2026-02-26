@@ -1,5 +1,5 @@
 import api from './api';
-import { User, Address } from '../types';
+import { User, Address, LoginResponse } from '../types';
 import { TENANT_HEADER } from './productService';
 import { cartService } from './cartService';
 
@@ -9,27 +9,27 @@ import { cartService } from './cartService';
  */
 
 export const authService = {
+    register: async (userData: any): Promise<any> => {
+        const response = await api.post('/auth/register', userData);
+        return response.data;
+    },
+
+    verify: async (email: string, code: string): Promise<any> => {
+        const response = await api.post('/auth/verify', { email, code });
+        return response.data;
+    },
+
     login: async (email: string, password: string): Promise<User> => {
         try {
             const response = await api.post('/auth/login', { email, password });
             if (response.data?.token) {
-                localStorage.setItem('auth_token', response.data.token);
-                const userObj: User = {
-                    id: response.data.id,
-                    name: response.data.name,
-                    email: response.data.email,
-                    role: response.data.role,
-                    emailVerified: response.data.emailVerified,
-                    photoUrl: response.data.photoUrl,
-                    googleId: response.data.googleId
-                };
-                localStorage.setItem('user', JSON.stringify(userObj));
+                authService.setSession(response.data);
 
                 // Migrar carrinho de convidado para o usuário logado
-                await cartService.migrate(userObj.id);
+                await cartService.migrate(response.data.id);
 
                 window.dispatchEvent(new Event('auth-changed'));
-                return userObj;
+                return response.data;
             }
             throw new Error("Resposta de login inválida");
         } catch (error) {
@@ -38,11 +38,65 @@ export const authService = {
         }
     },
 
+    /**
+     * Login com Google — usa access_token do @react-oauth/google.
+     * O frontend já buscou o userInfo do Google e envia ao backend.
+     */
+    googleLoginWithUserInfo: async (userInfo: any, accessToken: string): Promise<User> => {
+        try {
+            const response = await api.post('/auth/google', {
+                email: userInfo.email,
+                name: userInfo.name,
+                picture: userInfo.picture,
+                googleId: userInfo.sub,
+                accessToken,
+            });
+
+            if (response.data.token) {
+                authService.setSession(response.data);
+
+                // Migrar carrinho
+                await cartService.migrate(response.data.id);
+
+                window.dispatchEvent(new Event('auth-changed'));
+                return response.data;
+            }
+            throw new Error("Resposta de login Google inválida");
+        } catch (error) {
+            console.error('[authService] Erro no Google Login:', error);
+            throw error;
+        }
+    },
+
+    setSession: (data: LoginResponse): void => {
+        localStorage.setItem('auth_token', data.token);
+        const userObj: User = {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            role: data.role,
+            emailVerified: data.emailVerified,
+            photoUrl: data.photoUrl,
+            googleId: data.googleId
+        };
+        localStorage.setItem('user', JSON.stringify(userObj));
+    },
+
     logout: (): void => {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user');
         window.dispatchEvent(new Event('auth-changed'));
         window.location.href = '/';
+    },
+
+    requestPasswordReset: async (email: string): Promise<any> => {
+        const response = await api.post('/auth/password-reset', { email });
+        return response.data;
+    },
+
+    resetPassword: async (token: string, newPassword: string): Promise<any> => {
+        const response = await api.post('/auth/password-reset/reset', { token, newPassword });
+        return response.data;
     },
 
     getUser: (): User | null => {

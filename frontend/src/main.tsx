@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer'
-if (typeof global === 'undefined') {
-  window.global = window;
+if (typeof (window as any).global === 'undefined') {
+  (window as any).global = window;
 }
 window.Buffer = Buffer;
 
@@ -22,7 +22,10 @@ const AppTree = () => (
   </HelmetProvider>
 );
 
-createRoot(document.getElementById('root')).render(
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Failed to find the root element');
+
+createRoot(rootElement).render(
   <StrictMode>
     {GOOGLE_CLIENT_ID ? (
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
