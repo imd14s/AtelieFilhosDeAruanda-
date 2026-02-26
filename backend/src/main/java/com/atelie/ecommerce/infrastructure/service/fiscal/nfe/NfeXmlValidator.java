@@ -1,6 +1,7 @@
 package com.atelie.ecommerce.infrastructure.service.fiscal.nfe;
 
-import com.atelie.ecommerce.domain.common.exception.NfeValidationException;
+import com.atelie.ecommerce.domain.fiscal.nfe.NfeValidationException;
+import com.atelie.ecommerce.domain.fiscal.nfe.NfeXmlValidatorPort;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
@@ -14,7 +15,7 @@ import java.io.IOException;
 import java.io.StringReader;
 
 @Service
-public class NfeXmlValidator {
+public class NfeXmlValidator implements NfeXmlValidatorPort {
 
     // Aponta para o XSD central do Modelo 55 (NF-e)
     private static final String SCHEMA_PATH = "fiscal/nfe/xsd/nfe_v4.00.xsd";

@@ -1,6 +1,6 @@
 package com.atelie.ecommerce.infrastructure.service.fiscal.nfe;
 
-import com.atelie.ecommerce.domain.fiscal.nfe.NfeXmlGeneratorPort;
+import com.atelie.ecommerce.domain.fiscal.nfe.NfeDataMapperPort;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemEntity;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ import java.util.UUID;
  * NF-e 4.00.
  */
 @Component
-public class NfeDataMapper implements NfeXmlGeneratorPort {
+public class NfeDataMapper implements NfeDataMapperPort {
 
     private final NfeXmlValidator xmlValidator;
 
@@ -35,7 +35,7 @@ public class NfeDataMapper implements NfeXmlGeneratorPort {
     }
 
     @Override
-    public String generateXmlFor(OrderEntity order) {
+    public String generateNfeXml(OrderEntity order) {
         if (order == null) {
             throw new RuntimeException("Falha catastrófica ao mapear XML da NF-e para Pedido null");
         }

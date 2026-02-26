@@ -55,7 +55,7 @@ class NfeDataMapperTest {
         order.getItems().add(item);
 
         // Act
-        String resultXml = dataMapper.generateXmlFor(order);
+        String resultXml = dataMapper.generateNfeXml(order);
 
         // Assert
         assertThat(resultXml).isNotNull();
@@ -91,7 +91,7 @@ class NfeDataMapperTest {
     @Test
     void shouldThrowExceptionWhenOrderIsNullAndCauseCrashInTransformer() {
         // Enviar pedido nulo causa null pointers na construção inicial do XML
-        assertThatThrownBy(() -> dataMapper.generateXmlFor(null))
+        assertThatThrownBy(() -> dataMapper.generateNfeXml(null))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Falha catastrófica ao mapear XML da NF-e para Pedido null");
     }

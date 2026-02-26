@@ -92,6 +92,13 @@ public class OrderEntity {
     @Column(name = "document_expiry_date")
     private Instant documentExpiryDate;
 
+    // Novos Campos de Recibo Sefaz
+    @Column(name = "nfe_receipt", length = 100)
+    private String nfeReceipt;
+
+    @Column(name = "nfe_protocol_xml", columnDefinition = "TEXT")
+    private String nfeProtocolXml;
+
     public OrderEntity() {
     }
 
@@ -318,6 +325,22 @@ public class OrderEntity {
 
     public void setDocumentExpiryDate(Instant documentExpiryDate) {
         this.documentExpiryDate = documentExpiryDate;
+    }
+
+    public String getNfeReceipt() {
+        return nfeReceipt;
+    }
+
+    public void setNfeReceipt(String nfeReceipt) {
+        this.nfeReceipt = nfeReceipt;
+    }
+
+    public String getNfeProtocolXml() {
+        return nfeProtocolXml;
+    }
+
+    public void setNfeProtocolXml(String nfeProtocolXml) {
+        this.nfeProtocolXml = nfeProtocolXml;
     }
 
     @PrePersist
