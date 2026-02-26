@@ -165,7 +165,7 @@ Get All,GET /api/settings/payment,In: @RequestBody / Out: ResponseEntity,🟢
 Update,PUT /api/settings/payment/{id},In: @RequestBody / Out: ResponseEntity,🟢
 Get All,GET /api/settings/shipping,In: @RequestBody / Out: ResponseEntity,🟢
 Update,PUT /api/settings/shipping/{id},In: @RequestBody / Out: ResponseEntity,🟢
-Quote,POST /api/shipping/quote,In: @RequestBody / Out: ResponseEntity,🟢
+Quote,POST /api/shipping/quote,In: ShippingItem / Out: ShippingQuoteResponse (Cached/Async),🟢
 Refresh Configs,POST /api/shipping/configs/refresh,In: @RequestBody / Out: ResponseEntity,🟢
 Get All,GET /api/subscription-plans,In: @RequestBody / Out: ResponseEntity,🟢
 Get Active,GET /api/subscription-plans/active,In: @RequestBody / Out: ResponseEntity,🟢

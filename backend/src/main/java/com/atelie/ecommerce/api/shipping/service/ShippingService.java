@@ -6,12 +6,12 @@ import com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class ShippingService {
@@ -27,10 +27,11 @@ public class ShippingService {
         this.shippingFactory = shippingFactory;
     }
 
+    @Cacheable(value = "shippingQuotes", key = "#rawCep + #items.hashCode()")
     public ShippingQuoteResponse quote(String rawCep, BigDecimal subtotal, String forcedProvider,
             List<com.atelie.ecommerce.application.dto.shipping.ShippingQuoteRequest.ShippingItem> items) {
 
-        String providerName = forcedProvider != null ? forcedProvider : "MELHOR_ENVIO"; // Default fallback
+        String providerName = forcedProvider != null ? forcedProvider : "MELHOR_ENVIO";
 
         var domainItems = items.stream()
                 .map(i -> new com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingItem(
@@ -46,13 +47,22 @@ public class ShippingService {
         var params = new com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingParams(
                 rawCep, subtotal, domainItems, "default-tenant");
 
-        log.info("[LOGISTICS] Resolvendo estratégia para provedor: {}", providerName);
-        var strategy = shippingFactory.getStrategy(providerName);
-        var result = strategy.calculate(params);
+        log.info("[LOGISTICS] Iniciando orquestração assíncrona para provedor: {}", providerName);
 
-        if (!result.success()) {
-            log.warn("[LOGISTICS] Estratégia {} falhou: {}. Tentando contingência offline.", providerName,
-                    result.error());
+        // Orquestração assíncrona para suportar cotações simultâneas se necessário
+        CompletableFuture<com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingResult> futureResult = CompletableFuture
+                .supplyAsync(() -> shippingFactory.getStrategy(providerName).calculate(params))
+                .orTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+                .exceptionally(ex -> {
+                    log.error("[LOGISTICS] Timeout ou erro crítico na estratégia {}: {}", providerName,
+                            ex.getMessage());
+                    return null;
+                });
+
+        var result = futureResult.join();
+
+        if (result == null || !result.success()) {
+            log.warn("[LOGISTICS] Estratégia {} falhou ou expirou. Acionando contingência OFFLINE.", providerName);
             result = shippingFactory.getStrategy("OFFLINE").calculate(params);
         }
 

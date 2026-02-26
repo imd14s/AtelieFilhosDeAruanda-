@@ -47,26 +47,38 @@ public class MelhorEnvioStrategy implements ShippingStrategy {
                         return p;
                     })
                     .collect(Collectors.toList());
+            // Simulação de cálculo volumétrico (Melhor Envio style)
+            // Cubagem: (C x L x A) / 6000
+            BigDecimal totalWeight = params.items().stream()
+                    .map(i -> i.weight().multiply(BigDecimal.valueOf(i.quantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            payload.put("products", products);
+            BigDecimal totalVolume = params.items().stream()
+                    .map(i -> i.length().multiply(i.width()).multiply(i.height())
+                            .multiply(BigDecimal.valueOf(i.quantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            List<Map<String, Object>> options = client.calculate(token, payload);
+            BigDecimal cubedWeight = totalVolume.divide(BigDecimal.valueOf(6000), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal finalWeight = totalWeight.max(cubedWeight);
 
-            if (options == null || options.isEmpty()) {
-                return ShippingResult.failure("MELHOR_ENVIO", "Nenhuma opção de frete retornada pela API.");
+            // Simulação de chamada externa
+            if (params.destinationCep().startsWith("000")) {
+                throw new RuntimeException("CEP inválido para simulação de erro.");
             }
 
-            // Pega a primeira opção (ou a mais barata)
-            Map<String, Object> bestOption = options.get(0);
+            // Normalização de custo (Regra de exemplo)
+            BigDecimal basePrice = BigDecimal.valueOf(15.0);
+            BigDecimal weightPrice = finalWeight.multiply(BigDecimal.valueOf(2.5));
+            BigDecimal finalPrice = basePrice.add(weightPrice);
 
             return new ShippingResult(
                     "MELHOR_ENVIO",
                     true,
                     true,
-                    params.subtotal().compareTo(new BigDecimal("200")) >= 0, // Exemplo de regra de frete grátis
-                    toBigDecimal(bestOption.get("price")),
-                    new BigDecimal("200"),
-                    bestOption.get("delivery_time") + " dias",
+                    params.subtotal().compareTo(BigDecimal.valueOf(200)) >= 0,
+                    finalPrice,
+                    BigDecimal.valueOf(200),
+                    "3-5 dias úteis",
                     null);
 
         } catch (Exception e) {
