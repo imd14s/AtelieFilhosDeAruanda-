@@ -19,6 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.UUID;
+import com.atelie.ecommerce.domain.catalog.product.ProductionType;
+import com.atelie.ecommerce.domain.catalog.product.ProductOrigin;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -75,8 +77,10 @@ public class ProductControllerTest {
                                 BigDecimal.valueOf(1.0), // height
                                 BigDecimal.valueOf(1.0), // width
                                 BigDecimal.valueOf(1.0), // length
-                                new ArrayList<>() // marketplaceIds
-                );
+                                new ArrayList<>(), // marketplaceIds
+                                "6109.10.00",
+                                ProductionType.REVENDA,
+                                ProductOrigin.NACIONAL);
                 org.springframework.mock.web.MockMultipartFile productPart = new org.springframework.mock.web.MockMultipartFile(
                                 "product",
                                 "",
@@ -115,7 +119,10 @@ public class ProductControllerTest {
                                 BigDecimal.valueOf(1.0),
                                 BigDecimal.valueOf(1.0),
                                 BigDecimal.valueOf(1.0),
-                                new ArrayList<>());
+                                new ArrayList<>(),
+                                "6109.10.00",
+                                ProductionType.REVENDA,
+                                ProductOrigin.NACIONAL);
 
                 // Act & Assert
                 org.springframework.mock.web.MockMultipartFile updatePart = new org.springframework.mock.web.MockMultipartFile(
@@ -153,7 +160,10 @@ public class ProductControllerTest {
                                 BigDecimal.valueOf(1.0),
                                 BigDecimal.valueOf(1.0),
                                 BigDecimal.valueOf(1.0),
-                                new ArrayList<>());
+                                new ArrayList<>(),
+                                "6109.10.00",
+                                ProductionType.REVENDA,
+                                ProductOrigin.NACIONAL);
 
                 org.springframework.mock.web.MockMultipartFile updateGhostPart = new org.springframework.mock.web.MockMultipartFile(
                                 "product",

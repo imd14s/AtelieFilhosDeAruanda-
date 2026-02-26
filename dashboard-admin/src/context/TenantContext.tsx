@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import type { Tenant } from '../types/tenant';
 import { TenantService } from '../services/TenantService';
 import { api } from '../api/axios';
+import { useAuth } from './AuthContext';
 
 interface TenantContextType {
     currentTenant: Tenant | null;
@@ -14,13 +15,18 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType>({} as TenantContextType);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadTenants();
-    }, []);
+        if (!isAuthLoading && isAuthenticated) {
+            loadTenants();
+        } else if (!isAuthLoading && !isAuthenticated) {
+            setIsLoading(false);
+        }
+    }, [isAuthenticated, isAuthLoading]);
 
     const loadTenants = async () => {
         try {
