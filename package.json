@@ -1,0 +1,12 @@
+{
+  "name": "atelie-filhos-de-aruanda-root",
+  "private": true,
+  "description": "Root automation and quality gates for Atelie Filhos de Aruanda monorepo",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.5",
+    "lint-staged": "^15.2.10"
+  }
+}

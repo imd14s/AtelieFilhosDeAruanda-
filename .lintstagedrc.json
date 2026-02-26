@@ -1,0 +1,13 @@
+{
+    "frontend/src/**/*.{ts,tsx}": [
+        "frontend/node_modules/.bin/eslint --fix --config frontend/eslint.config.js",
+        "frontend/node_modules/.bin/vitest related --run --config frontend/vitest.config.ts"
+    ],
+    "dashboard-admin/src/**/*.{ts,tsx}": [
+        "dashboard-admin/node_modules/.bin/eslint --fix --config dashboard-admin/eslint.config.js",
+        "dashboard-admin/node_modules/.bin/vitest related --run --config dashboard-admin/vitest.config.ts"
+    ],
+    "backend/src/**/*.java": [
+        "sh -c 'mvn -f backend/pom.xml test -Dtest=ArchitectureTest'"
+    ]
+}
