@@ -29,6 +29,7 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    // @api-status: stable
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         OrderEntity created = orderService.createOrder(request);

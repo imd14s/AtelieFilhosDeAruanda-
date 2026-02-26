@@ -114,3 +114,6 @@ jobs:
 
       - name: Sync Manifesto
         run: npm run doc:sync
+
+      - name: Introspect Contracts
+        run: npm run doc:introspect
