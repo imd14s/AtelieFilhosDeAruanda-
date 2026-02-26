@@ -117,3 +117,6 @@ jobs:
 
       - name: Introspect Contracts
         run: npm run doc:introspect
+
+      - name: Guardrail Check
+        run: npm run test:guardrails

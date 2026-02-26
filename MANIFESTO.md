@@ -190,13 +190,13 @@ Busca de Endereço,ZipCodeInput,Máscara 00000-000 + Integração correta com AP
 <!-- END_CATALOG_STOREFRONT -->
 
 🔐 3. Guardrails e Segurança (SLA Interno)
-Performance: Nenhuma rota de busca deve exceder 200ms.
+Performance: Nenhuma rota de busca deve exceder 200ms. <!-- sla: response_time=200 -->
 
 Privacidade (LGPD): Dados de CPF/CNPJ devem ser criptografados em repouso e mascarados em logs.
 
-Integridade: Bloqueio automático de commits com cobertura de testes inferior a 80%.
+Integridade: Bloqueio automático de commits com cobertura de testes inferior a 80%. <!-- sla: coverage=80 -->
 
-Segurança de Certificado: O Certificado A1 nunca deve tocar o disco de forma persistente sem cifragem AES-256.
+Segurança de Certificado: O Certificado A1 nunca deve tocar o disco de forma persistente sem cifragem AES-256. <!-- sla: cert_security=aes-256 -->
 
 📖 4. Glossário de Regras de Negócio
 Pedido Autorizado: Pedido com pagamento confirmado e XML da NF-e transmitido com sucesso.
