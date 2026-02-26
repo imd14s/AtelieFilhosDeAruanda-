@@ -49,4 +49,4 @@ cd ..
 echo "🚀 Iniciando API Backend (Porta 8080)..."
 echo "👀 O log da API ficará preso neste terminal para você analisar em tempo real. Para parar tudo, pressione Ctrl+C."
 cd backend
-mvn spring-boot:run
+mvn clean package spring-boot:run -DskipTests
