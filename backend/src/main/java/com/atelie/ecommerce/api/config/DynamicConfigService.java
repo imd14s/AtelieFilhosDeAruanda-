@@ -1,13 +1,9 @@
 package com.atelie.ecommerce.api.config;
 
-import com.atelie.ecommerce.domain.common.event.EntityChangedEvent;
-import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
+import com.atelie.ecommerce.domain.config.SystemConfig;
+import com.atelie.ecommerce.domain.config.SystemConfigGateway;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class DynamicConfigService {
@@ -16,36 +12,19 @@ public class DynamicConfigService {
 
     public static final String CACHE_TTL_SECONDS_KEY = "CACHE_TTL_SECONDS";
 
-    private final SystemConfigRepository repository;
+    private final SystemConfigGateway gateway;
     private final Environment environment;
-    private final Map<String, String> cache = new ConcurrentHashMap<>();
 
-    public DynamicConfigService(SystemConfigRepository repository, Environment environment) {
-        this.repository = repository;
+    public DynamicConfigService(SystemConfigGateway gateway, Environment environment) {
+        this.gateway = gateway;
         this.environment = environment;
-        refresh();
-    }
-
-    public void refresh() {
-        try {
-            var configs = repository.findAll();
-            cache.clear();
-            configs.forEach(c -> cache.put(c.getConfigKey(), c.getConfigValue()));
-            log.debug("Cache de configurações atualizado: {} itens", cache.size());
-        } catch (Exception e) {
-            log.warn("Não foi possível carregar configurações do banco: {}",
-                    e.getMessage());
-        }
-    }
-
-    @EventListener
-    public void onEntityChanged(EntityChangedEvent event) {
-        if ("SYSTEM_CONFIG".equals(event.getEntityType()))
-            refresh();
     }
 
     public String getString(String key) {
-        String val = cache.get(key);
+        String val = gateway.findByKey(key)
+                .map(SystemConfig::value)
+                .orElse(null);
+
         if (val == null) {
             // Fallback: buscar nas variáveis de ambiente do Spring
             val = environment.getProperty(key);
@@ -55,11 +34,6 @@ public class DynamicConfigService {
 
     public String requireString(String key) {
         String v = getString(key);
-        if (v == null) {
-            // Última tentativa: recarregar do banco
-            refresh();
-            v = getString(key);
-        }
         if (v == null)
             throw new IllegalStateException("Config ausente (banco e ENV): " + key);
         return v;
@@ -70,7 +44,12 @@ public class DynamicConfigService {
     }
 
     public boolean containsKey(String key) {
-        return cache.containsKey(key) || environment.containsProperty(key);
+        return gateway.findByKey(key).isPresent() || environment.containsProperty(key);
+    }
+
+    public void refresh() {
+        // No-op: Spring Cache lida com a invalidação automaticamente via @CacheEvict
+        log.debug("A atualização manual de configurações não é mais necessária (Spring Cache ativo).");
     }
 
     public String get(String key, String defaultValue) {

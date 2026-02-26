@@ -2,9 +2,12 @@ package com.atelie.ecommerce.infrastructure.persistence.config;
 
 import com.atelie.ecommerce.domain.config.SystemConfig;
 import com.atelie.ecommerce.domain.config.SystemConfigGateway;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * JpaSystemConfigGateway.
@@ -27,5 +30,28 @@ public class JpaSystemConfigGateway implements SystemConfigGateway {
                 .filter(e -> e.getConfigKey() != null)
                 .map(e -> new SystemConfig(e.getConfigKey(), e.getConfigValue()))
                 .toList();
+    }
+
+    @Override
+    @Cacheable(value = "systemConfigs", key = "#key")
+    public Optional<SystemConfig> findByKey(String key) {
+        return repository.findById(key)
+                .map(e -> new SystemConfig(e.getConfigKey(), e.getConfigValue()));
+    }
+
+    @Override
+    @CacheEvict(value = "systemConfigs", key = "#config.key()")
+    public void save(SystemConfig config) {
+        SystemConfigEntity entity = SystemConfigEntity.builder()
+                .configKey(config.key())
+                .configValue(config.value())
+                .build();
+        repository.save(entity);
+    }
+
+    @Override
+    @CacheEvict(value = "systemConfigs", key = "#key")
+    public void deleteByKey(String key) {
+        repository.deleteById(key);
     }
 }

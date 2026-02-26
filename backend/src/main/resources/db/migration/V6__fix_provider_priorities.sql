@@ -19,7 +19,7 @@ SELECT
     gen_random_uuid(),
     id,
     'dev',
-    '{"rate": 0.00, "free_threshold": 999.00, "display_name": "Frete Grátis (Teste)"}',
+    '{"rate": 15.00, "free_threshold": 999.00, "display_name": "Frete Grátis (Teste)"}',
     1,
     true,
     NOW()

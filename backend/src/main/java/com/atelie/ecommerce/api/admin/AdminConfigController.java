@@ -1,8 +1,9 @@
 package com.atelie.ecommerce.api.admin;
 
+import com.atelie.ecommerce.application.service.config.SystemConfigService;
 import com.atelie.ecommerce.domain.common.event.EntityChangedEvent;
+import com.atelie.ecommerce.domain.config.SystemConfig;
 import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigEntity;
-import com.atelie.ecommerce.infrastructure.persistence.config.SystemConfigRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,17 +14,17 @@ import java.util.List;
 @RequestMapping("/api/admin/configs")
 public class AdminConfigController {
 
-    private final SystemConfigRepository repository;
+    private final SystemConfigService service;
     private final ApplicationEventPublisher eventPublisher;
 
-    public AdminConfigController(SystemConfigRepository repository, ApplicationEventPublisher eventPublisher) {
-        this.repository = repository;
+    public AdminConfigController(SystemConfigService service, ApplicationEventPublisher eventPublisher) {
+        this.service = service;
         this.eventPublisher = eventPublisher;
     }
 
     @GetMapping
-    public List<SystemConfigEntity> listAll() {
-        return repository.findAll();
+    public List<SystemConfig> listAll() {
+        return service.listAll();
     }
 
     @PostMapping
@@ -31,14 +32,14 @@ public class AdminConfigController {
         if (dto.getConfigKey() == null || dto.getConfigKey().trim().isEmpty()) {
             return ResponseEntity.badRequest().body("configKey is required");
         }
-        SystemConfigEntity saved = repository.save(dto);
+        service.upsert(dto.getConfigKey(), dto.getConfigValue());
         eventPublisher.publishEvent(new EntityChangedEvent(this, "SYSTEM_CONFIG"));
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{key}")
     public ResponseEntity<Void> delete(@PathVariable String key) {
-        repository.deleteById(key);
+        service.delete(key);
         eventPublisher.publishEvent(new EntityChangedEvent(this, "SYSTEM_CONFIG"));
         return ResponseEntity.noContent().build();
     }
