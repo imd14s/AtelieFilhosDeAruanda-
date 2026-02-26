@@ -184,9 +184,9 @@ Handle Marketplace Webhook,POST /api/webhooks/marketplace/{provider},In: @Reques
 
 <!-- START_CATALOG_STOREFRONT -->
 Funcionalidade,Componente,Validação/Regra,Status
-Identificação Fiscal,DocumentInput,Valida Dígito Verificador (CPF/CNPJ) via Módulo 11.,🟢
-Cálculo de Impostos,CheckoutSummary,Aplica alíquota baseada na Origem da Mercadoria.,🟡
-Busca de Endereço,ZipCodeInput,Máscara 00000-000 + Integração correta com API de CEP.,🟢
+Identificação Fiscal,DocumentInput,Valida CPF/CNPJ via Módulo 11,🟢
+Cálculo de Impostos,CheckoutSummary,Alíquota por Origem,🟡
+Busca de Endereço,ZipCodeInput,Integração API CEP,🟢
 <!-- END_CATALOG_STOREFRONT -->
 
 🔐 3. Guardrails e Segurança (SLA Interno)

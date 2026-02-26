@@ -1,9 +1,8 @@
 package com.atelie.ecommerce.api.shipping.service;
 
-import com.atelie.ecommerce.application.serviceengine.ServiceOrchestrator;
-import com.atelie.ecommerce.application.serviceengine.ServiceResult;
+import com.atelie.ecommerce.domain.shipping.factory.ShippingProviderFactory;
 import com.atelie.ecommerce.application.dto.shipping.ShippingQuoteResponse;
-import com.atelie.ecommerce.domain.service.model.ServiceType;
+import com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,51 +18,50 @@ public class ShippingService {
 
     private static final Logger log = LoggerFactory.getLogger(ShippingService.class);
 
-    private final ServiceOrchestrator orchestrator;
+    private final ShippingProviderFactory shippingFactory;
 
     @Value("${spring.profiles.active:prod}")
     private String activeProfile;
 
-    public ShippingService(ServiceOrchestrator orchestrator) {
-        this.orchestrator = orchestrator;
+    public ShippingService(ShippingProviderFactory shippingFactory) {
+        this.shippingFactory = shippingFactory;
     }
 
     public ShippingQuoteResponse quote(String rawCep, BigDecimal subtotal, String forcedProvider,
             List<com.atelie.ecommerce.application.dto.shipping.ShippingQuoteRequest.ShippingItem> items) {
 
-        Map<String, Object> request = new HashMap<>();
-        request.put("cep", rawCep);
-        request.put("subtotal", subtotal);
-        request.put("items", items);
+        String providerName = forcedProvider != null ? forcedProvider : "MELHOR_ENVIO"; // Default fallback
 
-        if (forcedProvider != null) {
-            request.put("forced_provider", forcedProvider);
-        }
+        var domainItems = items.stream()
+                .map(i -> new com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingItem(
+                        i.getProductId(),
+                        i.getVariantId(),
+                        i.getQuantity(),
+                        i.getWeight() != null ? i.getWeight() : BigDecimal.valueOf(0.5),
+                        i.getLength() != null ? i.getLength() : BigDecimal.valueOf(10),
+                        i.getHeight() != null ? i.getHeight() : BigDecimal.valueOf(10),
+                        i.getWidth() != null ? i.getWidth() : BigDecimal.valueOf(10)))
+                .toList();
 
-        log.debug("[DEBUG] Chamando orquestrador para frete no ambiente: {}. Request: {}", activeProfile, request);
-        ServiceResult result = orchestrator.execute(ServiceType.SHIPPING, request, activeProfile);
-        log.info("[DEBUG] Resultado do orquestrador de frete: success={}, provider={}, error={}",
-                result.success(), result.providerCode(), result.error());
+        var params = new com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingParams(
+                rawCep, subtotal, domainItems, "default-tenant");
+
+        log.info("[LOGISTICS] Resolvendo estratégia para provedor: {}", providerName);
+        var strategy = shippingFactory.getStrategy(providerName);
+        var result = strategy.calculate(params);
 
         if (!result.success()) {
-            log.warn("[DEBUG] Erro ao orquestrar frete: {}. Informando frontend sobre indisponibilidade.",
+            log.warn("[LOGISTICS] Estratégia {} falhou: {}. Tentando contingência offline.", providerName,
                     result.error());
-            // Retorna um provedor especial para indicar que o serviço não está configurado
-            return new ShippingQuoteResponse("CONFIG_MISSING", false, false, BigDecimal.ZERO, BigDecimal.ZERO);
+            result = shippingFactory.getStrategy("OFFLINE").calculate(params);
         }
 
-        Map<String, Object> payload = result.payload();
-        log.debug("[DEBUG] Payload recebido do driver: {}", payload);
-
-        String providerName = (result.providerCode() != null) ? result.providerCode()
-                : (String) payload.getOrDefault("provider", "UNKNOWN");
-
         return new ShippingQuoteResponse(
-                providerName,
-                (Boolean) payload.getOrDefault("eligible", false),
-                (Boolean) payload.getOrDefault("free_shipping", false),
-                toBigDecimal(payload.get("cost")),
-                toBigDecimal(payload.get("threshold")));
+                result.providerName(),
+                result.eligible(),
+                result.freeShipping(),
+                result.cost(),
+                result.threshold());
     }
 
     private BigDecimal toBigDecimal(Object val) {

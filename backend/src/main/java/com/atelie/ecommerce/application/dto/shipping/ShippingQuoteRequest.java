@@ -55,7 +55,12 @@ public class ShippingQuoteRequest {
 
     public static class ShippingItem {
         private UUID productId;
+        private UUID variantId;
         private Integer quantity;
+        private BigDecimal weight;
+        private BigDecimal length;
+        private BigDecimal height;
+        private BigDecimal width;
 
         public UUID getProductId() {
             return productId;
@@ -65,12 +70,52 @@ public class ShippingQuoteRequest {
             this.productId = productId;
         }
 
+        public UUID getVariantId() {
+            return variantId;
+        }
+
+        public void setVariantId(UUID variantId) {
+            this.variantId = variantId;
+        }
+
         public Integer getQuantity() {
             return quantity;
         }
 
         public void setQuantity(Integer quantity) {
             this.quantity = quantity;
+        }
+
+        public BigDecimal getWeight() {
+            return weight;
+        }
+
+        public void setWeight(BigDecimal weight) {
+            this.weight = weight;
+        }
+
+        public BigDecimal getLength() {
+            return length;
+        }
+
+        public void setLength(BigDecimal length) {
+            this.length = length;
+        }
+
+        public BigDecimal getHeight() {
+            return height;
+        }
+
+        public void setHeight(BigDecimal height) {
+            this.height = height;
+        }
+
+        public BigDecimal getWidth() {
+            return width;
+        }
+
+        public void setWidth(BigDecimal width) {
+            this.width = width;
         }
     }
 }
