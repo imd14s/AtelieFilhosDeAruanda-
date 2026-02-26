@@ -6,6 +6,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.validation.constraints.Size;
+
 /**
  * DTO para receber os dados de criação de produto.
  * Garante que recebemos o ID da categoria separadamente para validação.
@@ -26,9 +28,10 @@ public record ProductCreateRequest(
                 BigDecimal width,
                 BigDecimal length,
                 @JsonProperty("marketplaceIds") List<UUID> marketplaceIds,
-                String ncm,
+                @Size(min = 8, max = 8, message = "O NCM deve ter exatamente 8 dígitos", groups = {
+                }) String ncm,
                 com.atelie.ecommerce.domain.catalog.product.ProductionType productionType,
-                com.atelie.ecommerce.domain.catalog.product.ProductOrigin origin) {
+                com.atelie.ecommerce.domain.catalog.product.ProductOrigin origin){
         public record ProductMediaItem(String url, String type, Boolean isMain) {
         }
 

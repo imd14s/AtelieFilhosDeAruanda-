@@ -14,6 +14,8 @@ import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
 
+import jakarta.validation.constraints.Size;
+
 @Entity
 @Table(name = "products")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -61,6 +63,8 @@ public class ProductEntity {
     private BigDecimal width;
     private BigDecimal length;
 
+    @Column(name = "ncm", length = 8)
+    @Size(min = 8, max = 8, message = "O NCM deve ter exatamente 8 dígitos")
     private String ncm;
 
     @Enumerated(EnumType.STRING)

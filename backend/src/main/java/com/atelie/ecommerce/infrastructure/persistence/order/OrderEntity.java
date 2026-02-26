@@ -29,6 +29,9 @@ public class OrderEntity {
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
+    @Column(name = "customer_document", length = 20)
+    private String customerDocument;
+
     // Campos exigidos pelo código legado
     private String source; // Ex: "SITE", "MERCADO_LIVRE"
 
@@ -115,6 +118,14 @@ public class OrderEntity {
 
     public void setCustomerEmail(String customerEmail) {
         this.customerEmail = customerEmail;
+    }
+
+    public String getCustomerDocument() {
+        return customerDocument;
+    }
+
+    public void setCustomerDocument(String customerDocument) {
+        this.customerDocument = customerDocument;
     }
 
     public com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity getUser() {

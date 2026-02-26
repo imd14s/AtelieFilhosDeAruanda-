@@ -109,6 +109,7 @@ class OrderControllerIntegrationTest {
                                 "Customer A",
                                 "customer@test.com",
                                 List.of(itemReq),
+                                "12345678901",
                                 "Rua A", "123", null, "Centro",
                                 "São Paulo", "SP", "01000-000",
                                 new BigDecimal("15.00"), "correios");

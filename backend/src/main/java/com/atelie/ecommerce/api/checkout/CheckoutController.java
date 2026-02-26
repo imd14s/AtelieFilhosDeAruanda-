@@ -63,6 +63,10 @@ public class CheckoutController {
                                 cost = new java.math.BigDecimal(costObj.toString());
                 }
 
+                String customerDocument = payload.containsKey("customerDocument")
+                                ? (String) payload.get("customerDocument")
+                                : "00000000000";
+
                 // 4. Criar o pedido (Status PENDING)
                 CreateOrderRequest orderRequest = new CreateOrderRequest(
                                 "STOREFRONT",
@@ -70,6 +74,7 @@ public class CheckoutController {
                                 customerName,
                                 customerEmail,
                                 items,
+                                customerDocument,
                                 street, number, complement, neighborhood, city, state, zip, cost, provider);
 
                 OrderEntity order = orderService.createOrder(orderRequest);
