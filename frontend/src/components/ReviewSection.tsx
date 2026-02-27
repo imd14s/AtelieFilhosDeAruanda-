@@ -1,43 +1,18 @@
 
-
-import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare } from 'lucide-react';
 import VerifiedBadge from './VerifiedBadge';
 import ReviewSummary from './ReviewSummary';
-import { productService } from '../services/productService';  
 import { Review } from '../types';
 import UGCGallery from './reviews/UGCGallery';
 import { ReviewItemSkeleton, UGCGallerySkeleton } from './reviews/ReviewSkeletons';
 
 interface ReviewSectionProps {
     productId: string;
-    onReviewAdded?: (review: Review) => void;
-    onReviewsLoaded?: (reviews: Review[]) => void;
+    reviews: Review[];
+    loading: boolean;
 }
 
-const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewsLoaded }) => {
-    const [reviews, setReviews] = useState<Review[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-
-    useEffect(() => {
-        const fetchReviews = async () => {
-            if (!productId) return;
-            setLoading(true);
-            try {
-                const data = await productService.getReviews(productId);
-                setReviews(data || []);
-                onReviewsLoaded?.(data || []);
-            } catch (err) {
-                console.error("[ReviewSection] Falha ao carregar reviews:", err);
-                setReviews([]);
-            } finally {
-                // Pequeno delay para suavizar a transição do skeleton
-                setTimeout(() => setLoading(false), 300);
-            }
-        };
-        fetchReviews();
-    }, [productId, onReviewsLoaded]);
-
+const ReviewSection: React.FC<ReviewSectionProps> = ({ reviews, loading }) => {
     if (loading) return (
         <div className="space-y-12">
             <div className="space-y-4">

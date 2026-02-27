@@ -24,7 +24,9 @@ const ProductPage: React.FC = () => {
     const user = authService.getUser();
     const { isFavorite: checkFavorite, toggleFavorite, loading: favLoading } = useFavorites();
     const [product, setProduct] = useState<Product | null>(null);
+    const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [reviewsLoading, setReviewsLoading] = useState<boolean>(true);
     const [quantity, setQuantity] = useState<number>(1);
     const [recommendations, setRecommendations] = useState<Product[]>([]);
     const [loadingRecs, setLoadingRecs] = useState<boolean>(false);
@@ -101,6 +103,27 @@ const ProductPage: React.FC = () => {
         fetchProduct();
     }, [id, user?.id]);
 
+    useEffect(() => {
+        if (!id) return;
+        const fetchReviews = async () => {
+            setReviewsLoading(true);
+            try {
+                const data = await productService.getReviews(id);
+                setReviews(data || []);
+                // Opcional: Atualizar médias se carregado dinamicamente
+                if (data?.length && product) {
+                    const avg = data.reduce((s, r) => s + r.rating, 0) / data.length;
+                    setProduct(prev => prev ? ({ ...prev, averageRating: avg, totalReviews: data.length }) : null);
+                }
+            } catch (err) {
+                console.error("Error fetching reviews", err);
+            } finally {
+                setReviewsLoading(false);
+            }
+        };
+        fetchReviews();
+    }, [id]);
+
     // Mídias da variante selecionada
     const variantMedias = useMemo(() => {
         if (currentVariant) {
@@ -128,34 +151,7 @@ const ProductPage: React.FC = () => {
     const displayStock = currentVariant ? currentVariant.stockQuantity : product?.stockQuantity || 0;
     const isOutOfStock = displayStock <= 0;
 
-    const handleReviewAdded = (newReview: Review) => {
-        setProduct(prev => {
-            if (!prev) return null;
-            const newTotal = (prev.totalReviews || 0) + 1;
-            const currentAvg = prev.averageRating || 4.6;
-            const newAvg = ((currentAvg * (prev.totalReviews || 1)) + newReview.rating) / newTotal;
 
-            return {
-                ...prev,
-                totalReviews: newTotal,
-                averageRating: parseFloat(newAvg.toFixed(1))
-            };
-        });
-    };
-
-    const handleReviewsLoaded = (loadedReviews: Review[]) => {
-        if (!loadedReviews?.length) return;
-        const total = loadedReviews.length;
-        const avg = loadedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / total;
-        setProduct(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                totalReviews: total,
-                averageRating: parseFloat(avg.toFixed(1))
-            };
-        });
-    };
 
     useEffect(() => {
         setQuantity(1);
@@ -612,8 +608,8 @@ const ProductPage: React.FC = () => {
                         {id && (
                             <ReviewSection
                                 productId={id}
-                                onReviewAdded={handleReviewAdded}
-                                onReviewsLoaded={handleReviewsLoaded}
+                                reviews={reviews}
+                                loading={reviewsLoading}
                             />
                         )}
                     </section>
