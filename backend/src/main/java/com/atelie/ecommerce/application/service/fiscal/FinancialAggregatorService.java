@@ -26,6 +26,7 @@ public class FinancialAggregatorService {
     private final FinancialLedgerRepository ledgerRepository;
     private final OrderService orderService;
     private final FiscalExtractorService fiscalExtractor;
+    private final com.atelie.ecommerce.domain.fiscal.repository.CashFlowRepository cashFlowRepository;
 
     // TODO: Mover para um DynamicConfigService no futuro
     private static final BigDecimal GATEWAY_FEE_PERCENT = new BigDecimal("0.0399"); // 3.99%
@@ -33,10 +34,12 @@ public class FinancialAggregatorService {
 
     public FinancialAggregatorService(FinancialLedgerRepository ledgerRepository,
             @org.springframework.context.annotation.Lazy OrderService orderService,
-            FiscalExtractorService fiscalExtractor) {
+            FiscalExtractorService fiscalExtractor,
+            com.atelie.ecommerce.domain.fiscal.repository.CashFlowRepository cashFlowRepository) {
         this.ledgerRepository = ledgerRepository;
         this.orderService = orderService;
         this.fiscalExtractor = fiscalExtractor;
+        this.cashFlowRepository = cashFlowRepository;
     }
 
     /**
@@ -83,6 +86,29 @@ public class FinancialAggregatorService {
                 .build();
 
         ledgerRepository.save(ledger);
+
+        // 6. Criar entrada de Fluxo de Caixa (Conciliação)
+        Instant expectedReleaseDate = Instant.now().plus(30, java.time.temporal.ChronoUnit.DAYS);
+        if ("pix".equalsIgnoreCase(order.getSource()) || "PIX".equalsIgnoreCase(order.getSource())) {
+            expectedReleaseDate = Instant.now();
+        }
+
+        com.atelie.ecommerce.domain.fiscal.model.CashFlowEntry cashFlow = com.atelie.ecommerce.domain.fiscal.model.CashFlowEntry
+                .builder()
+                .id(UUID.randomUUID())
+                .orderId(orderId)
+                .externalId(order.getExternalId())
+                .grossAmount(order.getTotalAmount())
+                .netAmount(order.getTotalAmount().subtract(gatewayFee))
+                .totalFees(gatewayFee)
+                .type("INFLOW")
+                .status(com.atelie.ecommerce.domain.fiscal.model.CashFlowEntry.CashFlowStatus.PENDING)
+                .expectedReleaseDate(expectedReleaseDate)
+                .gateway("MERCADO_PAGO") // Assumido gateway principal
+                .createdAt(Instant.now())
+                .build();
+
+        cashFlowRepository.save(cashFlow);
     }
 
     /**

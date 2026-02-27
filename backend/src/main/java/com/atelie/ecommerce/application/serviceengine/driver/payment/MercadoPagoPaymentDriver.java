@@ -135,4 +135,46 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
             return Map.of("error", true, "message", "Erro MP: " + e.getMessage());
         }
     }
+
+    public Map<String, Object> getPaymentDetails(String externalId, Map<String, Object> config) {
+        String accessToken = getAccessToken(config);
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(accessToken);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            String apiUrl = env.getProperty("MP_API_URL", "https://api.mercadopago.com/v1/payments") + "/" + externalId;
+
+            Map response = restTemplate.exchange(apiUrl, org.springframework.http.HttpMethod.GET, entity, Map.class)
+                    .getBody();
+
+            if (response != null) {
+                Map<String, Object> details = new HashMap<>();
+                details.put("external_id", response.get("id"));
+                details.put("status", response.get("status"));
+                details.put("status_detail", response.get("status_detail"));
+                details.put("transaction_amount", response.get("transaction_amount"));
+                details.put("net_received_amount", response.get("net_received_amount"));
+                details.put("money_release_date", response.get("money_release_date"));
+                details.put("fee_details", response.get("fee_details"));
+                return details;
+            }
+        } catch (Exception e) {
+            log.error("Erro ao buscar detalhes do pagamento {} no MP: {}", externalId, e.getMessage());
+        }
+        return null;
+    }
+
+    private String getAccessToken(Map<String, Object> config) {
+        String accessToken = null;
+        if (config.get("credentials") instanceof Map) {
+            Map<String, Object> credentials = (Map<String, Object>) config.get("credentials");
+            accessToken = (String) credentials.get("accessToken");
+        }
+        if (accessToken == null || accessToken.isBlank()) {
+            accessToken = env.getProperty("MP_ACCESS_TOKEN");
+        }
+        return DriverConfigReader.requireNonBlank(accessToken, "access_token (Config MP)");
+    }
 }
