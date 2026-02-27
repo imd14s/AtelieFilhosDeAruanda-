@@ -11,9 +11,7 @@ import {
     MoreVertical
 } from 'lucide-react';
 import { ReviewService } from '../../services/ReviewService';
-import { Review } from '../../types/review';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import type { Review } from '../../types/review';
 
 const ReviewManagementPage: React.FC = () => {
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -248,7 +246,7 @@ const ReviewManagementPage: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="p-4 text-sm text-gray-500 whitespace-nowrap">
-                                                {format(new Date(review.createdAt), "dd MMM, yyyy", { locale: ptBR })}
+                                                {new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(review.createdAt))}
                                             </td>
                                             <td className="p-4 text-right">
                                                 <div className="flex justify-end gap-2">
