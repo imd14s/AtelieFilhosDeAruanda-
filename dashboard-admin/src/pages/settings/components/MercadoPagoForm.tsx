@@ -8,6 +8,24 @@ interface Props {
     onCancel: () => void;
 }
 
+const SectionHeader = ({ id, icon: Icon, title, desc, isActive, onToggle }: { id: string, icon: React.ElementType, title: string, desc: string, isActive: boolean, onToggle: (id: string) => void }) => (
+    <button
+        onClick={() => onToggle(id)}
+        className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 border-b transition-all first:rounded-t-xl"
+    >
+        <div className="flex gap-4 items-center">
+            <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                <Icon size={20} />
+            </div>
+            <div className="text-left">
+                <h4 className="font-bold text-gray-800">{title}</h4>
+                <p className="text-xs text-gray-500">{desc}</p>
+            </div>
+        </div>
+        {isActive ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+    </button>
+);
+
 export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
     const [config, setConfig] = useState<MercadoPagoConfig>({
         identification: {
@@ -71,28 +89,10 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
 
     const toggleSection = (id: string) => setActiveSection(activeSection === id ? null : id);
 
-    const SectionHeader = ({ id, icon: Icon, title, desc }: { id: string, icon: any, title: string, desc: string }) => (
-        <button
-            onClick={() => toggleSection(id)}
-            className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 border-b transition-all first:rounded-t-xl"
-        >
-            <div className="flex gap-4 items-center">
-                <div className={`p-2 rounded-lg ${activeSection === id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
-                    <Icon size={20} />
-                </div>
-                <div className="text-left">
-                    <h4 className="font-bold text-gray-800">{title}</h4>
-                    <p className="text-xs text-gray-500">{desc}</p>
-                </div>
-            </div>
-            {activeSection === id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </button>
-    );
-
     return (
         <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-sm">
             {/* 1. Credenciais - O mais importante */}
-            <SectionHeader id="creds" icon={Shield} title="1. Chaves de Integração" desc="Insira suas credenciais do Mercado Pago" />
+            <SectionHeader id="creds" icon={Shield} title="1. Chaves de Integração" desc="Insira suas credenciais do Mercado Pago" isActive={activeSection === 'creds'} onToggle={toggleSection} />
             {activeSection === 'creds' && (
                 <div className="p-6 bg-white space-y-4 border-b">
                     <div className="bg-blue-50 p-4 rounded-xl flex gap-3 items-start border border-blue-100">
@@ -126,7 +126,7 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
             )}
 
             {/* 2. Métodos de Pagamento */}
-            <SectionHeader id="methods" icon={Zap} title="2. O que aceitar na loja?" desc="Ative ou desative as opções de pagamento" />
+            <SectionHeader id="methods" icon={Zap} title="2. O que aceitar na loja?" desc="Ative ou desative as opções de pagamento" isActive={activeSection === 'methods'} onToggle={toggleSection} />
             {activeSection === 'methods' && (
                 <div className="p-6 bg-white space-y-6 border-b">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,7 +188,7 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
             )}
 
             {/* 3. Configurações Avançadas (Escondidas por padrão) */}
-            <SectionHeader id="advanced" icon={Settings} title="3. Configurações Técnicas" desc="Webhooks e Identificação (Opcional)" />
+            <SectionHeader id="advanced" icon={Settings} title="3. Configurações Técnicas" desc="Webhooks e Identificação (Opcional)" isActive={activeSection === 'advanced'} onToggle={toggleSection} />
             {activeSection === 'advanced' && (
                 <div className="p-6 bg-white space-y-6 border-b">
                     <div className="grid grid-cols-2 gap-4">

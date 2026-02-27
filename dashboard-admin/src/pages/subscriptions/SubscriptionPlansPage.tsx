@@ -27,11 +27,11 @@ const INITIAL_PLAN_STATE = {
 };
 
 export function SubscriptionPlansPage() {
-    const [plans, setPlans] = useState<any[]>([]);
+    const [plans, setPlans] = useState<Record<string, unknown>[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [editingPlan, setEditingPlan] = useState<any>(INITIAL_PLAN_STATE);
-    const [availableProducts, setAvailableProducts] = useState<any[]>([]);
+    const [editingPlan, setEditingPlan] = useState<Record<string, unknown>>(INITIAL_PLAN_STATE as unknown as Record<string, unknown>);
+    const [availableProducts, setAvailableProducts] = useState<Record<string, unknown>[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const { addToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
@@ -88,20 +88,21 @@ export function SubscriptionPlansPage() {
             setEditingPlan(INITIAL_PLAN_STATE);
             setImageFile(null);
             setImagePreview(null);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Erro ao salvar plano:', error);
-            addToast('Erro ao salvar plano: ' + (error.response?.data?.message || error.message), 'error');
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            addToast('Erro ao salvar plano: ' + (err.response?.data?.message || err.message), 'error');
         } finally {
             setIsSaving(false);
         }
     };
 
-    const toggleProduct = (product: any) => {
-        const products = editingPlan.products || [];
-        const exists = products.find((p: any) => p.product?.id === product.id || p.productId === product.id);
+    const toggleProduct = (product: Record<string, unknown>) => {
+        const products = (editingPlan.products as Record<string, unknown>[]) || [];
+        const exists = products.find((p: Record<string, unknown>) => (p.product as Record<string, unknown>)?.id === product.id || p.productId === product.id);
         let newProducts;
         if (exists) {
-            newProducts = products.filter((p: any) => (p.product?.id || p.productId) !== product.id);
+            newProducts = products.filter((p: Record<string, unknown>) => ((p.product as Record<string, unknown>)?.id || p.productId) !== product.id);
         } else {
             newProducts = [...products, { product, productId: product.id, quantity: 1 }];
         }
@@ -109,34 +110,34 @@ export function SubscriptionPlansPage() {
     };
 
     const updateProductQuantity = (productId: string, quantity: number) => {
-        const newProducts = editingPlan.products.map((p: any) =>
-            (p.product?.id || p.productId) === productId ? { ...p, quantity: Number(quantity) } : p
+        const newProducts = (editingPlan.products as Record<string, unknown>[]).map((p: Record<string, unknown>) =>
+            ((p.product as Record<string, unknown>)?.id || p.productId) === productId ? { ...p, quantity: Number(quantity) } : p
         );
         setEditingPlan({ ...editingPlan, products: newProducts });
     };
 
     const toggleFrequency = (freq: string) => {
-        const frequencyRules = editingPlan.frequencyRules || [];
-        const exists = frequencyRules.find((r: any) => r.frequency === freq);
+        const frequencyRules = (editingPlan.frequencyRules as Record<string, unknown>[]) || [];
+        const exists = frequencyRules.find((r: Record<string, unknown>) => r.frequency === freq);
         let newRules;
         if (exists) {
-            newRules = frequencyRules.filter((r: any) => r.frequency !== freq);
+            newRules = frequencyRules.filter((r: Record<string, unknown>) => r.frequency !== freq);
         } else {
             newRules = [...frequencyRules, { frequency: freq, discountPercentage: 0 }];
         }
         setEditingPlan({ ...editingPlan, frequencyRules: newRules });
     };
 
-    const updateDiscount = (freq: string, discount: any) => {
-        const newRules = editingPlan.frequencyRules.map((r: any) =>
+    const updateDiscount = (freq: string, discount: string | number) => {
+        const newRules = (editingPlan.frequencyRules as Record<string, unknown>[]).map((r: Record<string, unknown>) =>
             r.frequency === freq ? { ...r, discountPercentage: discount === '' ? 0 : Number(discount) } : r
         );
         setEditingPlan({ ...editingPlan, frequencyRules: newRules });
     };
 
     const filteredProducts = availableProducts.filter(ap => {
-        const isNotSelected = !(editingPlan?.products || []).some((p: any) => (p.product?.id || p.productId) === ap.id);
-        const productName = ap.title || ap.name || '';
+        const isNotSelected = !((editingPlan?.products as Record<string, unknown>[]) || []).some((p: Record<string, unknown>) => ((p.product as Record<string, unknown>)?.id || p.productId) === ap.id);
+        const productName = (ap.title as string) || (ap.name as string) || '';
         const matchesSearch = productName.toLowerCase().includes(searchTerm.toLowerCase());
         return isNotSelected && matchesSearch;
     }).slice(0, 15);
@@ -406,30 +407,33 @@ export function SubscriptionPlansPage() {
                             </div>
 
                             <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar border rounded-xl p-2 bg-gray-50/50">
-                                {(editingPlan.products || []).map((p: any) => (
-                                    <div key={p.product?.id || p.productId} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <img src={getImageUrl(p.product?.media?.[0]?.url || p.product?.imageUrl)} alt="" className="w-10 h-10 rounded object-cover border bg-white flex-shrink-0" />
-                                            <div className="min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 truncate">{p.product?.title || p.product?.name}</p>
-                                                <p className="text-xs text-gray-500">R$ {p.product?.price?.toFixed(2)}</p>
+                                {((editingPlan.products as Record<string, unknown>[]) || []).map((p: Record<string, unknown>) => {
+                                    const product = p.product as Record<string, unknown>;
+                                    return (
+                                        <div key={(product?.id as string) || (p.productId as string)} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <img src={getImageUrl((product?.media as Record<string, unknown>[])?.[0]?.url as string || (product?.imageUrl as string))} alt="" className="w-10 h-10 rounded object-cover border bg-white flex-shrink-0" />
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium text-gray-900 truncate">{(product?.title as string) || (product?.name as string)}</p>
+                                                    <p className="text-xs text-gray-500">R$ {(product?.price as number)?.toFixed(2)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={p.quantity || 1}
+                                                    onChange={(e) => updateProductQuantity(p.product?.id || p.productId, Number(e.target.value))}
+                                                    className="w-12 border rounded p-1 text-center text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+                                                />
+                                                <button type="button" onClick={() => toggleProduct(product)} className="text-red-500 hover:bg-red-50 p-1 rounded transition">
+                                                    <Plus size={16} className="rotate-45" />
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={p.quantity || 1}
-                                                onChange={(e) => updateProductQuantity(p.product?.id || p.productId, Number(e.target.value))}
-                                                className="w-12 border rounded p-1 text-center text-sm outline-none focus:ring-1 focus:ring-indigo-500"
-                                            />
-                                            <button type="button" onClick={() => toggleProduct(p.product)} className="text-red-500 hover:bg-red-50 p-1 rounded transition">
-                                                <Plus size={16} className="rotate-45" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                {(editingPlan.products || []).length === 0 && (
+                                    )
+                                })}
+                                {((editingPlan.products as Record<string, unknown>[]) || []).length === 0 && (
                                     <div className="text-center py-6 text-gray-400 text-xs border-2 border-dashed rounded-lg bg-white/50">
                                         Nenhum produto adicionado. Escolha na lista abaixo.
                                     </div>
@@ -484,8 +488,8 @@ export function SubscriptionPlansPage() {
                                 { key: 'BIWEEKLY', label: 'Quinzenal' },
                                 { key: 'MONTHLY', label: 'Mensal' }
                             ].map(freq => {
-                                const frequencyRules = editingPlan.frequencyRules || [];
-                                const rule = frequencyRules.find((r: any) => r.frequency === freq.key);
+                                const frequencyRules = (editingPlan.frequencyRules as Record<string, unknown>[]) || [];
+                                const rule = frequencyRules.find((r: Record<string, unknown>) => r.frequency === freq.key);
                                 return (
                                     <div key={freq.key} className="flex flex-col gap-1">
                                         <button

@@ -72,9 +72,9 @@ export interface MercadoPagoConfig {
 
 // Legacy/UI Compatibility
 export interface ShippingProvider extends AdminServiceProvider {
-    config: Record<string, any>;
+    config: Record<string, unknown>;
 }
 
 export interface PaymentProvider extends AdminServiceProvider {
-    config: Record<string, any>;
+    config: Record<string, unknown>;
 }

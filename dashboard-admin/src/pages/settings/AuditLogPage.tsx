@@ -9,6 +9,7 @@ export function AuditLogPage() {
 
     useEffect(() => {
         loadLogs();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterAction]);
 
     const loadLogs = async () => {
@@ -18,8 +19,8 @@ export function AuditLogPage() {
                 action: filterAction || undefined
             });
             setLogs(data);
-        } catch (error) {
-            console.error('Erro ao carregar logs', error);
+        } catch {
+            console.error('Erro ao carregar logs');
         } finally {
             setLoading(false);
         }

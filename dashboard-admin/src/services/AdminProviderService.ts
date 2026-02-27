@@ -17,7 +17,7 @@ export const AdminProviderService = {
         try {
             const { data } = await api.get<ProviderConfig>(`/admin/provider-configs/${providerId}/${env}`);
             return data;
-        } catch (err) {
+        } catch {
             return null;
         }
     },

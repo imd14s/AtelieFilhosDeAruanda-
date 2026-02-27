@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Tenant } from '../types/tenant';
 import { TenantService } from '../services/TenantService';
@@ -26,6 +27,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         } else if (!isAuthLoading && !isAuthenticated) {
             setIsLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, isAuthLoading]);
 
     const loadTenants = async () => {

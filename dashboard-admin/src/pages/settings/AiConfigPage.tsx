@@ -21,13 +21,14 @@ export function AiConfigPage() {
 
     useEffect(() => {
         loadConfig();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadConfig = async () => {
         try {
             setIsLoading(true);
             const { data } = await api.get('/configs/ai');
-            const geminiConfig = Array.isArray(data) ? data.find((c: any) => c.nomeIa === 'Gemini') : undefined;
+            const geminiConfig = Array.isArray(data) ? data.find((c: Record<string, unknown>) => c.nomeIa === 'Gemini') : undefined;
 
             if (geminiConfig) {
                 setFormData({
@@ -57,9 +58,10 @@ export function AiConfigPage() {
         try {
             await api.post('/configs/ai', formData);
             setSuccessMsg('Configurações salvas com sucesso!');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Erro ao salvar configuração de IA:', error);
-            setErrorMsg(error.response?.data?.message || 'Erro ao salvar configuração.');
+            const err = error as { response?: { data?: { message?: string } } };
+            setErrorMsg(err.response?.data?.message || 'Erro ao salvar configuração.');
         } finally {
             setIsLoading(false);
         }

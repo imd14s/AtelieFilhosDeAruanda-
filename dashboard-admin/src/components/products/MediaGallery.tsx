@@ -27,7 +27,7 @@ export function MediaGallery({ media, onChange }: MediaGalleryProps) {
                     type: isVideo ? 'VIDEO' : 'IMAGE',
                     isMain: media.length === 0 && !isVideo,
                     file: file
-                } as any);
+                });
             }
 
             if (newMediaItems.length > 0) {

@@ -12,7 +12,7 @@ describe('ProductForm Component', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (CategoryService.getAll as any).mockResolvedValue(mockCategories);
+        (CategoryService.getAll as import('vitest').Mock).mockResolvedValue(mockCategories);
     });
 
     it('should render form fields correctly', async () => {
@@ -35,7 +35,7 @@ describe('ProductForm Component', () => {
     });
 
     it('should submit form successfully with valid data', async () => {
-        (ProductService.create as any).mockResolvedValueOnce({});
+        (ProductService.create as import('vitest').Mock).mockResolvedValueOnce({});
 
         render(<ProductForm />);
 

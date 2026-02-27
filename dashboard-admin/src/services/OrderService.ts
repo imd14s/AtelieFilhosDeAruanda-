@@ -4,9 +4,9 @@ import type { Order } from '../types/order';
 export const OrderService = {
     getAll: async (): Promise<Order[]> => {
         try {
-            const { data } = await api.get<any>('/orders');
+            const { data } = await api.get<Record<string, unknown>>('/orders');
             // Backend returns Page<OrderResponse>, so we extract content
-            return data.content || [];
+            return (data.content as Order[]) || [];
         } catch (error) {
             console.error('Erro ao buscar pedidos:', error);
             throw error;

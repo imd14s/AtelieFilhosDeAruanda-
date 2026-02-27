@@ -183,6 +183,7 @@ export default function EmailMarketingHub() {
             if (activeDesignSubTab === 'campaigns') loadCampaigns();
         }
         if (activeTab === 'config') loadSMTPConfigs();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, activeDesignSubTab]);
 
     useEffect(() => {
@@ -203,8 +204,8 @@ export default function EmailMarketingHub() {
             const rawMetrics = metricsRes.data;
             setMetrics({
                 totalSent: rawMetrics.emailsSent || 0,
-                failed: queueRes.data.filter((e: any) => e.status === 'FAILED').length,
-                pending: queueRes.data.filter((e: any) => e.status === 'PENDING').length,
+                failed: queueRes.data.filter((e: Record<string, unknown>) => e.status === 'FAILED').length,
+                pending: queueRes.data.filter((e: Record<string, unknown>) => e.status === 'PENDING').length,
                 verifiedUsers: rawMetrics.verifiedUsers || 0,
                 totalNewsletter: rawMetrics.totalNewsletter || 0
             });
@@ -243,7 +244,7 @@ export default function EmailMarketingHub() {
                 api.get('/marketing/signatures')
             ]);
             // Filtrar templates da newsletter legados
-            setTemplates(templatesRes.data.filter((t: any) => t.slug !== 'NEWSLETTER_CONFIRM' && t.automationType !== 'NEWSLETTER_CONFIRM'));
+            setTemplates(templatesRes.data.filter((t: Record<string, unknown>) => t.slug !== 'NEWSLETTER_CONFIRM' && t.automationType !== 'NEWSLETTER_CONFIRM'));
             setSignatures(signaturesRes.data);
             if (signaturesRes.data.length > 0 && !selectedSignatureId) {
                 handleSelectSignature(signaturesRes.data[0]);
@@ -264,9 +265,10 @@ export default function EmailMarketingHub() {
             await api.put(`/marketing/email-templates/${editingTemplate.id}`, payload);
             setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { ...editingTemplate, ...payload } : t));
             alert('Template salvo!');
-        } catch (error: any) {
-            console.error('Error saving template:', error.response?.data || error);
-            alert(`Erro ao salvar template: ${error.response?.data?.message || 'Erro desconhecido'}`);
+        } catch (error) {
+            const err = error as { response?: { data?: { message?: string } } };
+            console.error('Error saving template:', err.response?.data || error);
+            alert(`Erro ao salvar template: ${err.response?.data?.message || 'Erro desconhecido'}`);
         } finally {
             setIsSavingTemplate(false);
         }
@@ -285,9 +287,10 @@ export default function EmailMarketingHub() {
             setTemplates(prev => [...prev, res.data]);
             setIsCreatingTemplate(false);
             setNewTemplate({ name: '', slug: '', subject: '', content: '', signatureId: '', active: true });
-        } catch (error: any) {
-            console.error('Error creating template:', error.response?.data || error);
-            alert(`Erro ao criar template: ${error.response?.data?.message || 'Erro desconhecido'}`);
+        } catch (error) {
+            const err = error as { response?: { data?: { message?: string } } };
+            console.error('Error creating template:', err.response?.data || error);
+            alert(`Erro ao criar template: ${err.response?.data?.message || 'Erro desconhecido'}`);
         } finally {
             setIsSavingTemplate(false);
         }
@@ -327,9 +330,10 @@ export default function EmailMarketingHub() {
             setIsCreatingCampaign(false);
             setNewCampaign({ name: '', subject: '', content: '', status: 'PENDING', totalRecipients: 0, sentCount: 0, audience: 'NEWSLETTER_SUBSCRIBERS', signatureId: null });
             alert(newCampaign.id ? 'Campanha atualizada!' : 'Campanha criada com sucesso!');
-        } catch (error: any) {
-            console.error('Error saving campaign:', error.response?.data || error);
-            alert(`Erro ao salvar campanha: ${error.response?.data?.message || 'Erro interno'}`);
+        } catch (error) {
+            const err = error as { response?: { data?: { message?: string } } };
+            console.error('Error saving campaign:', err.response?.data || error);
+            alert(`Erro ao salvar campanha: ${err.response?.data?.message || 'Erro interno'}`);
         } finally {
             setIsSavingCampaign(false);
         }
@@ -402,14 +406,15 @@ export default function EmailMarketingHub() {
     const handleSaveSignature = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSavingSignature(true);
-        console.log('DEBUG: Saving signature payload:', JSON.stringify(signatureForm));
+        // DEBUG: Saving signature payload
         try {
             await api.post('/marketing/signatures', signatureForm);
             loadDesignData();
             alert('Assinatura salva!');
-        } catch (error: any) {
-            console.error('Error saving signature:', error.response?.data || error);
-            alert(`Erro ao salvar assinatura: ${error.response?.data?.message || 'Erro desconhecido'}`);
+        } catch (error) {
+            const err = error as { response?: { data?: { message?: string } } };
+            console.error('Error saving signature:', err.response?.data || error);
+            alert(`Erro ao salvar assinatura: ${err.response?.data?.message || 'Erro desconhecido'}`);
         } finally {
             setIsSavingSignature(false);
         }
@@ -632,10 +637,10 @@ export default function EmailMarketingHub() {
                 ].map(st => (
                     <button
                         key={st.id}
-                        onClick={() => setActiveDesignSubTab(st.id as any)}
+                        onClick={() => setActiveDesignSubTab(st.id as 'templates' | 'signatures' | 'campaigns')}
                         className={clsx(
                             "px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition",
-                            activeDesignSubTab === st.id ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                            activeDesignSubTab === (st.id as 'templates' | 'signatures' | 'campaigns') ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
                         )}
                     >
                         <st.icon size={16} /> {st.label}
@@ -1235,10 +1240,10 @@ export default function EmailMarketingHub() {
                     ].map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => setActiveTab(tab.id as 'analytics' | 'design' | 'config')}
                             className={clsx(
                                 "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all",
-                                activeTab === tab.id ? "bg-indigo-600 text-white shadow-lg" : "text-gray-500 hover:bg-gray-50"
+                                activeTab === (tab.id as 'analytics' | 'design' | 'config') ? "bg-indigo-600 text-white shadow-lg" : "text-gray-500 hover:bg-gray-50"
                             )}
                         >
                             <tab.icon size={18} />

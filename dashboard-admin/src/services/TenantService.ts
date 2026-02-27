@@ -24,7 +24,7 @@ export const TenantService = {
         try {
             const { data } = await api.get<Tenant[]>('/admin/tenants');
             return data;
-        } catch (e) {
+        } catch {
             console.warn('Backend Tenant API not ready, using mock');
             return MOCK_TENANTS;
         }
@@ -34,7 +34,7 @@ export const TenantService = {
         try {
             const { data } = await api.get<Tenant>(`/admin/tenants/${id}`);
             return data;
-        } catch (e) {
+        } catch {
             return MOCK_TENANTS.find(t => t.id === id);
         }
     },

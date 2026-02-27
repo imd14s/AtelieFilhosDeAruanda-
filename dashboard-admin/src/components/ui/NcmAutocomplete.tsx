@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, forwardRef } from 'react';
-import { FiscalService } from '../../services/FiscalService';
-import type { NcmResponse } from '../../services/FiscalService';
+// FiscalService removed to avoid direct imports in dumb components
+export interface NcmResponse {
+    code: string;
+    description: string;
+}
 import useDebounce from '../../hooks/useDebounce';
 import { Loader2, Search, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -14,10 +17,11 @@ export interface NcmAutocompleteProps extends Omit<React.InputHTMLAttributes<HTM
     value?: string;
     onChange?: (value: string) => void;
     error?: string;
+    fetchSuggestions: (query: string) => Promise<NcmResponse[]>;
 }
 
 export const NcmAutocomplete = forwardRef<HTMLDivElement, NcmAutocompleteProps>(
-    ({ value, onChange, error, className, placeholder = "Buscar código NCM ou descrição...", disabled, ...props }, ref) => {
+    ({ value, onChange, error, fetchSuggestions, className, placeholder = "Buscar código NCM ou descrição...", disabled, ...props }, ref) => {
         const [inputValue, setInputValue] = useState(value || "");
         const [options, setOptions] = useState<NcmResponse[]>([]);
         const [isOpen, setIsOpen] = useState(false);
@@ -50,12 +54,13 @@ export const NcmAutocomplete = forwardRef<HTMLDivElement, NcmAutocompleteProps>(
 
                 setIsLoading(true);
                 try {
-                    const results = await FiscalService.searchNcms(debouncedSearchTerm);
+                    const results = await fetchSuggestions(debouncedSearchTerm);
                     if (isMounted) {
                         setOptions(results || []);
                         setFocusedIndex(-1); // reset focus
                     }
                 } catch (error) {
+
                     console.error("Failed to fetch NCMs", error);
                     if (isMounted) setOptions([]);
                 } finally {
@@ -68,7 +73,7 @@ export const NcmAutocomplete = forwardRef<HTMLDivElement, NcmAutocompleteProps>(
             return () => {
                 isMounted = false;
             };
-        }, [debouncedSearchTerm, isOpen]);
+        }, [debouncedSearchTerm, isOpen, fetchSuggestions]);
 
         // Close on click outside
         useEffect(() => {

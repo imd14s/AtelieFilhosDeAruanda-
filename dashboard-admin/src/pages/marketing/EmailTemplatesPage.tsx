@@ -20,7 +20,7 @@ interface EmailTemplate {
 
 export default function EmailTemplatesPage() {
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-    const [signatures, setSignatures] = useState<any[]>([]);
+    const [signatures, setSignatures] = useState<Record<string, unknown>[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [isSaving, setIsSaving] = useState(false);

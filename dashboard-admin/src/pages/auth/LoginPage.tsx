@@ -13,14 +13,14 @@ export function LoginPage() {
   const { addToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: Record<string, unknown>) => {
     setIsLoading(true);
     try {
       const res = await api.post('/auth/login', data);
       login(res.data.token);
       addToast('Bem-vindo ao painel!', 'success');
       navigate('/');
-    } catch (err) {
+    } catch {
       addToast('Credenciais inválidas. Tente novamente.', 'error');
     } finally {
       setIsLoading(false);

@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Shield, MapPin, Truck, Plus, Trash2, Info } from 'lucide-react';
 
+interface MelhorEnvioConfigData {
+    token?: string;
+    zipCode?: string;
+    allowedCarriers?: string[];
+    rules?: Record<string, string>;
+}
+
 interface MelhorEnvioConfigProps {
-    config: any;
-    onChange: (newConfig: any) => void;
+    config: MelhorEnvioConfigData;
+    onChange: (newConfig: MelhorEnvioConfigData) => void;
 }
 
 const CARRIER_CATALOG = [
@@ -22,10 +29,10 @@ export function MelhorEnvioConfig({ config, onChange }: MelhorEnvioConfigProps) 
     const [token, setToken] = useState(config.token || '');
     const [zipCode, setZipCode] = useState(config.zipCode || '');
     const [allowedCarriers, setAllowedCarriers] = useState<string[]>(config.allowedCarriers || []);
-    const [rules, setRules] = useState<any[]>(parseRules(config.rules || {}));
+    const [rules, setRules] = useState<{ id: string; name: string; state: string; minAmount: string; }[]>(parseRules(config.rules || {}));
 
-    function parseRules(rulesObj: any) {
-        return Object.entries(rulesObj).map(([name, spel]: [string, any]) => {
+    function parseRules(rulesObj: Record<string, string>) {
+        return Object.entries(rulesObj).map(([name, spel]: [string, string]) => {
             // Regex simples para extrair UF e Valor de: region == 'SP' and total >= 200
             const stateMatch = spel.match(/region\s*==\s*'([^']*)'/);
             const totalMatch = spel.match(/total\s*>=\s*([\d.]+)/);
@@ -39,8 +46,8 @@ export function MelhorEnvioConfig({ config, onChange }: MelhorEnvioConfigProps) 
         });
     }
 
-    function generateSpel(rule: any) {
-        let parts = [];
+    function generateSpel(rule: { id: string; name: string; state: string; minAmount: string; }) {
+        const parts = [];
         if (rule.state !== 'TODOS') parts.push(`region == '${rule.state}'`);
         const amount = parseFloat(rule.minAmount || '0');
         if (amount > 0) parts.push(`total >= ${amount}`);
@@ -48,7 +55,7 @@ export function MelhorEnvioConfig({ config, onChange }: MelhorEnvioConfigProps) 
     }
 
     useEffect(() => {
-        const rulesObj: any = {};
+        const rulesObj: Record<string, string> = {};
         rules.forEach(r => {
             rulesObj[r.name] = generateSpel(r);
         });
@@ -59,6 +66,7 @@ export function MelhorEnvioConfig({ config, onChange }: MelhorEnvioConfigProps) 
             allowedCarriers,
             rules: rulesObj
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, zipCode, allowedCarriers, rules]);
 
     const handleCarrierToggle = (id: string) => {
@@ -80,7 +88,7 @@ export function MelhorEnvioConfig({ config, onChange }: MelhorEnvioConfigProps) 
         setRules(prev => prev.filter(r => r.id !== id));
     };
 
-    const updateRule = (id: string, field: string, value: any) => {
+    const updateRule = (id: string, field: string, value: string) => {
         setRules(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
     };
 

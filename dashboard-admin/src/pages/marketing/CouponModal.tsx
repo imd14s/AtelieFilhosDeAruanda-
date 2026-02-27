@@ -47,7 +47,7 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
             await onSave(formData);
             addToast(initialData ? 'Cupom atualizado com sucesso!' : 'Cupom criado com sucesso!', 'success');
             onClose();
-        } catch (error) {
+        } catch {
             addToast(initialData ? 'Erro ao atualizar cupom' : 'Erro ao criar cupom', 'error');
         } finally {
             setLoading(false);
@@ -78,7 +78,7 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                         <select
                             value={formData.type}
-                            onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                            onChange={(e) => setFormData({ ...formData, type: e.target.value as 'PERCENTAGE' | 'FIXED' | 'SHIPPING' })}
                             className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                         >
                             <option value="PERCENTAGE">Porcentagem (%)</option>

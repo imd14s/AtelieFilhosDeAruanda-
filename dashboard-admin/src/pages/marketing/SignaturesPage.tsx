@@ -39,6 +39,7 @@ export function SignaturesPage() {
 
     useEffect(() => {
         loadSignatures();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadSignatures = async () => {

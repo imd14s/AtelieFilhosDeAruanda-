@@ -3,14 +3,14 @@ import type { Product, CreateProductDTO } from '../types/product';
 
 export const ProductService = {
   getAll: async (): Promise<Product[]> => {
-    const { data } = await api.get<any>('/products');
+    const { data } = await api.get<Record<string, unknown>>('/products');
     const content = Array.isArray(data) ? data : (data.content || []);
 
-    return content.map((p: any) => ({
+    return (content as Record<string, unknown>[]).map((p: Record<string, unknown>) => ({
       ...p,
       title: p.name || p.title || 'Sem Título',
       stock: p.stockQuantity !== undefined ? p.stockQuantity : (p.stock || 0),
-      media: (p.images || []).map((url: string, index: number) => {
+      media: Array.isArray(p.images) ? p.images.map((url: string, index: number) => {
         const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
         return {
           id: `temp-${index}-${p.id}`,
@@ -18,24 +18,26 @@ export const ProductService = {
           type: isVideo ? 'VIDEO' : 'IMAGE',
           isMain: index === 0
         };
-      })
+      }) : []
     }));
   },
 
   getById: async (id: string): Promise<Product> => {
-    const { data } = await api.get<any>(`/products/${id}`);
+    const { data } = await api.get<Record<string, unknown>>(`/products/${id}`);
 
     // Adapter: Transform Backend Entity to Frontend Interface
     const product: Product = {
       ...data,
       // Map 'stockQuantity' (backend) to 'stock' (frontend)
       stock: data.stockQuantity !== undefined ? data.stockQuantity : data.stock,
+      // Parse attributesJson string to attributes object for the main product
+      attributes: typeof data.attributesJson === 'string' ? JSON.parse(data.attributesJson as string) : data.attributesJson || {},
 
-      // Parse attributesJson string to attributes object
-      variants: (data.variants || []).map((v: any) => ({
+      // Parse attributesJson string to attributes object for variants
+      variants: (Array.isArray(data.variants) ? data.variants : []).map((v: Record<string, unknown>) => ({
         ...v,
         stock: v.stockQuantity, // Map variant stock
-        attributes: v.attributesJson ? JSON.parse(v.attributesJson) : (v.attributes || {}),
+        attributes: typeof v.attributesJson === 'string' ? JSON.parse(v.attributesJson as string) : v.attributes || {},
         media: (v.images || []).map((url: string, index: number) => {
           const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
           return {
@@ -67,7 +69,7 @@ export const ProductService = {
     const filesMapping: { file: File, id: string }[] = [];
 
     // Helper to process media and collect files
-    const processMedia = (mediaList: any[]) => {
+    const processMedia = (mediaList: Record<string, unknown>[]) => {
       return (mediaList || []).map(m => {
         if (m.file) {
           filesMapping.push({ file: m.file, id: m.id });
@@ -100,7 +102,7 @@ export const ProductService = {
     const formData = new FormData();
     const filesMapping: { file: File, id: string }[] = [];
 
-    const processMedia = (mediaList: any[]) => {
+    const processMedia = (mediaList: Record<string, unknown>[]) => {
       return (mediaList || []).map(m => {
         if (m.file) {
           filesMapping.push({ file: m.file, id: m.id });

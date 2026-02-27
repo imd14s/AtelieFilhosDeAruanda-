@@ -85,9 +85,10 @@ export function OrdersPage() {
             addToast('NF-e enviada para processamento!', 'success');
             // Refresh orders to get updated status/XML links
             loadOrders();
-        } catch (error: any) {
+        } catch (error) {
             console.error('Erro ao emitir NF-e', error);
-            const detail = error.response?.data?.message || 'Erro de comunicação com a SEFAZ.';
+            const err = error as { response?: { data?: { message?: string } } };
+            const detail = err.response?.data?.message || 'Erro de comunicação com a SEFAZ.';
             addToast(`Falha na NF-e: ${detail}`, 'error');
         } finally {
             setIsEmitting(null);
@@ -255,7 +256,7 @@ export function OrdersPage() {
                                                         try {
                                                             await OrderService.delivered(order.id);
                                                             setOrders(orders.map(o => o.id === order.id ? { ...o, status: 'DELIVERED' } : o));
-                                                        } catch (err) {
+                                                        } catch {
                                                             alert('Não foi possível finalizar o pedido. Tente novamente.');
                                                         }
                                                     }}

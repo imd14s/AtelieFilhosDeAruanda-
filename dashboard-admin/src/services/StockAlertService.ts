@@ -27,9 +27,9 @@ export const StockAlertService = {
     getSettings: async (): Promise<StockAlertSettings> => {
         try {
             const { data } = await api.get('/admin/configs');
-            const config = data.find((c: any) => c.configKey === CONFIG_KEY);
+            const config = data.find((c: Record<string, unknown>) => c.configKey === CONFIG_KEY);
 
-            if (config && config.configJson) {
+            if (config && typeof config.configJson === 'string') {
                 return JSON.parse(config.configJson);
             }
 

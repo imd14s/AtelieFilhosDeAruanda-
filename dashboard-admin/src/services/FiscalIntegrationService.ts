@@ -5,7 +5,7 @@ export interface FiscalIntegration {
     providerName: string;
     apiKey: string;
     apiUrl?: string;
-    settings?: Record<string, any>;
+    settings?: Record<string, unknown>;
     active: boolean;
 }
 
@@ -35,7 +35,7 @@ export const FiscalIntegrationService = {
         try {
             const response = await api.get('/fiscal/certificate/info');
             return response.data;
-        } catch (error) {
+        } catch {
             return null;
         }
     },

@@ -16,7 +16,7 @@ vi.mock('../../services/AdminProviderService', () => ({
 
 // Mock MercadoPagoForm to avoid deep testing it here
 vi.mock('./components/MercadoPagoForm', () => ({
-    MercadoPagoForm: ({ onSave }: any) => (
+    MercadoPagoForm: ({ onSave }: { onSave: (config: { publicKey: string; accessToken: string }) => void }) => (
         <button onClick={() => onSave({ publicKey: 'test', accessToken: 'test' })}>
             Mock Save MP Config
         </button>
@@ -31,7 +31,7 @@ describe('PaymentPage Component', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        (AdminProviderService.listProviders as any).mockResolvedValue(mockProviders);
+        (AdminProviderService.listProviders as import('vitest').Mock).mockResolvedValue(mockProviders);
     });
 
     it('should render payment providers correctly and filter out standalone PIX', async () => {
@@ -42,7 +42,7 @@ describe('PaymentPage Component', () => {
     });
 
     it('should open MercadoPagoForm and save config', async () => {
-        (AdminProviderService.saveProviderConfig as any).mockResolvedValue({});
+        (AdminProviderService.saveProviderConfig as import('vitest').Mock).mockResolvedValue({});
         render(<PaymentPage />);
 
         const configButton = await screen.findByText('Configurar');

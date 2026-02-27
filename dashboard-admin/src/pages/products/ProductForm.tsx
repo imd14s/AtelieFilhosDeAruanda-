@@ -13,7 +13,7 @@ import type { ProductMedia, ProductVariant, CreateProductDTO } from '../../types
 import type { Category } from '../../types/category';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { AdminProviderService } from '../../services/AdminProviderService';
-// Legacy fiscal service import removed
+import { FiscalService } from '../../services/FiscalService';
 import { NcmAutocomplete } from '../../components/ui/NcmAutocomplete';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
@@ -608,6 +608,7 @@ export function ProductForm() {
                     {...field}
                     error={errors.ncm?.message}
                     placeholder="Busque por código ou nome..."
+                    fetchSuggestions={FiscalService.searchNcms}
                   />
                 )}
               />

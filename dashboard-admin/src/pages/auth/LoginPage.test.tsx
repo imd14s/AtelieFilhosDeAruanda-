@@ -12,7 +12,7 @@ describe('LoginPage Component', () => {
     });
 
     it('should show error message on invalid credentials', async () => {
-        (api.post as any).mockRejectedValueOnce({ response: { status: 401 } });
+        (api.post as import('vitest').Mock).mockRejectedValueOnce({ response: { status: 401 } });
 
         render(<LoginPage />);
 
@@ -26,7 +26,7 @@ describe('LoginPage Component', () => {
     });
 
     it('should call login and redirected on success', async () => {
-        (api.post as any).mockResolvedValueOnce({
+        (api.post as import('vitest').Mock).mockResolvedValueOnce({
             data: { token: 'mock-token-123' }
         });
 

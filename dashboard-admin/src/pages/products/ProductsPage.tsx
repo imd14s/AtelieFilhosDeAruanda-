@@ -56,9 +56,10 @@ export function ProductsPage() {
       setProducts(prev => prev.map(p =>
         p.id === id ? { ...p, alertEnabled: !p.alertEnabled } : p
       ));
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erro ao atualizar alerta', error);
-      if (error.response?.status === 404) {
+      const err = error as { response?: { status?: number } };
+      if (err.response?.status === 404) {
         alert('Produto não encontrado ou funcionalidade indisponível.');
       } else {
         alert('Erro ao atualizar alerta. Tente novamente.');
@@ -134,7 +135,7 @@ export function ProductsPage() {
           <select
             className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm text-gray-700 font-medium"
             value={stockFilter}
-            onChange={(e) => setStockFilter(e.target.value as any)}
+            onChange={(e) => setStockFilter(e.target.value as 'all' | 'out' | 'low')}
           >
             <option value="all">📦 Todos os Estoques</option>
             <option value="out">🚫 Sem Estoque</option>
@@ -144,7 +145,7 @@ export function ProductsPage() {
           <select
             className="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm text-gray-700 font-medium"
             value={stockSort}
-            onChange={(e) => setStockSort(e.target.value as any)}
+            onChange={(e) => setStockSort(e.target.value as 'none' | 'asc' | 'desc')}
           >
             <option value="none">⇅ Ordenação Padrão</option>
             <option value="asc">📉 Estoque: Menor primeiro</option>
@@ -202,7 +203,7 @@ export function ProductsPage() {
                         {(() => {
                           const mainImg = product.media?.find(m => m.isMain)?.url || product.media?.[0]?.url;
                           const variantImg = product.variants?.[0]?.imageUrl || product.variants?.[0]?.media?.[0]?.url;
-                          // @ts-ignore
+                          // @ts-expect-error Property 'images' might not exist
                           const rawImg = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null;
                           const finalImg = mainImg || variantImg || rawImg;
 

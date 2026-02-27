@@ -22,27 +22,28 @@ export function CreatableCategorySelect({ categories, value, onChange, error }: 
         ? { value, label: value.replace('NEW_', ''), isNew: true }
         : options.find((opt) => opt.value === value) || null;
 
-    const handleChange = (newValue: any) => {
+    const handleChange = (newValue: unknown) => { // Changed 'any' to 'unknown'
         if (!newValue) {
             onChange('');
             return;
         }
 
-        if (newValue.__isNew__) {
+        // Check if newValue is an object and has the __isNew__ property
+        if (typeof newValue === 'object' && newValue !== null && '__isNew__' in newValue && (newValue as { __isNew__: boolean }).__isNew__) {
             // The user created a new category (transient)
-            onChange(`NEW_${newValue.label}`, newValue.label);
-        } else {
+            onChange(`NEW_${(newValue as { label: string }).label}`, (newValue as { label: string }).label);
+        } else if (typeof newValue === 'object' && newValue !== null && 'value' in newValue) {
             // The user selected an existing category
-            onChange(newValue.value);
+            onChange((newValue as { value: string }).value);
         }
     };
 
     // Rule: Only allow creating a new category if the typed name has at least 3 characters
     // and it doesn't already exist in the options list
-    const isValidNewOption = (inputValue: string, _selectValue: any, selectOptions: readonly any[]) => {
+    const isValidNewOption = (inputValue: string, _selectValue: unknown, selectOptions: readonly unknown[]) => { // Changed 'any' to 'unknown'
         if (inputValue.trim().length < 3) return false;
         const exactMatch = selectOptions.some(
-            (opt) => opt.label.toLowerCase() === inputValue.trim().toLowerCase()
+            (opt: unknown) => (opt as { label: string }).label.toLowerCase() === inputValue.trim().toLowerCase()
         );
         return !exactMatch;
     };
@@ -53,7 +54,7 @@ export function CreatableCategorySelect({ categories, value, onChange, error }: 
                 isClearable
                 options={options}
                 value={selectedOption}
-                onChange={handleChange as any}
+                onChange={handleChange} // Removed 'as any'
                 isValidNewOption={isValidNewOption}
                 formatCreateLabel={(inputValue) => `Adicionar "${inputValue}"`}
                 placeholder="Selecione ou digite para adicionar uma categoria..."

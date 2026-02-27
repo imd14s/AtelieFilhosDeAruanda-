@@ -88,7 +88,7 @@ export function IntegrationsPage() {
         try {
             await ChannelIntegrationService.testConnection(selectedProvider, { appId, appSecret });
             alert('Conexão testada com sucesso!');
-        } catch (error) {
+        } catch {
             alert('Falha ao testar conexão. Verifique as credenciais.');
         } finally {
             setTestingConnection(false);
@@ -119,13 +119,13 @@ export function IntegrationsPage() {
 
             // 2. Obter URL de Autenticação
             // Usamos a URL base da API (backend) para o callback, pois é o backend que processa o código do TikTok
-            const apiBase = (ChannelIntegrationService as any).apiBase || `${window.location.protocol}//${window.location.host}/api`;
+            const apiBase = (ChannelIntegrationService as Record<string, unknown>).apiBase || `${window.location.protocol}//${window.location.host}/api`;
             const redirectUri = `${apiBase}/integrations/${selectedProvider}/callback?redirectUri=${encodeURIComponent(window.location.href)}`;
             const { url } = await ChannelIntegrationService.getAuthUrl(selectedProvider, encodeURIComponent(redirectUri));
 
             // 3. Redirecionar para OAuth
             window.location.href = url;
-        } catch (error) {
+        } catch {
             alert('Erro ao configurar integração. Verifique as credenciais.');
         } finally {
             setSaving(false);
@@ -152,7 +152,7 @@ export function IntegrationsPage() {
                 }
                 alert(`${channel.name} conectada com sucesso!`);
                 loadData();
-            } catch (error) {
+            } catch {
                 alert(`Erro ao adicionar ${channel.name}.`);
             }
         } else {
@@ -167,7 +167,7 @@ export function IntegrationsPage() {
             await ChannelIntegrationService.deleteProvider(providerId);
             alert(`${providerName} foi desconectado.`);
             loadData();
-        } catch (error) {
+        } catch {
             alert('Erro ao desconectar o canal.');
         }
     };

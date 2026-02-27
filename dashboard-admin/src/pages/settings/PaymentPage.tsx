@@ -45,7 +45,7 @@ export function PaymentPage() {
             await AdminProviderService.toggleProvider(id, !currentStatus);
             setProviders(prev => prev.map(p => p.id === id ? { ...p, enabled: !currentStatus } : p));
             addToast('Status atualizado com sucesso!', 'success');
-        } catch (err) {
+        } catch {
             addToast('Erro ao atualizar status', 'error');
         }
     };
@@ -57,7 +57,7 @@ export function PaymentPage() {
             setProviders(prev => prev.filter(p => p.id !== id));
             if (editingProvider?.id === id) setEditingProvider(null);
             addToast('Provedor removido com sucesso!', 'success');
-        } catch (err) {
+        } catch {
             addToast('Erro ao remover provedor.', 'error');
         }
     };
@@ -76,7 +76,7 @@ export function PaymentPage() {
             setNewProvider({ name: '', code: '', driverKey: '' });
             addToast('Provedor criado com sucesso!', 'success');
             loadData();
-        } catch (err) {
+        } catch {
             addToast('Erro ao criar provedor.', 'error');
         }
     };
@@ -92,7 +92,7 @@ export function PaymentPage() {
             addToast('Configuração salva com sucesso!', 'success');
             setEditingProvider(null);
             loadData();
-        } catch (err) {
+        } catch {
             addToast('Erro ao salvar configuração profissional.', 'error');
         }
     };

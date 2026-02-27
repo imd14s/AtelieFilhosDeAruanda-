@@ -19,7 +19,7 @@ export function ShippingPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingProvider, setEditingProvider] = useState<AdminServiceProvider | null>(null);
-    const [configData, setConfigData] = useState<any>({});
+    const [configData, setConfigData] = useState<Record<string, unknown>>({});
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newProvider, setNewProvider] = useState({ name: '', code: '', driverKey: '' });
     const { addToast } = useToast();
@@ -47,7 +47,7 @@ export function ShippingPage() {
             await AdminProviderService.toggleProvider(id, !currentStatus);
             setProviders((prev: AdminServiceProvider[]) => prev.map(p => p.id === id ? { ...p, enabled: !currentStatus } : p));
             addToast('Status atualizado com sucesso!', 'success');
-        } catch (err) {
+        } catch {
             addToast('Erro ao atualizar status', 'error');
         }
     };
@@ -59,7 +59,7 @@ export function ShippingPage() {
             setProviders((prev: AdminServiceProvider[]) => prev.filter(p => p.id !== id));
             if (editingProvider?.id === id) setEditingProvider(null);
             addToast('Provedor removido!', 'success');
-        } catch (err) {
+        } catch {
             addToast('Erro ao remover provedor.', 'error');
         }
     };
@@ -78,7 +78,7 @@ export function ShippingPage() {
             setNewProvider({ name: '', code: '', driverKey: '' });
             addToast('Provedor criado com sucesso!', 'success');
             loadData();
-        } catch (err) {
+        } catch {
             addToast('Erro ao criar provedor.', 'error');
         }
     };
@@ -92,7 +92,7 @@ export function ShippingPage() {
         setEditingProvider(provider);
         try {
             setConfigData(config ? JSON.parse(config.configJson) : {});
-        } catch (e) {
+        } catch {
             setConfigData({});
         }
     };
@@ -107,7 +107,7 @@ export function ShippingPage() {
             });
             addToast('Configuração de frete salva!', 'success');
             setEditingProvider(null);
-        } catch (err) {
+        } catch {
             addToast('Erro ao salvar configuração.', 'error');
         }
     };
@@ -227,7 +227,7 @@ export function ShippingPage() {
                                             <textarea
                                                 value={JSON.stringify(configData, null, 2)}
                                                 onChange={(e) => {
-                                                    try { setConfigData(JSON.parse(e.target.value)); } catch (e) { }
+                                                    try { setConfigData(JSON.parse(e.target.value)); } catch { /* ignore */ }
                                                 }}
                                                 className="w-full h-48 p-4 font-mono text-sm border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner"
                                                 placeholder='{ "apiKey": "...", "token": "..." }'

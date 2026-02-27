@@ -6,9 +6,26 @@ import BaseModal from '../../components/ui/BaseModal';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
 
+interface Campaign {
+    id: string;
+    name: string;
+    subject: string;
+    audience: string;
+    content: string;
+    status: string;
+    sentCount: number;
+    totalRecipients: number;
+    signatureId?: string;
+}
+
+interface Signature {
+    id: string;
+    name: string;
+}
+
 export function CampaignsPage() {
-    const [campaigns, setCampaigns] = useState<any[]>([]);
-    const [signatures, setSignatures] = useState<any[]>([]);
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [signatures, setSignatures] = useState<Signature[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,7 +62,7 @@ export function CampaignsPage() {
             const { data } = await api.get('/marketing/signatures');
             setSignatures(data);
             if (data.length > 0) {
-                setNewCampaign((prev: any) => ({ ...prev, signatureId: data[0].id }));
+                setNewCampaign(prev => ({ ...prev, signatureId: String(data[0].id) }));
             }
         } catch (error) {
             console.error('Erro ao carregar assinaturas', error);
@@ -218,7 +235,7 @@ export function CampaignsPage() {
                             onChange={e => setNewCampaign({ ...newCampaign, signatureId: e.target.value })}
                         >
                             <option value="">Sem assinatura</option>
-                            {signatures.map((sig: any) => (
+                            {signatures.map((sig: Signature) => (
                                 <option key={sig.id} value={sig.id}>{sig.name}</option>
                             ))}
                         </select>
@@ -263,11 +280,11 @@ export function CampaignsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-6 rounded-xl border shadow-sm">
                     <h3 className="text-gray-500 text-sm font-medium">Total de Envios</h3>
-                    <p className="text-2xl font-bold mt-2">{campaigns.reduce((acc: number, c: any) => acc + (c.sentCount || 0), 0)}</p>
+                    <p className="text-2xl font-bold mt-2">{campaigns.reduce((acc: number, c: Campaign) => acc + (c.sentCount || 0), 0)}</p>
                 </div>
                 <div className="bg-white p-6 rounded-xl border shadow-sm">
                     <h3 className="text-gray-500 text-sm font-medium">Campanhas Ativas</h3>
-                    <p className="text-2xl font-bold mt-2 text-blue-600">{campaigns.filter((c: any) => c.status === 'SENDING').length}</p>
+                    <p className="text-2xl font-bold mt-2 text-blue-600">{campaigns.filter((c: Campaign) => c.status === 'SENDING').length}</p>
                 </div>
                 <div className="bg-white p-6 rounded-xl border shadow-sm">
                     <h3 className="text-gray-500 text-sm font-medium">Taxa de Verificação</h3>

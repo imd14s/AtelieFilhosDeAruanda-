@@ -6,7 +6,7 @@ export const subscriptionService = {
         return response.data;
     },
 
-    createPlan: async (plan: any, imageFile?: File) => {
+    createPlan: async (plan: Record<string, unknown>, imageFile?: File) => {
         const formData = new FormData();
         formData.append('plan', new Blob([JSON.stringify(plan)], { type: 'application/json' }));
         if (imageFile) {
@@ -18,7 +18,7 @@ export const subscriptionService = {
         return response.data;
     },
 
-    updatePlan: async (id: string, plan: any, imageFile?: File) => {
+    updatePlan: async (id: string, plan: Record<string, unknown>, imageFile?: File) => {
         const formData = new FormData();
         formData.append('plan', new Blob([JSON.stringify(plan)], { type: 'application/json' }));
         if (imageFile) {

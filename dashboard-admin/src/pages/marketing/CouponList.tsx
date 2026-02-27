@@ -49,7 +49,7 @@ export function CouponList() {
         try {
             await MarketingService.toggleCoupon(id, !currentStatus);
             setCoupons(prev => prev.map(c => c.id === id ? { ...c, active: !currentStatus } : c));
-        } catch (err) {
+        } catch {
             alert('Erro ao alterar status');
         }
     };
@@ -59,7 +59,7 @@ export function CouponList() {
         try {
             await MarketingService.deleteCoupon(id);
             setCoupons(prev => prev.filter(c => c.id !== id));
-        } catch (err) {
+        } catch {
             alert('Erro ao excluir');
         }
     };

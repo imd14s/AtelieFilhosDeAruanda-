@@ -7,7 +7,7 @@ export function TeamPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newUser, setNewUser] = useState({ id: '', name: '', email: '', password: '', role: 'EMPLOYEE' as any });
+    const [newUser, setNewUser] = useState({ id: '', name: '', email: '', password: '', role: 'EMPLOYEE' as 'ADMIN' | 'EMPLOYEE' });
     const [isEditMode, setIsEditMode] = useState(false);
 
     useEffect(() => {
@@ -29,7 +29,7 @@ export function TeamPage() {
     };
 
     const handleEdit = (user: User) => {
-        setNewUser({ ...user, password: '' } as any);
+        setNewUser({ ...user, password: '' } as typeof newUser);
         setIsEditMode(true);
         setIsModalOpen(true);
     };
@@ -186,7 +186,7 @@ export function TeamPage() {
                                 <select
                                     className="w-full border rounded p-2"
                                     value={newUser.role}
-                                    onChange={e => setNewUser({ ...newUser, role: e.target.value as any })}
+                                    onChange={e => setNewUser({ ...newUser, role: e.target.value as 'ADMIN' | 'EMPLOYEE' })}
                                 >
                                     <option value="EMPLOYEE">Funcionário</option>
                                     <option value="ADMIN">Administrador</option>

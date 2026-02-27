@@ -10,7 +10,7 @@ import { useToast } from '../../context/ToastContext';
 
 export function AbandonedCartPage() {
     const [settings, setSettings] = useState<AbandonedCartSettings | null>(null);
-    const [signatures, setSignatures] = useState<any[]>([]);
+    const [signatures, setSignatures] = useState<Record<string, unknown>[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const { addToast } = useToast();
@@ -45,7 +45,7 @@ export function AbandonedCartPage() {
             setSaving(true);
             await MarketingService.updateAbandonedCartSettings(settings);
             addToast('Motor de recuperação atualizado com sucesso! 🚀', 'success');
-        } catch (err) {
+        } catch {
             addToast('Erro ao salvar configurações', 'error');
         } finally {
             setSaving(false);
@@ -70,7 +70,7 @@ export function AbandonedCartPage() {
         setSettings({ ...settings, triggers: newTriggers });
     };
 
-    const updateTrigger = (index: number, field: string, value: any) => {
+    const updateTrigger = (index: number, field: string, value: unknown) => {
         if (!settings) return;
         const newTriggers = [...(settings.triggers || [])];
         newTriggers[index] = { ...newTriggers[index], [field]: value };

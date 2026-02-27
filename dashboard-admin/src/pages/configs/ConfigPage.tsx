@@ -107,7 +107,7 @@ export function ConfigPage() {
                                                     });
                                                     loadConfigs();
                                                     addToast('Configurações padrão criadas.');
-                                                } catch (e) { addToast('Erro ao criar defaults', 'error') }
+                                                } catch { addToast('Erro ao criar defaults', 'error') }
                                             }}
                                             className="text-indigo-600 hover:text-indigo-800 font-medium underline"
                                         >

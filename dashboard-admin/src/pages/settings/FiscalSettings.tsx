@@ -77,7 +77,7 @@ export function FiscalSettings() {
                 invoiceNumber: getConfig('FISCAL_INVOICE_NUMBER', '0')
             });
 
-        } catch (error) {
+        } catch {
             console.error('Erro ao carregar dados fiscais', error);
         } finally {
             setLoading(false);
@@ -113,7 +113,7 @@ export function FiscalSettings() {
 
             await Promise.all(payloads.map(p => ConfigService.upsert(p)));
             alert('Configurações de Emitente salvas com sucesso!');
-        } catch (error) {
+        } catch {
             console.error('Erro ao salvar config', error);
             alert('Ocorreu um erro ao persistir as configurações.');
         } finally {
@@ -127,7 +127,7 @@ export function FiscalSettings() {
             await FiscalIntegrationService.save({ providerName: slug, apiKey, active });
             alert('Integração salva com sucesso!');
             loadData();
-        } catch (error) {
+        } catch {
             alert('Erro ao salvar integração.');
         } finally {
             setSaving(false);
@@ -141,9 +141,10 @@ export function FiscalSettings() {
             alert('Certificado enviado e cifrado com sucesso!');
             const newCertInfo = await FiscalIntegrationService.getCertificateInfo();
             setCertificateMetadata(newCertInfo);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Erro no upload de certificado', error);
-            throw new Error(error.response?.data?.message || 'Falha na comunicação com o servidor.');
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            throw new Error(err.response?.data?.message || err.message || 'Falha na comunicação com o servidor.');
         } finally {
             setSaving(false);
         }
@@ -155,7 +156,7 @@ export function FiscalSettings() {
             await FiscalIntegrationService.revokeCertificate();
             setCertificateMetadata(null);
             alert('Certificado revogado.');
-        } catch (error) {
+        } catch {
             alert('Erro ao revogar certificado.');
         } finally {
             setSaving(false);
@@ -167,7 +168,7 @@ export function FiscalSettings() {
         try {
             await ConfigService.upsert({ configKey: 'DOCUMENT_RETENTION_DAYS', configValue: retentionDays.toString() });
             alert('Política de retenção atualizada!');
-        } catch (error) {
+        } catch {
             alert('Erro ao salvar retenção.');
         } finally {
             setSaving(false);

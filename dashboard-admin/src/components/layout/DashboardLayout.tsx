@@ -10,11 +10,8 @@ const {
   ChevronDown, ChevronRight, Plus, Tag, Plug, Repeat, Menu, X, Bell
 } = Icons;
 
-console.log('Icons loaded:', { Bell: !!Bell });
-
-
 interface NavItem {
-  icon: any;
+  icon: React.ElementType;
   label: string;
   path?: string;
   children?: NavItem[];

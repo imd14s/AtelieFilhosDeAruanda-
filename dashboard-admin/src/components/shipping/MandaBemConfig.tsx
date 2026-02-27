@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Shield, MapPin, Package, Clock, DollarSign, Info } from 'lucide-react';
 
+interface MandaBemConfigData {
+    apiKey?: string;
+    apiSecret?: string;
+    zipCode?: string;
+    defaultWeight?: string | number;
+    estimatedDays?: string | number;
+    freeShippingMinAmount?: string | number;
+    sandbox?: boolean;
+}
+
 interface MandaBemConfigProps {
-    config: any;
-    onChange: (newConfig: any) => void;
+    config: MandaBemConfigData;
+    onChange: (newConfig: MandaBemConfigData) => void;
 }
 
 export function MandaBemConfig({ config, onChange }: MandaBemConfigProps) {
@@ -25,6 +35,7 @@ export function MandaBemConfig({ config, onChange }: MandaBemConfigProps) {
             freeShippingMinAmount: freeShippingMinAmount ? parseFloat(freeShippingMinAmount) : undefined,
             sandbox,
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apiKey, apiSecret, zipCode, defaultWeight, estimatedDays, freeShippingMinAmount, sandbox]);
 
     return (

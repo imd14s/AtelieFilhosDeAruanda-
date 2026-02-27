@@ -108,7 +108,7 @@ export default function OrderDetailModal({ isOpen, onClose, order: initialOrder 
                                                 addToast(' NF-e solicitada!', 'success');
                                                 // No mundo ideal aqui buscaríamos o pedido atualizado.
                                                 // Por simplicidade, assumimos que o link externo seria o padrão.
-                                            } catch (err) {
+                                            } catch {
                                                 addToast('Falha na emissão.', 'error');
                                             } finally {
                                                 setIsEmitting(false);
