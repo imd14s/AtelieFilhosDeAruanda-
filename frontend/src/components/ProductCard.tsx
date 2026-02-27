@@ -1,6 +1,7 @@
- 
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+ 
 import { cartService } from '../services/cartService';
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, Check, Heart } from 'lucide-react';
