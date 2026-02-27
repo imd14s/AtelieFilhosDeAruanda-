@@ -39,9 +39,15 @@ export interface Review {
     rating: number;
     comment: string;
     createdAt: string;
-    images?: string[];
+    media?: {
+        id: string;
+        url: string;
+        type: 'IMAGE' | 'VIDEO';
+    }[];
     verifiedPurchase?: boolean;
     orderId?: string;
+    adminResponse?: string;
+    respondedAt?: string;
     product?: Partial<Product>;
 }
 

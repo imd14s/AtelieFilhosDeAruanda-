@@ -42,6 +42,12 @@ public class ReviewEntity {
     @Column(name = "ai_moderation_score")
     private BigDecimal aiModerationScore;
 
+    @Column(name = "admin_response", length = 1000)
+    private String adminResponse;
+
+    @Column(name = "responded_at")
+    private LocalDateTime respondedAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

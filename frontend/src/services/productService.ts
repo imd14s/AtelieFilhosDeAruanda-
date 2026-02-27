@@ -1,5 +1,5 @@
 import api from './api';
-import { Product, Category, Variant } from '../types';
+import { Product, Category, Variant, Review } from '../types';
 import { SafeAny } from "../types/safeAny";
 
 /**
@@ -99,7 +99,7 @@ export const productService = {
     /**
      * Busca as avaliações de um produto específico.
      */
-    getReviews: async (productId: string): Promise<SafeAny[]> => {
+    getReviews: async (productId: string): Promise<Review[]> => {
         try {
             const response = await api.get(`/reviews/product/${productId}`, {
                 headers: TENANT_HEADER

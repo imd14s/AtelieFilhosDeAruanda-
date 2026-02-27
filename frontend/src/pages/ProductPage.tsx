@@ -9,8 +9,9 @@ import SEO from '../components/SEO';
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2, Heart } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
-import ReviewSection from '../components/ReviewSection';
+import RatingSummary from '../components/reviews/RatingSummary';
 import ProductCard from '../components/ProductCard';
+import ReviewSection from '../components/ReviewSection';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
@@ -393,41 +394,11 @@ const ProductPage: React.FC = () => {
                                     {typeof product.category === 'object' ? product.category.name : 'Artigos Religiosos Exclusivos'}
                                 </p>
 
-                                {(() => {
-                                    const avg = product.averageRating ?? 0;
-                                    const total = product.totalReviews ?? 0;
-                                    return (
-                                        <div className="flex items-center gap-2">
-                                            {total > 0 ? (
-                                                <>
-                                                    <span className="text-sm font-lato text-gray-500">{avg.toFixed(1)}</span>
-                                                    <div className="flex items-center gap-0.5">
-                                                        {[1, 2, 3, 4, 5].map((star) => {
-                                                            const fill = Math.min(Math.max(avg - (star - 1), 0), 1);
-                                                            return (
-                                                                <span key={star} className="relative inline-block w-4 h-4">
-                                                                    <svg className="w-4 h-4 text-gray-300 fill-gray-300 absolute inset-0" viewBox="0 0 20 20">
-                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                                    </svg>
-                                                                    <svg
-                                                                        className="w-4 h-4 text-[#3483fa] fill-[#3483fa] absolute inset-0"
-                                                                        viewBox="0 0 20 20"
-                                                                        style={{ clipPath: `inset(0 ${100 - fill * 100}% 0 0)` }}
-                                                                    >
-                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                                    </svg>
-                                                                </span>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                    <span className="text-sm font-lato text-gray-400">({total} {total === 1 ? 'avaliação' : 'avaliações'})</span>
-                                                </>
-                                            ) : (
-                                                <span className="text-xs font-lato text-gray-400 uppercase tracking-widest">Sem avaliações ainda</span>
-                                            )}
-                                        </div>
-                                    );
-                                })()}
+                                <RatingSummary
+                                    averageRating={product.averageRating}
+                                    totalReviews={product.totalReviews}
+                                    isLoading={loading}
+                                />
 
                                 <div className="flex flex-col gap-1 mt-6">
                                     {hasDiscount && (

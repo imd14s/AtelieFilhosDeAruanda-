@@ -27,6 +27,7 @@ import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPa
 import { SubscribersPage } from './pages/marketing/SubscribersPage';
 import EmailMarketingHub from './pages/marketing/EmailMarketingHub';
 import ProductFavoritesRanking from './pages/marketing/ProductFavoritesRanking';
+import ReviewManagementPage from './pages/marketing/ReviewManagementPage';
 import { ClientsPage } from './pages/settings/ClientsPage';
 import { FiscalSettings } from './pages/settings/FiscalSettings';
 import Reports from './pages/fiscal/Reports';
@@ -65,6 +66,7 @@ function AppRoutes() {
         <Route path="/marketing/email" element={<EmailMarketingHub />} />
         <Route path="/marketing/favorites" element={<ProductFavoritesRanking />} />
         <Route path="/marketing/subscribers" element={<SubscribersPage />} />
+        <Route path="/marketing/reviews" element={<ReviewManagementPage />} />
 
         {/* Automações e Assinaturas */}
         <Route path="/automations" element={<AutomationsPage />} />

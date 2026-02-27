@@ -16,6 +16,8 @@ import com.atelie.ecommerce.infrastructure.persistence.review.ReviewTokenReposit
 import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,15 +46,12 @@ public class ReviewService {
     @Transactional
     public ReviewEntity createReview(UUID userId, UUID productId, Integer rating, String comment,
             List<Map<String, String>> media) {
-        // 1. Check eligibility
         validateEligibility(userId, productId);
 
-        // 2. AI Moderation
         Map<String, Object> moderationResult = geminiIntegrationService.moderateReview(comment, media);
         boolean safe = (boolean) moderationResult.get("safe");
         BigDecimal score = (BigDecimal) moderationResult.get("score");
 
-        // 3. Create Review
         ReviewEntity review = new ReviewEntity();
         UserEntity user = new UserEntity();
         user.setId(userId);
@@ -90,7 +89,7 @@ public class ReviewService {
                 token.setOrderId(order.getId());
                 token.setProductId(item.getProduct().getId());
                 token.setCustomerEmail(order.getCustomerEmail());
-                token.setExpiryDate(LocalDateTime.now().plusDays(30)); // 30 dias para avaliar
+                token.setExpiryDate(LocalDateTime.now().plusDays(30));
                 reviewTokenRepository.save(token);
             }
         });
@@ -115,14 +114,9 @@ public class ReviewService {
     public ReviewEntity createVerifiedReview(String token, Integer rating, String comment,
             List<MultipartFile> mediaFiles) {
         ReviewTokenEntity tokenEntity = validateToken(token);
-
-        // Validate media constraints: 3 photos OR 1 video
         validateMediaConstraints(mediaFiles);
-
-        // Upload to Cloudinary and convert to internal representation
         List<Map<String, String>> mediaData = uploadMedia(mediaFiles);
 
-        // Moderation
         Map<String, Object> moderationResult = geminiIntegrationService.moderateReview(comment, mediaData);
         boolean safe = (boolean) moderationResult.get("safe");
         BigDecimal score = (BigDecimal) moderationResult.get("score");
@@ -173,7 +167,6 @@ public class ReviewService {
             throw new BusinessException("Você pode enviar no máximo 3 fotos por avaliação.");
         }
 
-        // Strict type validation
         for (MultipartFile file : mediaFiles) {
             String ct = file.getContentType();
             if (ct == null || (!ct.equals("image/jpeg") && !ct.equals("image/png") && !ct.equals("video/mp4"))) {
@@ -194,7 +187,6 @@ public class ReviewService {
     }
 
     public List<ReviewTokenEntity> getPendingTokensForOrder(UUID orderId) {
-        // Obter tokens não usados para um pedido
         return reviewTokenRepository.findAll().stream()
                 .filter(t -> t.getOrderId().equals(orderId) && !t.isUsed() && !t.isExpired())
                 .toList();
@@ -216,7 +208,6 @@ public class ReviewService {
     }
 
     public List<ProductEntity> getPendingReviews(UUID userId) {
-        // Find all unique products from DELIVERED orders
         List<OrderEntity> orders = orderRepository.findAll().stream()
                 .filter(o -> o.getUser() != null && o.getUser().getId().equals(userId)
                         && "DELIVERED".equals(o.getStatus()))
@@ -228,16 +219,58 @@ public class ReviewService {
                 .distinct()
                 .toList();
 
-        // Find reviewed product IDs
         List<UUID> reviewedProductIds = reviewRepository.findByUserId(userId).stream()
                 .map(r -> r.getProduct().getId())
                 .toList();
 
-        // Filter out reviewed products
         List<UUID> pendingProductIds = purchasedProductIds.stream()
                 .filter(id -> !reviewedProductIds.contains(id))
                 .toList();
 
         return productRepository.findAllById(pendingProductIds);
+    }
+
+    @Transactional
+    public ReviewEntity moderateReview(UUID id, String status) {
+        ReviewEntity review = reviewRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Avaliação não encontrada"));
+
+        if (!List.of("APPROVED", "REJECTED", "PENDING").contains(status)) {
+            throw new BusinessException("Status de moderação inválido");
+        }
+
+        review.setStatus(status);
+        return reviewRepository.save(review);
+    }
+
+    @Transactional
+    public void batchModerate(List<UUID> ids, String status) {
+        List<ReviewEntity> reviews = reviewRepository.findAllById(ids);
+        reviews.forEach(r -> r.setStatus(status));
+        reviewRepository.saveAll(reviews);
+    }
+
+    @Transactional
+    public ReviewEntity respondToReview(UUID id, String responseText) {
+        ReviewEntity review = reviewRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Avaliação não encontrada"));
+
+        review.setAdminResponse(responseText);
+        review.setRespondedAt(LocalDateTime.now());
+        return reviewRepository.save(review);
+    }
+
+    public Page<ReviewEntity> getReviewsForAdmin(String status, List<Integer> ratings, Boolean hasMedia,
+            Pageable pageable) {
+        if (status != null) {
+            return reviewRepository.findAllByStatusOrderByCreatedAtDesc(status, pageable);
+        }
+        if (ratings != null && !ratings.isEmpty()) {
+            return reviewRepository.findAllByRatingInOrderByCreatedAtDesc(ratings, pageable);
+        }
+        if (Boolean.TRUE.equals(hasMedia)) {
+            return reviewRepository.findAllWithMediaOrderByCreatedAtDesc(pageable);
+        }
+        return reviewRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 }

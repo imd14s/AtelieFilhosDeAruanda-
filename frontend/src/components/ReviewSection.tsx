@@ -1,11 +1,13 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { Star, MessageSquare, Loader2 } from 'lucide-react';
+import { Star, MessageSquare } from 'lucide-react';
 import VerifiedBadge from './VerifiedBadge';
 import ReviewSummary from './ReviewSummary';
-import { productService } from '../services/productService'; // eslint-disable-line no-restricted-imports
+import { productService } from '../services/productService';  
 import { Review } from '../types';
+import UGCGallery from './reviews/UGCGallery';
+import { ReviewItemSkeleton, UGCGallerySkeleton } from './reviews/ReviewSkeletons';
 
 interface ReviewSectionProps {
     productId: string;
@@ -29,15 +31,22 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewsLoade
                 console.error("[ReviewSection] Falha ao carregar reviews:", err);
                 setReviews([]);
             } finally {
-                setLoading(false);
+                // Pequeno delay para suavizar a transição do skeleton
+                setTimeout(() => setLoading(false), 300);
             }
         };
         fetchReviews();
     }, [productId, onReviewsLoaded]);
 
     if (loading) return (
-        <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-[#C9A24D]" />
+        <div className="space-y-12">
+            <div className="space-y-4">
+                <div className="h-8 w-48 bg-gray-100 animate-pulse rounded" />
+                <UGCGallerySkeleton />
+            </div>
+            <div className="space-y-8">
+                {[1, 2, 3].map(i => <ReviewItemSkeleton key={i} />)}
+            </div>
         </div>
     );
 
@@ -52,6 +61,9 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewsLoade
                 <>
                     <ReviewSummary reviews={reviews} />
 
+                    {/* UGC Gallery - Apenas fotos aprovadas que vem no media */}
+                    <UGCGallery reviews={reviews} />
+
                     {/* Lista de Comentários */}
                     <div className="space-y-8">
                         <div className="flex justify-between items-center border-b border-gray-100 pb-4">
@@ -64,23 +76,51 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewsLoade
                             </div>
                         </div>
 
-                        <div className="grid gap-8">
+                        <div className="grid gap-12">
                             {reviews.map(review => (
-                                <div key={review.id} className="flex flex-col md:flex-row gap-6 pb-8 border-b border-gray-50 last:border-0">
-                                    <div className="w-full md:w-48 shrink-0">
-                                        <div className="flex gap-0.5 mb-2">
-                                            {[1, 2, 3, 4, 5].map(s => (
-                                                <Star key={s} size={12} className={s <= review.rating ? "fill-[#C9A24D] text-[#C9A24D]" : "text-gray-200"} />
-                                            ))}
+                                <div key={review.id} className="group">
+                                    <div className="flex flex-col md:flex-row gap-6 pb-8 border-b border-gray-50 last:border-0 group-last:pb-0">
+                                        <div className="w-full md:w-48 shrink-0">
+                                            <div className="flex gap-0.5 mb-2">
+                                                {[1, 2, 3, 4, 5].map(s => (
+                                                    <Star key={s} size={12} className={s <= review.rating ? "fill-[#C9A24D] text-[#C9A24D]" : "text-gray-200"} />
+                                                ))}
+                                            </div>
+                                            <span className="font-lato text-sm font-bold text-[var(--azul-profundo)] block">{review.userName || review.user?.name || 'Cliente'}</span>
+                                            {review.verifiedPurchase && <VerifiedBadge className="mt-1" />}
                                         </div>
-                                        <span className="font-lato text-sm font-bold text-[var(--azul-profundo)] block">{review.userName || review.user?.name || 'Cliente'}</span>
-                                        {review.verifiedPurchase && <VerifiedBadge className="mt-1" />}
-                                    </div>
-                                    <div className="flex-1 space-y-4">
-                                        <p className="font-lato text-gray-600 leading-relaxed italic">"{review.comment}"</p>
-                                        <span className="text-[10px] font-lato text-gray-300 uppercase tracking-widest block">
-                                            {review.createdAt ? new Date(review.createdAt).toLocaleDateString('pt-BR') : ''}
-                                        </span>
+                                        <div className="flex-1 space-y-4">
+                                            <div className="relative">
+                                                <span className="absolute -left-4 top-0 text-3xl text-gray-100 font-serif">"</span>
+                                                <p className="font-lato text-gray-600 leading-relaxed italic pr-4">
+                                                    {review.comment}
+                                                </p>
+                                            </div>
+
+                                            <span className="text-[10px] font-lato text-gray-300 uppercase tracking-widest block">
+                                                {review.createdAt ? new Date(review.createdAt).toLocaleDateString('pt-BR') : ''}
+                                            </span>
+
+                                            {/* Resposta do Ateliê */}
+                                            {review.adminResponse && (
+                                                <div className="mt-6 bg-[#F7F7F4] p-6 rounded-sm border-l-2 border-[#C9A24D] relative">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <div className="w-6 h-6 bg-[var(--azul-profundo)] rounded-full flex items-center justify-center">
+                                                            <span className="text-[10px] text-white font-bold">A</span>
+                                                        </div>
+                                                        <span className="font-lato text-[11px] font-bold text-[var(--azul-profundo)] uppercase tracking-wider">Resposta do Ateliê</span>
+                                                    </div>
+                                                    <p className="font-lato text-sm text-[var(--azul-profundo)]/80 leading-relaxed">
+                                                        {review.adminResponse}
+                                                    </p>
+                                                    {review.respondedAt && (
+                                                        <span className="text-[9px] font-lato text-gray-400 uppercase tracking-widest mt-3 block">
+                                                            Respondido em {new Date(review.respondedAt).toLocaleDateString('pt-BR')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}

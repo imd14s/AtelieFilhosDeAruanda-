@@ -62,6 +62,7 @@ export function DashboardLayout() {
         { icon: Icons.Heart, label: 'Ranking de Favoritos', path: '/marketing/favorites' },
         { icon: Ticket, label: 'Cupons', path: '/marketing/coupons' },
         { icon: Mail, label: 'Recuperação', path: '/marketing/abandoned-cart' },
+        { icon: Icons.MessageSquare, label: 'Avaliações', path: '/marketing/reviews' },
       ]
     },
     {
