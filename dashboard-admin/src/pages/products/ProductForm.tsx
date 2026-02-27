@@ -13,8 +13,6 @@ import type { ProductMedia, ProductVariant, CreateProductDTO } from '../../types
 import type { Category } from '../../types/category';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { AdminProviderService } from '../../services/AdminProviderService';
-import { FiscalService } from '../../services/FiscalService';
-import { NcmAutocomplete } from '../../components/ui/NcmAutocomplete';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
 import { cn } from '../../utils/cn';
@@ -29,7 +27,7 @@ const schema = z.object({
   height: z.coerce.number().optional().default(0),
   width: z.coerce.number().optional().default(0),
   length: z.coerce.number().optional().default(0),
-  ncm: z.string().min(1, 'NCM é obrigatório'),
+  ncm: z.string().min(1, 'NCM é obrigatório').length(10, 'NCM deve ter 8 dígitos (formato XXXX.XX.XX)'),
   productionType: z.enum(['PROPRIA', 'REVENDA']).default('REVENDA'),
   origin: z.string().min(1, 'Origem é obrigatória').default('NACIONAL'),
 });
@@ -183,7 +181,20 @@ export function ProductForm() {
     }
   };
 
-  // (Removed legacy NCM Hooks - Component handles it)
+  const formatNcm = (value: string) => {
+    // Remove non-digits
+    const digits = value.replace(/\D/g, '').substring(0, 8);
+
+    // Apply mask: XXXX.XX.XX
+    let formatted = digits;
+    if (digits.length > 4) {
+      formatted = digits.substring(0, 4) + '.' + digits.substring(4);
+    }
+    if (digits.length > 6) {
+      formatted = formatted.substring(0, 7) + '.' + formatted.substring(7);
+    }
+    return formatted;
+  };
 
   const handleEditVariant = (variant: ProductVariant) => {
     setEditingVariantId(variant.id!);
@@ -604,12 +615,28 @@ export function ProductForm() {
                 control={control}
                 name="ncm"
                 render={({ field }) => (
-                  <NcmAutocomplete
-                    {...field}
-                    error={errors.ncm?.message}
-                    placeholder="Busque por código ou nome..."
-                    fetchSuggestions={FiscalService.searchNcms}
-                  />
+                  <div className="space-y-1">
+                    <input
+                      {...field}
+                      type="text"
+                      maxLength={10}
+                      placeholder="0000.00.00"
+                      onChange={(e) => {
+                        const formatted = formatNcm(e.target.value);
+                        field.onChange(formatted);
+                      }}
+                      onBlur={(e) => {
+                        const formatted = formatNcm(e.target.value);
+                        field.onChange(formatted);
+                        field.onBlur();
+                      }}
+                      className={cn(
+                        "w-full p-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 transition-all",
+                        errors.ncm ? "border-red-300" : "border-gray-300"
+                      )}
+                    />
+                    {errors.ncm && <p className="text-red-500 text-[10px] mt-1">{errors.ncm.message}</p>}
+                  </div>
                 )}
               />
             </div>
