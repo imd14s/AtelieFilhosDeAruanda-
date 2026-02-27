@@ -35,7 +35,14 @@ export function DashboardLayout() {
 
   const navItems: NavItem[] = [
     { icon: LayoutDashboard, label: 'Resumo', path: '/' },
-    { icon: Icons.BarChart2, label: 'Análise Visual', path: '/analytics' },
+    {
+      icon: Icons.BarChart2,
+      label: 'Financeiro',
+      children: [
+        { icon: Icons.BarChart2, label: 'Análise Visual', path: '/analytics' },
+        { icon: FileText, label: 'Relatórios & Auditoria', path: '/fiscal/reports' },
+      ]
+    },
     { icon: ShoppingBag, label: 'Pedidos', path: '/orders' },
     {
       icon: Package,

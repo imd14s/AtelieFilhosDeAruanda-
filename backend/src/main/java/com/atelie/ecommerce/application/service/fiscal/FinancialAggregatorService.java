@@ -27,6 +27,7 @@ public class FinancialAggregatorService {
     private final OrderService orderService;
     private final FiscalExtractorService fiscalExtractor;
     private final com.atelie.ecommerce.domain.fiscal.repository.CashFlowRepository cashFlowRepository;
+    private final com.atelie.ecommerce.domain.fiscal.repository.FinancialSnapshotRepository snapshotRepository;
 
     // TODO: Mover para um DynamicConfigService no futuro
     private static final BigDecimal GATEWAY_FEE_PERCENT = new BigDecimal("0.0399"); // 3.99%
@@ -35,11 +36,13 @@ public class FinancialAggregatorService {
     public FinancialAggregatorService(FinancialLedgerRepository ledgerRepository,
             @org.springframework.context.annotation.Lazy OrderService orderService,
             FiscalExtractorService fiscalExtractor,
-            com.atelie.ecommerce.domain.fiscal.repository.CashFlowRepository cashFlowRepository) {
+            com.atelie.ecommerce.domain.fiscal.repository.CashFlowRepository cashFlowRepository,
+            com.atelie.ecommerce.domain.fiscal.repository.FinancialSnapshotRepository snapshotRepository) {
         this.ledgerRepository = ledgerRepository;
         this.orderService = orderService;
         this.fiscalExtractor = fiscalExtractor;
         this.cashFlowRepository = cashFlowRepository;
+        this.snapshotRepository = snapshotRepository;
     }
 
     /**
@@ -48,6 +51,15 @@ public class FinancialAggregatorService {
     @Transactional
     public void aggregate(UUID orderId) {
         OrderEntity order = (OrderEntity) orderService.getOrderModelById(orderId);
+
+        // 0. Validar se o período está congelado
+        java.time.ZonedDateTime now = java.time.ZonedDateTime.now(java.time.ZoneId.systemDefault());
+        snapshotRepository.findByPeriod(now.getMonthValue(), now.getYear()).ifPresent(snapshot -> {
+            if (snapshot.isFrozen()) {
+                throw new IllegalStateException("O período financeiro " + now.getMonthValue() + "/" + now.getYear()
+                        + " está CONGELADO. Não é possível realizar novas agregações.");
+            }
+        });
 
         // 1. Extrair Impostos Reais do XML da NF-e
         FiscalExtractorService.TaxBreakdown taxes = fiscalExtractor.extractTaxes(order.getNfeProtocolXml());

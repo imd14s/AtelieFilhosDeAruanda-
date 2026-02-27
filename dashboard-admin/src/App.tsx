@@ -29,6 +29,7 @@ import EmailMarketingHub from './pages/marketing/EmailMarketingHub';
 import ProductFavoritesRanking from './pages/marketing/ProductFavoritesRanking';
 import { ClientsPage } from './pages/settings/ClientsPage';
 import { FiscalSettings } from './pages/settings/FiscalSettings';
+import Reports from './pages/fiscal/Reports';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 const PrivateRoute = () => {
@@ -53,8 +54,9 @@ function AppRoutes() {
         <Route path="/products/edit/:id" element={<ProductForm />} />
         <Route path="/categories" element={<CategoriesPage />} />
 
-        {/* Pedidos */}
+        {/* Pedidos e Fiscal */}
         <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/fiscal/reports" element={<Reports />} />
 
         {/* Marketing */}
         <Route path="/marketing/coupons" element={<CouponList />} />
