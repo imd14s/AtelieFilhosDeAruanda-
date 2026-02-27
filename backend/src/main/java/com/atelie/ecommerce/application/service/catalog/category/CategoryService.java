@@ -21,7 +21,7 @@ public class CategoryService {
         this.repository = repository;
     }
 
-    @CacheEvict(value = "categories", allEntries = true)
+    @CacheEvict(value = { "categories", "sitemap" }, allEntries = true)
     public CategoryResponse create(CreateCategoryRequest request) {
         // Validar se já existe categoria com o mesmo nome
         if (repository.existsByNameIgnoreCase(request.getName())) {
@@ -46,7 +46,7 @@ public class CategoryService {
                 .toList();
     }
 
-    @CacheEvict(value = "categories", allEntries = true)
+    @CacheEvict(value = { "categories", "sitemap" }, allEntries = true)
     public void delete(UUID id) {
         if (!repository.existsById(id)) {
             throw new com.atelie.ecommerce.application.common.exception.NotFoundException("Categoria não encontrada.");

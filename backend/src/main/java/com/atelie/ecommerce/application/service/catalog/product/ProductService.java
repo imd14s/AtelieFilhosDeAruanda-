@@ -85,7 +85,7 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Product not found with ID: " + id));
     }
 
-    @CacheEvict(value = "products", allEntries = true)
+    @CacheEvict(value = { "products", "sitemap" }, allEntries = true)
     @Transactional
     public ProductEntity saveProduct(ProductEntity product, UUID categoryId, List<ProductVariantEntity> variants,
             MultipartFile[] images) {
@@ -111,7 +111,7 @@ public class ProductService {
         return saved;
     }
 
-    @CacheEvict(value = "products", allEntries = true)
+    @CacheEvict(value = { "products", "sitemap" }, allEntries = true)
     @Transactional
     public ProductEntity updateProduct(UUID id, ProductEntity details, List<ProductVariantEntity> variants,
             MultipartFile[] images) {
@@ -324,7 +324,7 @@ public class ProductService {
         return updateProduct(id, details, null);
     }
 
-    @CacheEvict(value = "products", allEntries = true)
+    @CacheEvict(value = { "products", "sitemap" }, allEntries = true)
     @Transactional
     public void deleteProduct(UUID id) {
         ProductEntity product = productRepository.findById(id)
