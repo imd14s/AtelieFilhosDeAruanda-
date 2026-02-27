@@ -1,0 +1,42 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32m✓[39m src/services/ProductService.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m src/pages/settings/AuditLogPage.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 719[2mms[22m[39m
+     [33m[2m✓[22m[39m should filter logs by action [33m 442[2mms[22m[39m
+ [32m✓[39m src/components/layout/StoreSelector.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 723[2mms[22m[39m
+     [33m[2m✓[22m[39m should open dropdown and show tenants [33m 517[2mms[22m[39m
+ [32m✓[39m src/pages/settings/PaymentPage.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 470[2mms[22m[39m
+     [33m[2m✓[22m[39m should render payment providers correctly and filter out standalone PIX [33m 305[2mms[22m[39m
+ [32m✓[39m src/pages/settings/AiConfigPage.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1077[2mms[22m[39m
+     [33m[2m✓[22m[39m should save configs successfully [33m 549[2mms[22m[39m
+     [33m[2m✓[22m[39m should handle save error [33m 346[2mms[22m[39m
+ [32m✓[39m src/pages/auth/LoginPage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 935[2mms[22m[39m
+     [33m[2m✓[22m[39m should render login form correctly [33m 613[2mms[22m[39m
+ [32m✓[39m src/pages/orders/OrdersList.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 939[2mms[22m[39m
+     [33m[2m✓[22m[39m should render orders list correctly [33m 534[2mms[22m[39m
+     [33m[2m✓[22m[39m should open cancel modal and cancel order [33m 397[2mms[22m[39m
+ [32m✓[39m src/pages/settings/ShippingPage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1223[2mms[22m[39m
+     [33m[2m✓[22m[39m should toggle provider status [33m 737[2mms[22m[39m
+ [32m✓[39m src/pages/settings/EmailSettingsPage.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1893[2mms[22m[39m
+     [33m[2m✓[22m[39m should save configs successfully [33m 1004[2mms[22m[39m
+     [33m[2m✓[22m[39m should handle save error [33m 392[2mms[22m[39m
+ [32m✓[39m src/services/OrderService.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/services/TenantService.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/App.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [31m❯[39m src/components/layout/DashboardLayout.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 2605[2mms[22m[39m
+     [33m[2m✓[22m[39m should render main navigation items [33m 497[2mms[22m[39m
+[31m     [31m×[31m should expand and collapse menu items[39m[33m 1252[2mms[22m[39m
+     [33m[2m✓[22m[39m should call logout function [33m 378[2mms[22m[39m
+     [33m[2m✓[22m[39m should toggle mobile sidebar [33m 472[2mms[22m[39m
+ [32m✓[39m src/pages/products/ProductForm.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 2198[2mms[22m[39m
+     [33m[2m✓[22m[39m should render form fields correctly [33m 787[2mms[22m[39m
+     [33m[2m✓[22m[39m should show validation errors for empty fields [33m 644[2mms[22m[39m
+     [33m[2m✓[22m[39m should submit form successfully with valid data [33m 760[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m13 passed[39m[22m[90m (14)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m60 passed[39m[22m[90m (61)[39m
+[2m   Start at [22m 18:33:39
+[2m   Duration [22m 8.71s[2m (transform 3.95s, setup 4.07s, import 14.36s, tests 12.86s, environment 26.96s)[22m
+

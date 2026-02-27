@@ -61,8 +61,8 @@ const ProductPage: React.FC = () => {
                     setMainMedia(data.image || null);
                 }
 
-                // Registrar no histórico de navegação via API se o usuário estiver logado
-                if (user?.id) {
+                // Registrar no histórico de navegação via API se o usuário estiver logado e o produto existir
+                if (data && user?.id) {
                     orderService.history.add(user.id, data.id);
                 }
 
@@ -213,7 +213,7 @@ const ProductPage: React.FC = () => {
                 priority={isMain}
                 productContext={isMain ? {
                     name: product?.name || '',
-                    category: typeof product?.category === 'object' ? product.category.name : undefined
+                    category: (product?.category && typeof product?.category === 'object') ? product.category.name : undefined
                 } : undefined}
                 className="w-full h-full object-cover"
                 onMouseMove={isMain ? handleMouseMove : undefined}
@@ -223,21 +223,7 @@ const ProductPage: React.FC = () => {
         );
     };
 
-    if (loading) return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F7F7F4]">
-            <Spinner size={40} className="text-[#C9A24D]" />
-            <p className="font-lato text-[10px] uppercase tracking-widest text-[#0f2A44]/40">Carregando Axé...</p>
-        </div>
-    );
-
-    if (!product) return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F7F7F4]">
-            <div className="text-center">
-                <p className="font-playfair text-xl text-[#0f2A44] mb-4">Produto não encontrado.</p>
-                <Link to="/store" className="text-[var(--dourado-suave)] hover:underline font-lato text-sm">Voltar para a loja</Link>
-            </div>
-        </div>
-    );
+    // Removido early return do loading para não quebrar hooks
 
     const productJsonLd = useMemo(() => {
         if (!product) return undefined;
@@ -273,15 +259,31 @@ const ProductPage: React.FC = () => {
         return JSON.stringify(schema);
     }, [product, displayPrice, isOutOfStock]);
 
+    if (loading) return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F7F7F4]">
+            <Spinner size={40} className="text-[#C9A24D]" />
+            <p className="font-lato text-[10px] uppercase tracking-widest text-[#0f2A44]/40">Carregando Axé...</p>
+        </div>
+    );
+
+    if (!product) return (
+        <div className="min-h-screen flex items-center justify-center bg-[#F7F7F4]">
+            <div className="text-center">
+                <p className="font-playfair text-xl text-[#0f2A44] mb-4">Produto não encontrado.</p>
+                <Link to="/store" className="text-[var(--dourado-suave)] hover:underline font-lato text-sm">Voltar para a loja</Link>
+            </div>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-white">
             <SEO
-                title={product ? `${product.name} | ${typeof product.category === 'object' ? product.category.name : 'Artigos Religiosos'}` : undefined}
+                title={product ? `${product.name} | ${(product.category && typeof product.category === 'object') ? product.category.name : 'Artigos Religiosos'}` : undefined}
                 description={product.description?.substring(0, 150) + "... Compre agora no Ateliê!"}
                 image={product.images?.[0] || product.image}
                 type="product"
                 jsonLd={productJsonLd}
-                keywords={`${product.name}, ${typeof product.category === 'object' ? product.category.name : ''}, ateliê aruanda, artigos religiosos artesanais`}
+                keywords={`${product.name}, ${(product.category && typeof product.category === 'object') ? product.category.name : ''}, ateliê aruanda, artigos religiosos artesanais`}
             />
 
             {/* Lightbox Modal */}
@@ -387,7 +389,7 @@ const ProductPage: React.FC = () => {
                                     {product.name || 'Produto sem título'}
                                 </h1>
                                 <p className="hidden md:block text-[10px] uppercase tracking-widest text-[#C9A24D] font-bold">
-                                    {typeof product.category === 'object' ? product.category.name : 'Artigos Religiosos Exclusivos'}
+                                    {(product.category && typeof product.category === 'object') ? product.category.name : 'Artigos Religiosos Exclusivos'}
                                 </p>
 
                                 <RatingSummary

@@ -3,8 +3,8 @@
 import React, { useState, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
-import { cartService } from '../services/cartService'; // eslint-disable-line no-restricted-imports
-import { orderService } from '../services/orderService'; // eslint-disable-line no-restricted-imports
+import { cartService } from '../services/cartService';  
+import { orderService } from '../services/orderService';  
 import { getImageUrl } from '../utils/imageUtils';
 import Button from './ui/Button';
 import { useToast } from '../context/ToastContext';
@@ -84,7 +84,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, cartItems, onU
                         ) : (
                             <div className="space-y-6">
                                 {cartItems.map((item) => (
-                                    <div key={item.id} className="flex gap-4 group">
+                                    <div key={item.id} className="flex gap-4 group" data-testid="cart-item">
                                         <div className="w-20 h-24 bg-white flex-shrink-0 overflow-hidden">
                                             <img
                                                 src={getImageUrl(item.image || '')}

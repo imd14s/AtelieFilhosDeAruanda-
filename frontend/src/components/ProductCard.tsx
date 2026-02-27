@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { cartService } from '../services/cartService'; // eslint-disable-line no-restricted-imports
+import { cartService } from '../services/cartService';  
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, Check, Heart } from 'lucide-react';
 
@@ -96,7 +96,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     height={280}
                     productContext={{
                         name: product.name,
-                        category: typeof product.category === 'object' ? product.category.name : undefined
+                        category: (product.category && typeof product.category === 'object') ? product.category.name : undefined
                     }}
                     className="h-full w-full object-contain object-center transition-transform duration-700 group-hover:scale-110 px-4"
                 />

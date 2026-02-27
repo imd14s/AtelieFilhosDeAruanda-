@@ -3,27 +3,30 @@
       [2mCoverage enabled with [22m[33mv8[39m
 
  [32m✓[39m src/App.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 8[2mms[22m[39m
- [32m✓[39m src/pages/settings/PaymentPage.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 273[2mms[22m[39m
- [32m✓[39m src/pages/orders/OrdersList.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 474[2mms[22m[39m
- [32m✓[39m src/pages/auth/LoginPage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 747[2mms[22m[39m
-     [33m[2m✓[22m[39m should render login form correctly [33m 506[2mms[22m[39m
- [32m✓[39m src/pages/settings/ShippingPage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 788[2mms[22m[39m
-     [33m[2m✓[22m[39m should toggle provider status [33m 457[2mms[22m[39m
- [32m✓[39m src/pages/products/ProductForm.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1767[2mms[22m[39m
-     [33m[2m✓[22m[39m should render form fields correctly [33m 449[2mms[22m[39m
-     [33m[2m✓[22m[39m should show validation errors for empty fields [33m 614[2mms[22m[39m
-     [33m[2m✓[22m[39m should submit form successfully with valid data [33m 699[2mms[22m[39m
+ [32m✓[39m src/services/TenantService.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+ [32m✓[39m src/services/ProductService.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 86[2mms[22m[39m
+ [32m✓[39m src/services/OrderService.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 65[2mms[22m[39m
+ [32m✓[39m src/pages/settings/PaymentPage.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 245[2mms[22m[39m
+ [32m✓[39m src/pages/orders/OrdersList.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 436[2mms[22m[39m
+ [32m✓[39m src/pages/auth/LoginPage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 642[2mms[22m[39m
+     [33m[2m✓[22m[39m should render login form correctly [33m 433[2mms[22m[39m
+ [32m✓[39m src/pages/settings/ShippingPage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 877[2mms[22m[39m
+     [33m[2m✓[22m[39m should toggle provider status [33m 535[2mms[22m[39m
+ [32m✓[39m src/pages/products/ProductForm.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1885[2mms[22m[39m
+     [33m[2m✓[22m[39m should render form fields correctly [33m 577[2mms[22m[39m
+     [33m[2m✓[22m[39m should show validation errors for empty fields [33m 605[2mms[22m[39m
+     [33m[2m✓[22m[39m should submit form successfully with valid data [33m 698[2mms[22m[39m
 
-[2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
-[2m      Tests [22m [1m[32m14 passed[39m[22m[90m (14)[39m
-[2m   Start at [22m 18:10:43
-[2m   Duration [22m 6.09s[2m (transform 1.82s, setup 1.05s, import 4.96s, tests 4.06s, environment 6.55s)[22m
+[2m Test Files [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+[2m      Tests [22m [1m[32m39 passed[39m[22m[90m (39)[39m
+[2m   Start at [22m 18:22:24
+[2m   Duration [22m 7.01s[2m (transform 2.31s, setup 2.57s, import 5.99s, tests 4.29s, environment 13.77s)[22m
 
 [34m % [39m[2mCoverage report from [22m[33mv8[39m
 -------------------|---------|----------|---------|---------|-------------------
 File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 -------------------|---------|----------|---------|---------|-------------------
-All files          |   12.34 |    12.87 |    9.58 |   12.91 |                   
+All files          |   14.63 |    14.83 |   12.62 |   15.34 |                   
  src               |       0 |        0 |       0 |       0 |                   
   App.tsx          |       0 |        0 |       0 |       0 | 36-94             
  src/api           |       0 |        0 |       0 |       0 |                   
@@ -111,7 +114,7 @@ All files          |   12.34 |    12.87 |    9.58 |   12.91 |
   SetupWizard.tsx  |       0 |        0 |       0 |       0 | 7-114             
  .../subscriptions |       0 |        0 |       0 |       0 |                   
   ...PlansPage.tsx |       0 |        0 |       0 |       0 | 11-525            
- src/services      |    1.71 |        0 |       1 |    1.75 |                   
+ src/services      |   32.18 |    54.54 |      32 |   32.01 |                   
   ...derService.ts |      25 |        0 |   16.66 |      25 | 11-35             
   ...icsService.ts |       0 |        0 |       0 |       0 | 23-29             
   AuditService.ts  |       0 |      100 |       0 |       0 | 4-17              
@@ -122,14 +125,14 @@ All files          |   12.34 |    12.87 |    9.58 |   12.91 |
   FiscalService.ts |      20 |        0 |       0 |      25 | 10-14             
   ...ingService.ts |       0 |      100 |       0 |       0 | 4-34              
   MediaService.ts  |       0 |        0 |       0 |       0 | 8-31              
-  OrderService.ts  |       0 |        0 |       0 |       0 | 4-44              
+  OrderService.ts  |     100 |      100 |     100 |     100 |                   
   ...entService.ts |       0 |      100 |       0 |       0 | 4-15              
-  ...uctService.ts |       0 |        0 |       0 |       0 | 4-149             
+  ...uctService.ts |      86 |    72.72 |   85.71 |   85.71 | 107-112,119,127   
   ReportService.ts |       0 |      100 |       0 |       0 | 13-27             
   ReviewService.ts |       0 |      100 |       0 |       0 | 3-27              
   ...ingService.ts |       0 |      100 |       0 |       0 | 4-15              
   ...ertService.ts |       0 |        0 |       0 |       0 | 15-44             
-  TenantService.ts |       0 |      100 |       0 |       0 | 5-49              
+  TenantService.ts |     100 |      100 |     100 |     100 |                   
   UserService.ts   |       0 |      100 |       0 |       0 | 6-21              
   ...ionService.ts |       0 |        0 |       0 |       0 | 3-34              
  src/types         |       0 |        0 |       0 |       0 |                   
