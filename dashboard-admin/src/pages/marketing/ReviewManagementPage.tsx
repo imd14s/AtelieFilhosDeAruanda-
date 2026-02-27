@@ -6,7 +6,9 @@ import {
     Star,
     Filter,
     Video,
-    Check
+    Check,
+    ImageIcon,
+    MoreVertical
 } from 'lucide-react';
 import { ReviewService } from '../../services/ReviewService';
 import { Review } from '../../types/review';
