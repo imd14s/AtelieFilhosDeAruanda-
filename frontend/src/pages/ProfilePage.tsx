@@ -69,16 +69,14 @@ const ProfilePage: React.FC = () => {
     };
 
     const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    setImage(reader.result as string);
-                    setModal('crop');
-                };
-                reader.readAsDataURL(file);
-            }
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImage(reader.result as string);
+                setModal('crop');
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -309,7 +307,7 @@ const ProfilePage: React.FC = () => {
             {modal && (
                 <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
                     <div className={`${modal === 'crop' ? 'max-w-xl' : 'max-w-md'} bg-white w-full rounded shadow-2xl p-6 relative`}>
-                        <button onClick={() => { setModal(null); setActionMsg(''); }} className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-800 bg-white rounded-full p-1">
+                        <button onClick={() => { setModal(null); setActionMsg(''); }} className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-800 bg-white rounded-full p-1" aria-label="Close">
                             <X size={20} />
                         </button>
 
@@ -328,6 +326,7 @@ const ProfilePage: React.FC = () => {
                                         />
                                     </div>
                                     <MaskedInput
+                                        id="profile-document"
                                         mask="cpf-cnpj"
                                         label="CPF ou CNPJ"
                                         value={profileData.document}
@@ -385,8 +384,9 @@ const ProfilePage: React.FC = () => {
                                 </div>
                                 <div className="flex flex-col gap-4">
                                     <div className="flex items-center gap-4">
-                                        <span className="text-sm text-gray-500">Zoom</span>
+                                        <label htmlFor="zoom-range" className="text-sm text-gray-500">Zoom</label>
                                         <input
+                                            id="zoom-range"
                                             type="range"
                                             value={zoom}
                                             min={1}
