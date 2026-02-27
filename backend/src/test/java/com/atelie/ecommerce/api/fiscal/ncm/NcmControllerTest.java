@@ -26,7 +26,10 @@ class NcmControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private NcmService ncmService;
+    private com.atelie.ecommerce.application.service.catalog.SeoMetadataService seoMetadataService;
+
+    @MockBean
+    private com.atelie.ecommerce.application.service.fiscal.ncm.NcmService ncmService;
 
     @MockBean
     private NcmSyncService ncmSyncService;
@@ -36,6 +39,12 @@ class NcmControllerTest {
 
     @MockBean
     private com.atelie.ecommerce.infrastructure.security.CustomUserDetailsService customUserDetailsService;
+
+    @MockBean
+    private com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository productRepository;
+
+    @MockBean
+    private com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository categoryRepository;
 
     @Test
     void shouldReturnPaginatedResults() throws Exception {

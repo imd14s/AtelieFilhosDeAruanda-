@@ -15,6 +15,9 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
+import java.util.UUID;
+import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
+import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 
 @Service
 public class EmailService {
@@ -23,13 +26,16 @@ public class EmailService {
     private final DynamicConfigService configService;
     private final EmailSignatureService signatureService;
     private final EmailConfigRepository emailConfigRepository;
+    private final UserRepository userRepository;
 
     public EmailService(DynamicConfigService configService,
             EmailSignatureService signatureService,
-            EmailConfigRepository emailConfigRepository) {
+            EmailConfigRepository emailConfigRepository,
+            UserRepository userRepository) {
         this.configService = configService;
         this.signatureService = signatureService;
         this.emailConfigRepository = emailConfigRepository;
+        this.userRepository = userRepository;
     }
 
     private JavaMailSender createDynamicMailSender() {
@@ -99,5 +105,28 @@ public class EmailService {
         message.addHeader("List-Unsubscribe", "<" + unsubscribeLink + ">");
 
         mailSender.send(message);
+    }
+
+    public void sendPointsEarnedEmail(UUID userId, int pointsGained, int newBalance) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        String subject = "Você ganhou " + pointsGained + " pontos no Ateliê!";
+        String content = "<h2>Parabéns, " + user.getName() + "!</h2>" +
+                "<p>Sua avaliação foi aprovada e você acaba de ganhar <strong>" + pointsGained
+                + " pontos</strong> de fidelidade.</p>" +
+                "<p>Seu saldo atual é de <strong>" + newBalance + " pontos</strong>.</p>" +
+                "<p>Use seus pontos como desconto na sua próxima compra!</p>";
+
+        EmailQueue email = new EmailQueue();
+        email.setRecipient(user.getEmail());
+        email.setSubject(subject);
+        email.setContent(content);
+
+        try {
+            sendEmail(email);
+        } catch (MessagingException e) {
+            log.error("Failed to send points earned email to {}", user.getEmail(), e);
+        }
     }
 }

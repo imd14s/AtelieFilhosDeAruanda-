@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -39,6 +40,7 @@ public class ReviewService {
     private final ProductRepository productRepository;
     private final GeminiIntegrationService geminiIntegrationService;
     private final MediaStorageService mediaStorageService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -144,7 +146,13 @@ public class ReviewService {
         tokenEntity.setUsed(true);
         reviewTokenRepository.save(tokenEntity);
 
-        return reviewRepository.save(review);
+        ReviewEntity savedReview = reviewRepository.save(review);
+        if ("APPROVED".equals(savedReview.getStatus())) {
+            eventPublisher.publishEvent(new com.atelie.ecommerce.application.event.ReviewApprovedEvent(
+                    this, savedReview.getId(), savedReview.getUser().getId(), !savedReview.getMedia().isEmpty()));
+        }
+
+        return savedReview;
     }
 
     private void validateMediaConstraints(List<MultipartFile> mediaFiles) {
@@ -239,14 +247,29 @@ public class ReviewService {
             throw new BusinessException("Status de moderação inválido");
         }
 
+        String oldStatus = review.getStatus();
         review.setStatus(status);
-        return reviewRepository.save(review);
+        ReviewEntity savedReview = reviewRepository.save(review);
+
+        if ("APPROVED".equals(status) && !"APPROVED".equals(oldStatus) && review.isVerifiedPurchase()) {
+            eventPublisher.publishEvent(new com.atelie.ecommerce.application.event.ReviewApprovedEvent(
+                    this, savedReview.getId(), savedReview.getUser().getId(), !savedReview.getMedia().isEmpty()));
+        }
+
+        return savedReview;
     }
 
     @Transactional
     public void batchModerate(List<UUID> ids, String status) {
         List<ReviewEntity> reviews = reviewRepository.findAllById(ids);
-        reviews.forEach(r -> r.setStatus(status));
+        for (ReviewEntity r : reviews) {
+            String oldStatus = r.getStatus();
+            r.setStatus(status);
+            if ("APPROVED".equals(status) && !"APPROVED".equals(oldStatus) && r.isVerifiedPurchase()) {
+                eventPublisher.publishEvent(new com.atelie.ecommerce.application.event.ReviewApprovedEvent(
+                        this, r.getId(), r.getUser().getId(), !r.getMedia().isEmpty()));
+            }
+        }
         reviewRepository.saveAll(reviews);
     }
 

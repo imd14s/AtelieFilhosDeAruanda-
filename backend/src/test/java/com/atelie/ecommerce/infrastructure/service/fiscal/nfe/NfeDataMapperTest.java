@@ -47,6 +47,7 @@ class NfeDataMapperTest {
         product.setNcm("71171900");
 
         OrderItemEntity item = new OrderItemEntity();
+        item.setId(UUID.randomUUID());
         item.setProduct(product);
         item.setProductName(product.getName());
         item.setQuantity(2);

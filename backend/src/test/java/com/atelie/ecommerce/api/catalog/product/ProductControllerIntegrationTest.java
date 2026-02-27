@@ -80,12 +80,12 @@ public class ProductControllerIntegrationTest {
                                 List.of(new ProductCreateRequest.ProductMediaItem("image1.jpg", "IMAGE", true)),
                                 List.of(), // variants
                                 true, // active
-                                null, // weight
-                                null, // height
-                                null, // width
-                                null, // length
+                                new BigDecimal("1.5"), // weight
+                                new BigDecimal("10.0"), // height
+                                new BigDecimal("20.0"), // width
+                                new BigDecimal("30.0"), // length
                                 List.of(), // marketplaceIds
-                                "6109.10.00",
+                                "61091000",
                                 ProductionType.REVENDA,
                                 ProductOrigin.NACIONAL);
 

@@ -84,6 +84,7 @@ class MarketplaceCoreServiceTest {
         String expectedUrl = "https://auth.tiktok-shop.com/authorize?app_key=TT123&state=" + integrationId.toString();
 
         MarketplaceIntegrationEntity integration = new MarketplaceIntegrationEntity(provider, false);
+        integration.setId(integrationId);
         integration.setEncryptedCredentials("encrypted_creds");
 
         Map<String, String> decryptedCreds = Map.of("appId", "TT123", "appSecret", "secret");
@@ -112,6 +113,7 @@ class MarketplaceCoreServiceTest {
         String state = integrationId.toString();
 
         MarketplaceIntegrationEntity integration = new MarketplaceIntegrationEntity(provider, false);
+        integration.setId(integrationId);
         integration.setEncryptedCredentials("encrypted_creds");
 
         Map<String, String> decryptedCreds = Map.of("appId", "ML123", "clientSecret", "secret");
@@ -166,6 +168,7 @@ class MarketplaceCoreServiceTest {
         long expiresAt = System.currentTimeMillis() + 300000; // 5 minutes from now (within 10min buffer)
 
         MarketplaceIntegrationEntity integration = new MarketplaceIntegrationEntity(provider, true);
+        integration.setId(integrationId);
         integration.setEncryptedCredentials("encrypted_creds");
 
         Map<String, Object> oldPayload = new HashMap<>();

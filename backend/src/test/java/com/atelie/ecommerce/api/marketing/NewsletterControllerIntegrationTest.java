@@ -13,6 +13,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
+import java.util.UUID;
+
+import com.atelie.ecommerce.domain.marketing.model.AutomationType;
+import com.atelie.ecommerce.domain.marketing.model.EmailTemplate;
+import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailTemplateRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -33,10 +38,26 @@ public class NewsletterControllerIntegrationTest {
     @Autowired
     private EmailQueueRepository emailQueueRepository;
 
+    @Autowired
+    private EmailTemplateRepository emailTemplateRepository;
+
     @BeforeEach
     void setUp() {
         repository.deleteAll();
         emailQueueRepository.deleteAll();
+        emailTemplateRepository.deleteAll();
+
+        // Ensure an active template exists so CommunicationService actually queues the
+        // email
+        EmailTemplate template = new EmailTemplate();
+        template.setId(UUID.randomUUID());
+        template.setSlug("TEST_CONFIRMATION");
+        template.setName("Test Template");
+        template.setAutomationType(AutomationType.NEWSLETTER_CONFIRM);
+        template.setSubject("Bem-vindo à nossa Newsletter!");
+        template.setContent("<h1>Olá!</h1><p>Obrigado por assinar.</p>");
+        template.setActive(true);
+        emailTemplateRepository.save(template);
     }
 
     @Test

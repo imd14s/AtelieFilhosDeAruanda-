@@ -64,16 +64,15 @@ public class RealProductCreateIntegrationTest {
                     "price": 120.50,
                     "stock": 50,
                     "category": "%s",
+                    "ncm": "12345678",
                     "active": true,
                     "media": [
                         { "url": "http://img.com/1.jpg", "type": "IMAGE", "isMain": true }
                     ],
-                    "dimensions": {
-                        "weight": 100,
-                        "width": 10,
-                        "height": 10,
-                        "length": 10
-                    },
+                    "weight": 100,
+                    "width": 10,
+                    "height": 10,
+                    "length": 10,
                     "seo": {
                         "slug": "produto-teste-frontend",
                         "title": "SEO Title",

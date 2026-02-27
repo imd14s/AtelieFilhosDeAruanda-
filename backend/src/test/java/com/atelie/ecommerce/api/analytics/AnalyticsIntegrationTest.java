@@ -9,6 +9,8 @@ import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemRepository
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
+import com.atelie.ecommerce.domain.fiscal.model.FinancialLedger;
+import com.atelie.ecommerce.domain.fiscal.repository.FinancialLedgerRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,10 +53,18 @@ public class AnalyticsIntegrationTest {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private FinancialLedgerRepository ledgerRepository;
+
     @BeforeEach
     void setUp() {
         orderItemRepository.deleteAll();
         orderRepository.deleteAll();
+        // Custom tear down approach since FinancialLedger is clean arch and doesn't
+        // expose deleteAll.
+        // It relies on order cascade or we'd need another method. For now, dropping
+        // orders might not clear the ledger directly if not mapped correctly, but let's
+        // just not call deleteAll directly.
         productRepository.deleteAll();
         categoryRepository.deleteAll();
 
@@ -126,5 +136,20 @@ public class AnalyticsIntegrationTest {
         item.setId(UUID.randomUUID());
 
         orderItemRepository.save(item);
+
+        if (status == OrderStatus.PAID || status == OrderStatus.DELIVERED) {
+            FinancialLedger ledger = FinancialLedger.builder()
+                    .id(UUID.randomUUID())
+                    .orderId(order.getId())
+                    .grossAmount(total)
+                    .netAmount(total.multiply(new BigDecimal("0.9")))
+                    .taxesAmount(total.multiply(new BigDecimal("0.05")))
+                    .gatewayFee(total.multiply(new BigDecimal("0.05")))
+                    .shippingCost(BigDecimal.ZERO)
+                    .productCost(total.multiply(new BigDecimal("0.4")))
+                    .createdAt(order.getCreatedAt())
+                    .build();
+            ledgerRepository.save(ledger);
+        }
     }
 }

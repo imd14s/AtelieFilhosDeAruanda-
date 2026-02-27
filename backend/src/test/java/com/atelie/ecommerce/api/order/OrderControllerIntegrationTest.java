@@ -61,6 +61,15 @@ class OrderControllerIntegrationTest {
         private ProductEntity product;
         private ProductVariantEntity variant;
 
+        @org.springframework.boot.test.mock.mockito.MockBean
+        private com.atelie.ecommerce.application.service.fiscal.InvoiceService invoiceService;
+
+        @org.springframework.boot.test.mock.mockito.MockBean
+        private com.atelie.ecommerce.application.service.shipping.ShippingLabelService shippingLabelService;
+
+        @org.springframework.boot.test.mock.mockito.MockBean
+        private com.atelie.ecommerce.application.service.fiscal.FinancialAggregatorService financialAggregatorService;
+
         @BeforeEach
         void setUp() {
                 orderRepository.deleteAll();
