@@ -50,7 +50,7 @@ describe('DashboardLayout Component', () => {
         // Note: The logout button is rendered twice (mobile drawer and desktop sidebar)
         // Use regex because there's an icon inside the button
         const logoutButtons = screen.getAllByRole('button', { name: /Sair/i });
-        fireEvent.click(logoutButtons[0]);
+        fireEvent.click(logoutButtons[0]!);
 
         expect(mockLogout).toHaveBeenCalledTimes(1);
     });

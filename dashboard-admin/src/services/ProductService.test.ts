@@ -121,7 +121,7 @@ describe('ProductService', () => {
         });
 
         const callArgs = (api.post as import('vitest').Mock).mock.calls[0];
-        const formData = callArgs[1] as FormData;
+        const formData = callArgs![1] as FormData;
 
         expect(formData.has('product')).toBe(true);
         expect(formData.has('images')).toBe(true);
