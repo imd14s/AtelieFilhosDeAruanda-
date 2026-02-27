@@ -7,6 +7,7 @@ import GlobalOverlay from './components/ui/GlobalOverlay';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SetupWizard } from './pages/setup/SetupWizard';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
+import { VisualAnalytics } from './pages/analytics/VisualAnalytics';
 import { ProductsPage } from './pages/products/ProductsPage';
 import { OrdersPage } from './pages/orders/OrdersList';
 import { AiConfigPage } from './pages/settings/AiConfigPage';
@@ -44,6 +45,7 @@ function AppRoutes() {
 
       <Route element={<PrivateRoute />}>
         <Route path="/" element={<DashboardHome />} />
+        <Route path="/analytics" element={<VisualAnalytics />} />
 
         {/* Produtos e Categorias */}
         <Route path="/products" element={<ProductsPage />} />

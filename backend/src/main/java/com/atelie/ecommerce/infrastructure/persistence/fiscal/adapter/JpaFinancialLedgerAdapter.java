@@ -34,6 +34,13 @@ public class JpaFinancialLedgerAdapter implements FinancialLedgerRepository {
     }
 
     @Override
+    public java.util.List<FinancialLedger> findAllInPeriod(java.time.Instant start, java.time.Instant end) {
+        return repository.findByCreatedAtBetween(start, end).stream()
+                .map(FinancialLedgerEntity::toDomain)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public void deleteByOrderId(UUID orderId) {
         repository.deleteByOrderId(orderId);

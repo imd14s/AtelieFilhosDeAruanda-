@@ -11,5 +11,7 @@ import java.util.UUID;
 public interface JpaFinancialLedgerRepository extends JpaRepository<FinancialLedgerEntity, UUID> {
     Optional<FinancialLedgerEntity> findByOrderId(UUID orderId);
 
+    java.util.List<FinancialLedgerEntity> findByCreatedAtBetween(java.time.Instant start, java.time.Instant end);
+
     void deleteByOrderId(UUID orderId);
 }

@@ -12,5 +12,7 @@ public interface FinancialLedgerRepository {
 
     Optional<FinancialLedger> findByOrderId(UUID orderId);
 
+    java.util.List<FinancialLedger> findAllInPeriod(java.time.Instant start, java.time.Instant end);
+
     void deleteByOrderId(UUID orderId);
 }
