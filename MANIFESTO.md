@@ -11,13 +11,14 @@ Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
 Segurança (AppSec) | A+ | 🟢 | Auditoria JWT e OWASP Top 10.
 Vulnerabilidades (CVE) | 0 | 🟢 | Monitoramento de dependências.
-Cobertura de Testes (Global)| 12.5% | 🟡 | Meta: 80%.
+Cobertura de Testes (Global)| 24.28% | 🟡 | Instruções (Linhas: 38.14%). Meta: 80%.
 Erros Críticos (Sentry) | 0 | 🟢 | Estabilidade 24/7.
 
 ### ⚙️ 1.2 Backend (Spring Clean Arch)
-Métrica | Valor | Status | Observações
---- | --- | --- | ---
-Cobertura (Módulo AUTH) | 100% | 🟢 | Branches 100% validadas.
+Cobertura (Segurança/Auth) | 86.28% | 🟢 | Foco: Autenticação e JWT.
+Cobertura (Checkout/Pagto) | 46.03% | 🟡 | Foco: Mercado Pago Integration.
+Cobertura (Fiscal/Financ) | 11.06% | 🔴 | Foco: Emissão NF-e (JaCoCo).
+Cobertura (Catalog/Prod)  | 5.20%  | 🔴 | Foco: SEO e Indexação AI.
 Build / Compilação | Sucesso | 🟢 | Maven Clean Compile OK.
 Dívida Técnica | 10h | 🟢 | Foco em refatoração de DTOs.
 Tempo de Boot | 3.5s | 🟢 | Otimização de contexto Spring.
@@ -50,7 +51,8 @@ Rota Backend | Uso | Acesso | Dados Expostos | Permissão
 --- | --- | --- | --- | ---
 `/api/auth/login` | Loja/Dash | 🟢 Público | Token, Nome, E-mail | Escrita
 `/api/auth/register` | Loja | 🟢 Público | Nome, E-mail, Senha | Escrita
-`/api/users/profile` | Loja/Dash | 🟡 Cliente/Admin | Nome, E-mail, Foto | Leitura/Escrita
+`/api/users/profile` | Loja | 🟢 Cliente | Nome, E-mail, Foto | **Leitura**
+`/api/users/profile` | Dash | 🔴 Admin | Dados Completos + Bloqueio | **Leitura / Escrita**
 `/api/auth/google` | Loja | 🟢 Público | Perfil Google (ID/Foto) | Escrita
 
 ---
@@ -75,6 +77,8 @@ Rota Backend | Uso | Acesso | Dados Expostos | Permissão
 `/api/checkout/process` | Loja | 🟡 Cliente | Dados do Pedido, Status | Escrita
 `/api/cart/{userId}` | Loja | 🟡 Cliente | Itens, Quantidades | Leitura/Escrita
 `/api/shipping/quote` | Loja | 🟢 Público | CEP, Valor de Frete | Leitura
+`/api/webhooks/mercadopago` | Externo | ⚪ Público | Notificação Pagamento (IPN) | **Escrita (Public)**
+`/api/webhooks/shipping/melhorenvio` | Externo | ⚪ Público | Rastreio Logístico | **Escrita (Public)**
 
 ---
 
