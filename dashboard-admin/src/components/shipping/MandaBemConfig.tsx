@@ -30,9 +30,9 @@ export function MandaBemConfig({ config, onChange }: MandaBemConfigProps) {
             apiKey,
             apiSecret,
             zipCode,
-            defaultWeight: defaultWeight ? parseFloat(defaultWeight) : undefined,
-            estimatedDays: estimatedDays ? parseInt(estimatedDays) : undefined,
-            freeShippingMinAmount: freeShippingMinAmount ? parseFloat(freeShippingMinAmount) : undefined,
+            defaultWeight: defaultWeight ? parseFloat(String(defaultWeight)) : undefined,
+            estimatedDays: estimatedDays ? parseInt(String(estimatedDays)) : undefined,
+            freeShippingMinAmount: freeShippingMinAmount ? parseFloat(String(freeShippingMinAmount)) : undefined,
             sandbox,
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -40,8 +40,8 @@ export function MelhorEnvioConfig({ config, onChange }: MelhorEnvioConfigProps) 
             return {
                 id: Math.random().toString(36).substr(2, 9),
                 name,
-                state: stateMatch ? stateMatch[1] : 'TODOS',
-                minAmount: minAmount === '0' ? '' : minAmount
+                state: stateMatch ? (stateMatch[1] || 'TODOS') : 'TODOS',
+                minAmount: (minAmount === '0' ? '' : minAmount) || ''
             };
         });
     }

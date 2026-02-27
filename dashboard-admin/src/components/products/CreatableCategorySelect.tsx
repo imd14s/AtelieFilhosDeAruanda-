@@ -31,7 +31,7 @@ export function CreatableCategorySelect({ categories, value, onChange, error }: 
         // Check if newValue is an object and has the __isNew__ property
         if (typeof newValue === 'object' && newValue !== null && '__isNew__' in newValue && (newValue as { __isNew__: boolean }).__isNew__) {
             // The user created a new category (transient)
-            onChange(`NEW_${(newValue as { label: string }).label}`, (newValue as { label: string }).label);
+            onChange(`NEW_${(newValue as Record<string, unknown>).label as string}`, (newValue as Record<string, unknown>).label as string);
         } else if (typeof newValue === 'object' && newValue !== null && 'value' in newValue) {
             // The user selected an existing category
             onChange((newValue as { value: string }).value);

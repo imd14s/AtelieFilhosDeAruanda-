@@ -69,10 +69,11 @@ export const ProductService = {
     const filesMapping: { file: File, id: string }[] = [];
 
     // Helper to process media and collect files
-    const processMedia = (mediaList: Record<string, unknown>[]) => {
-      return (mediaList || []).map(m => {
-        if (m.file) {
-          filesMapping.push({ file: m.file, id: m.id });
+    const processMedia = (mediaList: unknown[]) => {
+      return (mediaList || []).map(item => {
+        const m = item as Record<string, unknown>;
+        if (m.file instanceof File) {
+          filesMapping.push({ file: m.file, id: m.id as string });
           return { ...m, url: `cid:${m.id}`, file: undefined };
         }
         return m;
@@ -102,10 +103,11 @@ export const ProductService = {
     const formData = new FormData();
     const filesMapping: { file: File, id: string }[] = [];
 
-    const processMedia = (mediaList: Record<string, unknown>[]) => {
-      return (mediaList || []).map(m => {
-        if (m.file) {
-          filesMapping.push({ file: m.file, id: m.id });
+    const processMedia = (mediaList: unknown[]) => {
+      return (mediaList || []).map(item => {
+        const m = item as Record<string, unknown>;
+        if (m.file instanceof File) {
+          filesMapping.push({ file: m.file, id: m.id as string });
           return { ...m, url: `cid:${m.id}`, file: undefined };
         }
         return m;

@@ -77,7 +77,7 @@ export function FiscalSettings() {
                 invoiceNumber: getConfig('FISCAL_INVOICE_NUMBER', '0')
             });
 
-        } catch {
+        } catch (error) {
             console.error('Erro ao carregar dados fiscais', error);
         } finally {
             setLoading(false);
@@ -113,7 +113,7 @@ export function FiscalSettings() {
 
             await Promise.all(payloads.map(p => ConfigService.upsert(p)));
             alert('Configurações de Emitente salvas com sucesso!');
-        } catch {
+        } catch (error) {
             console.error('Erro ao salvar config', error);
             alert('Ocorreu um erro ao persistir as configurações.');
         } finally {
