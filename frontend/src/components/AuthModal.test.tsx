@@ -95,7 +95,7 @@ describe('AuthModal Component', () => {
         fireEvent.click(screen.getByText('Entrar'));
 
         await waitFor(() => {
-            expect(screen.getByText('Credenciais inválidas.')).toBeInTheDocument();
+            expect(screen.getByText('E-mail ou senha incorretos.')).toBeInTheDocument();
         });
     });
 });

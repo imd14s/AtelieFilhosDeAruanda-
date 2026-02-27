@@ -41,11 +41,12 @@ describe('ProductCard Component', () => {
         expect(screen.getByText(/35,90/)).toBeInTheDocument();
     });
 
-    it('should show batch when quantity is low', () => {
-        const lowStockProduct = { ...mockProduct, stockQuantity: 2 };
-        render(<ProductCard product={lowStockProduct} />);
+    it('should show Esgotado badge when stock is 0', () => {
+        const outOfStockProduct = { ...mockProduct, stockQuantity: 0 };
+        render(<ProductCard product={outOfStockProduct} />);
 
-        expect(screen.getByText('Últimas unidades')).toBeInTheDocument();
+        expect(screen.getByText('Esgotado')).toBeInTheDocument();
+        expect(screen.getByText('Indisponível')).toBeInTheDocument();
     });
 
     it('should call handleAddToCart internally when button is clicked', () => {
@@ -56,6 +57,6 @@ describe('ProductCard Component', () => {
 
         // O componente interno lida com o carrinho via cartService
         // Não temos onAddToCart prop, então testamos o efeito visual se houver
-        expect(screen.getByRole('button')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /comprar/i })).toBeInTheDocument();
     });
 });

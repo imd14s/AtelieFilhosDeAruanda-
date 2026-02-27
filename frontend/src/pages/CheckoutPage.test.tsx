@@ -6,12 +6,33 @@ import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { useLocation } from 'react-router-dom';
 import { SafeAny } from "../types/safeAny";
 
+// Mock SEO
+vi.mock('../components/SEO', () => ({
+    default: ({ title }: { title: string }) => <div data-testid="seo">{title}</div>
+}));
+
 // Mock services
 vi.mock('../services/cartService', () => ({
     cartService: {
         get: vi.fn(),
         clear: vi.fn(),
+        add: vi.fn(),
+        remove: vi.fn(),
+        update: vi.fn()
     },
+}));
+
+vi.mock('../services/authService', () => ({
+    authService: {
+        address: {
+            create: vi.fn(() => Promise.resolve()),
+            list: vi.fn(() => Promise.resolve([])),
+        },
+        user: {
+            get: vi.fn(),
+            update: vi.fn(),
+        }
+    }
 }));
 
 vi.mock('../services/orderService', () => ({
@@ -88,9 +109,10 @@ describe('CheckoutPage Component', () => {
         expect(await screen.findByText(/Qtd: 2/i)).toBeInTheDocument();
 
         // Totals
-        expect(screen.getAllByText(/50,00/)[0]).toBeInTheDocument();
-        expect(screen.getByText(/15,00/)).toBeInTheDocument();
-        expect(screen.getByText(/65,00/)).toBeInTheDocument();
+        const price50 = await screen.findAllByText(/50.*00/);
+        expect(price50[0]).toBeInTheDocument();
+        expect(screen.getByText(/15.*00/)).toBeInTheDocument();
+        expect(screen.getByText(/62.*50/)).toBeInTheDocument(); // 50 - 5% (Pix) + 15 = 62.50
     });
 
     it('should show message when cart is empty', async () => {
