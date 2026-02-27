@@ -1,5 +1,7 @@
 package com.atelie.ecommerce.application.service.order;
 
+import com.atelie.ecommerce.application.service.fiscal.FinancialAggregatorService;
+
 import com.atelie.ecommerce.application.common.exception.NotFoundException;
 import com.atelie.ecommerce.application.dto.order.CreateOrderItemRequest;
 import com.atelie.ecommerce.application.dto.order.CreateOrderRequest;
@@ -39,6 +41,7 @@ public class OrderService {
     private final CommunicationService communicationService;
     private final InvoiceService invoiceService;
     private final com.atelie.ecommerce.application.service.shipping.ShippingLabelService shippingLabelService;
+    private final FinancialAggregatorService financialAggregatorService;
     private final com.atelie.ecommerce.application.mapper.OrderMapper orderMapper;
 
     public OrderService(OrderRepository orderRepository,
@@ -49,6 +52,7 @@ public class OrderService {
             CommunicationService communicationService,
             InvoiceService invoiceService,
             com.atelie.ecommerce.application.service.shipping.ShippingLabelService shippingLabelService,
+            FinancialAggregatorService financialAggregatorService,
             com.atelie.ecommerce.application.mapper.OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
@@ -58,6 +62,7 @@ public class OrderService {
         this.communicationService = communicationService;
         this.invoiceService = invoiceService;
         this.shippingLabelService = shippingLabelService;
+        this.financialAggregatorService = financialAggregatorService;
         this.orderMapper = orderMapper;
     }
 
@@ -283,6 +288,7 @@ public class OrderService {
         // Trigger automatisations
         invoiceService.emitInvoiceForOrder(orderId);
         shippingLabelService.generateLabelForOrder(orderId);
+        financialAggregatorService.aggregate(orderId);
     }
 
     @Transactional

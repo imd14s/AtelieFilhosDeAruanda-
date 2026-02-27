@@ -13,8 +13,8 @@ BACKEND_LOG="$LOG_DIR/backend.log"
 DASHBOARD_LOG="$LOG_DIR/dashboard.log"
 STORE_LOG="$LOG_DIR/store.log"
 
-BACKEND_WAIT=30   # segundos de espera para o backend iniciar
-DB_WAIT=8         # segundos de espera para o DB ficar healthy
+BACKEND_WAIT=60   # segundos de espera para o backend iniciar (Maven + Spring)
+DB_WAIT=12         # segundos de espera para o DB ficar healthy
 
 # ── Cores ──
 RED='\033[0;31m'
@@ -59,6 +59,8 @@ ok "Variáveis carregadas"
 
 # ── 3. Docker DB ──
 log "DOCKER" "Subindo PostgreSQL..."
+# Garantir remoção de containers órfãos ou conflitos de nome
+docker rm -f atelie_db 2>/dev/null || true
 docker compose -f "$ROOT_DIR/docker-compose.yml" down --remove-orphans 2>/dev/null || true
 docker compose -f "$ROOT_DIR/docker-compose.yml" up -d
 
