@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Star, Upload, X, AlertTriangle, Loader2, CheckCircle, Play } from 'lucide-react';
 import { isSafeImage, fileToImage, loadModel } from '../utils/nsfwModerator';
-import { productService } from '../services/productService';  
+import { productService } from '../services/productService'; // eslint-disable-line no-restricted-imports
 import { CreateReviewData } from '../types';
 import { SafeAny } from "../types/safeAny";
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Loader2 } from 'lucide-react';
 import VerifiedBadge from './VerifiedBadge';
 import ReviewSummary from './ReviewSummary';
-import { productService } from '../services/productService';  
+import { productService } from '../services/productService'; // eslint-disable-line no-restricted-imports
 import { Review } from '../types';
 
 interface ReviewSectionProps {

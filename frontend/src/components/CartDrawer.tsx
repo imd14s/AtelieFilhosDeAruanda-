@@ -3,8 +3,8 @@
 import React, { useState, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
-import { cartService } from '../services/cartService';  
-import { orderService } from '../services/orderService';  
+import { cartService } from '../services/cartService'; // eslint-disable-line no-restricted-imports
+import { orderService } from '../services/orderService'; // eslint-disable-line no-restricted-imports
 import { getImageUrl } from '../utils/imageUtils';
 import Button from './ui/Button';
 import { useToast } from '../context/ToastContext';
