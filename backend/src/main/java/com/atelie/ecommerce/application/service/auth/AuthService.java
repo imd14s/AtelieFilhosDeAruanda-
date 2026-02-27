@@ -196,7 +196,7 @@ public class AuthService {
 
         // Atualiza o nome, foto e googleId se mudou no Google
         boolean changed = false;
-        if (resolvedName != null && !resolvedName.equals(user.getName())) {
+        if (!resolvedName.equals(user.getName())) {
             user.setName(resolvedName);
             changed = true;
         }
