@@ -28,6 +28,12 @@ public class ReviewEntity {
 
     private Integer rating;
 
+    @Column(name = "verified_purchase")
+    private boolean verifiedPurchase;
+
+    @Column(name = "order_id")
+    private UUID orderId;
+
     @Column(length = 300)
     private String comment;
 

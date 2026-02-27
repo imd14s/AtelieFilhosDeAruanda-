@@ -123,5 +123,33 @@ export const productService = {
             console.error("[productService] Erro ao criar review:", error);
             throw error;
         }
+    },
+    /**
+     * Valida um token de avaliação.
+     */
+    validateReviewToken: async (token: string): Promise<SafeAny> => {
+        try {
+            const response = await api.get(`/reviews/token/${token}`, {
+                headers: TENANT_HEADER
+            });
+            return response.data;
+        } catch (error) {
+            console.error("[productService] Erro ao validar token:", error);
+            throw error;
+        }
+    },
+    /**
+     * Cria uma avaliação verificada usando um token.
+     */
+    createVerifiedReview: async (reviewData: SafeAny): Promise<SafeAny> => {
+        try {
+            const response = await api.post('/reviews/verified', reviewData, {
+                headers: TENANT_HEADER
+            });
+            return response.data;
+        } catch (error) {
+            console.error("[productService] Erro ao criar review verificada:", error);
+            throw error;
+        }
     }
 };

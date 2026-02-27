@@ -1,9 +1,9 @@
- 
- 
+
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { productService } from '../services/productService';
+import { productService } from '../services/productService';  
 import { Category } from '../types';
 
 interface NavMenuProps {

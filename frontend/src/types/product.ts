@@ -40,7 +40,8 @@ export interface Review {
     comment: string;
     createdAt: string;
     images?: string[];
-    status?: string;
+    verifiedPurchase?: boolean;
+    orderId?: string;
     product?: Partial<Product>;
 }
 
@@ -52,6 +53,7 @@ export interface CreateReviewData {
         url: string;
         type: 'IMAGE' | 'VIDEO';
     }[];
+    token?: string; // For verified reviews
 }
 
 export interface Product {

@@ -34,6 +34,7 @@ import PasswordResetPage from "./pages/PasswordResetPage";
 import UserLayout from "./pages/UserLayout";
 import SubscriptionCheckoutPage from "./pages/SubscriptionCheckoutPage";
 import SubscriptionDetailPage from "./pages/SubscriptionDetailPage";
+import ReviewSubmissionPage from "./pages/ReviewSubmissionPage";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -68,6 +69,7 @@ function App() {
               {/* Rotas Dinâmicas usando ID do Java */}
 
               <Route path="/categoria/:slug" element={<CategoryPage />} />
+              <Route path="/avaliar/:token" element={<ReviewSubmissionPage />} />
               <Route path="/produto/:id" element={<ProductPage />} />
 
               {/* Rotas de Conta do Usuário */}

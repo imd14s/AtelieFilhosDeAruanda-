@@ -1,14 +1,15 @@
- 
- 
+
+
 import React, { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Star, Upload, X, AlertTriangle, Loader2, CheckCircle, Play } from 'lucide-react';
 import { isSafeImage, fileToImage, loadModel } from '../utils/nsfwModerator';
-import { productService } from '../services/productService';
+import { productService } from '../services/productService';  
 import { CreateReviewData } from '../types';
 import { SafeAny } from "../types/safeAny";
 
 interface ReviewFormProps {
     productId: string;
+    token?: string; // NOVO: Token para compra verificada
     onReviewSubmitted?: () => void;
 }
 
@@ -18,7 +19,7 @@ interface MediaItem {
     type: 'IMAGE' | 'VIDEO';
 }
 
-const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted }) => {
+const ReviewForm: React.FC<ReviewFormProps> = ({ productId, token, onReviewSubmitted }) => {
     const [rating, setRating] = useState<number>(0);
     const [comment, setComment] = useState<string>('');
     const [media, setMedia] = useState<MediaItem[]>([]);
@@ -112,10 +113,15 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted })
                 media: media.map(m => ({
                     url: m.preview, // Mock URL
                     type: m.type
-                }))
-            } as SafeAny; // Cast for compatibility with expected API structure if needed
+                })),
+                token: token // Passa o token se existir
+            } as SafeAny;
 
-            await productService.createReview(reviewData);
+            if (token) {
+                await productService.createVerifiedReview(reviewData);
+            } else {
+                await productService.createReview(reviewData);
+            }
 
             setSuccess(true);
             setTimeout(() => {

@@ -19,17 +19,28 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<ReviewEntity> create(@RequestBody ReviewCreateRequest request) {
-        // Obter user_id do contexto de segurança (Spring Security)
-        // Por agora, assumiremos que vem no request ou simularemos para teste
-        UUID userId = request.userId();
-
-        ReviewEntity review = reviewService.createReview(
-                userId,
+        return ResponseEntity.ok(reviewService.createReview(
+                request.userId(),
                 request.productId(),
+                request.rating(),
+                request.comment(),
+                request.media()));
+    }
+
+    @PostMapping("/verified")
+    public ResponseEntity<ReviewEntity> createVerified(@RequestBody ReviewVerifiedCreateRequest request) {
+        ReviewEntity review = reviewService.createVerifiedReview(
+                request.token(),
                 request.rating(),
                 request.comment(),
                 request.media());
         return ResponseEntity.ok(review);
+    }
+
+    @GetMapping("/token/{token}")
+    public ResponseEntity<com.atelie.ecommerce.infrastructure.persistence.review.ReviewTokenEntity> validateToken(
+            @PathVariable String token) {
+        return ResponseEntity.ok(reviewService.validateToken(token));
     }
 
     @GetMapping("/product/{productId}")
@@ -51,6 +62,13 @@ public class ReviewController {
     public record ReviewCreateRequest(
             UUID userId,
             UUID productId,
+            Integer rating,
+            String comment,
+            java.util.List<Map<String, String>> media) {
+    }
+
+    public record ReviewVerifiedCreateRequest(
+            String token,
             Integer rating,
             String comment,
             java.util.List<Map<String, String>> media) {

@@ -3,6 +3,7 @@ package com.atelie.ecommerce.application.listener.shipping;
 import com.atelie.ecommerce.domain.shipping.event.TrackingUpdatedEvent;
 import com.atelie.ecommerce.domain.shipping.model.TrackingStatus;
 import com.atelie.ecommerce.application.service.marketing.CommunicationService;
+import com.atelie.ecommerce.application.service.review.ReviewService;
 import com.atelie.ecommerce.domain.marketing.model.AutomationType;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderRepository;
@@ -19,10 +20,14 @@ public class TrackingNotificationListener {
 
     private final CommunicationService communicationService;
     private final OrderRepository orderRepository;
+    private final ReviewService reviewService;
 
-    public TrackingNotificationListener(CommunicationService communicationService, OrderRepository orderRepository) {
+    public TrackingNotificationListener(CommunicationService communicationService,
+            OrderRepository orderRepository,
+            ReviewService reviewService) {
         this.communicationService = communicationService;
         this.orderRepository = orderRepository;
+        this.reviewService = reviewService;
     }
 
     @Async
@@ -47,6 +52,18 @@ public class TrackingNotificationListener {
                     "statusMessage", formatMessage(event));
 
             communicationService.sendAutomation(AutomationType.TRACKING_UPDATE, order.getCustomerEmail(), context);
+
+            // Se foi entregue, geramos tokens e enviamos convite de avaliação
+            if (event.newStatus() == TrackingStatus.DELIVERED) {
+                reviewService.generateReviewTokensForOrder(order);
+
+                // Opcional: Enviar automação específica de convite
+                // Ou podemos incluir os links no context do TRACKING_UPDATE se o template
+                // suportar.
+                // Seguindo a boa prática de separação, dispararemos uma nova automação.
+                communicationService.sendAutomation(AutomationType.REVIEW_INVITATION, order.getCustomerEmail(),
+                        context);
+            }
         }
     }
 

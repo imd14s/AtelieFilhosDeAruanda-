@@ -1,9 +1,10 @@
- 
- 
+
+
 import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Loader2 } from 'lucide-react';
+import VerifiedBadge from './VerifiedBadge';
 import ReviewSummary from './ReviewSummary';
-import { productService } from '../services/productService';
+import { productService } from '../services/productService';  
 import { Review } from '../types';
 
 interface ReviewSectionProps {
@@ -73,7 +74,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ productId, onReviewsLoade
                                             ))}
                                         </div>
                                         <span className="font-lato text-sm font-bold text-[var(--azul-profundo)] block">{review.userName || review.user?.name || 'Cliente'}</span>
-                                        <span className="font-lato text-[10px] text-gray-400 uppercase tracking-widest">Compra Verificada</span>
+                                        {review.verifiedPurchase && <VerifiedBadge className="mt-1" />}
                                     </div>
                                     <div className="flex-1 space-y-4">
                                         <p className="font-lato text-gray-600 leading-relaxed italic">"{review.comment}"</p>
