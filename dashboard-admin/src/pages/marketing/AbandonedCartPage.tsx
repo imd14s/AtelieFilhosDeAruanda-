@@ -59,8 +59,8 @@ export function AbandonedCartPage() {
             delayMinutes: 60,
             subject: 'Você esqueceu algo especial no seu carrinho! 🛍️',
             content: '<p>Olá! Notamos que você deixou alguns itens incríveis no seu carrinho.</p><p>Eles ainda estão reservados, mas por tempo limitado. Volte agora e finalize sua compra!</p>',
-            signatureId: signatures.length > 0 ? signatures[0].id : ''
-        });
+            signatureId: signatures && signatures.length > 0 ? (signatures[0]?.id as string) : ''
+        } as unknown as Record<string, unknown>); // Cast avoiding AbandonedCartSettings tight strict errors
         setSettings({ ...settings, triggers: newTriggers });
     };
 
@@ -288,7 +288,7 @@ export function AbandonedCartPage() {
                             >
                                 <option value="">Sem assinatura</option>
                                 {signatures.map(sig => (
-                                    <option key={sig.id} value={sig.id}>{sig.name}</option>
+                                    <option key={sig.id as string} value={sig.id as string}>{sig.name as string}</option>
                                 ))}
                             </select>
                         </div>

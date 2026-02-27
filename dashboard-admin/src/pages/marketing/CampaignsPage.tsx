@@ -96,7 +96,7 @@ export function CampaignsPage() {
                 subject: '',
                 audience: 'NEWSLETTER_SUBSCRIBERS',
                 content: '',
-                signatureId: signatures.length > 0 ? signatures[0].id : ''
+                signatureId: signatures && signatures.length > 0 ? (signatures[0]?.id as string) : ''
             });
             setEditingId(null);
             loadCampaigns();
@@ -169,7 +169,7 @@ export function CampaignsPage() {
                     onClick={() => {
                         setEditingId(null);
                         setNewCampaign({
-                            name: '', subject: '', audience: 'NEWSLETTER_SUBSCRIBERS', content: '', signatureId: signatures.length > 0 ? signatures[0].id : ''
+                            name: '', subject: '', audience: 'NEWSLETTER_SUBSCRIBERS', content: '', signatureId: signatures && signatures.length > 0 ? (signatures[0]?.id as string) : ''
                         });
                         setIsModalOpen(true);
                     }}

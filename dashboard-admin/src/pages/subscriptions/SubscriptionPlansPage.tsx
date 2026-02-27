@@ -57,7 +57,7 @@ export function SubscriptionPlansPage() {
     const fetchProducts = async () => {
         try {
             const data = await ProductService.getAll();
-            setAvailableProducts(data);
+            setAvailableProducts(data as unknown as Record<string, unknown>[]);
         } catch (error) {
             console.error('Erro ao buscar produtos:', error);
         }
@@ -77,7 +77,7 @@ export function SubscriptionPlansPage() {
             };
 
             if (editingPlan.id) {
-                await subscriptionService.updatePlan(editingPlan.id, planToSave, imageFile || undefined);
+                await subscriptionService.updatePlan(editingPlan.id as string, planToSave, imageFile || undefined);
                 addToast('Plano atualizado com sucesso!', 'success');
             } else {
                 await subscriptionService.createPlan(planToSave, imageFile || undefined);
@@ -170,7 +170,7 @@ export function SubscriptionPlansPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {plans.map(plan => (
-                    <div key={plan.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
+                    <div key={plan.id as string} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
                         <div className="p-6">
                             <div className="flex justify-between items-start mb-4">
                                 <div className={clsx(
@@ -182,26 +182,26 @@ export function SubscriptionPlansPage() {
                                 </div>
                                 {plan.active ? <CheckCircle2 className="text-green-500" size={18} /> : <XCircle className="text-red-500" size={18} />}
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-1">{plan.name}</h3>
-                            <p className="text-gray-500 text-sm mb-4 line-clamp-2">{plan.description}</p>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">{plan.name as string}</h3>
+                            <p className="text-gray-500 text-sm mb-4 line-clamp-2">{plan.description as string}</p>
 
                             <div className="space-y-2 mb-6 text-sm text-gray-600">
                                 <div className="flex items-center gap-2">
                                     <Repeat size={16} />
-                                    <span>{plan.frequencyRules?.length || 0} frequências configuradas</span>
+                                    <span>{(plan.frequencyRules as Record<string, unknown>[])?.length || 0} frequências configuradas</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {plan.isCouponPack ? <Ticket size={16} /> : <Package size={16} />}
                                     <span>
                                         {plan.isCouponPack
                                             ? `${plan.couponBundleCount || 0} cupons de ${plan.couponDiscountPercentage || 0}%`
-                                            : plan.type === 'FIXED' ? `${plan.products?.length || 0} produtos inclusos` : `${plan.minProducts || 1}-${plan.maxProducts || 10} itens p/ kit`
+                                            : plan.type === 'FIXED' ? `${(plan.products as Record<string, unknown>[])?.length || 0} produtos inclusos` : `${plan.minProducts as number || 1}-${plan.maxProducts as number || 10} itens p/ kit`
                                         }
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 font-bold text-indigo-600">
                                     <Percent size={16} className="text-gray-400" />
-                                    <span>A partir de R$ {plan.basePrice?.toFixed(2) || '0.00'}</span>
+                                    <span>A partir de R$ {(plan.basePrice as number)?.toFixed(2) || '0.00'}</span>
                                 </div>
                             </div>
 
@@ -212,10 +212,10 @@ export function SubscriptionPlansPage() {
                                             ...INITIAL_PLAN_STATE,
                                             ...plan,
                                             // Ensure nested arrays are cloned
-                                            frequencyRules: plan.frequencyRules ? [...plan.frequencyRules] : [],
-                                            products: plan.products ? [...plan.products] : []
+                                            frequencyRules: plan.frequencyRules ? [...(plan.frequencyRules as Record<string, unknown>[])] : [],
+                                            products: plan.products ? [...(plan.products as Record<string, unknown>[])] : []
                                         });
-                                        setImagePreview(plan.imageUrl ? getImageUrl(plan.imageUrl) : null);
+                                        setImagePreview(plan.imageUrl ? getImageUrl(plan.imageUrl as string) : null);
                                         setShowModal(true);
                                     }}
                                     variant="secondary"
@@ -227,7 +227,7 @@ export function SubscriptionPlansPage() {
                                 <Button
                                     onClick={async () => {
                                         if (confirm('Excluir plano?')) {
-                                            await subscriptionService.deletePlan(plan.id);
+                                            await subscriptionService.deletePlan(plan.id as string);
                                             addToast('Plano excluído.', 'success');
                                             fetchPlans();
                                         }
@@ -262,7 +262,7 @@ export function SubscriptionPlansPage() {
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-gray-500 uppercase">Tipo</label>
                             <select
-                                value={editingPlan.type || 'FIXED'}
+                                value={(editingPlan.type as string) || 'FIXED'}
                                 onChange={(e) => setEditingPlan({ ...editingPlan, type: e.target.value, isCouponPack: e.target.value === 'COUPON' })}
                                 className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                             >
@@ -274,7 +274,7 @@ export function SubscriptionPlansPage() {
                             <label className="text-xs font-bold text-gray-500 uppercase">Nome</label>
                             <input
                                 type="text"
-                                value={editingPlan.name || ''}
+                                value={(editingPlan.name as string) || ''}
                                 required
                                 onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
                                 className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -291,7 +291,7 @@ export function SubscriptionPlansPage() {
                                 <input
                                     type="number"
                                     step="0.01"
-                                    value={editingPlan.basePrice || ''}
+                                    value={(editingPlan.basePrice as number) || ''}
                                     onChange={(e) => setEditingPlan({ ...editingPlan, basePrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                                     className="w-full border rounded-lg p-2 pl-9 outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="0.00"
@@ -303,7 +303,7 @@ export function SubscriptionPlansPage() {
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-500 uppercase">Resumo (Descrição Curta)</label>
                         <textarea
-                            value={editingPlan.description || ''}
+                            value={(editingPlan.description as string) || ''}
                             onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
                             className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px]"
                             placeholder="Breve resumo para o card do plano..."
@@ -313,7 +313,7 @@ export function SubscriptionPlansPage() {
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-500 uppercase">Descrição Detalhada</label>
                         <textarea
-                            value={editingPlan.detailedDescription || ''}
+                            value={(editingPlan.detailedDescription as string) || ''}
                             onChange={(e) => setEditingPlan({ ...editingPlan, detailedDescription: e.target.value })}
                             className="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px]"
                             placeholder="Descreva todos os detalhes, benefícios e o que está incluído no plano..."
@@ -343,14 +343,14 @@ export function SubscriptionPlansPage() {
                                 >
                                     <Package className="text-gray-400" size={20} />
                                     <span className="text-sm text-gray-500 font-medium">
-                                        {imageFile ? imageFile.name : 'Selecionar imagem...'}
+                                        {imageFile ? (imageFile.name as string) : 'Selecionar imagem...'}
                                     </span>
                                 </label>
                             </div>
-                            {(imagePreview || editingPlan.imageUrl) && (
+                            {(imagePreview || (editingPlan.imageUrl as string)) && (
                                 <div className="h-16 w-16 rounded-lg overflow-hidden border bg-gray-50">
                                     <img
-                                        src={imagePreview || getImageUrl(editingPlan.imageUrl)}
+                                        src={imagePreview || getImageUrl(editingPlan.imageUrl as string)}
                                         alt="Preview"
                                         className="w-full h-full object-cover"
                                     />
@@ -370,7 +370,7 @@ export function SubscriptionPlansPage() {
                                     <label className="text-[10px] font-bold text-amber-600 uppercase">Qtd. Cupons</label>
                                     <input
                                         type="number"
-                                        value={editingPlan.couponBundleCount || ''}
+                                        value={(editingPlan.couponBundleCount as number) || ''}
                                         onChange={(e) => setEditingPlan({ ...editingPlan, couponBundleCount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
                                         placeholder="0"
@@ -380,7 +380,7 @@ export function SubscriptionPlansPage() {
                                     <label className="text-[10px] font-bold text-amber-600 uppercase">% Desconto</label>
                                     <input
                                         type="number"
-                                        value={editingPlan.couponDiscountPercentage || ''}
+                                        value={(editingPlan.couponDiscountPercentage as number) || ''}
                                         onChange={(e) => setEditingPlan({ ...editingPlan, couponDiscountPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
                                         placeholder="0"
@@ -390,14 +390,14 @@ export function SubscriptionPlansPage() {
                                     <label className="text-[10px] font-bold text-amber-600 uppercase">Validade (Dias)</label>
                                     <input
                                         type="number"
-                                        value={editingPlan.couponValidityDays || ''}
+                                        value={(editingPlan.couponValidityDays as number) || ''}
                                         onChange={(e) => setEditingPlan({ ...editingPlan, couponValidityDays: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
                                         placeholder="0"
                                     />
                                 </div>
                             </div>
-                            <p className="text-[10px] text-amber-600 italic">* O cliente receberá {editingPlan.couponBundleCount || 0} cupons de {editingPlan.couponDiscountPercentage || 0}% válidos por {editingPlan.couponValidityDays || 0} dias após cada ciclo de pagamento.</p>
+                            <p className="text-[10px] text-amber-600 italic">* O cliente receberá {editingPlan.couponBundleCount as number || 0} cupons de {editingPlan.couponDiscountPercentage as number || 0}% válidos por {editingPlan.couponValidityDays as number || 0} dias após cada ciclo de pagamento.</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -412,7 +412,7 @@ export function SubscriptionPlansPage() {
                                     return (
                                         <div key={(product?.id as string) || (p.productId as string)} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <img src={getImageUrl((product?.media as Record<string, unknown>[])?.[0]?.url as string || (product?.imageUrl as string))} alt="" className="w-10 h-10 rounded object-cover border bg-white flex-shrink-0" />
+                                                <img src={getImageUrl(((product?.media as Record<string, unknown>[])?.[0]?.url as string) || (product?.imageUrl as string))} alt="" className="w-10 h-10 rounded object-cover border bg-white flex-shrink-0" />
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium text-gray-900 truncate">{(product?.title as string) || (product?.name as string)}</p>
                                                     <p className="text-xs text-gray-500">R$ {(product?.price as number)?.toFixed(2)}</p>
@@ -422,8 +422,8 @@ export function SubscriptionPlansPage() {
                                                 <input
                                                     type="number"
                                                     min="1"
-                                                    value={p.quantity || 1}
-                                                    onChange={(e) => updateProductQuantity(p.product?.id || p.productId, Number(e.target.value))}
+                                                    value={(p.quantity as number) || 1}
+                                                    onChange={(e) => updateProductQuantity((p.product as Record<string, unknown>)?.id as string || (p.productId as string), Number(e.target.value))}
                                                     className="w-12 border rounded p-1 text-center text-sm outline-none focus:ring-1 focus:ring-indigo-500"
                                                 />
                                                 <button type="button" onClick={() => toggleProduct(product)} className="text-red-500 hover:bg-red-50 p-1 rounded transition">
@@ -457,7 +457,7 @@ export function SubscriptionPlansPage() {
                                 <div className="grid grid-cols-1 gap-1 min-h-[140px] max-h-[180px] overflow-y-auto border rounded-xl p-2 bg-white shadow-inner custom-scrollbar">
                                     {filteredProducts.map(product => (
                                         <button
-                                            key={product.id}
+                                            key={product.id as string}
                                             type="button"
                                             onClick={() => {
                                                 toggleProduct(product);
@@ -465,8 +465,8 @@ export function SubscriptionPlansPage() {
                                             }}
                                             className="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-lg text-left transition text-sm group"
                                         >
-                                            <img src={getImageUrl(product.media?.[0]?.url || product.imageUrl)} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
-                                            <span className="flex-1 truncate font-medium text-gray-700 group-hover:text-indigo-600">{product.title || product.name}</span>
+                                            <img src={getImageUrl(((product.media as Record<string, unknown>[])?.[0]?.url as string) || (product.imageUrl as string))} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                                            <span className="flex-1 truncate font-medium text-gray-700 group-hover:text-indigo-600">{(product.title as string) || (product.name as string)}</span>
                                             <Plus size={14} className="text-indigo-400 group-hover:scale-110 transition" />
                                         </button>
                                     ))}
@@ -508,7 +508,7 @@ export function SubscriptionPlansPage() {
                                         )}>
                                             <input
                                                 type="number"
-                                                value={rule ? (rule.discountPercentage || '') : ''}
+                                                value={rule ? ((rule.discountPercentage as number) || '') : ''}
                                                 onChange={(e) => updateDiscount(freq.key, e.target.value)}
                                                 placeholder="0"
                                                 className="w-full p-2 text-sm outline-none text-center"

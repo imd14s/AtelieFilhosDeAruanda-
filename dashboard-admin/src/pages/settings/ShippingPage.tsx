@@ -212,12 +212,12 @@ export function ShippingPage() {
                                     {provider.code === 'MELHOR_ENVIO' ? (
                                         <MelhorEnvioConfig
                                             config={configData}
-                                            onChange={setConfigData}
+                                            onChange={(newConfig) => setConfigData(newConfig as Record<string, unknown>)}
                                         />
                                     ) : provider.code === 'MANDA_BEM' ? (
                                         <MandaBemConfig
                                             config={configData}
-                                            onChange={setConfigData}
+                                            onChange={(newConfig) => setConfigData(newConfig as Record<string, unknown>)}
                                         />
                                     ) : (
                                         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-3">

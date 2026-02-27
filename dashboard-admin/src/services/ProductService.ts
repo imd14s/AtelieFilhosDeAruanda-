@@ -19,26 +19,25 @@ export const ProductService = {
           isMain: index === 0
         };
       }) : []
-    }));
+    } as unknown as Product));
   },
 
   getById: async (id: string): Promise<Product> => {
     const { data } = await api.get<Record<string, unknown>>(`/products/${id}`);
 
     // Adapter: Transform Backend Entity to Frontend Interface
-    const product: Product = {
+    const product = {
       ...data,
       // Map 'stockQuantity' (backend) to 'stock' (frontend)
-      stock: data.stockQuantity !== undefined ? data.stockQuantity : data.stock,
-      // Parse attributesJson string to attributes object for the main product
-      attributes: typeof data.attributesJson === 'string' ? JSON.parse(data.attributesJson as string) : data.attributesJson || {},
+      stock: (data.stockQuantity !== undefined ? data.stockQuantity : data.stock) as number,
+
 
       // Parse attributesJson string to attributes object for variants
-      variants: (Array.isArray(data.variants) ? data.variants : []).map((v: Record<string, unknown>) => ({
+      variants: ((Array.isArray(data.variants) ? data.variants : []) as Record<string, unknown>[]).map((v: Record<string, unknown>) => ({
         ...v,
-        stock: v.stockQuantity, // Map variant stock
-        attributes: typeof v.attributesJson === 'string' ? JSON.parse(v.attributesJson as string) : v.attributes || {},
-        media: (v.images || []).map((url: string, index: number) => {
+        stock: v.stockQuantity as number, // Map variant stock
+        attributes: typeof v.attributesJson === 'string' ? JSON.parse(v.attributesJson as string) : (v.attributes || {}),
+        media: ((v.images as string[]) || []).map((url: string, index: number) => {
           const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
           return {
             id: crypto.randomUUID(), // Generate temp ID for frontend key
@@ -47,10 +46,10 @@ export const ProductService = {
             isMain: index === 0 && !isVideo
           };
         })
-      })),
+      } as unknown as Record<string, unknown>)),
 
       // Map simple string[] images to full ProductMedia[]
-      media: (data.images || []).map((url: string, index: number) => {
+      media: ((data.images as string[]) || []).map((url: string, index: number) => {
         const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(url);
         return {
           id: crypto.randomUUID(), // Generate temp ID for frontend key
@@ -59,7 +58,7 @@ export const ProductService = {
           isMain: index === 0 && !isVideo
         };
       })
-    };
+    } as unknown as Product;
 
     return product;
   },

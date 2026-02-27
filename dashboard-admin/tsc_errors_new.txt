@@ -1,0 +1,4 @@
+src/pages/subscriptions/SubscriptionPlansPage.tsx(173,26): error TS2322: Type 'unknown' is not assignable to type 'Key | null | undefined'.
+src/pages/subscriptions/SubscriptionPlansPage.tsx(265,33): error TS2322: Type '{}' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/subscriptions/SubscriptionPlansPage.tsx(350,29): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/services/ProductService.ts(29,11): error TS2740: Type '{ stock: number; variants: any[]; media: { id: `${string}-${string}-${string}-${string}-${string}`; url: string; type: "IMAGE" | "VIDEO"; isMain: boolean; }[]; }' is missing the following properties from type 'Product': id, title, description, active, and 5 more.

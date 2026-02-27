@@ -186,7 +186,7 @@ export default function EmailTemplatesPage() {
                         >
                             <option value="">Sem assinatura</option>
                             {signatures.map(sig => (
-                                <option key={sig.id} value={sig.id}>{sig.name}</option>
+                                <option key={sig.id as string} value={sig.id as string}>{sig.name as string}</option>
                             ))}
                         </select>
                     </div>
@@ -310,7 +310,7 @@ export default function EmailTemplatesPage() {
                                         >
                                             <option value="">Sem Assinatura</option>
                                             {signatures.map(sig => (
-                                                <option key={sig.id} value={sig.id}>{sig.name}</option>
+                                                <option key={sig.id as string} value={sig.id as string}>{sig.name as string}</option>
                                             ))}
                                         </select>
                                     </div>
