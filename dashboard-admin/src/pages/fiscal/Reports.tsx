@@ -10,30 +10,24 @@ import {
     Filter,
     Search
 } from 'lucide-react';
-import ReportService, { GeneratedReport } from '../../services/ReportService';
-import { useToast } from '../../components/ui/use-toast';
+import ReportService from '../../services/ReportService';
+import type { GeneratedReport } from '../../services/ReportService';
+import { useToast } from '../../context/ToastContext';
 
 const Reports: React.FC = () => {
     const [reports, setReports] = useState<GeneratedReport[]>([]);
     const [loading, setLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const { toast } = useToast();
+    const { addToast } = useToast();
 
     const handleRequestReport = async (type: 'CSV' | 'PDF', period: string) => {
         try {
             setLoading(true);
             const newReport = await ReportService.requestReport(type, period);
             setReports([newReport, ...reports]);
-            toast({
-                title: "Relatório Solicitado",
-                description: `O relatório ${type} para o período ${period} está sendo processado.`,
-            });
+            addToast('Relatório Solicitado', 'success');
         } catch {
-            toast({
-                title: "Erro ao Gerar Relatório",
-                description: "Ocorreu um erro ao processar sua solicitação.",
-                variant: "destructive"
-            });
+            addToast('Erro ao Gerar Relatório', 'error');
         } finally {
             setLoading(false);
         }
