@@ -14,8 +14,13 @@ vi.mock('../services/authService', () => ({
     },
 }));
 
+vi.mock('@react-oauth/google', () => ({
+    useGoogleLogin: vi.fn(),
+    GoogleOAuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
 vi.mock('../context/ToastContext', () => ({
-    useToast: vi.fn(() => ({ showToast: vi.fn() }))
+    useToast: vi.fn(() => ({ addToast: vi.fn(), showToast: vi.fn() }))
 }));
 
 // Mock window.location.reload

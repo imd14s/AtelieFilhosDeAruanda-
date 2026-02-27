@@ -2,14 +2,19 @@ import { render, screen, fireEvent } from '../test-utils';
 import ProductCard from './ProductCard';
 import { Product } from '../types';
 import { describe, it, expect, vi } from 'vitest';
-import { } from 'react';
-import { MemoryRouter } from 'react-router-dom';
 
 // Mock hook
-vi.mock('../hooks/useFavorites', () => ({
+vi.mock('../context/FavoritesContext', () => ({
     useFavorites: () => ({
         isFavorite: () => false,
         toggleFavorite: vi.fn(),
+        loading: false
+    })
+}));
+
+vi.mock('../context/ToastContext', () => ({
+    useToast: () => ({
+        addToast: vi.fn()
     })
 }));
 
@@ -30,11 +35,7 @@ describe('ProductCard Component', () => {
     };
 
     it('should show product details correctly', () => {
-        render(
-            <MemoryRouter>
-                <ProductCard product={mockProduct} />
-            </MemoryRouter>
-        );
+        render(<ProductCard product={mockProduct} />);
 
         expect(screen.getByText('Vela Aromática')).toBeInTheDocument();
         expect(screen.getByText(/35,90/)).toBeInTheDocument();
@@ -42,21 +43,13 @@ describe('ProductCard Component', () => {
 
     it('should show batch when quantity is low', () => {
         const lowStockProduct = { ...mockProduct, stockQuantity: 2 };
-        render(
-            <MemoryRouter>
-                <ProductCard product={lowStockProduct} />
-            </MemoryRouter>
-        );
+        render(<ProductCard product={lowStockProduct} />);
 
         expect(screen.getByText('Últimas unidades')).toBeInTheDocument();
     });
 
     it('should call handleAddToCart internally when button is clicked', () => {
-        render(
-            <MemoryRouter>
-                <ProductCard product={mockProduct} />
-            </MemoryRouter>
-        );
+        render(<ProductCard product={mockProduct} />);
 
         const addButton = screen.getByRole('button', { name: /comprar/i });
         fireEvent.click(addButton);

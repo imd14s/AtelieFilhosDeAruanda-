@@ -19,6 +19,16 @@ vi.mock('../services/orderService', () => ({
         calculateShipping: vi.fn(),
         createOrder: vi.fn(),
     },
+    configService: {
+        getMercadoPagoPublicKey: vi.fn(() => Promise.resolve({ publicKey: 'TEST_KEY' })),
+    }
+}));
+
+vi.mock('../services/marketingService', () => ({
+    marketingService: {
+        trackEvent: vi.fn(),
+        getAutomations: vi.fn(() => Promise.resolve([])),
+    }
 }));
 
 vi.mock('../context/ToastContext', () => ({
@@ -27,6 +37,15 @@ vi.mock('../context/ToastContext', () => ({
 
 vi.mock('../context/AuthContext', () => ({
     useAuth: vi.fn(() => ({ user: { name: 'Test User', email: 'test@example.com' } }))
+}));
+
+vi.mock('../hooks/useMercadoPago', () => ({
+    useMercadoPago: vi.fn(() => ({
+        mp: { cardForm: vi.fn() },
+        loading: false,
+        isConfigured: true,
+        error: null
+    }))
 }));
 
 // Mock react-router-dom hooks
@@ -59,15 +78,19 @@ describe('CheckoutPage Component', () => {
     });
 
     it('should render cart items and totals correctly', async () => {
+        // Mock user in localStorage for CheckoutPage and cartService
+        localStorage.setItem('user', JSON.stringify({ id: 'user-123', name: 'Test User', email: 'test@example.com' }));
+
         render(<CheckoutPage />);
 
-        await waitFor(() => {
-            expect(screen.getByText('Vela de Arruda')).toBeInTheDocument();
-            expect(screen.getByText('Qtd: 2')).toBeInTheDocument();
-            expect(screen.getAllByText(/50,00/)[0]).toBeInTheDocument(); // Item total and Subtotal
-            expect(screen.getByText(/15,00/)).toBeInTheDocument(); // Frete
-            expect(screen.getByText(/65,00/)).toBeInTheDocument(); // Total
-        });
+        // Use findByText for better async handling and case-insensitive regex
+        expect(await screen.findByText(/Vela de Arruda/i)).toBeInTheDocument();
+        expect(await screen.findByText(/Qtd: 2/i)).toBeInTheDocument();
+
+        // Totals
+        expect(screen.getAllByText(/50,00/)[0]).toBeInTheDocument();
+        expect(screen.getByText(/15,00/)).toBeInTheDocument();
+        expect(screen.getByText(/65,00/)).toBeInTheDocument();
     });
 
     it('should show message when cart is empty', async () => {
@@ -94,6 +117,7 @@ describe('CheckoutPage Component', () => {
         fireEvent.change(screen.getByPlaceholderText('Endereço e Número'), { target: { value: 'Rua das Flores, 123' } });
         fireEvent.change(screen.getByPlaceholderText('Cidade'), { target: { value: 'São Paulo' } });
         fireEvent.change(screen.getByPlaceholderText('UF'), { target: { value: 'SP' } });
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00 ou 00.000.000/0000-00'), { target: { value: '12345678909' } });
 
         const submitButton = screen.getByText('Finalizar Pedido');
         fireEvent.click(submitButton);
