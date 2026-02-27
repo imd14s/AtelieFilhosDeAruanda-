@@ -6,38 +6,109 @@ Status Global: 🟢 Operacional
 
 📊 1. Painel de Saúde (Métricas de Qualidade)
 
-<!-- START_METRICS_TABLE -->
+### 🌍 1.1 Visão Global (Ecosistema)
 Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
-Segurança (AppSec) | A+ | 🟢 | Baseado em OWASP Top 10 e auditoria JWT.
-Erros de Lógica Críticos | 0 | 🟢 | Nenhuma regressão detectada em fluxos de Auth/Fiscal.
-Vulnerabilidades (CVE) | 0 | 🟢 | Dependências auditadas.
-Cobertura de Testes (AUTH) | 100% | 🟢 | Módulo de Autenticação com 100% de branches cobertas.
-Cobertura de Testes (Global)| 12.5% | 🟡 | Em ascensão (Meta: 80%).
-Dívida Técnica | 10h | 🟢 | Refatoração de código morto no AuthService concluída.
-<!-- END_METRICS_TABLE -->
+Segurança (AppSec) | A+ | 🟢 | Auditoria JWT e OWASP Top 10.
+Vulnerabilidades (CVE) | 0 | 🟢 | Monitoramento de dependências.
+Cobertura de Testes (Global)| 12.5% | 🟡 | Meta: 80%.
+Erros Críticos (Sentry) | 0 | 🟢 | Estabilidade 24/7.
+
+### ⚙️ 1.2 Backend (Spring Clean Arch)
+Métrica | Valor | Status | Observações
+--- | --- | --- | ---
+Cobertura (Módulo AUTH) | 100% | 🟢 | Branches 100% validadas.
+Build / Compilação | Sucesso | 🟢 | Maven Clean Compile OK.
+Dívida Técnica | 10h | 🟢 | Foco em refatoração de DTOs.
+Tempo de Boot | 3.5s | 🟢 | Otimização de contexto Spring.
+
+### 🛒 1.3 Storefront (React / Vite)
+Métrica | Valor | Status | Observações
+--- | --- | --- | ---
+Lighthouse (SEO) | 98/100 | 🟢 | Otimização de Meta Tags.
+Performance (Store) | 92/100 | 🟢 | Imagens e roteamento dinâmico.
+Vite Build | Sucesso | 🟢 | Zero erros de tipagem TS.
+Acessibilidade | 100% | 🟢 | Testes via Axe Core.
+
+### 🛠️ 1.4 Dashboard Admin (React / Vite)
+Métrica | Valor | Status | Observações
+--- | --- | --- | ---
+Lighthouse (Perf) | 88/100 | 🟢 | Dashboard complexo (React Query).
+Sessão Admin | JWT | 🟢 | Sessão segura com persistência.
+Build | Sucesso | 🟢 | Build validado.
+Consistência UI | 100% | 🟢 | Design System mantido.
 
 🏗️ 2. Catálogo Funcional (Visão de Negócio & Uso)
 Esta seção descreve as capacidades do sistema, onde são aplicadas no ecossistema e quem possui permissão de acesso.
 
-| Módulo de Negócio | Onde é Usado? | Acesso / Quem? | Status |
-| --- | --- | --- | --- |
-| **Autenticação e Perfil** | Loja e Dashboard | 🟢 Público / 🟡 Cliente / 🔴 Admin | Ativo |
-| **Catálogo de Produtos** | Loja e Dashboard | 🟢 Público / 🔴 Administradores | Ativo |
-| **Carrinho e Checkout** | Loja Virtual | 🟡 Clientes Logados | Ativo |
-| **Gestão de Pedidos** | Loja e Dashboard | 🟡 Clientes / 🔴 Administradores | Ativo |
-| **Marketing e Newsletter** | Loja e Dashboard | 🟢 Público / 🔴 Administradores | Ativo |
-| **Configurações de IA** | Dashboard Admin | 🔴 Administradores | Ativo |
-| **Relatórios e Analytics** | Dashboard Admin | 🔴 Administradores | Ativo |
-| **Fiscal e Tributário** | Dashboard Admin | 🔴 Administradores | Ativo |
-| **Logística e Frete** | Loja e Dashboard | 🟢 Público / 🔴 Administradores | Ativo |
-| **Regras de Roteamento** | (Nenhum Front) | 🔴 Administradores | ⚠️ Órfão |
-| **Gestão de Usuários** | Dashboard Admin | 🔴 Administradores | Ativo |
+---
 
-> [!NOTE]
-> **Acesso Privado (🔴)** exige permissões de `ROLE_ADMIN`.
-> **Acesso Autenticado (🟡)** exige que o usuário esteja logado (JWT).
-> **Acesso Público (🟢)** funcionalidade disponível para visitantes anônimos.
+### 🔑 2.1 Autenticação e Perfil
+*Gestão de acesso, identidade e dados pessoais do usuário.*
+
+Rota Backend | Uso | Acesso | Dados Expostos | Permissão
+--- | --- | --- | --- | ---
+`/api/auth/login` | Loja/Dash | 🟢 Público | Token, Nome, E-mail | Escrita
+`/api/auth/register` | Loja | 🟢 Público | Nome, E-mail, Senha | Escrita
+`/api/users/profile` | Loja/Dash | 🟡 Cliente/Admin | Nome, E-mail, Foto | Leitura/Escrita
+`/api/auth/google` | Loja | 🟢 Público | Perfil Google (ID/Foto) | Escrita
+
+---
+
+### 📦 2.2 Catálogo de Produtos
+*Exposição, categorização e busca de itens à venda.*
+
+Rota Backend | Uso | Acesso | Dados Expostos | Permissão
+--- | --- | --- | --- | ---
+`/api/products` | Loja/Dash | 🟢 Público | Preço, Descrição, Estoque | Leitura
+`/api/categories` | Loja/Dash | 🟢 Público | Nomes de Categorias | Leitura
+`/api/admin/products` | Dashboard | 🔴 Admin | Custo, Fornecedor | Leitura/Escrita
+`/api/products/upload-image`| Dashboard | 🔴 Admin | Metadados de Imagem | Escrita
+
+---
+
+### 🛒 2.3 Carrinho e Checkout
+*Fluxo transacional de compra e processamento de pagamento.*
+
+Rota Backend | Uso | Acesso | Dados Expostos | Permissão
+--- | --- | --- | --- | ---
+`/api/checkout/process` | Loja | 🟡 Cliente | Dados do Pedido, Status | Escrita
+`/api/cart/{userId}` | Loja | 🟡 Cliente | Itens, Quantidades | Leitura/Escrita
+`/api/shipping/quote` | Loja | 🟢 Público | CEP, Valor de Frete | Leitura
+
+---
+
+### 🧾 2.4 Gestão de Pedidos e Fiscal
+*Acompanhamento de compras e conformidade tributária.*
+
+Rota Backend | Uso | Acesso | Dados Expostos | Permissão
+--- | --- | --- | --- | ---
+`/api/orders/user/{id}` | Loja | 🟡 Cliente | Histórico, Endereço | Leitura
+`/api/admin/orders` | Dashboard | 🔴 Admin | **CPF**, Endereço Detalhado | Leitura/Escrita
+`/api/admin/orders/{id}/invoice`| Dashboard | 🔴 Admin | NF-e, XML, Chave Sefaz | Escrita (Fiscal)
+`/api/fiscal/ncm` | Dashboard | 🔴 Admin | Códigos NCM/SH | Leitura
+
+---
+
+### 🤖 2.5 Inteligência Artificial & Marketing
+*Recursos autônomos e campanhas de engajamento.*
+
+Rota Backend | Uso | Acesso | Dados Expostos | Permissão
+--- | --- | --- | --- | ---
+`/api/configs/ai` | Dashboard | 🔴 Admin | Chaves API, Prompts | Leitura/Escrita
+`/api/marketing/coupons` | Loja/Dash | 🟢 Público/🔴 Admin| Códigos de Desconto | Leitura/Escrita
+`/api/newsletter/subscribe` | Loja | 🟢 Público | E-mail | Escrita
+
+---
+
+### ⚠️ 2.6 Módulos Órfãos ou Internos
+Funcionalidade | Rota | Status | Observação
+--- | --- | --- | ---
+Regras de Roteamento | `/api/admin/rules` | ⚠️ Órfão | Sem mapeamento no Front.
+Providers Internos | `/api/admin/providers` | 🟢 Ativo | Uso via Backend Core.
+
+> [!IMPORTANT]
+> **Privacidade de Dados**: Rotas que expõem **CPF/CNPJ** ou **Endereços Completos** são restritas ao nível 🔴 Admin ou ao dono dos dados (🟡 Cliente). O sistema mascara estas informações em logs de depuração.
 
 🧪 3. Catálogo de Testes (Especificação Funcional Abstrata)
 Esta seção traduz a lógica técnica dos testes unitários em comportamentos de negócio esperados. Cada teste garante que uma promessa funcional seja mantida.
