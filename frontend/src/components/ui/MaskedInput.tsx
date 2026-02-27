@@ -7,6 +7,7 @@ import { } from '../../utils/fiscal';
 
 interface MaskedInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
     mask: 'cpf' | 'cnpj' | 'cpf-cnpj' | 'cep';
+    id?: string;
     label?: string;
     error?: string;
     onChange?: (value: string) => void;
@@ -17,7 +18,7 @@ interface MaskedInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
  * Suporta CPF, CNPJ e CEP com formatação em tempo real.
  */
 export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
-    ({ mask, label, error, className, value, onChange, ...props }, ref) => {
+    ({ mask, label, error, className, value, onChange, id, ...props }, ref) => {
 
         const applyMask = useCallback((val: string, type: 'cpf' | 'cnpj' | 'cpf-cnpj' | 'cep') => {
             const clean = val.replace(/\D/g, '');
@@ -87,13 +88,17 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
         return (
             <div className="w-full space-y-1">
                 {label && (
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label
+                        htmlFor={id}
+                        className="block text-sm font-medium text-gray-700"
+                    >
                         {label}
                     </label>
                 )}
                 <input
                     {...props}
                     ref={ref}
+                    id={id}
                     type="text"
                     value={displayValue}
                     onChange={handleChange}

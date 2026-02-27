@@ -24,6 +24,10 @@ describe('Button Component', () => {
 
         // The span wrapping the text should have opacity-0
         expect(screen.getByText('Click Me')).toHaveClass('opacity-0');
+
+        // Should show spinner
+        // SVG from spinner should be present
+        expect(document.querySelector('svg')).toBeInTheDocument();
     });
 
     it('applies variant styles correctly', () => {
@@ -35,10 +39,25 @@ describe('Button Component', () => {
 
         rerender(<Button variant="outline">Button</Button>);
         expect(screen.getByRole('button')).toHaveClass('bg-transparent');
+
+        // Test fallback or default if variant is invalid (though TS prevents it)
+        // @ts-expect-error - Testing fallback for invalid variant string
+        rerender(<Button variant="invalid">Button</Button>);
+        expect(screen.getByRole('button')).toHaveClass('bg-[#0f2A44]');
     });
 
     it('is disabled when disabled prop is true', () => {
         render(<Button disabled>Disabled</Button>);
         expect(screen.getByRole('button')).toBeDisabled();
+    });
+
+    it('applies custom className', () => {
+        render(<Button className="custom-test">Custom</Button>);
+        expect(screen.getByRole('button')).toHaveClass('custom-test');
+    });
+
+    it('renders as different type (e.g. submit)', () => {
+        render(<Button type="submit">Submit</Button>);
+        expect(screen.getByRole('button')).toHaveAttribute('type', 'submit');
     });
 });
