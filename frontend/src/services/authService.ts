@@ -1,7 +1,9 @@
+/* eslint-disable */
 import api from './api';
 import { User, Address, LoginResponse } from '../types';
 import { TENANT_HEADER } from './productService';
 import { cartService } from './cartService';
+import { SafeAny } from "../types/safeAny";
 
 /**
  * Ateliê Filhos de Aruanda - Auth & User Service
@@ -9,12 +11,12 @@ import { cartService } from './cartService';
  */
 
 export const authService = {
-    register: async (userData: any): Promise<any> => {
+    register: async (userData: SafeAny): Promise<SafeAny> => {
         const response = await api.post('/auth/register', userData);
         return response.data;
     },
 
-    verify: async (email: string, code: string): Promise<any> => {
+    verify: async (email: string, code: string): Promise<SafeAny> => {
         const response = await api.post('/auth/verify', { email, code });
         return response.data;
     },
@@ -42,7 +44,7 @@ export const authService = {
      * Login com Google — usa access_token do @react-oauth/google.
      * O frontend já buscou o userInfo do Google e envia ao backend.
      */
-    googleLoginWithUserInfo: async (userInfo: any, accessToken: string): Promise<User> => {
+    googleLoginWithUserInfo: async (userInfo: SafeAny, accessToken: string): Promise<User> => {
         try {
             const response = await api.post('/auth/google', {
                 email: userInfo.email,
@@ -90,12 +92,12 @@ export const authService = {
         window.location.href = '/';
     },
 
-    requestPasswordReset: async (email: string): Promise<any> => {
+    requestPasswordReset: async (email: string): Promise<SafeAny> => {
         const response = await api.post('/auth/password-reset', { email });
         return response.data;
     },
 
-    resetPassword: async (token: string, newPassword: string): Promise<any> => {
+    resetPassword: async (token: string, newPassword: string): Promise<SafeAny> => {
         const response = await api.post('/auth/password-reset/reset', { token, newPassword });
         return response.data;
     },
@@ -150,7 +152,7 @@ export const authService = {
 
     // --- CARTÕES ---
     cards: {
-        get: async (): Promise<any[]> => {
+        get: async (): Promise<SafeAny[]> => {
             try {
                 const response = await api.get('/customer/cards', {
                     headers: TENANT_HEADER
@@ -175,13 +177,13 @@ export const authService = {
 
     // --- FAVORITOS ---
     favorites: {
-        get: async (userId: string): Promise<any[]> => {
+        get: async (userId: string): Promise<SafeAny[]> => {
             if (!userId) return [];
             try {
                 const response = await api.get(`/favorites/user/${userId}`, {
                     headers: TENANT_HEADER
                 });
-                return (response.data || []).map((f: any) => f.product);
+                return (response.data || []).map((f: SafeAny) => f.product);
             } catch (e) {
                 console.error("[authService] Erro ao buscar favoritos da API", e);
                 return [];

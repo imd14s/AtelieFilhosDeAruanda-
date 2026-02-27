@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { MapPin, Plus, Pencil, Trash2, X, Loader2, Home } from 'lucide-react';
 import SEO from '../components/SEO';

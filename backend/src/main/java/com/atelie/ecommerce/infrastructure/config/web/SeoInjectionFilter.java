@@ -119,10 +119,10 @@ public class SeoInjectionFilter extends OncePerRequestFilter {
     }
 
     private String performInjection(String html, SeoMetadataDTO meta) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder metaTags = new StringBuilder();
 
         // Injeta no <head>
-        String metaTags = String.format(
+        metaTags.append(String.format(
                 "\n  <title>%s</title>\n" +
                         "  <meta name=\"description\" content=\"%s\" />\n" +
                         "  <link rel=\"canonical\" href=\"%s\" />\n" +
@@ -133,7 +133,11 @@ public class SeoInjectionFilter extends OncePerRequestFilter {
                         "  <meta name=\"twitter:card\" content=\"%s\" />\n",
                 meta.getTitle(), meta.getDescription(), meta.getCanonicalUrl(),
                 meta.getOgTitle(), meta.getOgDescription(), meta.getOgImage(),
-                meta.getOgType(), meta.getTwitterCard());
+                meta.getOgType(), meta.getTwitterCard()));
+
+        if (meta.getJsonLd() != null && !meta.getJsonLd().isEmpty()) {
+            metaTags.append(String.format("  <script type=\"application/ld+json\">%s</script>\n", meta.getJsonLd()));
+        }
 
         // Remove tags existentes para evitar duplicidade se o build já tiver algo
         // estático
@@ -141,6 +145,6 @@ public class SeoInjectionFilter extends OncePerRequestFilter {
                 .replaceAll("<meta name=\"description\" content=\".*\" />", "")
                 .replaceAll("<meta property=\"og:.*\" content=\".*\" />", "");
 
-        return cleanHtml.replace("<head>", "<head>" + metaTags);
+        return cleanHtml.replace("<head>", "<head>" + metaTags.toString());
     }
 }

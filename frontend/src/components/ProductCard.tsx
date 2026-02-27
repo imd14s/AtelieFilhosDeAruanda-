@@ -1,9 +1,10 @@
+ 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cartService } from '../services/cartService';
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, Check, Heart } from 'lucide-react';
-import { getImageUrl } from '../utils/imageUtils';
+
 import Button from './ui/Button';
 import Spinner from './ui/Spinner';
 import { useToast } from '../context/ToastContext';
@@ -13,6 +14,8 @@ interface ProductCardProps {
     product: Product;
     initialIsFavorite?: boolean;
 }
+
+import OptimizedImage from './ui/OptimizedImage';
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const favoritesContext = useFavorites();
@@ -46,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     };
 
     const isOutOfStock = (product.stockQuantity || 0) <= 0;
-    const imageUrl = getImageUrl(product.images?.[0] || '');
+    const imageUrl = product.images?.[0] || '';
 
     // Calculate discount
     const originalPrice = product.originalPrice || product.price;
@@ -85,10 +88,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </button>
 
             <Link to={`/produto/${product.id}`} className="relative aspect-square overflow-hidden bg-[var(--branco-off-white)] group-hover:opacity-95 transition-opacity">
-                <img
+                <OptimizedImage
                     src={imageUrl}
                     alt={product.title || product.name || 'Produto'}
-                    onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = '/images/default.png'; }}
+                    width={280}
+                    height={280}
+                    productContext={{
+                        name: product.name,
+                        category: typeof product.category === 'object' ? product.category.name : undefined
+                    }}
                     className="h-full w-full object-contain object-center transition-transform duration-700 group-hover:scale-110 px-4"
                 />
                 {isOutOfStock && (

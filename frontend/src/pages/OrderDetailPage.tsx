@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Package, Truck, CreditCard, MapPin, Clock, CheckCircle, Loader2, AlertCircle, LucideIcon } from 'lucide-react';

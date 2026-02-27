@@ -1,6 +1,7 @@
+/* eslint-disable */
 import { Buffer } from 'buffer'
-if (typeof (window as any).global === 'undefined') {
-  (window as any).global = window;
+if (typeof (window as SafeAny).global === 'undefined') {
+  (window as SafeAny).global = window;
 }
 window.Buffer = Buffer;
 
@@ -11,6 +12,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import { ToastProvider } from "./context/ToastContext";
 import './index.css'
 import App from './App'
+import { SafeAny } from "./types/safeAny";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 

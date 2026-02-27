@@ -9,6 +9,7 @@ interface SEOProps {
     type?: string;
     keywords?: string;
     twitterCard?: "summary" | "summary_large_image" | "app" | "player";
+    jsonLd?: string;
 }
 
 /**
@@ -22,7 +23,8 @@ const SEO: React.FC<SEOProps> = ({
     url = window.location.href,
     type = "website",
     keywords = "artigos religiosos, umbanda, candomblé, velas artesanais, guias de proteção",
-    twitterCard = "summary_large_image"
+    twitterCard = "summary_large_image",
+    jsonLd
 }) => {
     const siteName = "Ateliê Filhos de Aruanda";
     const fullTitle = title ? (title.includes(siteName) ? title : `${title} | ${siteName}`) : siteName;
@@ -48,6 +50,13 @@ const SEO: React.FC<SEOProps> = ({
             <meta name="twitter:title" content={fullTitle} />
             <meta name="twitter:description" content={description} />
             <meta name="twitter:image" content={image} />
+
+            {/* Dados Estruturados */}
+            {jsonLd && (
+                <script type="application/ld+json">
+                    {jsonLd}
+                </script>
+            )}
 
             {/* Acessibilidade e Social */}
             <meta name="robots" content="index, follow" />

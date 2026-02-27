@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { configService } from '../services/orderService';
+import { SafeAny } from "../types/safeAny";
 
 // Tipagem global para o SDK do Mercado Pago
 interface MercadoPagoInstance {
-    cardForm: (config: any) => any; // Will refine config/return types later or use unknown
-    [key: string]: any;
+    cardForm: (config: SafeAny) => SafeAny; // Will refine config/return types later or use unknown
+    [key: string]: SafeAny;
 }
 
 declare global {

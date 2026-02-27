@@ -1,6 +1,7 @@
 import api from './api';
 import { CreateOrderData, ShippingOption, CartItem, Order, Product } from '../types';
 import { TENANT_HEADER } from './productService';
+import { SafeAny } from "../types/safeAny";
 
 /**
  * Ateliê Filhos de Aruanda - Order & Shipping Service
@@ -63,7 +64,7 @@ export const orderService = {
             });
 
             if (response.data?.options) {
-                return response.data.options.map((opt: any) => ({
+                return response.data.options.map((opt: SafeAny) => ({
                     provider: opt.name,
                     price: opt.price,
                     days: opt.delivery_time,
@@ -92,7 +93,7 @@ export const orderService = {
                 const response = await api.get(`/history/user/${userId}`, {
                     headers: TENANT_HEADER
                 });
-                return (response.data || []).map((h: any) => h.product);
+                return (response.data || []).map((h: SafeAny) => h.product);
             } catch (e) {
                 console.error("[orderService] Erro ao buscar histórico da API", e);
                 return [];
@@ -122,7 +123,7 @@ export const orderService = {
 };
 
 export const configService = {
-    getMercadoPagoPublicKey: async (): Promise<any> => {
+    getMercadoPagoPublicKey: async (): Promise<SafeAny> => {
         try {
             const response = await api.get('/config/public/mercado-pago/public-key', {
                 headers: TENANT_HEADER

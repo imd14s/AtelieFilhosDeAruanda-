@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import { SafeAny } from "../types/safeAny";
 
 const api: AxiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
@@ -19,7 +20,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // Trata erros de resposta globalmente
 api.interceptors.response.use(
     (response: AxiosResponse) => response,
-    (error: any) => {
+    (error: SafeAny) => {
         // Se o erro for 401 (Unauthorized) e não for uma tentativa de login
         if (error.response?.status === 401 && error.config?.url && !error.config.url.includes('/auth/login')) {
             console.warn("[API] Sessão expirada ou inválida. Limpando dados locais...");

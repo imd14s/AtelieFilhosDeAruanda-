@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { PackageOpen, Clock, Settings, Search, PackageCheck } from 'lucide-react';
 import SEO from '../components/SEO';

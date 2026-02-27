@@ -1,8 +1,10 @@
+ 
 import React, { useState, useRef, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Star, Upload, X, AlertTriangle, Loader2, CheckCircle, Play } from 'lucide-react';
 import { isSafeImage, fileToImage, loadModel } from '../utils/nsfwModerator';
 import { productService } from '../services/productService';
 import { CreateReviewData } from '../types';
+import { SafeAny } from "../types/safeAny";
 
 interface ReviewFormProps {
     productId: string;
@@ -110,7 +112,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted })
                     url: m.preview, // Mock URL
                     type: m.type
                 }))
-            } as any; // Cast for compatibility with expected API structure if needed
+            } as SafeAny; // Cast for compatibility with expected API structure if needed
 
             await productService.createReview(reviewData);
 
@@ -118,7 +120,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onReviewSubmitted })
             setTimeout(() => {
                 if (onReviewSubmitted) onReviewSubmitted();
             }, 2000);
-        } catch (err: any) {
+        } catch (err: SafeAny) {
             setError(err.message || 'Erro ao enviar avaliação.');
         } finally {
             setIsSubmitting(false);

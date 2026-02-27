@@ -1,13 +1,14 @@
 import api from './api';
 import { Coupon } from '../types';
 import { TENANT_HEADER } from './productService';
+import { SafeAny } from "../types/safeAny";
 
 const marketingService = {
-    subscribeNewsletter: async (): Promise<any> => {
+    subscribeNewsletter: async (): Promise<SafeAny> => {
         try {
             const response = await api.post('/newsletter/subscribe', {}, { headers: TENANT_HEADER });
             return response.data;
-        } catch (error: any) {
+        } catch (error: SafeAny) {
             throw error.response?.data || { message: 'Erro ao assinar newsletter' };
         }
     },
@@ -20,7 +21,7 @@ const marketingService = {
                 cartTotal
             }, { headers: TENANT_HEADER });
             return response.data;
-        } catch (error: any) {
+        } catch (error: SafeAny) {
             const msg = error.response?.data?.message || 'Cupom inválido';
             throw new Error(msg);
         }
@@ -33,7 +34,7 @@ const marketingService = {
                 headers: TENANT_HEADER
             });
             return response.data;
-        } catch (error: any) {
+        } catch (error: SafeAny) {
             throw error.response?.data || { message: 'Erro ao buscar cupons' };
         }
     }

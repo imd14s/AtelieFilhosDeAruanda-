@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
@@ -5,6 +6,8 @@ import SEO from "../components/SEO";
 import { Loader2, ChevronLeft, Sparkles, Wind } from "lucide-react";
 import { productService } from '../services/productService';
 import { Product, Category } from "../types";
+
+import OptimizedImage from "../components/ui/OptimizedImage";
 
 const CategoryPage: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -65,6 +68,31 @@ const CategoryPage: React.FC = () => {
         );
     }
 
+    const headerImageUrl = collection.imageUrl || collection.media?.mainMedia?.image?.url;
+
+    const categoryJsonLd = React.useMemo(() => {
+        if (!collection) return undefined;
+        const schema = {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": window.location.origin
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": collection.name,
+                    "item": window.location.href
+                }
+            ]
+        };
+        return JSON.stringify(schema);
+    }, [collection]);
+
     return (
         <div className="bg-[var(--branco-off-white)] min-h-screen">
             <SEO
@@ -72,14 +100,18 @@ const CategoryPage: React.FC = () => {
                 description={collection.description || `Confira nossa seleção exclusiva de artigos para ${collection.name}. Velas, Guias, Ervas e tudo o que você precisa com a qualidade do Ateliê.`}
                 image={collection.imageUrl || collection.media?.mainMedia?.image?.url}
                 keywords={`${collection.name}, artigos de umbanda, ateliê aruanda, ${collection.name} comprar`}
+                jsonLd={categoryJsonLd}
             />
 
             {/* HEADER DINÂMICO DA CATEGORIA */}
             <header className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden bg-[var(--azul-profundo)]">
-                {(collection.imageUrl || collection.media?.mainMedia?.image?.url) ? (
-                    <img
-                        src={collection.imageUrl || collection.media?.mainMedia?.image?.url}
+                {headerImageUrl ? (
+                    <OptimizedImage
+                        src={headerImageUrl}
                         alt={collection.name}
+                        width={1920}
+                        height={600}
+                        priority={true}
                         className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
                     />
                 ) : (

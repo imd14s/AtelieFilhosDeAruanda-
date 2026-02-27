@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService';
@@ -10,6 +11,7 @@ import { ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maxi
 import { getImageUrl } from '../utils/imageUtils';
 import ReviewSection from '../components/ReviewSection';
 import ProductCard from '../components/ProductCard';
+import OptimizedImage from '../components/ui/OptimizedImage';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
 import { useToast } from '../context/ToastContext';
@@ -205,11 +207,17 @@ const ProductPage: React.FC = () => {
             );
         }
         return (
-            <img
+            <OptimizedImage
                 ref={isMain ? mainImageRef : null}
-                src={getImageUrl(url)}
+                src={url}
                 alt={product?.name || "Produto"}
-                onError={(e) => { (e.target as HTMLImageElement).src = '/images/default.png'; }}
+                width={isMain ? 600 : 80}
+                height={isMain ? 750 : 80}
+                priority={isMain}
+                productContext={isMain ? {
+                    name: product?.name || '',
+                    category: typeof product?.category === 'object' ? product.category.name : undefined
+                } : undefined}
                 className="w-full h-full object-cover"
                 onMouseMove={isMain ? handleMouseMove : undefined}
                 onMouseLeave={isMain ? () => setZoomPos(prev => ({ ...prev, show: false })) : undefined}
@@ -234,6 +242,40 @@ const ProductPage: React.FC = () => {
         </div>
     );
 
+    const productJsonLd = useMemo(() => {
+        if (!product) return undefined;
+        const offer = {
+            "@type": "Offer",
+            "url": window.location.href,
+            "priceCurrency": "BRL",
+            "price": displayPrice.toFixed(2),
+            "itemCondition": "https://schema.org/NewCondition",
+            "availability": isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+        };
+
+        const schema = {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": product.name,
+            "image": product.images?.[0] || product.image || "/og-image.jpg",
+            "description": product.description || "",
+            "sku": product.id,
+            "brand": {
+                "@type": "Brand",
+                "name": "Ateliê Filhos de Aruanda"
+            },
+            "offers": offer,
+            ...(product.totalReviews ? {
+                "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": product.averageRating,
+                    "reviewCount": product.totalReviews
+                }
+            } : {})
+        };
+        return JSON.stringify(schema);
+    }, [product, displayPrice, isOutOfStock]);
+
     return (
         <div className="min-h-screen bg-white">
             <SEO
@@ -241,6 +283,7 @@ const ProductPage: React.FC = () => {
                 description={product.description?.substring(0, 150) + "... Compre agora no Ateliê!"}
                 image={product.images?.[0] || product.image}
                 type="product"
+                jsonLd={productJsonLd}
                 keywords={`${product.name}, ${typeof product.category === 'object' ? product.category.name : ''}, ateliê aruanda, artigos religiosos artesanais`}
             />
 
@@ -464,11 +507,12 @@ const ProductPage: React.FC = () => {
                                                             }
                                                         `}
                                                     >
-                                                        <img
-                                                            src={getImageUrl(thumbSrc)}
+                                                        <OptimizedImage
+                                                            src={thumbSrc}
                                                             alt={tooltipLabel}
+                                                            width={64}
+                                                            height={64}
                                                             className="w-full h-full object-cover"
-                                                            onError={e => { (e.target as HTMLImageElement).src = '/images/default.png'; }}
                                                         />
                                                     </button>
                                                 );

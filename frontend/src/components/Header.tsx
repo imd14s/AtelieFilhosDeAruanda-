@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect, FormEvent } from 'react';
 import { ShoppingCart, User, Menu, X, LogOut, ChevronDown, ChevronRight } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';

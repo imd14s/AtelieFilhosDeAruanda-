@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
+import OptimizedImage from './ui/OptimizedImage';
+
 const Hero: React.FC = () => {
     return (
         <section className="relative w-full h-[80vh] md:h-[85vh] overflow-hidden bg-[var(--branco-off-white)]">
@@ -53,9 +55,12 @@ const Hero: React.FC = () => {
                     {/* Overlay gradiente para mobile (melhora leitura sobre a imagem se necessário) */}
                     <div className="absolute inset-0 bg-gradient-to-b from-[var(--branco-off-white)] via-transparent to-transparent md:hidden z-10 h-20"></div>
 
-                    <img
+                    <OptimizedImage
                         src="/images/fe.jpeg"
                         alt="Velas artesanais e ervas"
+                        width={800}
+                        height={1000}
+                        priority={true}
                         className="w-full h-full object-cover scale-105 animate-slow-zoom"
                     />
 

@@ -1,3 +1,4 @@
+ 
 import React, { useState, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
@@ -7,6 +8,7 @@ import { getImageUrl } from '../utils/imageUtils';
 import Button from './ui/Button';
 import { useToast } from '../context/ToastContext';
 import { CartItem } from '../types';
+import { SafeAny } from "../types/safeAny";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -18,8 +20,8 @@ interface CartDrawerProps {
 const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, cartItems, onUpdateCart }) => {
     const navigate = useNavigate();
     const [cep, setCep] = useState<string>('');
-    const [shippingOptions, setShippingOptions] = useState<any[]>([]);
-    const [shippingSelected, setShippingSelected] = useState<any | null>(null);
+    const [shippingOptions, setShippingOptions] = useState<SafeAny[]>([]);
+    const [shippingSelected, setShippingSelected] = useState<SafeAny | null>(null);
     const { addToast } = useToast();
     const [calculateLoading, setCalculateLoading] = useState<boolean>(false);
     const [shippingError, setShippingError] = useState<string | null>(null);

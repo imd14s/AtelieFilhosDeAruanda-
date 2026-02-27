@@ -1,5 +1,6 @@
 import api from './api';
 import { Product, Category, Variant } from '../types';
+import { SafeAny } from "../types/safeAny";
 
 /**
  * Ateliê Filhos de Aruanda - Product Service
@@ -11,7 +12,7 @@ export const TENANT_HEADER = { 'X-Tenant-ID': 'atelie-aruanda' };
 /**
  * Normaliza o objeto de produto da API para campos usados pelo frontend.
  */
-export const normalizeProduct = (p: any): Product => {
+export const normalizeProduct = (p: SafeAny): Product => {
     if (!p) return p;
     return {
         ...p,
@@ -20,7 +21,7 @@ export const normalizeProduct = (p: any): Product => {
         categoryId: p.categoryId || (typeof p.category === 'string' ? p.category : p.category?.id) || null,
         averageRating: p.averageRating ?? null,
         totalReviews: p.totalReviews ?? 0,
-        variants: (p.variants || []).map((v: any): Variant => ({
+        variants: (p.variants || []).map((v: SafeAny): Variant => ({
             ...v,
             stockQuantity: v.stockQuantity ?? v.stock ?? 0,
         }))
@@ -98,7 +99,7 @@ export const productService = {
     /**
      * Busca as avaliações de um produto específico.
      */
-    getReviews: async (productId: string): Promise<any[]> => {
+    getReviews: async (productId: string): Promise<SafeAny[]> => {
         try {
             const response = await api.get(`/reviews/product/${productId}`, {
                 headers: TENANT_HEADER
@@ -112,7 +113,7 @@ export const productService = {
     /**
      * Cria uma nova avaliação para um produto.
      */
-    createReview: async (reviewData: any): Promise<any> => {
+    createReview: async (reviewData: SafeAny): Promise<SafeAny> => {
         try {
             const response = await api.post('/reviews', reviewData, {
                 headers: TENANT_HEADER

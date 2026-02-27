@@ -4,6 +4,7 @@ import { cartService } from '../services/cartService';
 import { orderService } from '../services/orderService';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { useLocation } from 'react-router-dom';
+import { SafeAny } from "../types/safeAny";
 
 // Mock services
 vi.mock('../services/cartService', () => ({
@@ -31,7 +32,7 @@ vi.mock('../context/AuthContext', () => ({
 // Mock react-router-dom hooks
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
-    const actual = await vi.importActual<any>('react-router-dom');
+    const actual = await vi.importActual<SafeAny>('react-router-dom');
     return {
         ...actual,
         useNavigate: () => mockNavigate,

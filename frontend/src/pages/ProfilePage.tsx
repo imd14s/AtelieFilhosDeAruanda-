@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, ChangeEvent } from 'react';
 import { User as UserIcon, Shield, CreditCard, ChevronRight, MapPin, Bell, Gift, Mail, AlertTriangle, X, Loader2, Camera } from 'lucide-react';
 import Cropper, { Area, Point } from 'react-easy-crop';

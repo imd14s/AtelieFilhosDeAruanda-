@@ -10,19 +10,19 @@ fi
 cd ..
 
 # 2. Frontend Validation
-echo "⚛️ Verificando tipos do Frontend..."
-cd frontend && npm run typecheck
+echo "⚛️ Verificando tipos e lint do Frontend..."
+cd frontend && npm run typecheck && npm run lint
 if [ $? -ne 0 ]; then
-  echo "❌ Erro de tipagem no Frontend! Push cancelado."
+  echo "❌ Erro de tipagem ou lint no Frontend! Push cancelado."
   exit 1
 fi
 cd ..
 
 # 3. Dashboard Validation
-echo "📊 Verificando tipos do Dashboard Admin..."
-cd dashboard-admin && npm run typecheck
+echo "📊 Verificando tipos e lint do Dashboard Admin..."
+cd dashboard-admin && npm run typecheck && npm run lint
 if [ $? -ne 0 ]; then
-  echo "❌ Erro de tipagem no Dashboard! Push cancelado."
+  echo "❌ Erro de tipagem ou lint no Dashboard! Push cancelado."
   exit 1
 fi
 cd ..

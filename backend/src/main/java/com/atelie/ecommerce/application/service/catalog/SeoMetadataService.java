@@ -45,6 +45,8 @@ public class SeoMetadataService {
                 String name = product.getName();
                 String categoryName = product.getCategory() != null ? product.getCategory().getName()
                                 : "Artigos Religiosos";
+                String canonicalUrl = baseUrl + "/produto/"
+                                + (product.getSlug() != null ? product.getSlug() : product.getId());
 
                 // Título de cauda longa: [Produto] | Guia de Proteção X - Ateliê Filhos de
                 // Aruanda
@@ -59,16 +61,18 @@ public class SeoMetadataService {
                                 "%s. Compre seu %s%s no Ateliê Filhos de Aruanda. Entrega rápida e axé garantido!",
                                 cleanDescription, name, priceInfo);
 
+                String jsonLd = generateProductJsonLd(product, canonicalUrl);
+
                 return SeoMetadataDTO.builder()
                                 .title(title)
                                 .description(description)
-                                .canonicalUrl(baseUrl + "/produto/"
-                                                + (product.getSlug() != null ? product.getSlug() : product.getId()))
+                                .canonicalUrl(canonicalUrl)
                                 .ogTitle(title)
                                 .ogDescription(description)
                                 .ogImage(product.getImageUrl())
                                 .ogType("product")
                                 .twitterCard("summary_large_image")
+                                .jsonLd(jsonLd)
                                 .build();
         }
 
@@ -78,18 +82,82 @@ public class SeoMetadataService {
                 String description = String.format(
                                 "Confira nossa seleção exclusiva de artigos para %s. Velas, Guias, Ervas e tudo o que você precisa com a qualidade do %s.",
                                 name, SITE_NAME);
+                String canonicalUrl = baseUrl + "/categoria/" + category.getId();
+
+                String jsonLd = generateCategoryJsonLd(category, canonicalUrl);
 
                 return SeoMetadataDTO.builder()
                                 .title(title)
                                 .description(description)
-                                .canonicalUrl(baseUrl + "/categoria/" + category.getId()) // Ajustar se tiver slug de
-                                                                                          // categoria no
-                                                                                          // futuro
+                                .canonicalUrl(canonicalUrl) // Ajustar se tiver slug de
+                                                            // categoria no
+                                                            // futuro
                                 .ogTitle(title)
                                 .ogDescription(description)
                                 .ogType("website")
                                 .twitterCard("summary")
+                                .jsonLd(jsonLd)
                                 .build();
+        }
+
+        private String generateProductJsonLd(ProductEntity product, String canonicalUrl) {
+                String categoryName = product.getCategory() != null ? product.getCategory().getName() : "Produtos";
+                String imageUrl = product.getImageUrl();
+                if (imageUrl != null && !imageUrl.startsWith("http")) {
+                        imageUrl = baseUrl + imageUrl;
+                }
+
+                return String.format(
+                                "{" +
+                                                "\"@context\": \"https://schema.org\"," +
+                                                "\"@type\": \"Product\"," +
+                                                "\"name\": \"%s\"," +
+                                                "\"image\": \"%s\"," +
+                                                "\"description\": \"%s\"," +
+                                                "\"sku\": \"%s\"," +
+                                                "\"brand\": { \"@type\": \"Brand\", \"name\": \"%s\" }," +
+                                                "\"offers\": {" +
+                                                "\"@type\": \"Offer\"," +
+                                                "\"url\": \"%s\"," +
+                                                "\"priceCurrency\": \"BRL\"," +
+                                                "\"price\": \"%s\"," +
+                                                "\"itemCondition\": \"https://schema.org/NewCondition\"," +
+                                                "\"availability\": \"%s\"" +
+                                                "}" +
+                                                "}",
+                                escapeJson(product.getName()),
+                                imageUrl,
+                                escapeJson(product.getDescription() != null ? product.getDescription() : ""),
+                                product.getId(),
+                                SITE_NAME,
+                                canonicalUrl,
+                                product.getPrice() != null ? product.getPrice().toString() : "0.00",
+                                (product.getStockQuantity() != null && product.getStockQuantity() > 0)
+                                                ? "https://schema.org/InStock"
+                                                : "https://schema.org/OutOfStock");
+        }
+
+        private String generateCategoryJsonLd(CategoryEntity category, String canonicalUrl) {
+                return String.format(
+                                "{" +
+                                                "\"@context\": \"https://schema.org\"," +
+                                                "\"@type\": \"BreadcrumbList\"," +
+                                                "\"itemListElement\": [" +
+                                                "{ \"@type\": \"ListItem\", \"position\": 1, \"name\": \"Home\", \"item\": \"%s\" },"
+                                                +
+                                                "{ \"@type\": \"ListItem\", \"position\": 2, \"name\": \"%s\", \"item\": \"%s\" }"
+                                                +
+                                                "]" +
+                                                "}",
+                                baseUrl,
+                                escapeJson(category.getName()),
+                                canonicalUrl);
+        }
+
+        private String escapeJson(String input) {
+                if (input == null)
+                        return "";
+                return input.replace("\"", "\\\"").replace("\n", " ").replace("\r", " ");
         }
 
         public SeoMetadataDTO generateDefault() {

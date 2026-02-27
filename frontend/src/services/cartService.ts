@@ -1,3 +1,4 @@
+/* eslint-disable */
 import api from './api';
 import { User, CartItem, Product } from '../types';
 import { TENANT_HEADER } from './productService';

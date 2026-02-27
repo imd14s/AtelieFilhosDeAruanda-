@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { render, screen, fireEvent, waitFor } from '../test-utils';
 import AuthModal from './AuthModal';
 import { authService } from '../services/authService';

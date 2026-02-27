@@ -19,4 +19,5 @@ public class SeoMetadataDTO {
     private String ogImage;
     private String ogType;
     private String twitterCard;
+    private String jsonLd;
 }
