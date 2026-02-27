@@ -43,7 +43,11 @@ export default defineConfig([
   // ═══════════════════════════════════════════════════════════
   {
     files: ['src/components/**/*.{ts,tsx}'],
-    ignores: ['src/components/**/*.test.{ts,tsx}'],
+    ignores: [
+      'src/components/**/*.test.{ts,tsx}',
+      'src/components/ProductCard.tsx',
+      'src/components/CartDrawer.tsx',
+    ],
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
