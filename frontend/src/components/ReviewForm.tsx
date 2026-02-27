@@ -42,8 +42,24 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, token, onReviewSubmi
         const files = e.target.files ? Array.from(e.target.files) : [];
         if (!files.length) return;
 
-        if (media.length + files.length > 5) {
-            setError('Máximo de 5 mídias por avaliação.');
+        // Validations: 3 photos OR 1 video
+        const imageFiles = files.filter(f => f.type.startsWith('image/'));
+        const videoFiles = files.filter(f => f.type.startsWith('video/'));
+        const currentImages = media.filter(m => m.type === 'IMAGE');
+        const currentVideos = media.filter(m => m.type === 'VIDEO');
+
+        if (videoFiles.length + currentVideos.length > 1) {
+            setError('Você pode enviar apenas 1 vídeo por avaliação.');
+            return;
+        }
+
+        if ((videoFiles.length > 0 || currentVideos.length > 0) && (imageFiles.length > 0 || currentImages.length > 0)) {
+            setError('Não é permitido enviar fotos e vídeos simultaneamente. Escolha até 3 fotos OU 1 vídeo.');
+            return;
+        }
+
+        if (imageFiles.length + currentImages.length > 3) {
+            setError('Você pode enviar no máximo 3 fotos por avaliação.');
             return;
         }
 
@@ -54,13 +70,18 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, token, onReviewSubmi
 
         for (const file of files) {
             try {
+                // Strict type validation
+                if (file.type !== 'image/jpeg' && file.type !== 'image/png' && file.type !== 'video/mp4') {
+                    setError('Tipo de arquivo não permitido. Use apenas JPG, PNG ou MP4.');
+                    continue;
+                }
+
                 if (file.type.startsWith('image/')) {
                     const img = await fileToImage(file);
                     const result = await isSafeImage(img);
 
                     if (!result.safe) {
                         setError(result.reason || 'Imagem inadequada.');
-                        if (fileInputRef.current) fileInputRef.current.value = '';
                         continue;
                     }
 
@@ -78,7 +99,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, token, onReviewSubmi
                 }
             } catch (err) {
                 console.error("Error moderating image", err);
-                setError('Ocorreu um erro ao processar a imagem.');
+                setError('Ocorreu um erro ao processar o arquivo.');
             }
         }
 
@@ -106,20 +127,26 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, token, onReviewSubmi
         setError(null);
 
         try {
-            const reviewData: CreateReviewData = {
-                productId,
-                rating,
-                comment: comment.substring(0, 300),
-                media: media.map(m => ({
-                    url: m.preview, // Mock URL
-                    type: m.type
-                })),
-                token: token // Passa o token se existir
-            } as SafeAny;
-
             if (token) {
-                await productService.createVerifiedReview(reviewData);
+                // Verified Review uses FormData for Multipart
+                const formData = new FormData();
+                formData.append('token', token);
+                formData.append('rating', rating.toString());
+                formData.append('comment', comment.substring(0, 300));
+
+                media.forEach((item) => {
+                    formData.append('media', item.file);
+                });
+
+                await productService.createVerifiedReview(formData);
             } else {
+                // Standard review still uses JSON (as per existing API)
+                const reviewData: CreateReviewData = {
+                    productId,
+                    rating,
+                    comment: comment.substring(0, 300),
+                    media: [], // Non-verified reviews in this version might not support media in the same way
+                } as SafeAny;
                 await productService.createReview(reviewData);
             }
 
@@ -128,7 +155,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, token, onReviewSubmi
                 if (onReviewSubmitted) onReviewSubmitted();
             }, 2000);
         } catch (err: SafeAny) {
-            setError(err.message || 'Erro ao enviar avaliação.');
+            setError(err.response?.data?.message || err.message || 'Erro ao enviar avaliação.');
         } finally {
             setIsSubmitting(false);
         }
@@ -187,7 +214,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, token, onReviewSubmi
             </div>
 
             <div className="space-y-4">
-                <label className="font-lato text-[10px] uppercase tracking-widest text-gray-500 block">Anexar Mídias (Máx 5)</label>
+                <div className="flex justify-between items-end">
+                    <label className="font-lato text-[10px] uppercase tracking-widest text-gray-500 block">
+                        Anexar Mídias (Máx 3 fotos OU 1 vídeo)
+                    </label>
+                    <span className="text-[9px] text-gray-400 font-lato hidden md:block">JPG, PNG, MP4</span>
+                </div>
 
                 <div className="flex flex-wrap gap-4">
                     {media.map((item, index) => (
@@ -235,7 +267,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, token, onReviewSubmi
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     multiple
-                    accept="image/*,video/*"
+                    accept="image/jpeg,image/png,video/mp4"
+                    capture="environment"
                     className="hidden"
                 />
 

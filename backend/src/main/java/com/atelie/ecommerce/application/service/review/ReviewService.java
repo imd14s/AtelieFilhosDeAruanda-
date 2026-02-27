@@ -13,15 +13,18 @@ import com.atelie.ecommerce.infrastructure.persistence.review.ReviewMediaEntity;
 import com.atelie.ecommerce.infrastructure.persistence.review.ReviewRepository;
 import com.atelie.ecommerce.infrastructure.persistence.review.ReviewTokenEntity;
 import com.atelie.ecommerce.infrastructure.persistence.review.ReviewTokenRepository;
+import com.atelie.ecommerce.infrastructure.service.media.MediaStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,6 +36,7 @@ public class ReviewService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final GeminiIntegrationService geminiIntegrationService;
+    private final MediaStorageService mediaStorageService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -109,20 +113,21 @@ public class ReviewService {
 
     @Transactional
     public ReviewEntity createVerifiedReview(String token, Integer rating, String comment,
-            List<Map<String, String>> media) {
+            List<MultipartFile> mediaFiles) {
         ReviewTokenEntity tokenEntity = validateToken(token);
 
+        // Validate media constraints: 3 photos OR 1 video
+        validateMediaConstraints(mediaFiles);
+
+        // Upload to Cloudinary and convert to internal representation
+        List<Map<String, String>> mediaData = uploadMedia(mediaFiles);
+
         // Moderation
-        Map<String, Object> moderationResult = geminiIntegrationService.moderateReview(comment, media);
+        Map<String, Object> moderationResult = geminiIntegrationService.moderateReview(comment, mediaData);
         boolean safe = (boolean) moderationResult.get("safe");
         BigDecimal score = (BigDecimal) moderationResult.get("score");
 
         ReviewEntity review = new ReviewEntity();
-
-        // Em avaliações por token (e-mail), o usuário pode não estar logado no momento.
-        // Se quisermos vincular ao usuário, precisamos buscar pelo e-mail do token.
-        // Por simplicidade técnica e transparência, vinculamos ao Order ID e marcamos
-        // como Verificada.
         review.setOrderId(tokenEntity.getOrderId());
         review.setProduct(productRepository.findById(tokenEntity.getProductId())
                 .orElseThrow(() -> new BusinessException("Produto não encontrado")));
@@ -132,8 +137,8 @@ public class ReviewService {
         review.setStatus(safe ? "APPROVED" : "REJECTED");
         review.setVerifiedPurchase(true);
 
-        if (media != null) {
-            for (Map<String, String> m : media) {
+        if (mediaData != null) {
+            for (Map<String, String> m : mediaData) {
                 ReviewMediaEntity mediaEntity = new ReviewMediaEntity();
                 mediaEntity.setReview(review);
                 mediaEntity.setUrl(m.get("url"));
@@ -146,6 +151,46 @@ public class ReviewService {
         reviewTokenRepository.save(tokenEntity);
 
         return reviewRepository.save(review);
+    }
+
+    private void validateMediaConstraints(List<MultipartFile> mediaFiles) {
+        if (mediaFiles == null || mediaFiles.isEmpty())
+            return;
+
+        long imageCount = mediaFiles.stream()
+                .filter(f -> f.getContentType() != null && f.getContentType().startsWith("image/")).count();
+        long videoCount = mediaFiles.stream()
+                .filter(f -> f.getContentType() != null && f.getContentType().startsWith("video/")).count();
+
+        if (videoCount > 1) {
+            throw new BusinessException("Você pode enviar apenas 1 vídeo por avaliação.");
+        }
+        if (videoCount == 1 && imageCount > 0) {
+            throw new BusinessException(
+                    "Não é permitido enviar fotos e vídeos simultaneamente. Escolha até 3 fotos OU 1 vídeo.");
+        }
+        if (imageCount > 3) {
+            throw new BusinessException("Você pode enviar no máximo 3 fotos por avaliação.");
+        }
+
+        // Strict type validation
+        for (MultipartFile file : mediaFiles) {
+            String ct = file.getContentType();
+            if (ct == null || (!ct.equals("image/jpeg") && !ct.equals("image/png") && !ct.equals("video/mp4"))) {
+                throw new BusinessException("Tipo de arquivo não permitido: " + ct + ". Use apenas JPG, PNG ou MP4.");
+            }
+        }
+    }
+
+    private List<Map<String, String>> uploadMedia(List<MultipartFile> mediaFiles) {
+        if (mediaFiles == null || mediaFiles.isEmpty())
+            return List.of();
+
+        return mediaFiles.stream().map(file -> {
+            String url = mediaStorageService.storeImage(file);
+            String type = file.getContentType().startsWith("video/") ? "VIDEO" : "IMAGE";
+            return Map.of("url", url, "type", type);
+        }).toList();
     }
 
     public List<ReviewTokenEntity> getPendingTokensForOrder(UUID orderId) {

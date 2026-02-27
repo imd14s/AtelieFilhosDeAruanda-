@@ -5,6 +5,7 @@ import com.atelie.ecommerce.infrastructure.persistence.review.ReviewEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -27,13 +28,18 @@ public class ReviewController {
                 request.media()));
     }
 
-    @PostMapping("/verified")
-    public ResponseEntity<ReviewEntity> createVerified(@RequestBody ReviewVerifiedCreateRequest request) {
+    @PostMapping(value = "/verified", consumes = "multipart/form-data")
+    public ResponseEntity<ReviewEntity> createVerified(
+            @RequestPart("token") String token,
+            @RequestPart("rating") String rating,
+            @RequestPart("comment") String comment,
+            @RequestPart(value = "media", required = false) List<MultipartFile> media) {
+
         ReviewEntity review = reviewService.createVerifiedReview(
-                request.token(),
-                request.rating(),
-                request.comment(),
-                request.media());
+                token,
+                Integer.parseInt(rating),
+                comment,
+                media);
         return ResponseEntity.ok(review);
     }
 

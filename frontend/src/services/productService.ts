@@ -140,9 +140,11 @@ export const productService = {
     },
     /**
      * Cria uma avaliação verificada usando um token.
+     * Suporta FormData para envio de mídias (multipart/form-data).
      */
     createVerifiedReview: async (reviewData: SafeAny): Promise<SafeAny> => {
         try {
+            // Se for FormData, o axios configura o Content-Type automaticamente para multipart/form-data
             const response = await api.post('/reviews/verified', reviewData, {
                 headers: TENANT_HEADER
             });
