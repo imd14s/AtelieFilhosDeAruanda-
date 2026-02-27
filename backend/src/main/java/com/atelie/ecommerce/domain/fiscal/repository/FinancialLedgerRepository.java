@@ -8,7 +8,7 @@ import java.util.UUID;
  * Porto de persistência para o Razão Financeiro.
  */
 public interface FinancialLedgerRepository {
-    void save(FinancialLedger ledger);
+    FinancialLedger save(FinancialLedger ledger);
 
     Optional<FinancialLedger> findByOrderId(UUID orderId);
 

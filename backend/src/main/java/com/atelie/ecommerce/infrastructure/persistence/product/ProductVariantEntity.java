@@ -31,6 +31,9 @@ public class ProductVariantEntity {
 
     private BigDecimal price;
 
+    @Column(name = "cost_price")
+    private BigDecimal costPrice;
+
     @Column(name = "original_price")
     private BigDecimal originalPrice;
 
@@ -75,6 +78,14 @@ public class ProductVariantEntity {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public BigDecimal getCostPrice() {
+        return costPrice;
+    }
+
+    public void setCostPrice(BigDecimal costPrice) {
+        this.costPrice = costPrice;
     }
 
     public BigDecimal getOriginalPrice() {
@@ -173,17 +184,24 @@ public class ProductVariantEntity {
         this.images = images;
     }
 
-    // Manual constructor for builder fallback
-    public ProductVariantEntity(ProductEntity product, String sku, String gtin, BigDecimal price, Integer stockQuantity,
-            String attributesJson, Boolean active) {
+    // Manual constructor for builder fallback (8 arguments)
+    public ProductVariantEntity(ProductEntity product, String sku, String gtin, BigDecimal price, BigDecimal costPrice,
+            Integer stockQuantity, String attributesJson, Boolean active) {
         this.product = product;
         this.sku = sku;
         this.gtin = gtin;
         this.price = price;
+        this.costPrice = costPrice;
         this.stockQuantity = stockQuantity;
         this.attributesJson = attributesJson;
         this.active = active;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // Legacy constructor (7 arguments)
+    public ProductVariantEntity(ProductEntity product, String sku, String gtin, BigDecimal price,
+            Integer stockQuantity, String attributesJson, Boolean active) {
+        this(product, sku, gtin, price, BigDecimal.ZERO, stockQuantity, attributesJson, active);
     }
 }

@@ -21,41 +21,21 @@ public class JpaFinancialLedgerAdapter implements FinancialLedgerRepository {
 
     @Override
     @Transactional
-    public void save(FinancialLedger ledger) {
-        FinancialLedgerEntity entity = FinancialLedgerEntity.builder()
-                .id(ledger.getId() != null ? ledger.getId() : UUID.randomUUID())
-                .orderId(ledger.getOrderId())
-                .grossAmount(ledger.getGrossAmount())
-                .gatewayFee(ledger.getGatewayFee())
-                .shippingCost(ledger.getShippingCost())
-                .taxesAmount(ledger.getTaxesAmount())
-                .netAmount(ledger.getNetAmount())
-                .createdAt(ledger.getCreatedAt())
-                .build();
-        repository.save(entity);
+    public FinancialLedger save(FinancialLedger ledger) {
+        FinancialLedgerEntity entity = FinancialLedgerEntity.fromDomain(ledger);
+        FinancialLedgerEntity saved = repository.save(entity);
+        return saved.toDomain();
     }
 
     @Override
     public Optional<FinancialLedger> findByOrderId(UUID orderId) {
-        return repository.findByOrderId(orderId).map(this::toDomain);
+        return repository.findByOrderId(orderId)
+                .map(FinancialLedgerEntity::toDomain);
     }
 
     @Override
     @Transactional
     public void deleteByOrderId(UUID orderId) {
         repository.deleteByOrderId(orderId);
-    }
-
-    private FinancialLedger toDomain(FinancialLedgerEntity entity) {
-        return FinancialLedger.builder()
-                .id(entity.getId())
-                .orderId(entity.getOrderId())
-                .grossAmount(entity.getGrossAmount())
-                .gatewayFee(entity.getGatewayFee())
-                .shippingCost(entity.getShippingCost())
-                .taxesAmount(entity.getTaxesAmount())
-                .netAmount(entity.getNetAmount())
-                .createdAt(entity.getCreatedAt())
-                .build();
     }
 }

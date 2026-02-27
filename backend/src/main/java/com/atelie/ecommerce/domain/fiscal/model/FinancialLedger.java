@@ -23,9 +23,18 @@ public class FinancialLedger {
     // Deduções
     private final BigDecimal gatewayFee; // Taxas do Gateway (ex: Mercado Pago)
     private final BigDecimal shippingCost; // Custo real da etiqueta (ex: Melhor Envio)
-    private final BigDecimal taxesAmount; // Impostos calculados (ex: Simples Nacional)
 
-    // Lucro Líquido
+    // Impostos Granulares
+    private final BigDecimal taxesAmount; // Total de Impostos
+    private final BigDecimal icmsAmount;
+    private final BigDecimal pisAmount;
+    private final BigDecimal cofinsAmount;
+    private final BigDecimal issAmount;
+
+    // Custo de Mercadoria Vendida (CMV)
+    private final BigDecimal productCost;
+
+    // Lucro Líquido (Gross - Fees - Shipping - Taxes - ProductCost)
     private final BigDecimal netAmount;
 
     private final Instant createdAt;
@@ -35,20 +44,32 @@ public class FinancialLedger {
      */
     public FinancialLedger(UUID id, UUID orderId, BigDecimal grossAmount,
             BigDecimal gatewayFee, BigDecimal shippingCost,
-            BigDecimal taxesAmount, BigDecimal netAmount, Instant createdAt) {
+            BigDecimal taxesAmount, BigDecimal icmsAmount,
+            BigDecimal pisAmount, BigDecimal cofinsAmount,
+            BigDecimal issAmount, BigDecimal productCost,
+            BigDecimal netAmount, Instant createdAt) {
         this.id = id;
         this.orderId = orderId;
         this.grossAmount = grossAmount;
         this.gatewayFee = gatewayFee != null ? gatewayFee : BigDecimal.ZERO;
         this.shippingCost = shippingCost != null ? shippingCost : BigDecimal.ZERO;
-        this.taxesAmount = taxesAmount != null ? taxesAmount : BigDecimal.ZERO;
+        this.icmsAmount = icmsAmount != null ? icmsAmount : BigDecimal.ZERO;
+        this.pisAmount = pisAmount != null ? pisAmount : BigDecimal.ZERO;
+        this.cofinsAmount = cofinsAmount != null ? cofinsAmount : BigDecimal.ZERO;
+        this.issAmount = issAmount != null ? issAmount : BigDecimal.ZERO;
+        this.productCost = productCost != null ? productCost : BigDecimal.ZERO;
         this.createdAt = createdAt != null ? createdAt : Instant.now();
+
+        // Se taxesAmount não for passado, soma os granulares
+        this.taxesAmount = taxesAmount != null ? taxesAmount
+                : this.icmsAmount.add(this.pisAmount).add(this.cofinsAmount).add(this.issAmount);
 
         // Validação da verdade financeira
         BigDecimal calculatedNet = grossAmount
                 .subtract(this.gatewayFee)
                 .subtract(this.shippingCost)
-                .subtract(this.taxesAmount);
+                .subtract(this.taxesAmount)
+                .subtract(this.productCost);
 
         this.netAmount = calculatedNet;
     }
