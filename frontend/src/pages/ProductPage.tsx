@@ -237,10 +237,11 @@ const ProductPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-white">
             <SEO
-                title={product.name}
-                description={product.description?.substring(0, 160)}
+                title={product ? `${product.name} | ${typeof product.category === 'object' ? product.category.name : 'Artigos Religiosos'}` : undefined}
+                description={product.description?.substring(0, 150) + "... Compre agora no Ateliê!"}
                 image={product.images?.[0] || product.image}
                 type="product"
+                keywords={`${product.name}, ${typeof product.category === 'object' ? product.category.name : ''}, ateliê aruanda, artigos religiosos artesanais`}
             />
 
             {/* Lightbox Modal */}
@@ -345,6 +346,9 @@ const ProductPage: React.FC = () => {
                                 <h1 className="font-playfair text-3xl md:text-[40px] text-[var(--azul-profundo)] leading-tight font-medium">
                                     {product.name || 'Produto sem título'}
                                 </h1>
+                                <p className="hidden md:block text-[10px] uppercase tracking-widest text-[#C9A24D] font-bold">
+                                    {typeof product.category === 'object' ? product.category.name : 'Artigos Religiosos Exclusivos'}
+                                </p>
 
                                 {(() => {
                                     const avg = product.averageRating ?? 0;

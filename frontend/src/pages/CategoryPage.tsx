@@ -68,9 +68,10 @@ const CategoryPage: React.FC = () => {
     return (
         <div className="bg-[var(--branco-off-white)] min-h-screen">
             <SEO
-                title={collection.name}
-                description={collection.description || `Explore nossa coleção de ${collection.name}.`}
+                title={`Artigos para ${collection.name} | Melhores Preços`}
+                description={collection.description || `Confira nossa seleção exclusiva de artigos para ${collection.name}. Velas, Guias, Ervas e tudo o que você precisa com a qualidade do Ateliê.`}
                 image={collection.imageUrl || collection.media?.mainMedia?.image?.url}
+                keywords={`${collection.name}, artigos de umbanda, ateliê aruanda, ${collection.name} comprar`}
             />
 
             {/* HEADER DINÂMICO DA CATEGORIA */}

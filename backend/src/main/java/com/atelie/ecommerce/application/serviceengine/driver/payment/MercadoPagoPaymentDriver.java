@@ -53,13 +53,6 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
                             : "nulo");
         }
 
-        if (accessToken == null || accessToken.isBlank()) {
-            accessToken = env.getProperty("MP_ACCESS_TOKEN");
-            log.info("[DEBUG-MP] Fallback para variável de ambiente MP_ACCESS_TOKEN: {}",
-                    accessToken != null ? accessToken.substring(0, Math.min(accessToken.length(), 10)) + "..."
-                            : "nulo");
-        }
-
         accessToken = DriverConfigReader.requireNonBlank(accessToken, "access_token (Config MP)");
         String notificationUrl = (String) config.get("notification_url");
         BigDecimal amount = (BigDecimal) request.get("amount");
@@ -171,9 +164,6 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
         if (config.get("credentials") instanceof Map) {
             Map<String, Object> credentials = (Map<String, Object>) config.get("credentials");
             accessToken = (String) credentials.get("accessToken");
-        }
-        if (accessToken == null || accessToken.isBlank()) {
-            accessToken = env.getProperty("MP_ACCESS_TOKEN");
         }
         return DriverConfigReader.requireNonBlank(accessToken, "access_token (Config MP)");
     }

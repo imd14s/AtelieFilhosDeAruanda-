@@ -27,8 +27,9 @@ const Home: React.FC = () => {
     return (
         <div className="bg-[var(--branco-off-white)] min-h-screen">
             <SEO
-                title="Bem-vindo ao Axé"
-                description="Velas artesanais, guias personalizadas e ervas sagradas. O melhor do artesanato religioso com a qualidade do Ateliê Filhos de Aruanda."
+                title="Velas, Guias e Artigos Religiosos Artesanais"
+                description="Velas artesanais, guias personalizadas e ervas sagradas. O melhor do artesanato religioso com a qualidade do Ateliê Filhos de Aruanda. Feito com Axé e devoção."
+                keywords="umbanda, candomblé, velas artesanais, guias de proteção, ervas sagradas, ateliê aruanda"
             />
             <Hero />
 

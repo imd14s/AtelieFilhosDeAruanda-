@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.infrastructure.config.security;
 
+import com.atelie.ecommerce.infrastructure.config.web.SeoInjectionFilter;
 import com.atelie.ecommerce.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,10 +28,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final SeoInjectionFilter seoFilter;
     private final Environment env;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter, Environment env) {
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter, SeoInjectionFilter seoFilter, Environment env) {
         this.jwtFilter = jwtFilter;
+        this.seoFilter = seoFilter;
         this.env = env;
     }
 
@@ -112,6 +115,11 @@ public class SecurityConfig {
                         // Admin: exige ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
+                        // Rotas de SEO / Páginas do frontend (para injeção SSR)
+                        .requestMatchers(HttpMethod.GET, "/", "/store", "/search", "/about", "/ethics").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/produto/**", "/categoria/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/seo/**").permitAll()
+
                         // Demais rotas: autenticado
                         .anyRequest().authenticated())
 
@@ -123,7 +131,8 @@ public class SecurityConfig {
                                                               // Content-Security-Policy is preferred
 
                 // JWT filter (antes do filtro padrão de login)
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(seoFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
