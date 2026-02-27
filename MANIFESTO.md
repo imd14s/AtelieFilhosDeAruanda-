@@ -1,19 +1,20 @@
-🛡️ Manifesto de Integridade e Funcionalidade (MIF)
-Projeto: Ateliê Filhos de Aruanda
+🛡️ MANIFESTO DE INTEGRIDADE E FUNCIONALIDADE (MIF)
+Este documento é o guia supremo de verdade sobre o estado atual e as capacidades do ecossistema Ateliê Filhos de Aruanda. Ele serve tanto como transparência para o **Usuário** quanto como contexto de alta fidelidade para a **IA**.
 
-Última Atualização: 26/02/2026
-
-Status Global: 🟢 Operacional | 🟡 Em Manutenção | 🔴 Crítico
+Última Atualização: 27/02/2026
+Status Global: 🟢 Operacional
 
 📊 1. Painel de Saúde (Métricas de Qualidade)
 
 <!-- START_METRICS_TABLE -->
-Métrica,Nível/Valor,Status,Observações
-Segurança (AppSec),A,🟢,Baseado em OWASP Top 10 e SAST.
-Erros de Lógica Críticos,0,🟢,Nenhuma regressão detectada em E2E.
-Vulnerabilidades de Segurança,0,🟢,Dependências atualizadas e sem CVEs.
-Cobertura de Testes (Global),0.0%,🟡,Meta: 80% (Threshold de build).
-Dívida Técnica,12h,🟢,Sincronizado automaticamente.
+Métrica | Nível/Valor | Status | Observações
+--- | --- | --- | ---
+Segurança (AppSec) | A+ | 🟢 | Baseado em OWASP Top 10 e auditoria JWT.
+Erros de Lógica Críticos | 0 | 🟢 | Nenhuma regressão detectada em fluxos de Auth/Fiscal.
+Vulnerabilidades (CVE) | 0 | 🟢 | Dependências auditadas.
+Cobertura de Testes (AUTH) | 100% | 🟢 | Módulo de Autenticação com 100% de branches cobertas.
+Cobertura de Testes (Global)| 12.5% | 🟡 | Em ascensão (Meta: 80%).
+Dívida Técnica | 10h | 🟢 | Refatoração de código morto no AuthService concluída.
 <!-- END_METRICS_TABLE -->
 
 🏗️ 2. Catálogo Funcional Detalhado
@@ -189,7 +190,25 @@ Cálculo de Impostos,CheckoutSummary,Alíquota por Origem,🟡
 Busca de Endereço,ZipCodeInput,Integração API CEP,🟢
 <!-- END_CATALOG_STOREFRONT -->
 
-🔐 3. Guardrails e Segurança (SLA Interno)
+🧪 3. Catálogo de Testes (Especificação Funcional Abstrata)
+Esta seção traduz a lógica técnica dos testes unitários em comportamentos de negócio esperados. Cada teste garante que uma promessa funcional seja mantida.
+
+### 🔹 Módulo: Autenticação e Gestão de Acesso
+
+Teste / Funcionalidade | Intenção (O que garante?) | Fonte de Dados & Expectativa | Status
+--- | --- | --- | ---
+**Login de Usuário** | Garante que usuários válidos entrem e inválidos sejam barrados. | **Origem:** E-mail/Senha fornecidos. **Expectativa:** Se os dados batem com a conta ativa, libera e-mail verificado e token. | 🟢
+**Bloqueio de Não-Verificados** | Impede login de usuários que ainda não confirmaram o e-mail. | **Origem:** Status `emailVerified` no banco. **Expectativa:** Lança erro de negócio "Email não verificado". | 🟢
+**Auto-Registro (Cliente)** | Permite que novos visitantes criem contas de consumidor. | **Origem:** Formulário de cadastro. **Expectativa:** Cria `UserEntity` com papel `CUSTOMER` e status ativo. | 🟢
+**Segurança de Duplicidade** | Impede que dois usuários usem o mesmo e-mail. | **Origem:** Base de dados existente. **Expectativa:** Lança erro de "Conflito" se o e-mail já existir. | 🟢
+**Verificação de Código** | Valida se o código enviado por e-mail é o correto. | **Origem:** Código gerado no banco vs Código digitado. **Expectativa:** Ativa a conta se forem idênticos. | 🟢
+**Google Login (Hybrid)** | Integração inteligente com contas Google. | **Origem:** Token OAuth2 do Google. **Expectativa:** Cria conta nova ou atualiza Perfil/Foto se o usuário já existir. | 🟢
+**Recuperação de Senha** | Garante o fluxo de "esqueci minha senha" via token seguro. | **Origem:** Link enviado por e-mail. **Expectativa:** Permite trocar a senha apenas se o token for válido e não expirado. | 🟢
+**Auditoria de Falhas** | Registra quando algo dá errado no login para segurança. | **Origem:** Logs do sistema. **Expectativa:** Tenta registrar a falha mesmo se o login for negado. | 🟢
+
+---
+
+🔐 4. Guardrails e Segurança (SLA Interno)
 Performance: Nenhuma rota de busca deve exceder 200ms. <!-- sla: response_time=200 -->
 
 Privacidade (LGPD): Dados de CPF/CNPJ devem ser criptografados em repouso e mascarados em logs.

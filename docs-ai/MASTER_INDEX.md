@@ -8,6 +8,9 @@
    - Se o usuário usar `/plano [feature]`, liste APENAS os arquivos que serão criados/modificados com base na arquitetura. Sem código.
    - Se o usuário usar `/codigo [arquivo]`, gere APENAS o código daquele arquivo.
 
+## 📑 Fontes de Verdade (MIF)
+- **Estado Global & Métricas:** Use o [MANIFESTO.md](file:///home/imdias/workspace/AtelieFilhosDeAruanda-/MANIFESTO.md) na raiz como guia de saúde do projeto e catálogo de funcionalidades/testes.
+
 ## 🧭 Roteamento de Módulos (Mapas)
 Identifique em qual área o usuário quer trabalhar e leia o respectivo mapa ANTES de agir:
 
