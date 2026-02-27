@@ -6,7 +6,7 @@ import OptimizedImage from './ui/OptimizedImage';
 
 const Hero: React.FC = () => {
     return (
-        <section className="relative w-full h-[80vh] md:h-[85vh] overflow-hidden bg-[var(--branco-off-white)]">
+        <section className="relative w-full h-[80vh] md:h-[85vh] overflow-hidden bg-[var(--branco-off-white)] hero-container-skeleton">
             {/* Camada de Textura Orgânica */}
             <div className="absolute inset-0 z-10 opacity-[0.04] pointer-events-none mix-blend-multiply"
                 style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/p6.png')` }}>
@@ -61,7 +61,7 @@ const Hero: React.FC = () => {
                         width={800}
                         height={1000}
                         priority={true}
-                        className="w-full h-full object-cover scale-105 animate-slow-zoom"
+                        className="w-full h-full object-cover scale-105 animate-slow-zoom aspect-[4/5] md:aspect-auto"
                     />
 
                     {/* Detalhe Decorativo */}

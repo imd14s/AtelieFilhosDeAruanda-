@@ -1,17 +1,23 @@
-import * as nsfwjs from 'nsfwjs';
-import * as tf from '@tensorflow/tfjs';
+import { SafeAny } from '../types/safeAny';
 
-let modelPromise: Promise<nsfwjs.NSFWJS> | null = null;
+let modelPromise: Promise<SafeAny> | null = null;
 
 /**
- * Loads the NSFW model once.
+ * Loads the NSFW model once using dynamic imports to optimize bundle size.
  */
-export const loadModel = async (): Promise<nsfwjs.NSFWJS> => {
+export const loadModel = async (): Promise<SafeAny> => {
     if (!modelPromise) {
-        // Necessary for some environments to avoid issues with webgl
-        await tf.ready();
-        // Load models locally to avoid external network latency
-        modelPromise = nsfwjs.load('/models/');
+        modelPromise = (async () => {
+            const [tf, nsfwjs] = await Promise.all([
+                import('@tensorflow/tfjs'),
+                import('nsfwjs')
+            ]);
+
+            // Necessary for some environments to avoid issues with webgl
+            await tf.ready();
+            // Load models locally to avoid external network latency
+            return (nsfwjs as SafeAny).load('/models/');
+        })();
     }
     return modelPromise;
 };
@@ -31,11 +37,11 @@ export const isSafeImage = async (
     threshold: number = 0.6
 ): Promise<ModerationResult> => {
     const model = await loadModel();
-    const predictions = await model.classify(imageElement);
+    const predictions: SafeAny[] = await model.classify(imageElement);
 
     // Predictions are sorted by probability
     const results: Record<string, number> = {};
-    predictions.forEach(p => {
+    predictions.forEach((p: SafeAny) => {
         results[p.className] = p.probability;
     });
 

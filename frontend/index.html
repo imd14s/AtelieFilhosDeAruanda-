@@ -5,6 +5,28 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preload" href="/src/assets/fonts/PlayfairDisplay-Medium.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/src/assets/fonts/Lato-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  
+  <style>
+    :root {
+      --azul-profundo: #0f2A44;
+      --branco-off-white: #F7F7F4;
+      --dourado-suave: #C9A24D;
+    }
+    body {
+      background-color: #F7F7F4;
+      color: #0f2A44;
+      margin: 0;
+      font-family: sans-serif; /* Fallback until fonts load */
+    }
+    /* Critical skeleton for Hero Height to prevent CLS */
+    .hero-container-skeleton {
+      min-height: 80vh;
+      background-color: #F7F7F4;
+    }
+  </style>
+
   <title>Ateliê Filhos de Aruanda</title>
 </head>
 

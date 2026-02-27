@@ -11,11 +11,13 @@
 @font-face {
     font-family: "PlayFair";
     src: url('/src/assets/fonts/PlayfairDisplay-Medium.ttf');
+    font-display: swap;
 }
 
 @font-face {
     font-family: "Lato";
     src: url('/src/assets/fonts/Lato-Regular.ttf');
+    font-display: swap;
 }
 
 :root {
