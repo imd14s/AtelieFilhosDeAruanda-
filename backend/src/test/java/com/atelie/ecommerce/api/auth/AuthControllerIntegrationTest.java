@@ -1,141 +1,141 @@
 package com.atelie.ecommerce.api.auth;
 
-import com.atelie.ecommerce.application.dto.auth.LoginRequest;
-import com.atelie.ecommerce.application.dto.auth.LoginResponse;
-import com.atelie.ecommerce.application.dto.auth.RegisterRequest;
+import com.atelie.ecommerce.application.common.exception.GlobalExceptionHandler;
+import com.atelie.ecommerce.application.common.exception.UnauthorizedException;
+import com.atelie.ecommerce.application.dto.auth.*;
 import com.atelie.ecommerce.application.service.auth.AuthService;
+import com.atelie.ecommerce.application.service.catalog.SeoMetadataService;
+import com.atelie.ecommerce.infrastructure.persistence.category.CategoryRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
+import com.atelie.ecommerce.infrastructure.security.CustomUserDetailsService;
+import com.atelie.ecommerce.infrastructure.security.TokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
+@WebMvcTest(AuthController.class)
+@Import(GlobalExceptionHandler.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class AuthControllerIntegrationTest {
 
-        @Autowired
-        private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-        @Autowired
-        private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-        @MockBean
-        private AuthService authService;
+    @MockBean
+    private AuthService authService;
 
-        @Test
-        void login_ValidCredentials_ShouldReturnToken() throws Exception {
-                LoginRequest request = new LoginRequest("test@example.com", "password");
+    @MockBean
+    private SeoMetadataService seoMetadataService;
 
-                given(authService.login(any(LoginRequest.class))).willReturn(new LoginResponse("mock-jwt-token"));
+    @MockBean
+    private ProductRepository productRepository;
 
-                mockMvc.perform(post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.token").value("mock-jwt-token"));
-        }
+    @MockBean
+    private CategoryRepository categoryRepository;
 
-        @Test
-        void login_InvalidCredentials_ShouldReturnUnauthorized() throws Exception {
-                LoginRequest request = new LoginRequest("wrong@example.com", "wrongpass");
+    @MockBean
+    private TokenProvider tokenProvider;
 
-                // Simulating standard Spring Security behaviors
-                given(authService.login(any(LoginRequest.class)))
-                                .willThrow(new BadCredentialsException("Invalid credentials"));
+    @MockBean
+    private CustomUserDetailsService userDetailsService;
 
-                mockMvc.perform(post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                                .andExpect(status().isUnauthorized());
-                // Note: Standard handling or GlobalExceptionHandler should map this to 401
-        }
+    @Test
+    @DisplayName("POST /register - Should return 201 when valid")
+    void register_ValidRequest_ShouldReturn201() throws Exception {
+        RegisterRequest request = new RegisterRequest();
+        request.setName("Test User");
+        request.setEmail("test@example.com");
+        request.setPassword("password123");
 
-        @Test
-        @WithMockUser(roles = "ADMIN")
-        void register_AsAdmin_ShouldSucceed() throws Exception {
-                RegisterRequest request = new RegisterRequest();
-                request.setName("New User");
-                request.setEmail("new@example.com");
-                request.setPassword("password");
-                request.setRole("USER");
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
+    }
 
-                mockMvc.perform(post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                                .andExpect(status().isCreated());
-        }
+    @Test
+    @DisplayName("POST /register - Should return 400 when invalid DTO")
+    void register_InvalidRequest_ShouldReturn400() throws Exception {
+        RegisterRequest request = new RegisterRequest();
+        request.setName("");
+        request.setEmail("invalid-email");
 
-        @Test
-        void register_AsUser_ShouldReturnCreatedWhenPublic() throws Exception {
-                // Arrange
-                RegisterRequest request = new RegisterRequest();
-                request.setName("New User");
-                request.setEmail("newuser@example.com");
-                request.setPassword("password");
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validação Falhou"));
+    }
 
-                // Act & Assert
-                // In the new configuration, registration is public (permitAll), so even an
-                // authenticated user
-                // *might* be allowed to hit it, or it might just create a new user.
-                // Ideally, logged in users shouldn't register, but the endpoint is open.
-                // Let's assume 201 is now the correct expected behavior for the current
-                // security config.
-                mockMvc.perform(post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                                .andExpect(status().isCreated());
-        }
+    @Test
+    @DisplayName("POST /verify - Should return 200")
+    void verify_ValidRequest_ShouldReturn200() throws Exception {
+        VerifyRequest request = new VerifyRequest();
+        request.setEmail("test@example.com");
+        request.setCode("123456");
+        given(authService.verifyCustomer(any(VerifyRequest.class))).willReturn("Verified");
 
-        @Test
-        @WithMockUser(roles = "USER") // Not ADMIN, so logic inside service (which checks SecurityContext) or
-                                      // PreAuthorize would fail
-        void register_AsUser_ShouldReturnForbiddenOrAuthorizedDependingOnLayer() throws Exception {
-                // Since logic is inside service:
-                // "auth.getAuthorities()...anyMatch...ROLE_ADMIN"
-                // And we mock service?
-                // WAIT: If we MOCK the service, the service logic is NOT executed.
-                // So the security check INSIDE AuthService.register() won't happen if we just
-                // do "willDoNothing".
-                // BUT, if the controller has security annotations, those would check.
-                // AuthController.register() is public in terms of HTTP security?
-                // Let's assume the security config allows authenticated access or restricted to
-                // ADMIN.
-                // If the restriction is ONLY inside the service method (as seen in the
-                // reading), then mocking the service bypasses the check?
-                // Actually, if we mock the service, we can't test the security logic INSIDE the
-                // service.
-                // HOWEVER, if the logic is: "Service check SecurityContext", and we Mock the
-                // Service...
-                // We should skip this test OR use @SpyBean or invoke the real service if we
-                // want to test THAT interaction.
-                // But this is a Controller test.
+        mockMvc.perform(post("/api/auth/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Verified"));
+    }
 
-                // Let's stick to testing the endpoint response codes assuming the Service
-                // throws AccessDeniedException if unauthorized.
+    @Test
+    @DisplayName("POST /google - Should return 200 and LoginResponse")
+    void google_ValidRequest_ShouldReturn200() throws Exception {
+        GoogleLoginRequest request = new GoogleLoginRequest();
+        request.setIdToken("google-token");
+        LoginResponse response = LoginResponse.builder().token("jwt-token").build();
+        given(authService.googleLogin(any(GoogleLoginRequest.class))).willReturn(response);
 
-                RegisterRequest request = new RegisterRequest();
-                request.setName("New User");
-                request.setEmail("new@example.com");
-                request.setPassword("password");
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("jwt-token"));
+    }
 
-                mockMvc.perform(post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
-                                .andExpect(status().isCreated()); // or isUnauthorized? Usually AccessDenied -> 403
-                                                                  // Forbidden
-        }
+    @Test
+    @DisplayName("POST /login - Should return 200 and LoginResponse")
+    void login_ValidRequest_ShouldReturn200() throws Exception {
+        LoginRequest request = new LoginRequest("test@example.com", "password");
+        LoginResponse response = LoginResponse.builder().token("jwt-token").build();
+        given(authService.login(any(LoginRequest.class))).willReturn(response);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("jwt-token"));
+    }
+
+    @Test
+    @DisplayName("POST /login - Should return 401 when service throws UnauthorizedException")
+    void login_InvalidCredentials_ShouldReturn401() throws Exception {
+        LoginRequest request = new LoginRequest("test@example.com", "wrong-password");
+        given(authService.login(any(LoginRequest.class))).willThrow(new UnauthorizedException("Invalid credentials"));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.title").value("Não Autorizado"));
+    }
 }
