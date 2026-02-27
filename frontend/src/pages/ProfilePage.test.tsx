@@ -218,7 +218,7 @@ describe('ProfilePage Component', () => {
 
         // Mock FileReader constructor manually
         const mockInstance = {
-            readAsDataURL: vi.fn(function (this: { onload: () => void }) {
+            readAsDataURL: vi.fn(function (this: { onload: () => void }, _file: File) {
                 this.onload();
             }),
             result: 'data:image/png;base64,hello',
@@ -264,7 +264,7 @@ describe('ProfilePage Component', () => {
         (api.post as Mock).mockRejectedValue({ response: { data: { message: 'Upload failed' } } });
 
         const mockInstance = {
-            readAsDataURL: vi.fn(function (this: { onload: () => void }) {
+            readAsDataURL: vi.fn(function (this: { onload: () => void }, _file: File) {
                 this.onload();
             }),
             result: 'data:image/png;base64,hello',
@@ -311,7 +311,7 @@ describe('ProfilePage Component', () => {
 
     it('highlights zoom slider changes', async () => {
         const mockInstance = {
-            readAsDataURL: vi.fn(function (this: { onload: () => void }) { this.onload(); }),
+            readAsDataURL: vi.fn(function (this: { onload: () => void }, _file: File) { this.onload(); }),
             result: 'data:image/png;base64,hello',
             onload: () => { }
         };
