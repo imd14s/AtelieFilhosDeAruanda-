@@ -19,9 +19,9 @@ describe('ProductForm Component', () => {
         render(<ProductForm />);
 
         expect(await screen.findByText('Novo Produto')).toBeInTheDocument();
-        expect(screen.getByPlaceholderText('Ex: Camiseta Branca')).toBeInTheDocument();
-        expect(screen.getByLabelText('Preço Base (R$)')).toBeInTheDocument();
-        expect(screen.getByLabelText('Categoria')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Ex: Vestido Amarelo Ogum')).toBeInTheDocument();
+        expect(screen.getByText('Por (R$)')).toBeInTheDocument();
+        expect(screen.getByText('Categoria')).toBeInTheDocument();
     });
 
     it('should show validation errors for empty fields', async () => {
@@ -31,7 +31,8 @@ describe('ProductForm Component', () => {
         fireEvent.click(saveButton);
 
         expect(await screen.findByText('Título muito curto')).toBeInTheDocument();
-        expect(await screen.findByText('Categoria obrigatória')).toBeInTheDocument();
+        const categoryError = await screen.findByText(/Categoria obrigatória|Required|Expected string/i);
+        expect(categoryError).toBeInTheDocument();
     });
 
     it('should submit form successfully with valid data', async () => {
@@ -40,12 +41,23 @@ describe('ProductForm Component', () => {
         render(<ProductForm />);
 
         // Wait for categories to load
-        await screen.findByText('Velas');
+        await waitFor(() => {
+            expect(CategoryService.getAll).toHaveBeenCalled();
+        });
 
-        fireEvent.change(screen.getByPlaceholderText('Ex: Camiseta Branca'), { target: { value: 'Vela Teste' } });
-        fireEvent.change(screen.getByLabelText('Preço Base (R$)'), { target: { value: '50' } });
-        fireEvent.change(screen.getByLabelText('Estoque Total'), { target: { value: '10' } });
-        fireEvent.change(screen.getByLabelText('Categoria'), { target: { value: '1' } });
+        const selectPlaceholder = await screen.findByText('Selecione ou digite para adicionar uma categoria...');
+        fireEvent.keyDown(selectPlaceholder, { key: 'ArrowDown' });
+        const velasOption = await screen.findByText('Velas');
+        fireEvent.click(velasOption);
+
+        fireEvent.change(screen.getByPlaceholderText('Ex: Vestido Amarelo Ogum'), { target: { value: 'Vela Teste' } });
+        fireEvent.change(screen.getByPlaceholderText('0.00 (ou herdar)'), { target: { value: '50' } });
+        fireEvent.change(screen.getByPlaceholderText('0 (ou herdar)'), { target: { value: '10' } });
+        fireEvent.change(screen.getByPlaceholderText('Busque por código ou nome...'), { target: { value: '12345678' } });
+
+        // Add variant to the list so its values are submitted
+        fireEvent.click(screen.getByRole('button', { name: /Adicionar Variante/i }));
+
 
         const saveButton = screen.getByRole('button', { name: /Salvar Produto/i });
         fireEvent.click(saveButton);

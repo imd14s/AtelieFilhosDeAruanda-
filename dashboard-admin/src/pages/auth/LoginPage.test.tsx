@@ -21,7 +21,7 @@ describe('LoginPage Component', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
         await waitFor(() => {
-            expect(screen.getByText('Credenciais inválidas')).toBeInTheDocument();
+            expect(screen.getByText(/Credenciais inválidas/i)).toBeInTheDocument();
         });
     });
 

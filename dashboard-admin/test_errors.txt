@@ -1,0 +1,1448 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin[39m
+
+ [32m✓[39m src/App.test.tsx[2m > [22mAdmin Dashboard Initial Test[2m > [22mshould pass[32m 2[2mms[22m[39m
+ [32m✓[39m src/pages/settings/PaymentPage.test.tsx[2m > [22mPaymentPage Component[2m > [22mshould render payment providers correctly and filter out standalone PIX[32m 99[2mms[22m[39m
+ [32m✓[39m src/pages/settings/PaymentPage.test.tsx[2m > [22mPaymentPage Component[2m > [22mshould open MercadoPagoForm and save config[32m 48[2mms[22m[39m
+ [31m×[39m src/pages/settings/ShippingPage.test.tsx[2m > [22mShippingPage Component[2m > [22mshould render shipping providers correctly[32m 142[2mms[22m[39m
+[31m   → Unable to find an element with the text: JADLOG. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body[31m
+  [33mstyle[31m=[32m"overflow: unset;"[31m
+[36m>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"max-w-6xl mx-auto space-y-8 p-4"[31m
+    [36m>[31m
+      [36m<header[31m
+        [33mclass[31m=[32m"flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"flex gap-4 items-center"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100"[31m
+          [36m>[31m
+            [36m<svg[31m
+              [33maria-hidden[31m=[32m"true"[31m
+              [33mclass[31m=[32m"lucide lucide-truck"[31m
+              [33mfill[31m=[32m"none"[31m
+              [33mheight[31m=[32m"32"[31m
+              [33mstroke[31m=[32m"currentColor"[31m
+              [33mstroke-linecap[31m=[32m"round"[31m
+              [33mstroke-linejoin[31m=[32m"round"[31m
+              [33mstroke-width[31m=[32m"2"[31m
+              [33mviewBox[31m=[32m"0 0 24 24"[31m
+              [33mwidth[31m=[32m"32"[31m
+              [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+            [36m>[31m
+              [36m<path[31m
+                [33md[31m=[32m"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"[31m
+              [36m/>[31m
+              [36m<path[31m
+                [33md[31m=[32m"M15 18H9"[31m
+              [36m/>[31m
+              [36m<path[31m
+                [33md[31m=[32m"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"[31m
+              [36m/>[31m
+              [36m<circle[31m
+                [33mcx[31m=[32m"17"[31m
+                [33mcy[31m=[32m"18"[31m
+                [33mr[31m=[32m"2"[31m
+              [36m/>[31m
+              [36m<circle[31m
+                [33mcx[31m=[32m"7"[31m
+                [33mcy[31m=[32m"18"[31m
+                [33mr[31m=[32m"2"[31m
+              [36m/>[31m
+            [36m</svg>[31m
+          [36m</div>[31m
+          [36m<div>[31m
+            [36m<h1[31m
+              [33mclass[31m=[32m"text-3xl font-extrabold text-gray-900 tracking-tight"[31m
+            [36m>[31m
+              [0mFrete e Entrega[0m
+            [36m</h1>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"flex items-center gap-2 text-gray-500 mt-1"[31m
+            [36m>[31m
+              [36m<svg[31m
+                [33maria-hidden[31m=[32m"true"[31m
+                [33mclass[31m=[32m"lucide lucide-shield-check text-green-500"[31m
+                [33mfill[31m=[32m"none"[31m
+                [33mheight[31m=[32m"14"[31m
+                [33mstroke[31m=[32m"currentColor"[31m
+                [33mstroke-linecap[31m=[32m"round"[31m
+                [33mstroke-linejoin[31m=[32m"round"[31m
+                [33mstroke-width[31m=[32m"2"[31m
+                [33mviewBox[31m=[32m"0 0 24 24"[31m
+                [33mwidth[31m=[32m"14"[31m
+                [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+              [36m>[31m
+                [36m<path[31m
+                  [33md[31m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[31m
+                [36m/>[31m
+                [36m<path[31m
+                  [33md[31m=[32m"m9 12 2 2 4-4"[31m
+                [36m/>[31m
+              [36m</svg>[31m
+              [36m<span[31m
+                [33mclass[31m=[32m"text-sm"[31m
+              [36m>[31m
+                [0mConfiguração Dinâmica Ativa[0m
+              [36m</span>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+        [36m<button[31m
+          [33mclass[31m=[32m"inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md gap-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm px-4 py-2 text-sm shadow-lg"[31m
+        [36m>[31m
+          [36m<svg[31m
+            [33maria-hidden[31m=[32m"true"[31m
+            [33mclass[31m=[32m"lucide lucide-plus"[31m
+            [33mfill[31m=[32m"none"[31m
+            [33mheight[31m=[32m"20"[31m
+            [33mstroke[31m=[32m"currentColor"[31m
+            [33mstroke-linecap[31m=[32m"round"[31m
+            [33mstroke-linejoin[31m=[32m"round"[31m
+            [33mstroke-width[31m=[32m"2"[31m
+            [33mviewBox[31m=[32m"0 0 24 24"[31m
+            [33mwidth[31m=[32m"20"[31m
+            [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+          [36m>[31m
+            [36m<path[31m
+              [33md[31m=[32m"M5 12h14"[31m
+            [36m/>[31m
+            [36m<path[31m
+              [33md[31m=[32m"M12 5v14"[31m
+            [36m/>[31m
+          [36m</svg>[31m
+          [0m Adicionar Provedor[0m
+        [36m</button>[31m
+      [36m</header>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"grid gap-6"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white rounded-3xl border-2 transition-all border-gray-100 hover:border-gray-200 shadow-sm"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"p-8 flex flex-col md:flex-row items-center justify-between gap-6"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"flex items-center gap-6"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"w-20 h-20 rounded-2xl flex items-center justify-center transition-colors bg-indigo-50 text-indigo-600"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-truck"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"32"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"2"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"32"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M15 18H9"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md...[39m
+ [32m✓[39m src/pages/auth/LoginPage.test.tsx[2m > [22mLoginPage Component[2m > [22mshould render login form correctly[33m 321[2mms[22m[39m
+ [32m✓[39m src/pages/settings/ShippingPage.test.tsx[2m > [22mShippingPage Component[2m > [22mshould toggle provider status[32m 264[2mms[22m[39m
+ [32m✓[39m src/pages/orders/OrdersList.test.tsx[2m > [22mOrdersPage Component[2m > [22mshould render orders list correctly[32m 196[2mms[22m[39m
+ [31m×[39m src/pages/orders/OrdersList.test.tsx[2m > [22mOrdersPage Component[2m > [22mshould open cancel modal and cancel order[32m 300[2mms[22m[39m
+[31m   → Found multiple elements with the role "textbox"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<input[31m
+  [33mclass[31m=[32m"w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"[31m
+  [33mplaceholder[31m=[32m"Buscar por ID ou nome do cliente..."[31m
+  [33mtype[31m=[32m"text"[31m
+  [33mvalue[31m=[32m""[31m
+[36m/>[31m
+
+Ignored nodes: comments, script, style
+[36m<textarea[31m
+  [33mclass[31m=[32m"w-full border rounded-lg p-3 mb-4 focus:ring-2 focus:ring-red-500 outline-none"[31m
+  [33mplaceholder[31m=[32m"Ex: Produto fora de estoque, desistência..."[31m
+  [33mrows[31m=[32m"3"[31m
+[36m/>[31m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body[31m
+  [33mstyle[31m=[32m"overflow: hidden;"[31m
+[36m>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"space-y-6"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex justify-between items-center"[31m
+      [36m>[31m
+        [36m<div>[31m
+          [36m<h1[31m
+            [33mclass[31m=[32m"text-2xl font-bold text-gray-800"[31m
+          [36m>[31m
+            [0mPedidos[0m
+          [36m</h1>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"text-gray-500"[31m
+          [36m>[31m
+            [0mGerencie os pedidos da loja[0m
+          [36m</p>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"bg-white p-4 rounded-xl shadow-sm border border-gray-100"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"relative max-w-md"[31m
+        [36m>[31m
+          [36m<svg[31m
+            [33maria-hidden[31m=[32m"true"[31m
+            [33mclass[31m=[32m"lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"[31m
+            [33mfill[31m=[32m"none"[31m
+            [33mheight[31m=[32m"18"[31m
+            [33mstroke[31m=[32m"currentColor"[31m
+            [33mstroke-linecap[31m=[32m"round"[31m
+            [33mstroke-linejoin[31m=[32m"round"[31m
+            [33mstroke-width[31m=[32m"2"[31m
+            [33mviewBox[31m=[32m"0 0 24 24"[31m
+            [33mwidth[31m=[32m"18"[31m
+            [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+          [36m>[31m
+            [36m<path[31m
+              [33md[31m=[32m"m21 21-4.34-4.34"[31m
+            [36m/>[31m
+            [36m<circle[31m
+              [33mcx[31m=[32m"11"[31m
+              [33mcy[31m=[32m"11"[31m
+              [33mr[31m=[32m"8"[31m
+            [36m/>[31m
+          [36m</svg>[31m
+          [36m<input[31m
+            [33mclass[31m=[32m"w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"[31m
+            [33mplaceholder[31m=[32m"Buscar por ID ou nome do cliente..."[31m
+            [33mtype[31m=[32m"text"[31m
+            [33mvalue[31m=[32m""[31m
+          [36m/>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"overflow-x-auto"[31m
+        [36m>[31m
+          [36m<table[31m
+            [33mclass[31m=[32m"w-full text-left min-w-[600px]"[31m
+          [36m>[31m
+            [36m<thead[31m
+              [33mclass[31m=[32m"bg-gray-50 border-b"[31m
+            [36m>[31m
+              [36m<tr>[31m
+                [36m<th[31m
+                  [33mclass[31m=[32m"p-4 text-sm font-semibold text-gray-600"[31m
+                [36m>[31m
+                  [0mID[0m
+                [36m</th>[31m
+                [36m<th[31m
+                  [33mclass[31m=[32m"p-4 text-sm font-semibold text-gray-600"[31m
+                [36m>[31m
+                  [0mCliente[0m
+                [36m</th>[31m
+                [36m<th[31m
+                  [33mclass[31m=[32m"p-4 text-sm font-semibold text-gray-600"[31m
+                [36m>[31m
+                  [0mTotal[0m
+                [36m</th>[31m
+                [36m<th[31m
+                  [33mclass[31m=[32m"p-4 text-sm font-semibold text-gray-600"[31m
+                [36m>[31m
+                  [0mStatus[0m
+                [36m</th>[31m
+                [36m<th[31m
+                  [33mclass[31m=[32m"p-4 text-sm font-semibold text-gray-600"[31m
+                [36m>[31m
+                  [0mDocumentos[0m
+                [36m</th>[31m
+                [36m<th[31m
+                  [33mclass[31m=[32m"p-4 text-sm font-semibold text-gray-600"[31m
+                [36m>[31m
+                  [0mData[0m
+                [36m</th>[31m
+                [36m<th[31m
+                  [33mclass[31m=[32m"p-4 text-sm font-semibold text-gray-600 text-right"[31m
+                [36m>[31m
+                  [0mAções[0m
+                [36m</th>[31m
+              [36m</tr>[31m
+            [36m</thead>[31m
+            [36m<tbody[31m
+              [33mclass[31m=[32m"divide-y divide-gray-100"[31m
+            [36m>[31m
+              [36m<tr[31m
+                [33mclass[31m=[32m"hover:bg-gray-50 transition cursor-pointer"[31m
+              [36m>[31m
+                [36m<td[31m
+                  [33mclass[31m=[32m"p-4 font-mono text-xs text-gray-500"[31m
+                [36m>[31m
+                  [0m#[0m
+                  [0mORD1[0m
+                [36m</td>[31m
+                [36m<td[31m
+                  [33mclass[31m=[32m"p-4 font-medium text-gray-800"[31m
+                [36m>[31m
+                  [0mCliente 1[0m
+                [36m</td>[31m
+                [36m<td[31m
+                  [33mclass[31m=[32m"p-4 text-gray-600"[31m
+                [36m>[31m
+                  [0mR$ 100,00[0m
+                [36m</td>[31m
+                [36m<td[31m
+                  [33mclass[31m=[32m"p-4"[31m
+                [36m>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700"[31m
+                  [36m>[31m
+                    [0mPAID[0m
+                  [36m</span>[31m
+                [36m</td>[31m
+                [36m<td[31m
+                  [33mclass[31m=[32m"p-4"[31m
+                [36m>[31m
+                  [36m<div[31m
+                    [33mclass[31m=[32m"flex gap-2"[31m
+                  [36m>[31m
+                    [36m<span[31m
+                      [33mclass[31m=[32m"text-gray-300 text-xs"[31m
+                    [36m>[31m
+                      [0m-[0m
+                    [36m</span>[31m
+                  [36m</div>[31m
+                [36m</td>[31m
+                [36m<td[31m
+                  [33mclass[31m=[32m"p-4 text-sm text-gray-500"[31m
+                [36m>[31m
+                  [0m10/02/2024[0m
+                [36m</td>[31m
+                [36m<td[31m
+                  [33mclass[31m=[32m"p-4 text-right flex justify-end gap-2"[31m
+                [36m>[31m
+                  [36m<button[31m
+                    [33mclass[31m=[32m"text-blue-600 hover:text-blue-800 transition flex items-center gap-1"[31m
+                    [33mtitle[31m=[32m"Marcar como Enviado"[31m
+                  [36m>[31m
+                    [36m<svg[31m
+                      [33maria-hidden[31m=[32m"true"[31m
+                      [33mclass[31m=[32m"lucide lucide-truck"[31m
+                      [33mfill[31m=[32m"none"[31m
+                      [33mheight[31m=[32m"1...[39m
+ [31m×[39m src/pages/products/ProductForm.test.tsx[2m > [22mProductForm Component[2m > [22mshould render form fields correctly[33m 319[2mms[22m[39m
+[31m   → Unable to find an element with the placeholder text of: Ex: Camiseta Branca
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"space-y-6 pb-20"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex items-center gap-4"[31m
+      [36m>[31m
+        [36m<button[31m
+          [33mclass[31m=[32m"p-2 hover:bg-gray-100 rounded-full"[31m
+        [36m>[31m
+          [36m<svg[31m
+            [33maria-hidden[31m=[32m"true"[31m
+            [33mclass[31m=[32m"lucide lucide-chevron-left"[31m
+            [33mfill[31m=[32m"none"[31m
+            [33mheight[31m=[32m"24"[31m
+            [33mstroke[31m=[32m"currentColor"[31m
+            [33mstroke-linecap[31m=[32m"round"[31m
+            [33mstroke-linejoin[31m=[32m"round"[31m
+            [33mstroke-width[31m=[32m"2"[31m
+            [33mviewBox[31m=[32m"0 0 24 24"[31m
+            [33mwidth[31m=[32m"24"[31m
+            [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+          [36m>[31m
+            [36m<path[31m
+              [33md[31m=[32m"m15 18-6-6 6-6"[31m
+            [36m/>[31m
+          [36m</svg>[31m
+        [36m</button>[31m
+        [36m<div>[31m
+          [36m<h1[31m
+            [33mclass[31m=[32m"text-2xl font-bold text-gray-800"[31m
+          [36m>[31m
+            [0mNovo Produto[0m
+          [36m</h1>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"text-gray-500"[31m
+          [36m>[31m
+            [0mCadastro passo-a-passo de Informações e Variantes[0m
+          [36m</p>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<form[31m
+        [33mclass[31m=[32m"space-y-6"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"mb-4 text-sm text-indigo-600 bg-indigo-50 p-3 rounded border border-indigo-100 italic"[31m
+          [36m>[31m
+            [0mPara adicionar um produto com múltiplas variantes e fotos distintas: anexe primeiro as fotos de uma cor/modelo, preencha os dados abaixo e clique em [0m
+            [36m<b>[31m
+              [0m"Adicionar"[0m
+            [36m</b>[31m
+            [0m. A galeria será limpa para você subir as fotos da próxima variação! A foto principal da Categoria se torna a Capa da variante.[0m
+          [36m</div>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2 mb-4"[31m
+          [36m>[31m
+            [0mMídia & Imagens da Variante Atual[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"space-y-4"[31m
+          [36m>[31m
+            [36m<h3[31m
+              [33mclass[31m=[32m"font-semibold text-gray-700"[31m
+            [36m>[31m
+              [0mGaleria de Mídia[0m
+            [36m</h3>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"grid grid-cols-2 md:grid-cols-4 gap-4"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition relative"[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"text-center w-full px-4"[31m
+                [36m>[31m
+                  [36m<svg[31m
+                    [33maria-hidden[31m=[32m"true"[31m
+                    [33mclass[31m=[32m"lucide lucide-upload text-gray-400 mb-2 mx-auto"[31m
+                    [33mfill[31m=[32m"none"[31m
+                    [33mheight[31m=[32m"24"[31m
+                    [33mstroke[31m=[32m"currentColor"[31m
+                    [33mstroke-linecap[31m=[32m"round"[31m
+                    [33mstroke-linejoin[31m=[32m"round"[31m
+                    [33mstroke-width[31m=[32m"2"[31m
+                    [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [33mwidth[31m=[32m"24"[31m
+                    [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                  [36m>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M12 3v12"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"m17 8-5-5-5 5"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[31m
+                    [36m/>[31m
+                  [36m</svg>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"text-sm text-gray-500 block"[31m
+                  [36m>[31m
+                    [0mUpload Arquivo[0m
+                  [36m</span>[31m
+                [36m</div>[31m
+                [36m<input[31m
+                  [33maccept[31m=[32m"image/*,video/*"[31m
+                  [33mclass[31m=[32m"hidden"[31m
+                  [33mmultiple[31m=[32m""[31m
+                  [33mtype[31m=[32m"file"[31m
+                [36m/>[31m
+              [36m</label>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6"[31m
+        [36m>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2"[31m
+          [36m>[31m
+            [0mInformações Básicas & Variantes[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded border"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+                [33mfor[31m=[32m"title"[31m
+              [36m>[31m
+                [0mTítulo do Produto[0m
+              [36m</label>[31m
+              [36m<input[31m
+                [33mclass[31m=[32m"w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"[31m
+                [33mid[31m=[32m"title"[31m
+                [33mname[31m=[32m"title"[31m
+                [33mplaceholder[31m=[32m"Ex: Vestido Amarelo Ogum"[31m
+              [36m/>[31m
+            [36m</div>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+                [33mfor[31m=[32m"category"[31m
+              [36m>[31m
+                [0mCategoria[0m
+              [36m</label>[31m
+              [36m<div[31m
+                [33mclas...[39m
+ [31m×[39m src/pages/auth/LoginPage.test.tsx[2m > [22mLoginPage Component[2m > [22mshould show error message on invalid credentials[33m 1057[2mms[22m[39m
+[31m   → Unable to find an element with the text: Credenciais inválidas. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"min-h-screen flex items-center justify-center bg-gray-100"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"bg-white p-8 rounded-xl shadow-lg w-full max-w-md"[31m
+      [36m>[31m
+        [36m<h2[31m
+          [33mclass[31m=[32m"text-2xl font-bold mb-6 text-center text-gray-800"[31m
+        [36m>[31m
+          [0mAcesso Administrativo[0m
+        [36m</h2>[31m
+        [36m<form[31m
+          [33mclass[31m=[32m"space-y-4"[31m
+        [36m>[31m
+          [36m<div>[31m
+            [36m<label[31m
+              [33mclass[31m=[32m"block text-sm font-medium text-gray-700"[31m
+              [33mfor[31m=[32m"email"[31m
+            [36m>[31m
+              [0mEmail[0m
+            [36m</label>[31m
+            [36m<input[31m
+              [33mclass[31m=[32m"mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"[31m
+              [33mid[31m=[32m"email"[31m
+              [33mname[31m=[32m"email"[31m
+              [33mplaceholder[31m=[32m"admin@atelie.com"[31m
+              [33mtype[31m=[32m"email"[31m
+            [36m/>[31m
+          [36m</div>[31m
+          [36m<div>[31m
+            [36m<label[31m
+              [33mclass[31m=[32m"block text-sm font-medium text-gray-700"[31m
+              [33mfor[31m=[32m"password"[31m
+            [36m>[31m
+              [0mSenha[0m
+            [36m</label>[31m
+            [36m<input[31m
+              [33mclass[31m=[32m"mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"[31m
+              [33mid[31m=[32m"password"[31m
+              [33mname[31m=[32m"password"[31m
+              [33mplaceholder[31m=[32m"••••••"[31m
+              [33mtype[31m=[32m"password"[31m
+            [36m/>[31m
+          [36m</div>[31m
+          [36m<button[31m
+            [33mclass[31m=[32m"inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md gap-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm px-4 py-2 text-sm w-full"[31m
+            [33mtype[31m=[32m"submit"[31m
+          [36m>[31m
+            [0mEntrar[0m
+          [36m</button>[31m
+        [36m</form>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</div>[31m
+[36m</body>[31m
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"min-h-screen flex items-center justify-center bg-gray-100"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-8 rounded-xl shadow-lg w-full max-w-md"[31m
+        [36m>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"text-2xl font-bold mb-6 text-center text-gray-800"[31m
+          [36m>[31m
+            [0mAcesso Administrativo[0m
+          [36m</h2>[31m
+          [36m<form[31m
+            [33mclass[31m=[32m"space-y-4"[31m
+          [36m>[31m
+            [36m<div>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700"[31m
+                [33mfor[31m=[32m"email"[31m
+              [36m>[31m
+                [0mEmail[0m
+              [36m</label>[31m
+              [36m<input[31m
+                [33mclass[31m=[32m"mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"[31m
+                [33mid[31m=[32m"email"[31m
+                [33mname[31m=[32m"email"[31m
+                [33mplaceholder[31m=[32m"admin@atelie.com"[31m
+                [33mtype[31m=[32m"email"[31m
+              [36m/>[31m
+            [36m</div>[31m
+            [36m<div>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700"[31m
+                [33mfor[31m=[32m"password"[31m
+              [36m>[31m
+                [0mSenha[0m
+              [36m</label>[31m
+              [36m<input[31m
+                [33mclass[31m=[32m"mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"[31m
+                [33mid[31m=[32m"password"[31m
+                [33mname[31m=[32m"password"[31m
+                [33mplaceholder[31m=[32m"••••••"[31m
+                [33mtype[31m=[32m"password"[31m
+              [36m/>[31m
+            [36m</div>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md gap-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm px-4 py-2 text-sm w-full"[31m
+              [33mtype[31m=[32m"submit"[31m
+            [36m>[31m
+              [0mEntrar[0m
+            [36m</button>[31m
+          [36m</form>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+ [32m✓[39m src/pages/auth/LoginPage.test.tsx[2m > [22mLoginPage Component[2m > [22mshould call login and redirected on success[32m 76[2mms[22m[39m
+ [31m×[39m src/pages/settings/ShippingPage.test.tsx[2m > [22mShippingPage Component[2m > [22mshould open config editor and save config[33m 1101[2mms[22m[39m
+[31m   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Received: 
+
+[1m  1st vi.fn() call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "configJson": "{\"key\": \"updated\"}",[90m
+[31m+   {[90m
+[31m+     "configJson": "{\"key\":\"updated\"}",[90m
+[31m+     "environment": "PRODUCTION",[90m
+[2m      "providerId": "1",[22m
+[2m    },[22m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body[31m
+    [33mstyle[31m=[32m"overflow: unset;"[31m
+  [36m>[31m
+    [36m<div>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"max-w-6xl mx-auto space-y-8 p-4"[31m
+      [36m>[31m
+        [36m<header[31m
+          [33mclass[31m=[32m"flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"flex gap-4 items-center"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100"[31m
+            [36m>[31m
+              [36m<svg[31m
+                [33maria-hidden[31m=[32m"true"[31m
+                [33mclass[31m=[32m"lucide lucide-truck"[31m
+                [33mfill[31m=[32m"none"[31m
+                [33mheight[31m=[32m"32"[31m
+                [33mstroke[31m=[32m"currentColor"[31m
+                [33mstroke-linecap[31m=[32m"round"[31m
+                [33mstroke-linejoin[31m=[32m"round"[31m
+                [33mstroke-width[31m=[32m"2"[31m
+                [33mviewBox[31m=[32m"0 0 24 24"[31m
+                [33mwidth[31m=[32m"32"[31m
+                [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+              [36m>[31m
+                [36m<path[31m
+                  [33md[31m=[32m"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"[31m
+                [36m/>[31m
+                [36m<path[31m
+                  [33md[31m=[32m"M15 18H9"[31m
+                [36m/>[31m
+                [36m<path[31m
+                  [33md[31m=[32m"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"[31m
+                [36m/>[31m
+                [36m<circle[31m
+                  [33mcx[31m=[32m"17"[31m
+                  [33mcy[31m=[32m"18"[31m
+                  [33mr[31m=[32m"2"[31m
+                [36m/>[31m
+                [36m<circle[31m
+                  [33mcx[31m=[32m"7"[31m
+                  [33mcy[31m=[32m"18"[31m
+                  [33mr[31m=[32m"2"[31m
+                [36m/>[31m
+              [36m</svg>[31m
+            [36m</div>[31m
+            [36m<div>[31m
+              [36m<h1[31m
+                [33mclass[31m=[32m"text-3xl font-extrabold text-gray-900 tracking-tight"[31m
+              [36m>[31m
+                [0mFrete e Entrega[0m
+              [36m</h1>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex items-center gap-2 text-gray-500 mt-1"[31m
+              [36m>[31m
+                [36m<svg[31m
+                  [33maria-hidden[31m=[32m"true"[31m
+                  [33mclass[31m=[32m"lucide lucide-shield-check text-green-500"[31m
+                  [33mfill[31m=[32m"none"[31m
+                  [33mheight[31m=[32m"14"[31m
+                  [33mstroke[31m=[32m"currentColor"[31m
+                  [33mstroke-linecap[31m=[32m"round"[31m
+                  [33mstroke-linejoin[31m=[32m"round"[31m
+                  [33mstroke-width[31m=[32m"2"[31m
+                  [33mviewBox[31m=[32m"0 0 24 24"[31m
+                  [33mwidth[31m=[32m"14"[31m
+                  [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                [36m>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[31m
+                  [36m/>[31m
+                  [36m<path[31m
+                    [33md[31m=[32m"m9 12 2 2 4-4"[31m
+                  [36m/>[31m
+                [36m</svg>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"text-sm"[31m
+                [36m>[31m
+                  [0mConfiguração Dinâmica Ativa[0m
+                [36m</span>[31m
+              [36m</div>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+          [36m<button[31m
+            [33mclass[31m=[32m"inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md gap-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm px-4 py-2 text-sm shadow-lg"[31m
+          [36m>[31m
+            [36m<svg[31m
+              [33maria-hidden[31m=[32m"true"[31m
+              [33mclass[31m=[32m"lucide lucide-plus"[31m
+              [33mfill[31m=[32m"none"[31m
+              [33mheight[31m=[32m"20"[31m
+              [33mstroke[31m=[32m"currentColor"[31m
+              [33mstroke-linecap[31m=[32m"round"[31m
+              [33mstroke-linejoin[31m=[32m"round"[31m
+              [33mstroke-width[31m=[32m"2"[31m
+              [33mviewBox[31m=[32m"0 0 24 24"[31m
+              [33mwidth[31m=[32m"20"[31m
+              [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+            [36m>[31m
+              [36m<path[31m
+                [33md[31m=[32m"M5 12h14"[31m
+              [36m/>[31m
+              [36m<path[31m
+                [33md[31m=[32m"M12 5v14"[31m
+              [36m/>[31m
+            [36m</svg>[31m
+            [0m Adicionar Provedor[0m
+          [36m</button>[31m
+        [36m</header>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"grid gap-6"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"bg-white rounded-3xl border-2 transition-all border-indigo-500 shadow-2xl ring-4 ring-indigo-50"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"p-8 flex flex-col md:flex-row items-center justify-between gap-6"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex items-center gap-6"[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"w-20 h-20 rounded-2xl flex items-center justify-center transition-colors bg-indigo-50 text-indigo-600"[31m
+                [36m>[31m
+                  [36m<svg[31m
+                    [33maria-hidden[31m=[32m"true"[31m
+                    [33mclass[31m=[32m"lucide lucide-truck"[31m
+                    [33mfill[31m=[32m"none"[31m
+                    [33mheight[31m=[32m"32"[31m
+                    [33mstroke[31m=[32m"currentColor"[31m
+                    [33mstroke-linecap[31m=[32m"round"[31m
+                    [33mstroke-linejoin[31m=[32m"round"[31m
+                    [33mstroke-width[31m=[32m"2"[31m
+                    [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [33mwidth[31m=[32m"32"[31m
+                    [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                  [36m>[31m
+                    [3...[39m
+ [31m×[39m src/pages/products/ProductForm.test.tsx[2m > [22mProductForm Component[2m > [22mshould show validation errors for empty fields[33m 1325[2mms[22m[39m
+[31m   → Unable to find an element with the text: Categoria obrigatória. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"space-y-6 pb-20"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex items-center gap-4"[31m
+      [36m>[31m
+        [36m<button[31m
+          [33mclass[31m=[32m"p-2 hover:bg-gray-100 rounded-full"[31m
+        [36m>[31m
+          [36m<svg[31m
+            [33maria-hidden[31m=[32m"true"[31m
+            [33mclass[31m=[32m"lucide lucide-chevron-left"[31m
+            [33mfill[31m=[32m"none"[31m
+            [33mheight[31m=[32m"24"[31m
+            [33mstroke[31m=[32m"currentColor"[31m
+            [33mstroke-linecap[31m=[32m"round"[31m
+            [33mstroke-linejoin[31m=[32m"round"[31m
+            [33mstroke-width[31m=[32m"2"[31m
+            [33mviewBox[31m=[32m"0 0 24 24"[31m
+            [33mwidth[31m=[32m"24"[31m
+            [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+          [36m>[31m
+            [36m<path[31m
+              [33md[31m=[32m"m15 18-6-6 6-6"[31m
+            [36m/>[31m
+          [36m</svg>[31m
+        [36m</button>[31m
+        [36m<div>[31m
+          [36m<h1[31m
+            [33mclass[31m=[32m"text-2xl font-bold text-gray-800"[31m
+          [36m>[31m
+            [0mNovo Produto[0m
+          [36m</h1>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"text-gray-500"[31m
+          [36m>[31m
+            [0mCadastro passo-a-passo de Informações e Variantes[0m
+          [36m</p>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<form[31m
+        [33mclass[31m=[32m"space-y-6"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"mb-4 text-sm text-indigo-600 bg-indigo-50 p-3 rounded border border-indigo-100 italic"[31m
+          [36m>[31m
+            [0mPara adicionar um produto com múltiplas variantes e fotos distintas: anexe primeiro as fotos de uma cor/modelo, preencha os dados abaixo e clique em [0m
+            [36m<b>[31m
+              [0m"Adicionar"[0m
+            [36m</b>[31m
+            [0m. A galeria será limpa para você subir as fotos da próxima variação! A foto principal da Categoria se torna a Capa da variante.[0m
+          [36m</div>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2 mb-4"[31m
+          [36m>[31m
+            [0mMídia & Imagens da Variante Atual[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"space-y-4"[31m
+          [36m>[31m
+            [36m<h3[31m
+              [33mclass[31m=[32m"font-semibold text-gray-700"[31m
+            [36m>[31m
+              [0mGaleria de Mídia[0m
+            [36m</h3>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"grid grid-cols-2 md:grid-cols-4 gap-4"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition relative"[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"text-center w-full px-4"[31m
+                [36m>[31m
+                  [36m<svg[31m
+                    [33maria-hidden[31m=[32m"true"[31m
+                    [33mclass[31m=[32m"lucide lucide-upload text-gray-400 mb-2 mx-auto"[31m
+                    [33mfill[31m=[32m"none"[31m
+                    [33mheight[31m=[32m"24"[31m
+                    [33mstroke[31m=[32m"currentColor"[31m
+                    [33mstroke-linecap[31m=[32m"round"[31m
+                    [33mstroke-linejoin[31m=[32m"round"[31m
+                    [33mstroke-width[31m=[32m"2"[31m
+                    [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [33mwidth[31m=[32m"24"[31m
+                    [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                  [36m>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M12 3v12"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"m17 8-5-5-5 5"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[31m
+                    [36m/>[31m
+                  [36m</svg>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"text-sm text-gray-500 block"[31m
+                  [36m>[31m
+                    [0mUpload Arquivo[0m
+                  [36m</span>[31m
+                [36m</div>[31m
+                [36m<input[31m
+                  [33maccept[31m=[32m"image/*,video/*"[31m
+                  [33mclass[31m=[32m"hidden"[31m
+                  [33mmultiple[31m=[32m""[31m
+                  [33mtype[31m=[32m"file"[31m
+                [36m/>[31m
+              [36m</label>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6"[31m
+        [36m>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2"[31m
+          [36m>[31m
+            [0mInformações Básicas & Variantes[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded border"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+                [33mfor[31m=[32m"title"[31m
+              [36m>[31m
+                [0mTítulo do Produto[0m
+              [36m</label>[31m
+              [36m<input[31m
+                [33mclass[31m=[32m"w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"[31m
+                [33mid[31m=[32m"title"[31m
+                [33mname[31m=[32m"title"[31m
+                [33mplaceholder[31m=[32m"Ex: Vestido Amarelo Ogum"[31m
+              [36m/>[31m
+              [36m<p[31m
+                [33mclass[31m=[32m"text-red-500 text-xs mt-1"[31m
+              [36m>[31m
+                [0mTítulo muito curto[0m
+              [36m</p>[31m
+            [36m</div>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+   ...
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"space-y-6 pb-20"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex items-center gap-4"[31m
+      [36m>[31m
+        [36m<button[31m
+          [33mclass[31m=[32m"p-2 hover:bg-gray-100 rounded-full"[31m
+        [36m>[31m
+          [36m<svg[31m
+            [33maria-hidden[31m=[32m"true"[31m
+            [33mclass[31m=[32m"lucide lucide-chevron-left"[31m
+            [33mfill[31m=[32m"none"[31m
+            [33mheight[31m=[32m"24"[31m
+            [33mstroke[31m=[32m"currentColor"[31m
+            [33mstroke-linecap[31m=[32m"round"[31m
+            [33mstroke-linejoin[31m=[32m"round"[31m
+            [33mstroke-width[31m=[32m"2"[31m
+            [33mviewBox[31m=[32m"0 0 24 24"[31m
+            [33mwidth[31m=[32m"24"[31m
+            [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+          [36m>[31m
+            [36m<path[31m
+              [33md[31m=[32m"m15 18-6-6 6-6"[31m
+            [36m/>[31m
+          [36m</svg>[31m
+        [36m</button>[31m
+        [36m<div>[31m
+          [36m<h1[31m
+            [33mclass[31m=[32m"text-2xl font-bold text-gray-800"[31m
+          [36m>[31m
+            [0mNovo Produto[0m
+          [36m</h1>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"text-gray-500"[31m
+          [36m>[31m
+            [0mCadastro passo-a-passo de Informações e Variantes[0m
+          [36m</p>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<form[31m
+        [33mclass[31m=[32m"space-y-6"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"mb-4 text-sm text-indigo-600 bg-indigo-50 p-3 rounded border border-indigo-100 italic"[31m
+          [36m>[31m
+            [0mPara adicionar um produto com múltiplas variantes e fotos distintas: anexe primeiro as fotos de uma cor/modelo, preencha os dados abaixo e clique em [0m
+            [36m<b>[31m
+              [0m"Adicionar"[0m
+            [36m</b>[31m
+            [0m. A galeria será limpa para você subir as fotos da próxima variação! A foto principal da Categoria se torna a Capa da variante.[0m
+          [36m</div>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2 mb-4"[31m
+          [36m>[31m
+            [0mMídia & Imagens da Variante Atual[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"space-y-4"[31m
+          [36m>[31m
+            [36m<h3[31m
+              [33mclass[31m=[32m"font-semibold text-gray-700"[31m
+            [36m>[31m
+              [0mGaleria de Mídia[0m
+            [36m</h3>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"grid grid-cols-2 md:grid-cols-4 gap-4"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition relative"[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"text-center w-full px-4"[31m
+                [36m>[31m
+                  [36m<svg[31m
+                    [33maria-hidden[31m=[32m"true"[31m
+                    [33mclass[31m=[32m"lucide lucide-upload text-gray-400 mb-2 mx-auto"[31m
+                    [33mfill[31m=[32m"none"[31m
+                    [33mheight[31m=[32m"24"[31m
+                    [33mstroke[31m=[32m"currentColor"[31m
+                    [33mstroke-linecap[31m=[32m"round"[31m
+                    [33mstroke-linejoin[31m=[32m"round"[31m
+                    [33mstroke-width[31m=[32m"2"[31m
+                    [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [33mwidth[31m=[32m"24"[31m
+                    [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                  [36m>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M12 3v12"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"m17 8-5-5-5 5"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[31m
+                    [36m/>[31m
+                  [36m</svg>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"text-sm text-gray-500 block"[31m
+                  [36m>[31m
+                    [0mUpload Arquivo[0m
+                  [36m</span>[31m
+                [36m</div>[31m
+                [36m<input[31m
+                  [33maccept[31m=[32m"image/*,video/*"[31m
+                  [33mclass[31m=[32m"hidden"[31m
+                  [33mmultiple[31m=[32m""[31m
+                  [33mtype[31m=[32m"file"[31m
+                [36m/>[31m
+              [36m</label>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6"[31m
+        [36m>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2"[31m
+          [36m>[31m
+            [0mInformações Básicas & Variantes[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded border"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+                [33mfor[31m=[32m"title"[31m
+              [36m>[31m
+                [0mTítulo do Produto[0m
+              [36m</label>[31m
+              [36m<input[31m
+                [33mclass[31m=[32m"w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"[31m
+                [33mid[31m=[32m"title"[31m
+                [33mname[31m=[32m"title"[31m
+                [33mplaceholder[31m=[32m"Ex: Vestido Amarelo Ogum"[31m
+              [36m/>[31m
+              [36m<p[31m
+                [33mclass[31m=[32m"text-red-500 text-xs mt-1"[31m
+              [36m>[31m
+                [0mTítulo muito curto[0m
+              [36m</p>[31m
+            [36m</div>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+   ...[39m
+ [31m×[39m src/pages/products/ProductForm.test.tsx[2m > [22mProductForm Component[2m > [22mshould submit form successfully with valid data[33m 1093[2mms[22m[39m
+[31m   → Unable to find an element with the text: Velas. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"space-y-6 pb-20"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex items-center gap-4"[31m
+      [36m>[31m
+        [36m<button[31m
+          [33mclass[31m=[32m"p-2 hover:bg-gray-100 rounded-full"[31m
+        [36m>[31m
+          [36m<svg[31m
+            [33maria-hidden[31m=[32m"true"[31m
+            [33mclass[31m=[32m"lucide lucide-chevron-left"[31m
+            [33mfill[31m=[32m"none"[31m
+            [33mheight[31m=[32m"24"[31m
+            [33mstroke[31m=[32m"currentColor"[31m
+            [33mstroke-linecap[31m=[32m"round"[31m
+            [33mstroke-linejoin[31m=[32m"round"[31m
+            [33mstroke-width[31m=[32m"2"[31m
+            [33mviewBox[31m=[32m"0 0 24 24"[31m
+            [33mwidth[31m=[32m"24"[31m
+            [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+          [36m>[31m
+            [36m<path[31m
+              [33md[31m=[32m"m15 18-6-6 6-6"[31m
+            [36m/>[31m
+          [36m</svg>[31m
+        [36m</button>[31m
+        [36m<div>[31m
+          [36m<h1[31m
+            [33mclass[31m=[32m"text-2xl font-bold text-gray-800"[31m
+          [36m>[31m
+            [0mNovo Produto[0m
+          [36m</h1>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"text-gray-500"[31m
+          [36m>[31m
+            [0mCadastro passo-a-passo de Informações e Variantes[0m
+          [36m</p>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<form[31m
+        [33mclass[31m=[32m"space-y-6"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"mb-4 text-sm text-indigo-600 bg-indigo-50 p-3 rounded border border-indigo-100 italic"[31m
+          [36m>[31m
+            [0mPara adicionar um produto com múltiplas variantes e fotos distintas: anexe primeiro as fotos de uma cor/modelo, preencha os dados abaixo e clique em [0m
+            [36m<b>[31m
+              [0m"Adicionar"[0m
+            [36m</b>[31m
+            [0m. A galeria será limpa para você subir as fotos da próxima variação! A foto principal da Categoria se torna a Capa da variante.[0m
+          [36m</div>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2 mb-4"[31m
+          [36m>[31m
+            [0mMídia & Imagens da Variante Atual[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"space-y-4"[31m
+          [36m>[31m
+            [36m<h3[31m
+              [33mclass[31m=[32m"font-semibold text-gray-700"[31m
+            [36m>[31m
+              [0mGaleria de Mídia[0m
+            [36m</h3>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"grid grid-cols-2 md:grid-cols-4 gap-4"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition relative"[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"text-center w-full px-4"[31m
+                [36m>[31m
+                  [36m<svg[31m
+                    [33maria-hidden[31m=[32m"true"[31m
+                    [33mclass[31m=[32m"lucide lucide-upload text-gray-400 mb-2 mx-auto"[31m
+                    [33mfill[31m=[32m"none"[31m
+                    [33mheight[31m=[32m"24"[31m
+                    [33mstroke[31m=[32m"currentColor"[31m
+                    [33mstroke-linecap[31m=[32m"round"[31m
+                    [33mstroke-linejoin[31m=[32m"round"[31m
+                    [33mstroke-width[31m=[32m"2"[31m
+                    [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [33mwidth[31m=[32m"24"[31m
+                    [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                  [36m>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M12 3v12"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"m17 8-5-5-5 5"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[31m
+                    [36m/>[31m
+                  [36m</svg>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"text-sm text-gray-500 block"[31m
+                  [36m>[31m
+                    [0mUpload Arquivo[0m
+                  [36m</span>[31m
+                [36m</div>[31m
+                [36m<input[31m
+                  [33maccept[31m=[32m"image/*,video/*"[31m
+                  [33mclass[31m=[32m"hidden"[31m
+                  [33mmultiple[31m=[32m""[31m
+                  [33mtype[31m=[32m"file"[31m
+                [36m/>[31m
+              [36m</label>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6"[31m
+        [36m>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2"[31m
+          [36m>[31m
+            [0mInformações Básicas & Variantes[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded border"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+                [33mfor[31m=[32m"title"[31m
+              [36m>[31m
+                [0mTítulo do Produto[0m
+              [36m</label>[31m
+              [36m<input[31m
+                [33mclass[31m=[32m"w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"[31m
+                [33mid[31m=[32m"title"[31m
+                [33mname[31m=[32m"title"[31m
+                [33mplaceholder[31m=[32m"Ex: Vestido Amarelo Ogum"[31m
+              [36m/>[31m
+            [36m</div>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+                [33mfor[31m=[32m"category"[31m
+              [36m>[31m
+                [0mCategoria[0m
+              [36m</label>[31m
+              [36m<div[31m
+                [33mclas...
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"space-y-6 pb-20"[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex items-center gap-4"[31m
+      [36m>[31m
+        [36m<button[31m
+          [33mclass[31m=[32m"p-2 hover:bg-gray-100 rounded-full"[31m
+        [36m>[31m
+          [36m<svg[31m
+            [33maria-hidden[31m=[32m"true"[31m
+            [33mclass[31m=[32m"lucide lucide-chevron-left"[31m
+            [33mfill[31m=[32m"none"[31m
+            [33mheight[31m=[32m"24"[31m
+            [33mstroke[31m=[32m"currentColor"[31m
+            [33mstroke-linecap[31m=[32m"round"[31m
+            [33mstroke-linejoin[31m=[32m"round"[31m
+            [33mstroke-width[31m=[32m"2"[31m
+            [33mviewBox[31m=[32m"0 0 24 24"[31m
+            [33mwidth[31m=[32m"24"[31m
+            [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+          [36m>[31m
+            [36m<path[31m
+              [33md[31m=[32m"m15 18-6-6 6-6"[31m
+            [36m/>[31m
+          [36m</svg>[31m
+        [36m</button>[31m
+        [36m<div>[31m
+          [36m<h1[31m
+            [33mclass[31m=[32m"text-2xl font-bold text-gray-800"[31m
+          [36m>[31m
+            [0mNovo Produto[0m
+          [36m</h1>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"text-gray-500"[31m
+          [36m>[31m
+            [0mCadastro passo-a-passo de Informações e Variantes[0m
+          [36m</p>[31m
+        [36m</div>[31m
+      [36m</div>[31m
+      [36m<form[31m
+        [33mclass[31m=[32m"space-y-6"[31m
+      [36m>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100"[31m
+        [36m>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"mb-4 text-sm text-indigo-600 bg-indigo-50 p-3 rounded border border-indigo-100 italic"[31m
+          [36m>[31m
+            [0mPara adicionar um produto com múltiplas variantes e fotos distintas: anexe primeiro as fotos de uma cor/modelo, preencha os dados abaixo e clique em [0m
+            [36m<b>[31m
+              [0m"Adicionar"[0m
+            [36m</b>[31m
+            [0m. A galeria será limpa para você subir as fotos da próxima variação! A foto principal da Categoria se torna a Capa da variante.[0m
+          [36m</div>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2 mb-4"[31m
+          [36m>[31m
+            [0mMídia & Imagens da Variante Atual[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"space-y-4"[31m
+          [36m>[31m
+            [36m<h3[31m
+              [33mclass[31m=[32m"font-semibold text-gray-700"[31m
+            [36m>[31m
+              [0mGaleria de Mídia[0m
+            [36m</h3>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"grid grid-cols-2 md:grid-cols-4 gap-4"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center h-40 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition relative"[31m
+              [36m>[31m
+                [36m<div[31m
+                  [33mclass[31m=[32m"text-center w-full px-4"[31m
+                [36m>[31m
+                  [36m<svg[31m
+                    [33maria-hidden[31m=[32m"true"[31m
+                    [33mclass[31m=[32m"lucide lucide-upload text-gray-400 mb-2 mx-auto"[31m
+                    [33mfill[31m=[32m"none"[31m
+                    [33mheight[31m=[32m"24"[31m
+                    [33mstroke[31m=[32m"currentColor"[31m
+                    [33mstroke-linecap[31m=[32m"round"[31m
+                    [33mstroke-linejoin[31m=[32m"round"[31m
+                    [33mstroke-width[31m=[32m"2"[31m
+                    [33mviewBox[31m=[32m"0 0 24 24"[31m
+                    [33mwidth[31m=[32m"24"[31m
+                    [33mxmlns[31m=[32m"http://www.w3.org/2000/svg"[31m
+                  [36m>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M12 3v12"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"m17 8-5-5-5 5"[31m
+                    [36m/>[31m
+                    [36m<path[31m
+                      [33md[31m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[31m
+                    [36m/>[31m
+                  [36m</svg>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"text-sm text-gray-500 block"[31m
+                  [36m>[31m
+                    [0mUpload Arquivo[0m
+                  [36m</span>[31m
+                [36m</div>[31m
+                [36m<input[31m
+                  [33maccept[31m=[32m"image/*,video/*"[31m
+                  [33mclass[31m=[32m"hidden"[31m
+                  [33mmultiple[31m=[32m""[31m
+                  [33mtype[31m=[32m"file"[31m
+                [36m/>[31m
+              [36m</label>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mclass[31m=[32m"bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6"[31m
+        [36m>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"font-semibold text-lg text-gray-800 border-b pb-2"[31m
+          [36m>[31m
+            [0mInformações Básicas & Variantes[0m
+          [36m</h2>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded border"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+                [33mfor[31m=[32m"title"[31m
+              [36m>[31m
+                [0mTítulo do Produto[0m
+              [36m</label>[31m
+              [36m<input[31m
+                [33mclass[31m=[32m"w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"[31m
+                [33mid[31m=[32m"title"[31m
+                [33mname[31m=[32m"title"[31m
+                [33mplaceholder[31m=[32m"Ex: Vestido Amarelo Ogum"[31m
+              [36m/>[31m
+            [36m</div>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"col-span-2 md:col-span-1"[31m
+            [36m>[31m
+              [36m<label[31m
+                [33mclass[31m=[32m"block text-sm font-medium text-gray-700 mb-1"[31m
+                [33mfor[31m=[32m"category"[31m
+              [36m>[31m
+                [0mCategoria[0m
+              [36m</label>[31m
+              [36m<div[31m
+                [33mclas...[39m
+
+[2m Test Files [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[31m7 failed[39m[22m[2m | [22m[1m[32m7 passed[39m[22m[90m (14)[39m
+[2m     Errors [22m [1m[31m5 errors[39m[22m
+[2m   Start at [22m 17:56:17
+[2m   Duration [22m 5.17s[2m (transform 1.29s, setup 666ms, import 3.93s, tests 6.36s, environment 6.72s)[22m
+

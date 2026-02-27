@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.69% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/13</span>
+                <span class='fraction'>0/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.09% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/11</span>
+                <span class='fraction'>0/11</span>
             </div>
         
             
@@ -96,38 +96,36 @@
 <a name='L31'></a><a href='#L31'>31</a>
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a>
-<a name='L35'></a><a href='#L35'>35</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L34'></a><a href='#L34'>34</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -138,31 +136,30 @@ export interface UploadResponse {
     url: string;
 }
 &nbsp;
-&nbsp;
-&nbsp;
-export const MediaService = {
-    upload: <span class="fstat-no" title="function not covered" >async (f</span>ile: File): Promise&lt;UploadResponse&gt; =&gt; {
+export const MediaService = <span class="cstat-no" title="statement not covered" >{</span>
+    upload: <span class="fstat-no" title="function not covered" >async (f</span>ile: File, onProgress?: (progress: number) =&gt; void): Promise&lt;UploadResponse&gt; =&gt; {
         const formData = <span class="cstat-no" title="statement not covered" >new FormData();</span>
 <span class="cstat-no" title="statement not covered" >        formData.append('file', file);</span>
+<span class="cstat-no" title="statement not covered" >        formData.append('public', 'true');</span>
 &nbsp;
-        // Assumindo endpoint realista conforme padrão
         const { data } = <span class="cstat-no" title="statement not covered" >await api.post&lt;UploadResponse&gt;('/media/upload', formData, {</span>
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: <span class="fstat-no" title="function not covered" >(p</span>rogressEvent) =&gt; {
+<span class="cstat-no" title="statement not covered" >                if (onProgress &amp;&amp; progressEvent.total) {</span>
+                    const progress = <span class="cstat-no" title="statement not covered" >Math.round((progressEvent.loaded * 100) / progressEvent.total);</span>
+<span class="cstat-no" title="statement not covered" >                    onProgress(progress);</span>
+                }
+            }
         });
 <span class="cstat-no" title="statement not covered" >        return data;</span>
     },
 &nbsp;
-    removeBackground: <span class="fstat-no" title="function not covered" >async (m</span>ediaId: string): Promise&lt;string&gt; =&gt; {
-<span class="cstat-no" title="statement not covered" >        console.warn('Using Mock AI Remove Background');</span>
-<span class="cstat-no" title="statement not covered" >        await new Promise(<span class="fstat-no" title="function not covered" >resolve =&gt; <span class="cstat-no" title="statement not covered" >s</span>etTimeout(resolve, 1500))</span>;</span>
-        // Retorna uma imagem com "fundo removido" (mock)
-<span class="cstat-no" title="statement not covered" >        return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?bg=removed';</span>
+    removeBackground: <span class="fstat-no" title="function not covered" >async (_</span>mediaId: string): Promise&lt;string&gt; =&gt; {
+<span class="cstat-no" title="statement not covered" >        throw new Error('COMING_SOON');</span>
     },
 &nbsp;
-    generateMockup: <span class="fstat-no" title="function not covered" >async (m</span>ediaId: string, modelId: string): Promise&lt;string&gt; =&gt; {
-<span class="cstat-no" title="statement not covered" >        console.warn('Using Mock AI Mockup Generation');</span>
-<span class="cstat-no" title="statement not covered" >        await new Promise(<span class="fstat-no" title="function not covered" >resolve =&gt; <span class="cstat-no" title="statement not covered" >s</span>etTimeout(resolve, 2000))</span>;</span>
-<span class="cstat-no" title="statement not covered" >        return 'https://images.unsplash.com/photo-1542272617-08f086302542?mockup=generated';</span>
+    generateMockup: <span class="fstat-no" title="function not covered" >async (_</span>mediaId: string, _modelId: string): Promise&lt;string&gt; =&gt; {
+<span class="cstat-no" title="statement not covered" >        throw new Error('COMING_SOON');</span>
     }
 };
 &nbsp;</pre></td></tr></table></pre>
@@ -172,7 +169,7 @@ export const MediaService = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-11T00:01:20.617Z
+                at 2026-02-27T21:10:49.933Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

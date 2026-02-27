@@ -32,7 +32,7 @@ describe('ShippingPage Component', () => {
         render(<ShippingPage />);
 
         expect(await screen.findByText('Correios')).toBeInTheDocument();
-        expect(screen.getByText('JADLOG')).toBeInTheDocument();
+        expect(screen.getByText('Jadlog')).toBeInTheDocument();
         expect(screen.getByText('Operacional')).toBeInTheDocument();
         expect(screen.getByText('Inativo')).toBeInTheDocument();
     });
@@ -83,7 +83,7 @@ describe('ShippingPage Component', () => {
         await waitFor(() => {
             expect(AdminProviderService.saveProviderConfig).toHaveBeenCalledWith(expect.objectContaining({
                 providerId: '1',
-                configJson: '{"key": "updated"}'
+                configJson: '{"key":"updated"}'
             }));
         });
     });

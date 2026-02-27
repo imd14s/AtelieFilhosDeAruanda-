@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>15/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>15/15</span>
             </div>
         
             
@@ -124,30 +124,42 @@
 <a name='L59'></a><a href='#L59'>59</a>
 <a name='L60'></a><a href='#L60'>60</a>
 <a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -190,20 +202,27 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 &nbsp;
 export function LoginPage() {
   const { register, handleSubmit } = useForm();
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
+  const { addToast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 &nbsp;
-  const onSubmit = async (data: any) =&gt; {
+  const onSubmit = async (data: Record&lt;string, unknown&gt;) =&gt; {
+    setIsLoading(true);
     try {
       const res = await api.post('/auth/login', data);
       login(res.data.token);
+      addToast('Bem-vindo ao painel!', 'success');
       navigate('/');
-    } catch (err) {
-      setError('Credenciais inválidas');
+    } catch {
+      addToast('Credenciais inválidas. Tente novamente.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 &nbsp;
@@ -211,8 +230,6 @@ export function LoginPage() {
     &lt;div className="min-h-screen flex items-center justify-center bg-gray-100"&gt;
       &lt;div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"&gt;
         &lt;h2 className="text-2xl font-bold mb-6 text-center text-gray-800"&gt;Acesso Administrativo&lt;/h2&gt;
-&nbsp;
-        {error &amp;&amp; &lt;div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm"&gt;{error}&lt;/div&gt;}
 &nbsp;
         &lt;form onSubmit={handleSubmit(onSubmit)} className="space-y-4"&gt;
           &lt;div&gt;
@@ -235,12 +252,13 @@ export function LoginPage() {
               placeholder="••••••"
             /&gt;
           &lt;/div&gt;
-          &lt;button
+          &lt;Button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+            isLoading={isLoading}
+            className="w-full"
           &gt;
             Entrar
-          &lt;/button&gt;
+          &lt;/Button&gt;
         &lt;/form&gt;
       &lt;/div&gt;
     &lt;/div&gt;
@@ -253,7 +271,7 @@ export function LoginPage() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-11T00:01:20.617Z
+                at 2026-02-27T21:10:49.933Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

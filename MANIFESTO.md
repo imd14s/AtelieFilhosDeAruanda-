@@ -15,6 +15,8 @@ Cobertura de Testes (Global)| 24.28% | 🟡 | Instruções (Linhas: 38.14%). Met
 Erros Críticos (Sentry) | 0 | 🟢 | Estabilidade 24/7.
 
 ### ⚙️ 1.2 Backend (Spring Clean Arch)
+Métrica | Nível/Valor | Status | Observações
+--- | --- | --- | ---
 Cobertura (Segurança/Auth) | 86.28% | 🟢 | Foco: Autenticação e JWT.
 Cobertura (Checkout/Pagto) | 46.03% | 🟡 | Foco: Mercado Pago Integration.
 Cobertura (Fiscal/Financ) | 11.06% | 🔴 | Foco: Emissão NF-e (JaCoCo).
@@ -24,16 +26,22 @@ Dívida Técnica | 10h | 🟢 | Foco em refatoração de DTOs.
 Tempo de Boot | 3.5s | 🟢 | Otimização de contexto Spring.
 
 ### 🛒 1.3 Storefront (React / Vite)
-Métrica | Valor | Status | Observações
+Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
+Cobertura (Global) | 20.76% | 🔴 | Falha na Meta de 80% (Vitest).
+Cobertura (Auth/Profile) | 94.94% | 🟢 | Foco: Gestão de perfil do cliente.
+Cobertura (Checkout/Pagto) | 41.66% | 🟡 | Foco: Fluxo de carrinho e finalização.
 Lighthouse (SEO) | 98/100 | 🟢 | Otimização de Meta Tags.
 Performance (Store) | 92/100 | 🟢 | Imagens e roteamento dinâmico.
 Vite Build | Sucesso | 🟢 | Zero erros de tipagem TS.
 Acessibilidade | 100% | 🟢 | Testes via Axe Core.
 
 ### 🛠️ 1.4 Dashboard Admin (React / Vite)
-Métrica | Valor | Status | Observações
+Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
+Cobertura (Global) | 12.91% | 🔴 | Falha na Meta de 80% (Vitest).
+Cobertura (Auth/Login) | 100% | 🟢 | Foco: Autenticação Administrativa.
+Cobertura (Orders) | 46.29% | 🟡 | Foco: Gestão de status de pedidos.
 Lighthouse (Perf) | 88/100 | 🟢 | Dashboard complexo (React Query).
 Sessão Admin | JWT | 🟢 | Sessão segura com persistência.
 Build | Sucesso | 🟢 | Build validado.

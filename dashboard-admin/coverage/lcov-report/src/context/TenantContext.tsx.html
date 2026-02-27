@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/test-utils.tsx</title>
+    <title>Code coverage report for src/context/TenantContext.tsx</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../prettify.css" />
-    <link rel="stylesheet" href="../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../sort-arrow-sprite.png);
+            background-image: url(../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">src</a> test-utils.tsx</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/context</a> TenantContext.tsx</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.3% </span>
+                <span class="strong">63.63% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>21/23</span>
+                <span class='fraction'>21/33</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">78.57% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>11/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">77.77% </span>
+                <span class="strong">37.5% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/9</span>
+                <span class='fraction'>3/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">89.47% </span>
+                <span class="strong">67.74% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>17/19</span>
+                <span class='fraction'>21/31</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -133,146 +133,161 @@
 <a name='L68'></a><a href='#L68'>68</a>
 <a name='L69'></a><a href='#L69'>69</a>
 <a name='L70'></a><a href='#L70'>70</a>
-<a name='L71'></a><a href='#L71'>71</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { TenantProvider } from './context/TenantContext';
-import { vi } from 'vitest';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import type { Tenant } from '../types/tenant';
+import { TenantService } from '../services/TenantService';
+import { api } from '../api/axios';
+import { useAuth } from './AuthContext';
 &nbsp;
-// Mock API
-vi.mock('./api/axios', () =&gt; ({
-    api: {
-        post: vi.fn(),
-        get: vi.fn(),
-        defaults: {
-            headers: {
-                common: {}
-            }
+interface TenantContextType {
+    currentTenant: Tenant | null;
+    tenants: Tenant[];
+    isLoading: boolean;
+    switchTenant: (tenantId: string) =&gt; void;
+    refreshTenants: () =&gt; Promise&lt;void&gt;;
+}
+&nbsp;
+const TenantContext = createContext&lt;TenantContextType&gt;({} as TenantContextType);
+&nbsp;
+export function TenantProvider({ children }: { children: ReactNode }) {
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const [tenants, setTenants] = useState&lt;Tenant[]&gt;([]);
+    const [currentTenant, setCurrentTenant] = useState&lt;Tenant | null&gt;(null);
+    const [isLoading, setIsLoading] = useState(true);
+&nbsp;
+    useEffect(() =&gt; {
+        if (!isAuthLoading &amp;&amp; isAuthenticated) {
+            loadTenants();
+        } else if (!isAuthLoading &amp;&amp; !isAuthenticated) {
+            setIsLoading(false);
         }
-    }
-}));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, isAuthLoading]);
 &nbsp;
-// Mock Services
-vi.mock('./services/TenantService', () =&gt; ({
-    TenantService: {
-        getAll: vi.fn(() =&gt; Promise.resolve([])),
-        getById: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-    }
-}));
+    const loadTenants = async () =&gt; {
+        try {
+            const data = await TenantService.getAll();
+            setTenants(data);
 &nbsp;
-vi.mock('./services/CategoryService', () =&gt; ({
-    CategoryService: {
-        getAll: vi.fn(<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >P</span>romise.resolve([]))</span>,
-    }
-}));
+            // Restaurar seleção anterior ou selecionar o primeiro
+            const savedId = localStorage.getItem('current_tenant_id');
+            const selected = data.find(<span class="fstat-no" title="function not covered" >t =&gt; <span class="cstat-no" title="statement not covered" >t</span>.id === savedId)</span> || data[0];
 &nbsp;
-vi.mock('./services/ProductService', () =&gt; ({
-    ProductService: {
-        getAll: vi.fn(<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >P</span>romise.resolve([]))</span>,
-        getById: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-    }
-}));
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (selected) {
+<span class="cstat-no" title="statement not covered" >                selectTenant(selected);</span>
+            }
+        } catch (error) {
+<span class="cstat-no" title="statement not covered" >            console.error('Failed to load tenants', error);</span>
+        } finally {
+            setIsLoading(false);
+        }
+    };
 &nbsp;
-const AllTheProviders = ({ children }: { children: React.ReactNode }) =&gt; {
+    const selectTenant = <span class="fstat-no" title="function not covered" >(t</span>enant: Tenant) =&gt; {
+<span class="cstat-no" title="statement not covered" >        setCurrentTenant(tenant);</span>
+<span class="cstat-no" title="statement not covered" >        localStorage.setItem('current_tenant_id', tenant.id);</span>
+        // Configurar header global para futuras requisições
+<span class="cstat-no" title="statement not covered" >        api.defaults.headers.common['X-Tenant-ID'] = tenant.id;</span>
+    };
+&nbsp;
+    const switchTenant = <span class="fstat-no" title="function not covered" >(t</span>enantId: string) =&gt; {
+        const tenant = <span class="cstat-no" title="statement not covered" >tenants.find(<span class="fstat-no" title="function not covered" >t =&gt; <span class="cstat-no" title="statement not covered" >t</span>.id === tenantId)</span>;</span>
+<span class="cstat-no" title="statement not covered" >        if (tenant) {</span>
+<span class="cstat-no" title="statement not covered" >            selectTenant(tenant);</span>
+            // Opcional: Recarregar a página para limpar estados antigos de produtos/pedidos
+<span class="cstat-no" title="statement not covered" >            window.location.reload();</span>
+        }
+    };
+&nbsp;
     return (
-        &lt;BrowserRouter&gt;
-            &lt;AuthProvider&gt;
-                &lt;TenantProvider&gt;
-                    {children}
-                &lt;/TenantProvider&gt;
-            &lt;/AuthProvider&gt;
-        &lt;/BrowserRouter&gt;
+        &lt;TenantContext.Provider value={{ currentTenant, tenants, isLoading, switchTenant, refreshTenants: loadTenants }}&gt;
+            {children}
+        &lt;/TenantContext.Provider&gt;
     );
-};
+}
 &nbsp;
-const customRender = (
-    ui: ReactElement,
-    options?: Omit&lt;RenderOptions, 'wrapper'&gt;,
-) =&gt; render(ui, { wrapper: AllTheProviders, ...options });
-&nbsp;
-// Re-export mocked API
-import { api } from './api/axios';
-const mockedApi = vi.mocked(api, true);
-&nbsp;
-export * from '@testing-library/react';
-export { customRender as render };
-export { mockedApi as api };
+export const useTenant = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; u</span>seContext(TenantContext);</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -280,16 +295,16 @@ export { mockedApi as api };
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-11T00:01:20.617Z
+                at 2026-02-27T21:10:49.775Z
             </div>
-        <script src="../prettify.js"></script>
+        <script src="../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../sorter.js"></script>
-        <script src="../block-navigation.js"></script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
     </body>
 </html>
     

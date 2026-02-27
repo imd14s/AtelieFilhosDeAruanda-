@@ -21,3 +21,7 @@ trigger: always_on
   2. Faça o checkout/integração com a branch `dev`, garantindo que não há conflitos.
   3. Execute o push das alterações validadas para a branch remota `dev`.
 - Finalize reportando o sucesso da operação e o hash do commit.
+
+## 4. Tratamento de Erros
+- Ao se deparar com algum erro tente resolver 1 vez caso o erro persista, entre em mode de investigação coletando todos dados sobre o erro e para a execução me relate os erros de maneira abistraida, e aguarde novas instruções.
+- É extritamente proibido burlar os test de CI Piperline modificar porcentagem exigidas ex: diminuir a porcentagem minima de 80% das cobertura para 0 ou qualquer valor a baixo de 80, caso esse seja o travamento investigar os motivos e relatar.

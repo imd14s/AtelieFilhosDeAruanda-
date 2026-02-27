@@ -1,0 +1,151 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/imdias/workspace/AtelieFilhosDeAruanda-/dashboard-admin[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32m✓[39m src/App.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/pages/settings/PaymentPage.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 273[2mms[22m[39m
+ [32m✓[39m src/pages/orders/OrdersList.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 474[2mms[22m[39m
+ [32m✓[39m src/pages/auth/LoginPage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 747[2mms[22m[39m
+     [33m[2m✓[22m[39m should render login form correctly [33m 506[2mms[22m[39m
+ [32m✓[39m src/pages/settings/ShippingPage.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 788[2mms[22m[39m
+     [33m[2m✓[22m[39m should toggle provider status [33m 457[2mms[22m[39m
+ [32m✓[39m src/pages/products/ProductForm.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1767[2mms[22m[39m
+     [33m[2m✓[22m[39m should render form fields correctly [33m 449[2mms[22m[39m
+     [33m[2m✓[22m[39m should show validation errors for empty fields [33m 614[2mms[22m[39m
+     [33m[2m✓[22m[39m should submit form successfully with valid data [33m 699[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[32m14 passed[39m[22m[90m (14)[39m
+[2m   Start at [22m 18:10:43
+[2m   Duration [22m 6.09s[2m (transform 1.82s, setup 1.05s, import 4.96s, tests 4.06s, environment 6.55s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   12.34 |    12.87 |    9.58 |   12.91 |                   
+ src               |       0 |        0 |       0 |       0 |                   
+  App.tsx          |       0 |        0 |       0 |       0 | 36-94             
+ src/api           |       0 |        0 |       0 |       0 |                   
+  axios.ts         |       0 |        0 |       0 |       0 | 4-47              
+ ...ponents/common |       0 |        0 |       0 |       0 |                   
+  ...extEditor.tsx |       0 |        0 |       0 |       0 | 10-28             
+ ...ponents/layout |       0 |        0 |       0 |       0 |                   
+  ...ardLayout.tsx |       0 |        0 |       0 |       0 | 11-164            
+  ...eSelector.tsx |       0 |        0 |       0 |       0 | 7-48              
+ ...nents/products |   44.06 |    42.85 |   32.14 |   44.44 |                   
+  ...orySelect.tsx |   63.63 |    62.85 |   66.66 |      60 | ...34,45-48,59-62 
+  MediaGallery.tsx |      25 |        0 |    7.69 |   26.92 | ...5,49,53,80-133 
+  ...tsManager.tsx |   55.55 |       55 |   33.33 |    62.5 | 13,66-75          
+ ...ettings/fiscal |       0 |        0 |       0 |       0 |                   
+  ...ploadForm.tsx |       0 |        0 |       0 |       0 | 19-208            
+  ...onfigForm.tsx |       0 |        0 |       0 |       0 | 16-72             
+  ...rDataForm.tsx |       0 |      100 |       0 |       0 | 26-152            
+ ...nents/shipping |    2.98 |        0 |       0 |    3.38 |                   
+  ...BemConfig.tsx |       0 |        0 |       0 |       0 | 20-182            
+  ...vioConfig.tsx |    4.08 |        0 |       0 |    4.87 | 29-211            
+ src/components/ui |   39.15 |     37.5 |   48.64 |   41.21 |                   
+  BaseModal.tsx    |   85.71 |    71.42 |      75 |   91.66 | 22                
+  Button.tsx       |     100 |      100 |     100 |     100 |                   
+  ...SoonModal.tsx |   66.66 |    33.33 |     100 |      50 | 13                
+  ...GateModal.tsx |       0 |        0 |       0 |       0 | 11-13             
+  ...alOverlay.tsx |       0 |        0 |       0 |       0 | 5-10              
+  MaskedInput.tsx  |       0 |        0 |       0 |       0 | 18-117            
+  ...ocomplete.tsx |   43.75 |    38.63 |   52.38 |   45.45 | ...53-156,179-224 
+  Skeleton.tsx     |     100 |    85.71 |     100 |     100 | 15                
+  Spinner.tsx      |     100 |      100 |     100 |     100 |                   
+  TokenModal.tsx   |       0 |        0 |       0 |       0 | 13-52             
+ src/context       |   50.98 |    66.66 |   40.62 |   53.68 |                   
+  AuthContext.tsx  |   61.53 |       50 |   83.33 |   61.53 | 26-36,49-51       
+  ...ngContext.tsx |       0 |        0 |       0 |       0 | 7-53              
+  ...ntContext.tsx |   63.63 |    78.57 |    37.5 |   67.74 | ...53-56,60-64,75 
+  ToastContext.tsx |   65.21 |       80 |   41.66 |   77.77 | 27,32,56,71       
+ src/hooks         |    9.45 |        0 |   18.18 |   10.76 |                   
+  useDebounce.ts   |     100 |      100 |     100 |     100 |                   
+  ...tockAlerts.ts |       0 |        0 |       0 |       0 | 6-118             
+ ...ages/analytics |       0 |        0 |       0 |       0 |                   
+  ...Analytics.tsx |       0 |        0 |       0 |       0 | 13-295            
+ src/pages/auth    |     100 |      100 |     100 |     100 |                   
+  LoginPage.tsx    |     100 |      100 |     100 |     100 |                   
+ ...ges/categories |       0 |        0 |       0 |       0 |                   
+  ...oriesPage.tsx |       0 |        0 |       0 |       0 | 12-153            
+ src/pages/configs |       0 |        0 |       0 |       0 |                   
+  ConfigPage.tsx   |       0 |        0 |       0 |       0 | 11-172            
+ ...ages/dashboard |       0 |        0 |       0 |       0 |                   
+  ...boardHome.tsx |       0 |        0 |       0 |       0 | 8-102             
+ src/pages/fiscal  |       0 |        0 |       0 |       0 |                   
+  Reports.tsx      |       0 |        0 |       0 |       0 | 17-112            
+ ...ages/marketing |       0 |        0 |       0 |       0 |                   
+  ...dCartPage.tsx |       0 |        0 |       0 |       0 | 12-317            
+  ...tionsPage.tsx |       0 |      100 |       0 |       0 | 4                 
+  ...aignsPage.tsx |       0 |        0 |       0 |       0 | 27-355            
+  CouponList.tsx   |       0 |        0 |       0 |       0 | 8-152             
+  CouponModal.tsx  |       0 |        0 |       0 |       0 | 15-135            
+  ...ketingHub.tsx |       0 |        0 |       0 |       0 | 80-1243           
+  ...QueuePage.tsx |       0 |        0 |       0 |       0 | 19-192            
+  ...latesPage.tsx |       0 |        0 |       0 |       0 | 22-326            
+  ...esRanking.tsx |       0 |        0 |       0 |       0 | 17-161            
+  ...ementPage.tsx |       0 |        0 |       0 |       0 | 16-313            
+  ...turesPage.tsx |       0 |        0 |       0 |       0 | 21-345            
+  ...ibersPage.tsx |       0 |        0 |       0 |       0 | 14-113            
+ src/pages/orders  |   44.82 |    46.05 |   37.14 |   46.29 |                   
+  ...tailModal.tsx |   36.84 |    16.66 |   33.33 |   33.33 | 26-174            
+  OrdersList.tsx   |   46.39 |    55.17 |   37.93 |   48.88 | ...72,303,317-338 
+ ...pages/products |   30.46 |    26.88 |   22.95 |    32.6 |                   
+  ProductForm.tsx  |   42.85 |    36.76 |   36.84 |   46.58 | ...92-504,678-708 
+  ProductsPage.tsx |       0 |        0 |       0 |       0 | 14-279            
+ ...pages/settings |   14.62 |     16.4 |   13.37 |   15.07 |                   
+  AiConfigPage.tsx |       0 |        0 |       0 |       0 | 12-70             
+  AuditLogPage.tsx |       0 |        0 |       0 |       0 | 6-74              
+  ClientsPage.tsx  |       0 |        0 |       0 |       0 | 7-74              
+  ...tingsPage.tsx |       0 |        0 |       0 |       0 | 6-227             
+  ...lSettings.tsx |       0 |        0 |       0 |       0 | 12-303            
+  ...tionsPage.tsx |       0 |        0 |       0 |       0 | 22-439            
+  PaymentPage.tsx  |   44.15 |       50 |   34.61 |   48.52 | ...05-222,231-285 
+  ShippingPage.tsx |   54.02 |    57.44 |      50 |   55.84 | ...20,257,266-320 
+  ...AlertPage.tsx |       0 |        0 |       0 |       0 | 18-196            
+  TeamPage.tsx     |       0 |        0 |       0 |       0 | 7-198             
+ ...ngs/components |       0 |        0 |       0 |       0 |                   
+  ...oPagoForm.tsx |       0 |        0 |       0 |       0 | 11-242            
+ src/pages/setup   |       0 |        0 |       0 |       0 |                   
+  SetupWizard.tsx  |       0 |        0 |       0 |       0 | 7-114             
+ .../subscriptions |       0 |        0 |       0 |       0 |                   
+  ...PlansPage.tsx |       0 |        0 |       0 |       0 | 11-525            
+ src/services      |    1.71 |        0 |       1 |    1.75 |                   
+  ...derService.ts |      25 |        0 |   16.66 |      25 | 11-35             
+  ...icsService.ts |       0 |        0 |       0 |       0 | 23-29             
+  AuditService.ts  |       0 |      100 |       0 |       0 | 4-17              
+  ...oryService.ts |       0 |      100 |       0 |       0 | 4-17              
+  ...ionService.ts |       0 |      100 |       0 |       0 | 3-43              
+  ConfigService.ts |       0 |        0 |       0 |       0 | 4-20              
+  ...ionService.ts |       0 |      100 |       0 |       0 | 19-55             
+  FiscalService.ts |      20 |        0 |       0 |      25 | 10-14             
+  ...ingService.ts |       0 |      100 |       0 |       0 | 4-34              
+  MediaService.ts  |       0 |        0 |       0 |       0 | 8-31              
+  OrderService.ts  |       0 |        0 |       0 |       0 | 4-44              
+  ...entService.ts |       0 |      100 |       0 |       0 | 4-15              
+  ...uctService.ts |       0 |        0 |       0 |       0 | 4-149             
+  ReportService.ts |       0 |      100 |       0 |       0 | 13-27             
+  ReviewService.ts |       0 |      100 |       0 |       0 | 3-27              
+  ...ingService.ts |       0 |      100 |       0 |       0 | 4-15              
+  ...ertService.ts |       0 |        0 |       0 |       0 | 15-44             
+  TenantService.ts |       0 |      100 |       0 |       0 | 5-49              
+  UserService.ts   |       0 |      100 |       0 |       0 | 6-21              
+  ...ionService.ts |       0 |        0 |       0 |       0 | 3-34              
+ src/types         |       0 |        0 |       0 |       0 |                   
+  audit.ts         |       0 |        0 |       0 |       0 |                   
+  category.ts      |       0 |        0 |       0 |       0 |                   
+  config.ts        |       0 |        0 |       0 |       0 |                   
+  dashboard.ts     |       0 |        0 |       0 |       0 |                   
+  marketing.ts     |       0 |        0 |       0 |       0 |                   
+  order.ts         |       0 |        0 |       0 |       0 |                   
+  product.ts       |       0 |        0 |       0 |       0 |                   
+  review.ts        |       0 |        0 |       0 |       0 |                   
+  ...e-settings.ts |       0 |        0 |       0 |       0 |                   
+  tenant.ts        |       0 |        0 |       0 |       0 |                   
+  user.ts          |       0 |        0 |       0 |       0 |                   
+ src/utils         |    1.33 |        0 |   16.66 |    1.72 |                   
+  cn.ts            |     100 |      100 |     100 |     100 |                   
+  fiscal.ts        |       0 |        0 |       0 |       0 | 9-107             
+  imageUtils.ts    |       0 |        0 |       0 |       0 | 8-34              
+-------------------|---------|----------|---------|---------|-------------------

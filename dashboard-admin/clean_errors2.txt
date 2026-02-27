@@ -1,0 +1,11 @@
+ ✓ src/pages/orders/OrdersList.test.tsx > OrdersPage Component > should render orders list correctly 194ms
+ ✓ src/pages/orders/OrdersList.test.tsx > OrdersPage Component > should open cancel modal and cancel order 112ms
+ ✓ src/pages/settings/ShippingPage.test.tsx > ShippingPage Component > should render shipping providers correctly 150ms
+ ✓ src/pages/auth/LoginPage.test.tsx > LoginPage Component > should render login form correctly 345ms
+ ✓ src/pages/settings/ShippingPage.test.tsx > ShippingPage Component > should toggle provider status 269ms
+ ✓ src/pages/settings/ShippingPage.test.tsx > ShippingPage Component > should open config editor and save config 72ms
+ × src/pages/products/ProductForm.test.tsx > ProductForm Component > should render form fields correctly 363ms
+ × src/pages/auth/LoginPage.test.tsx > LoginPage Component > should show error message on invalid credentials 1082ms
+ ✓ src/pages/auth/LoginPage.test.tsx > LoginPage Component > should call login and redirected on success 90ms
+ × src/pages/products/ProductForm.test.tsx > ProductForm Component > should show validation errors for empty fields 1325ms
+ × src/pages/products/ProductForm.test.tsx > ProductForm Component > should submit form successfully with valid data 1089ms

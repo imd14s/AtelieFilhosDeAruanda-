@@ -45,7 +45,7 @@ describe('OrdersPage Component', () => {
 
         expect(screen.getByText('Cancelar Pedido')).toBeInTheDocument();
 
-        const textArea = screen.getByRole('textbox');
+        const textArea = screen.getByPlaceholderText(/Ex: Produto fora de estoque/i);
         fireEvent.change(textArea, { target: { value: 'Motivo de teste' } });
 
         const confirmButton = screen.getByText('Confirmar Cancelamento');

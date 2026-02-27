@@ -4,6 +4,7 @@ import { render, type RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { TenantProvider } from './context/TenantContext';
+import { ToastProvider } from './context/ToastContext';
 import { vi } from 'vitest';
 
 // Mock API
@@ -50,7 +51,9 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
         <BrowserRouter>
             <AuthProvider>
                 <TenantProvider>
-                    {children}
+                    <ToastProvider>
+                        {children}
+                    </ToastProvider>
                 </TenantProvider>
             </AuthProvider>
         </BrowserRouter>
