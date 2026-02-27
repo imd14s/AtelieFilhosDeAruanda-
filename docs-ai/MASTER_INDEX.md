@@ -1,5 +1,8 @@
 # 🗺️ MASTER AI INDEX - Ateliê Filhos de Aruanda
 
+## Atualizações
+Mantenha o arquivo `MANIFESTO.md` atualizado com as funcionalidades e testes que foram implementados.
+
 ## 🛑 Regras Globais de Engajamento (Leitura Obrigatória)
 1. **Zero Suposição:** NUNCA adivinhe a estrutura de diretórios ou padrões arquiteturais. Você DEVE usar este índice para localizar os mapas específicos antes de propor qualquer mudança.
 2. **Economia de Tokens:** Não reescreva arquivos inteiros a menos que solicitado. Use substituições parciais sempre que possível.
