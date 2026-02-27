@@ -43,6 +43,7 @@ export default defineConfig([
   // ═══════════════════════════════════════════════════════════
   {
     files: ['src/components/**/*.{ts,tsx}'],
+    ignores: ['src/components/**/*.test.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
