@@ -322,6 +322,11 @@ export function ProductForm() {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (editingVariantId) {
+      if (!confirm("Você tem uma variante em edição que não foi salva. Deseja prosseguir sem salvar as mudanças desta variante?")) {
+        return;
+      }
+    }
     setIsSaving(true);
     try {
       let finalCategoryId = data.category;

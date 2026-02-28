@@ -151,7 +151,7 @@ public class ProductController {
         }
 
         if (request.originalPrice() != null && request.price() != null
-                && request.price().compareTo(request.originalPrice()) >= 0) {
+                && request.price().compareTo(request.originalPrice()) > 0) {
             throw new BusinessException("O preço de venda deve ser menor que o preço original.");
         }
     }

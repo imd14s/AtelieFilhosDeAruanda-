@@ -28,7 +28,7 @@ public record ProductCreateRequest(
                 BigDecimal width,
                 BigDecimal length,
                 @JsonProperty("marketplaceIds") List<UUID> marketplaceIds,
-                @Size(min = 8, max = 8, message = "O NCM deve ter exatamente 8 dígitos", groups = {
+                @Size(min = 10, max = 10, message = "O NCM deve ter exatamente 10 caracteres (formato XXXX.XX.XX)", groups = {
                 }) String ncm,
                 com.atelie.ecommerce.domain.catalog.product.ProductionType productionType,
                 com.atelie.ecommerce.domain.catalog.product.ProductOrigin origin){
