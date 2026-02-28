@@ -63,8 +63,8 @@ public class ProductEntity {
     private BigDecimal width;
     private BigDecimal length;
 
-    @Column(name = "ncm", length = 8)
-    @Size(min = 8, max = 8, message = "O NCM deve ter exatamente 8 dígitos")
+    @Column(name = "ncm", length = 10)
+    @Size(min = 10, max = 10, message = "O NCM deve ter exatamente 10 caracteres (formato XXXX.XX.XX)")
     private String ncm;
 
     @Enumerated(EnumType.STRING)

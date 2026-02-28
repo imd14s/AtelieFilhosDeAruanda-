@@ -112,7 +112,27 @@ export function ProductForm() {
   }, [id]);
 
   const loadProduct = useCallback(async () => {
-    if (!id) return;
+    if (!id) {
+      reset({
+        tenantId: '1',
+        weight: 0,
+        height: 0,
+        width: 0,
+        length: 0,
+        marketplaceIds: [],
+        productionType: 'REVENDA',
+        origin: 'NACIONAL',
+        ncm: '',
+        title: '',
+        description: '',
+        category: ''
+      });
+      setVariants([]);
+      setAllMedia([]);
+      setVariantInput({ color: '', size: '', sku: '', originalPrice: '', price: '', stock: '' });
+      setCurrentMedia([]);
+      return;
+    }
     try {
       const product = await ProductService.getById(id);
       reset({
