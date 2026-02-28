@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, Instagram, Video, Youtube, ShoppingBag, Heart, Send, Loader2 } from 'lucide-react';
+import { useCategories } from '../context/CategoryContext';
 import marketingService from '../services/marketingService';
 import { authService } from '../services/authService';
 import { User } from '../types';
 import { SafeAny } from "../types/safeAny";
 
 const Footer: React.FC = () => {
+    const { categories } = useCategories();
     const currentYear = new Date().getFullYear();
     const [loading, setLoading] = useState<boolean>(false);
     const [subscribed, setSubscribed] = useState<boolean>(false);
@@ -105,9 +107,13 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-playfair text-lg mb-6 border-b border-[var(--dourado-suave)]/30 pb-2 inline-block">Navegação</h3>
                         <ul className="space-y-3 font-lato text-sm text-[var(--branco-off-white)]/70">
-                            <li><Link to="/store?categoria=velas" className="hover:text-[var(--dourado-suave)] transition-colors">Velas Artesanais</Link></li>
-                            <li><Link to="/store?categoria=guias" className="hover:text-[var(--dourado-suave)] transition-colors">Guias e Brajás</Link></li>
-                            <li><Link to="/store?categoria=ervas" className="hover:text-[var(--dourado-suave)] transition-colors">Ervas & Defumação</Link></li>
+                            {categories.slice(0, 3).map((cat) => (
+                                <li key={cat.id}>
+                                    <Link to={`/categoria/${cat.slug || cat.id}`} className="hover:text-[var(--dourado-suave)] transition-colors">
+                                        {cat.name}
+                                    </Link>
+                                </li>
+                            ))}
                             <li><Link to="/about" className="hover:text-[var(--dourado-suave)] transition-colors">Nossa História</Link></li>
                             <li><Link to="/contato" className="hover:text-[var(--dourado-suave)] transition-colors">Fale Conosco</Link></li>
                         </ul>

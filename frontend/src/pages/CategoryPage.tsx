@@ -9,8 +9,11 @@ import { Product, Category } from "../types";
 
 import OptimizedImage from "../components/ui/OptimizedImage";
 
+import { useCategories } from "../context/CategoryContext";
+
 const CategoryPage: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
+    const { categories } = useCategories();
     const [products, setProducts] = useState<Product[]>([]);
     const [collection, setCollection] = useState<Category | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -176,24 +179,15 @@ const CategoryPage: React.FC = () => {
                         Explorar Outras Vertentes
                     </h4>
                     <div className="flex gap-8">
-                        <Link
-                            to="/categoria/velas"
-                            className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
-                        >
-                            Velas
-                        </Link>
-                        <Link
-                            to="/categoria/guias"
-                            className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
-                        >
-                            Guias
-                        </Link>
-                        <Link
-                            to="/categoria/ervas"
-                            className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
-                        >
-                            Ervas
-                        </Link>
+                        {categories.slice(0, 3).map((cat) => (
+                            <Link
+                                key={cat.id}
+                                to={`/categoria/${cat.slug || cat.id}`}
+                                className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
+                            >
+                                {cat.name}
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </div>

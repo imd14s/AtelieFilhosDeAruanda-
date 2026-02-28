@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/34</span>
+                <span class='fraction'>0/36</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/25</span>
+                <span class='fraction'>0/27</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/32</span>
+                <span class='fraction'>0/34</span>
             </div>
         
             
@@ -261,13 +261,7 @@
 <a name='L196'></a><a href='#L196'>196</a>
 <a name='L197'></a><a href='#L197'>197</a>
 <a name='L198'></a><a href='#L198'>198</a>
-<a name='L199'></a><a href='#L199'>199</a>
-<a name='L200'></a><a href='#L200'>200</a>
-<a name='L201'></a><a href='#L201'>201</a>
-<a name='L202'></a><a href='#L202'>202</a>
-<a name='L203'></a><a href='#L203'>203</a>
-<a name='L204'></a><a href='#L204'>204</a>
-<a name='L205'></a><a href='#L205'>205</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L199'></a><a href='#L199'>199</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -278,6 +272,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -446,16 +443,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -482,8 +470,11 @@ import { Product, Category } from "../types";
 &nbsp;
 import OptimizedImage from "../components/ui/OptimizedImage";
 &nbsp;
+import { useCategories } from "../context/CategoryContext";
+&nbsp;
 const CategoryPage: React.FC = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
     const { slug <span class="cstat-no" title="statement not covered" >} = useParams&lt;{ slug: string }&gt;();</span>
+    const { categories <span class="cstat-no" title="statement not covered" >} = useCategories();</span>
     const [products, setProducts<span class="cstat-no" title="statement not covered" >] = useState&lt;Product[]&gt;([]);</span>
     const [collection, setCollection<span class="cstat-no" title="statement not covered" >] = useState&lt;Category | null&gt;(null);</span>
     const [loading, setLoading<span class="cstat-no" title="statement not covered" >] = useState&lt;boolean&gt;(true);</span>
@@ -649,24 +640,15 @@ const CategoryPage: React.FC = <span class="cstat-no" title="statement not cover
                         Explorar Outras Vertentes
                     &lt;/h4&gt;
                     &lt;div className="flex gap-8"&gt;
-                        &lt;Link
-                            to="/categoria/velas"
-                            className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
-                        &gt;
-                            Velas
-                        &lt;/Link&gt;
-                        &lt;Link
-                            to="/categoria/guias"
-                            className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
-                        &gt;
-                            Guias
-                        &lt;/Link&gt;
-                        &lt;Link
-                            to="/categoria/ervas"
-                            className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
-                        &gt;
-                            Ervas
-                        &lt;/Link&gt;
+                        {categories.slice(0, 3).map(<span class="fstat-no" title="function not covered" >(c</span>at) =&gt; (
+<span class="cstat-no" title="statement not covered" >                            &lt;Link</span>
+                                key={cat.id}
+                                to={`/categoria/${cat.slug || cat.id}`}
+                                className="font-lato text-[10px] uppercase tracking-[0.2em] text-[var(--azul-profundo)] hover:text-[var(--dourado-suave)] transition-colors"
+                            &gt;
+                                {cat.name}
+                            &lt;/Link&gt;
+                        ))}
                     &lt;/div&gt;
                 &lt;/div&gt;
             &lt;/div&gt;
@@ -682,7 +664,7 @@ export default CategoryPage;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-28T04:19:27.074Z
+                at 2026-02-28T05:31:02.390Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

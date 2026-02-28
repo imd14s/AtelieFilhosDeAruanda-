@@ -1,10 +1,9 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { productService } from '../services/productService'; // eslint-disable-line no-restricted-imports
-import { Category } from '../types';
+import { useCategories } from '../context/CategoryContext';
 
 interface NavMenuProps {
     isMobile: boolean;
@@ -13,18 +12,9 @@ interface NavMenuProps {
 
 const NavMenu: React.FC<NavMenuProps> = ({ isMobile, closeMenu }) => {
     const location = useLocation();
-    const [categories, setCategories] = useState<Category[]>([]);
+    const { categories } = useCategories();
     const [isCategoryOpen, setIsCategoryOpen] = useState<boolean>(false);
     const [isHovered, setIsHovered] = useState<boolean>(false);
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            const data = await productService.getCategories();
-            // Filtra apenas ativas e ordena alfabeticamente
-            setCategories(data.filter(c => c.active).sort((a, b) => a.name.localeCompare(b.name)));
-        };
-        fetchCategories();
-    }, []);
 
     // Função para verificar se o link está ativo
     const isActive = (path: string) => {
