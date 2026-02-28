@@ -1,5 +1,7 @@
 package com.atelie.ecommerce.domain.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class SystemConfig {
 
     private final String key;
@@ -10,10 +12,12 @@ public class SystemConfig {
         this.value = value;
     }
 
+    @JsonProperty("configKey")
     public String key() {
         return key;
     }
 
+    @JsonProperty("configValue")
     public String value() {
         return value;
     }
