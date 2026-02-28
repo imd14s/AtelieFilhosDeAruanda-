@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -43,9 +45,11 @@ public class ShippingService {
             List<com.atelie.ecommerce.application.dto.shipping.ShippingQuoteRequest.ShippingItem> items) {
 
         List<String> providersToCalculate = new ArrayList<>();
+        Map<String, String> providerNameMap = new HashMap<>();
 
         if (forcedProvider != null && !forcedProvider.isEmpty()) {
             providersToCalculate.add(forcedProvider);
+            providerNameMap.put(forcedProvider, forcedProvider);
         } else {
             var activeProviders = providerRepository.findByServiceTypeAndEnabledOrderByPriorityAsc(ServiceType.SHIPPING,
                     true);
@@ -54,6 +58,7 @@ public class ShippingService {
                 return List.of();
             }
             providersToCalculate.addAll(activeProviders.stream().map(p -> p.getCode()).toList());
+            activeProviders.forEach(p -> providerNameMap.put(p.getCode(), p.getName()));
         }
 
         var domainItems = items.stream()
@@ -97,8 +102,12 @@ public class ShippingService {
                         paramsBase.destinationCep(), paramsBase.subtotal(), paramsBase.items(), paramsBase.tenantId(),
                         result.providerName());
                 var finalResult = rulesEngine.applyRules(result, paramResult);
+
+                String displayProviderName = providerNameMap.getOrDefault(finalResult.providerName(),
+                        finalResult.providerName());
+
                 options.add(new ShippingQuoteResponse(
-                        finalResult.providerName(),
+                        displayProviderName,
                         finalResult.eligible(),
                         finalResult.freeShipping(),
                         finalResult.cost(),
