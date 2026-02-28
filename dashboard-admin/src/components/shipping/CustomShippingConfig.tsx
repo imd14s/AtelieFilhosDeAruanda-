@@ -5,15 +5,20 @@ import Button from '../ui/Button';
 interface CustomShippingConfigProps {
     config: Record<string, unknown>;
     onChange: (newConfig: Record<string, unknown>) => void;
-    onSaveConfig: (fileToUpload: File | null) => Promise<void>;
+    onSaveConfig: () => Promise<void>;
     totalCeps: number;
     uploading: boolean;
+    onClearCeps: () => Promise<void>;
+    onUploadChunk: (chunk: string[]) => Promise<void>;
+    onUploadComplete: (newCount: number) => void;
 }
 
-export function CustomShippingConfig({ config, onChange, onSaveConfig, totalCeps, uploading }: CustomShippingConfigProps) {
+export function CustomShippingConfig({ config, onChange, onSaveConfig, totalCeps, uploading, onClearCeps, onUploadChunk, onUploadComplete }: CustomShippingConfigProps) {
     const [file, setFile] = useState<File | null>(null);
     const [previewCount, setPreviewCount] = useState<number | null>(null);
     const [isParsing, setIsParsing] = useState(false);
+    const [isUploadingCeps, setIsUploadingCeps] = useState(false);
+    const [migratedCount, setMigratedCount] = useState<number | null>(null);
 
     const name = config.name as string || '';
     const price = config.price as string || '';
@@ -24,31 +29,72 @@ export function CustomShippingConfig({ config, onChange, onSaveConfig, totalCeps
             const selectedFile = e.target.files[0];
             if (selectedFile) {
                 setFile(selectedFile);
-                parseFileCount(selectedFile);
+                startRealTimeUpload(selectedFile);
             }
         }
     };
 
-    const parseFileCount = async (selectedFile: File) => {
+    const startRealTimeUpload = async (selectedFile: File) => {
         setIsParsing(true);
+        setMigratedCount(0);
+        const cleanCeps: string[] = [];
+
         try {
             const text = await selectedFile.text();
-            // Estimativa rudimentar com base no número de linhas não vazias (descontando o cabeçalho)
             const lines = text.split('\n').filter(line => line.trim().length > 0);
-            setPreviewCount(Math.max(0, lines.length - 1));
+
+            let startIndex = 0;
+            if (lines.length > 0 && lines[0]?.toLowerCase().includes('cep')) {
+                startIndex = 1;
+            }
+
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i]?.trim();
+                if (!line) continue;
+                const cols = line.split(',');
+                const rawCep = cols[0] ? cols[0].split(';')[0] : '';
+                if (!rawCep) continue;
+
+                const clean = rawCep.replace(/\D/g, '');
+                if (clean.length === 8) {
+                    cleanCeps.push(clean);
+                }
+            }
+
+            setPreviewCount(cleanCeps.length);
         } catch {
             setPreviewCount(null);
         } finally {
             setIsParsing(false);
         }
+
+        if (cleanCeps.length === 0) return;
+
+        setIsUploadingCeps(true);
+        try {
+            await onClearCeps();
+            const chunkSize = 1500;
+            let currentMigrated = 0;
+
+            for (let i = 0; i < cleanCeps.length; i += chunkSize) {
+                const chunk = cleanCeps.slice(i, i + chunkSize);
+                await onUploadChunk(chunk);
+                currentMigrated += chunk.length;
+                setMigratedCount(currentMigrated);
+                onUploadComplete(currentMigrated);
+            }
+            setFile(null);
+            setPreviewCount(null);
+            setMigratedCount(null);
+        } catch (error) {
+            console.error('Falha ao processar as chunks de CEPs', error);
+        } finally {
+            setIsUploadingCeps(false);
+        }
     };
 
     const handleSaveGeneral = async () => {
-        await onSaveConfig(file);
-        if (file) {
-            setFile(null);
-            setPreviewCount(null);
-        }
+        await onSaveConfig();
     };
 
     return (
@@ -109,12 +155,27 @@ export function CustomShippingConfig({ config, onChange, onSaveConfig, totalCeps
                         <p className="font-bold text-sm text-gray-800 max-w-[80%] truncate">
                             {file ? file.name : "Clique ou arraste sua planilha de CEPs aqui"}
                         </p>
-                        <div className="text-xs text-gray-500 mt-2">
+                        <div className="text-xs text-gray-500 mt-2 w-full">
                             {isParsing ? (
                                 <span className="flex items-center gap-2 justify-center font-medium text-indigo-600">
                                     <div className="w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                                    Lendo planilha...
+                                    Extraindo e formatando CEPs...
                                 </span>
+                            ) : isUploadingCeps && file ? (
+                                <div className="space-y-2 mt-4 mx-auto w-10/12 max-w-sm">
+                                    <div className="flex justify-between text-[11px] font-bold text-indigo-700 uppercase tracking-wider">
+                                        <span>Migrando para Banco de Dados</span>
+                                        <span>{migratedCount?.toLocaleString('pt-BR')} / {previewCount?.toLocaleString('pt-BR')}</span>
+                                    </div>
+                                    <div className="w-full bg-indigo-100 rounded-full h-2.5 overflow-hidden">
+                                        <div
+                                            className="bg-indigo-600 h-full transition-all duration-300 relative"
+                                            style={{ width: `${Math.round(((migratedCount || 0) / (previewCount || 1)) * 100)}%` }}
+                                        >
+                                            <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             ) : file ? (
                                 `Tamanho: ${(file.size / 1024).toFixed(1)} KB`
                             ) : (
@@ -181,17 +242,17 @@ export function CustomShippingConfig({ config, onChange, onSaveConfig, totalCeps
                 <Button
                     variant="primary"
                     onClick={handleSaveGeneral}
-                    disabled={uploading || (!name && !file)}
+                    disabled={uploading || isUploadingCeps || !name}
                     className="flex items-center gap-2 px-8 py-3 shadow-lg shadow-indigo-200/50"
                 >
-                    {uploading ? (
+                    {uploading || isUploadingCeps ? (
                         <>
                             <div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin" />
-                            Gerando e Sincronizando Base...
+                            {isUploadingCeps ? "Sincronizando..." : "Salvando..."}
                         </>
                     ) : (
                         <>
-                            <Save size={18} /> {file ? "Processar Planilha e Salvar" : "Salvar Configuração"}
+                            <Save size={18} /> Salvar Configuração
                         </>
                     )}
                 </Button>

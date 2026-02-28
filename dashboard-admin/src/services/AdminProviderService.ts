@@ -35,12 +35,13 @@ export const AdminProviderService = {
         return api.delete(`/admin/providers/${id}`);
     },
 
-    uploadShippingCsv: async (providerId: string, file: File): Promise<{ message: string, totalCeps: number }> => {
-        const formData = new FormData();
-        formData.append('file', file);
-        const { data } = await api.post(`/admin/providers/${providerId}/ceps/upload`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
+    clearShippingCeps: async (providerId: string): Promise<{ message: string }> => {
+        const { data } = await api.delete(`/admin/providers/${providerId}/ceps/clear`);
+        return data;
+    },
+
+    uploadShippingCepsChunk: async (providerId: string, ceps: string[]): Promise<{ message: string, migradas: number }> => {
+        const { data } = await api.post(`/admin/providers/${providerId}/ceps/chunk`, ceps);
         return data;
     },
 

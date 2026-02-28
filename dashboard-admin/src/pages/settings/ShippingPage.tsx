@@ -126,8 +126,9 @@ export function ShippingPage() {
         }
     };
 
-    const handleSaveCustomConfig = async (fileToUpload: File | null) => {
+    const handleSaveCustomConfig = async () => {
         if (!editingProvider) return;
+        setIsCustomUploading(true);
         try {
             await AdminProviderService.saveProviderConfig({
                 providerId: editingProvider.id,
@@ -135,20 +136,24 @@ export function ShippingPage() {
                 environment: 'PRODUCTION'
             });
 
-            if (fileToUpload) {
-                setIsCustomUploading(true);
-                const res = await AdminProviderService.uploadShippingCsv(editingProvider.id, fileToUpload);
-                setCustomCepCount(res.totalCeps);
-                addToast(`Foram carregados ${res.totalCeps} CEPs com sucesso!`, 'success');
-            } else {
-                addToast('Configurações do frete local salvas!', 'success');
-            }
+            addToast('Configurações do frete local salvas!', 'success');
+            setEditingProvider(null);
         } catch (err) {
-            addToast('Erro ao salvar configuração de frete ou processar CSV.', 'error');
+            addToast('Erro ao salvar configuração de frete.', 'error');
             throw err;
         } finally {
             setIsCustomUploading(false);
         }
+    };
+
+    const handleClearCeps = async () => {
+        if (!editingProvider) return;
+        await AdminProviderService.clearShippingCeps(editingProvider.id);
+    };
+
+    const handleUploadChunk = async (chunk: string[]) => {
+        if (!editingProvider) return;
+        await AdminProviderService.uploadShippingCepsChunk(editingProvider.id, chunk);
     };
 
     return (
@@ -265,6 +270,9 @@ export function ShippingPage() {
                                             onSaveConfig={handleSaveCustomConfig}
                                             totalCeps={customCepCount}
                                             uploading={isCustomUploading}
+                                            onClearCeps={handleClearCeps}
+                                            onUploadChunk={handleUploadChunk}
+                                            onUploadComplete={(newCount) => setCustomCepCount(newCount)}
                                         />
                                     ) : (
                                         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-3">

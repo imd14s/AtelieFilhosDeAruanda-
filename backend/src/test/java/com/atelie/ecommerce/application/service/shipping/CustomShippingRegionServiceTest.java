@@ -10,15 +10,12 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,14 +38,11 @@ public class CustomShippingRegionServiceTest {
     }
 
     @Test
-    void shouldProcessCsvSuccessfully() throws Exception {
-        String csvData = "cep,outra_coluna\n12345678,ignorada\n01001-000,test\n\ninvalido";
-        MultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv",
-                csvData.getBytes(StandardCharsets.UTF_8));
+    void shouldProcessCepChunkSuccessfully() {
+        List<String> chunk = List.of("12345678", "01001000", "invalido");
 
-        service.processCsvUpload(providerId, file);
+        service.processCepChunk(providerId, chunk);
 
-        verify(repository).deleteByProviderId(providerId);
         verify(repository).saveAll(listCaptor.capture());
 
         List<CustomShippingRegionEntity> saved = listCaptor.getValue();
@@ -58,10 +52,8 @@ public class CustomShippingRegionServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfFileIsEmpty() {
-        MultipartFile file = new MockMultipartFile("file", new byte[0]);
-
-        assertThrows(IllegalArgumentException.class, () -> service.processCsvUpload(providerId, file));
+    void shouldNotSaveIfChunkIsEmpty() {
+        service.processCepChunk(providerId, Collections.emptyList());
         verifyNoInteractions(repository);
     }
 }
