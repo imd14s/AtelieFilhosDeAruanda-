@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/164</span>
+                <span class='fraction'>0/166</span>
             </div>
         
             
@@ -595,7 +595,8 @@
 <a name='L530'></a><a href='#L530'>530</a>
 <a name='L531'></a><a href='#L531'>531</a>
 <a name='L532'></a><a href='#L532'>532</a>
-<a name='L533'></a><a href='#L533'>533</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L533'></a><a href='#L533'>533</a>
+<a name='L534'></a><a href='#L534'>534</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1021,6 +1022,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1420,7 +1422,7 @@ export function <span class="fstat-no" title="function not covered" >Subscriptio
                                 &lt;input
                                     type="number"
                                     step="0.01"
-                                    value={(editingPlan.basePrice as number) || ''}
+                                    value={editingPlan.basePrice === 0 ? '' : (editingPlan.basePrice as number | string)}
                                     onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setEditingPlan({ ...editingPlan, basePrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}</span>
                                     className="w-full border rounded-lg p-2 pl-9 outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="0.00"
@@ -1499,7 +1501,7 @@ export function <span class="fstat-no" title="function not covered" >Subscriptio
                                     &lt;label className="text-[10px] font-bold text-amber-600 uppercase"&gt;Qtd. Cupons&lt;/label&gt;
                                     &lt;input
                                         type="number"
-                                        value={(editingPlan.couponBundleCount as number) || ''}
+                                        value={editingPlan.couponBundleCount === 0 ? '' : (editingPlan.couponBundleCount as number | string)}
                                         onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setEditingPlan({ ...editingPlan, couponBundleCount: e.target.value === '' ? 0 : parseInt(e.target.value) })}</span>
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
                                         placeholder="0"
@@ -1509,20 +1511,20 @@ export function <span class="fstat-no" title="function not covered" >Subscriptio
                                     &lt;label className="text-[10px] font-bold text-amber-600 uppercase"&gt;% Desconto&lt;/label&gt;
                                     &lt;input
                                         type="number"
-                                        value={(editingPlan.couponDiscountPercentage as number) || ''}
+                                        value={editingPlan.couponDiscountPercentage === 0 ? '' : (editingPlan.couponDiscountPercentage as number | string)}
                                         onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setEditingPlan({ ...editingPlan, couponDiscountPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}</span>
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
-                                        placeholder="0"
+                                        placeholder="0.00"
                                     /&gt;
                                 &lt;/div&gt;
                                 &lt;div className="space-y-1"&gt;
                                     &lt;label className="text-[10px] font-bold text-amber-600 uppercase"&gt;Validade (Dias)&lt;/label&gt;
                                     &lt;input
                                         type="number"
-                                        value={(editingPlan.couponValidityDays as number) || ''}
+                                        value={editingPlan.couponValidityDays === 0 ? '' : (editingPlan.couponValidityDays as number | string)}
                                         onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setEditingPlan({ ...editingPlan, couponValidityDays: e.target.value === '' ? 0 : parseInt(e.target.value) })}</span>
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
-                                        placeholder="0"
+                                        placeholder="30"
                                     /&gt;
                                 &lt;/div&gt;
                             &lt;/div&gt;
@@ -1551,9 +1553,10 @@ export function <span class="fstat-no" title="function not covered" >Subscriptio
                                                 &lt;input
                                                     type="number"
                                                     min="1"
-                                                    value={(p.quantity as number) || 1}
-                                                    onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >updateProductQuantity((p.product as Record&lt;string, unknown&gt;)?.id as string || (p.productId as string), Number(e.target.value))}</span>
+                                                    value={p.quantity === 0 ? '' : (p.quantity as number | string)}
+                                                    onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >updateProductQuantity((p.product as Record&lt;string, unknown&gt;)?.id as string || (p.productId as string), e.target.value === '' ? 0 : Number(e.target.value))}</span>
                                                     className="w-12 border rounded p-1 text-center text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    placeholder="1"
                                                 /&gt;
                                                 &lt;button type="button" onClick={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >t</span>oggleProduct(product)} c</span>lassName="text-red-500 hover:bg-red-50 p-1 rounded transition"&gt;
                                                     &lt;Plus size={16} className="rotate-45" /&gt;
@@ -1637,9 +1640,9 @@ export function <span class="fstat-no" title="function not covered" >Subscriptio
                                         )}&gt;
                                             &lt;input
                                                 type="number"
-                                                value={rule ? ((rule.discountPercentage as number) || '') : ''}
+                                                value={rule ? (rule.discountPercentage === 0 ? '' : (rule.discountPercentage as number | string)) : ''}
                                                 onChange={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >updateDiscount(freq.key, e.target.value)}</span>
-                                                placeholder="0"
+                                                placeholder="0.00"
                                                 className="w-full p-2 text-sm outline-none text-center"
                                             /&gt;
                                             &lt;span className="bg-gray-50 px-2 py-2 text-xs text-gray-400 font-bold"&gt;%&lt;/span&gt;
@@ -1666,7 +1669,7 @@ export function <span class="fstat-no" title="function not covered" >Subscriptio
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-28T03:12:44.913Z
+                at 2026-02-28T03:24:10.991Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -52,7 +52,7 @@ describe('ProductForm Component', () => {
 
         fireEvent.change(screen.getByPlaceholderText('Ex: Vestido Amarelo Ogum'), { target: { value: 'Vela Teste' } });
         fireEvent.change(screen.getByPlaceholderText('0.00 (ou herdar)'), { target: { value: '50' } });
-        fireEvent.change(screen.getByPlaceholderText('0 (ou herdar)'), { target: { value: '10' } });
+        fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '10' } });
         fireEvent.change(screen.getByPlaceholderText('0000.00.00'), { target: { value: '12345678' } });
 
         // Add variant to the list so its values are submitted

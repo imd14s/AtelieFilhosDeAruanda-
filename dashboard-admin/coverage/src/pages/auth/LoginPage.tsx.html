@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -139,27 +139,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -205,28 +205,28 @@ import { useState } from 'react';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
 &nbsp;
-export function LoginPage() {
-  const { register, handleSubmit } = useForm();
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const { addToast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+export function <span class="fstat-no" title="function not covered" >LoginPage() {</span>
+  const { register, handleSubmit <span class="cstat-no" title="statement not covered" >} = useForm();</span>
+  const { login <span class="cstat-no" title="statement not covered" >} = useAuth();</span>
+  const <span class="cstat-no" title="statement not covered" >navigate = useNavigate();</span>
+  const { addToast <span class="cstat-no" title="statement not covered" >} = useToast();</span>
+  const [isLoading, setIsLoading<span class="cstat-no" title="statement not covered" >] = useState(false);</span>
 &nbsp;
-  const onSubmit = async (data: Record&lt;string, unknown&gt;) =&gt; {
-    setIsLoading(true);
-    try {
-      const res = await api.post('/auth/login', data);
-      login(res.data.token);
-      addToast('Bem-vindo ao painel!', 'success');
-      navigate('/');
+  const onSubmit = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (d</span>ata: Record&lt;string, unknown&gt;) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    setIsLoading(true);</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+      const res = <span class="cstat-no" title="statement not covered" >await api.post('/auth/login', data);</span>
+<span class="cstat-no" title="statement not covered" >      login(res.data.token);</span>
+<span class="cstat-no" title="statement not covered" >      addToast('Bem-vindo ao painel!', 'success');</span>
+<span class="cstat-no" title="statement not covered" >      navigate('/');</span>
     } catch {
-      addToast('Credenciais inválidas. Tente novamente.', 'error');
+<span class="cstat-no" title="statement not covered" >      addToast('Credenciais inválidas. Tente novamente.', 'error');</span>
     } finally {
-      setIsLoading(false);
+<span class="cstat-no" title="statement not covered" >      setIsLoading(false);</span>
     }
   };
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className="min-h-screen flex items-center justify-center bg-gray-100"&gt;
       &lt;div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"&gt;
         &lt;h2 className="text-2xl font-bold mb-6 text-center text-gray-800"&gt;Acesso Administrativo&lt;/h2&gt;
@@ -271,7 +271,7 @@ export function LoginPage() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-28T03:12:45.164Z
+                at 2026-02-28T03:24:11.183Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

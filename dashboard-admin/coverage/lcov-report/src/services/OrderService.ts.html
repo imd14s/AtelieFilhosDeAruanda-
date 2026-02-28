@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -112,93 +112,93 @@
 <a name='L47'></a><a href='#L47'>47</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { api } from '../api/axios';
 import type { Order } from '../types/order';
 &nbsp;
-export const OrderService = {
-    getAll: async (): Promise&lt;Order[]&gt; =&gt; {
-        try {
-            const { data } = await api.get&lt;Record&lt;string, unknown&gt;&gt;('/orders');
+export const OrderService = <span class="cstat-no" title="statement not covered" >{</span>
+    getAll: <span class="fstat-no" title="function not covered" >async (): Promise&lt;Order[]&gt; =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        try {</span>
+            const { data } = <span class="cstat-no" title="statement not covered" >await api.get&lt;Record&lt;string, unknown&gt;&gt;('/orders');</span>
             // Backend returns Page&lt;OrderResponse&gt;, so we extract content
-            return (data.content as Order[]) || [];
+<span class="cstat-no" title="statement not covered" >            return (data.content as Order[]) || [];</span>
         } catch (error) {
-            console.error('Erro ao buscar pedidos:', error);
-            throw error;
+<span class="cstat-no" title="statement not covered" >            console.error('Erro ao buscar pedidos:', error);</span>
+<span class="cstat-no" title="statement not covered" >            throw error;</span>
         }
     },
 &nbsp;
-    cancel: async (id: string, reason: string) =&gt; {
+    cancel: <span class="fstat-no" title="function not covered" >async (i</span>d: string, reason: string) =&gt; {
         // Backend expects raw string body for reason or nothing
-        return await api.put(`/orders/${id}/cancel`, reason, {
+<span class="cstat-no" title="statement not covered" >        return await api.put(`/orders/${id}/cancel`, reason, {</span>
             headers: { 'Content-Type': 'text/plain' }
         });
     },
 &nbsp;
-    ship: async (id: string) =&gt; {
-        return await api.put(`/orders/${id}/ship`);
+    ship: <span class="fstat-no" title="function not covered" >async (i</span>d: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >        return await api.put(`/orders/${id}/ship`);</span>
     },
 &nbsp;
-    approve: async (id: string) =&gt; {
-        return await api.put(`/orders/${id}/approve`);
+    approve: <span class="fstat-no" title="function not covered" >async (i</span>d: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >        return await api.put(`/orders/${id}/approve`);</span>
     },
 &nbsp;
-    delivered: async (id: string) =&gt; {
-        return await api.put(`/orders/${id}/delivered`);
+    delivered: <span class="fstat-no" title="function not covered" >async (i</span>d: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >        return await api.put(`/orders/${id}/delivered`);</span>
     },
 &nbsp;
-    emitInvoice: async (id: string) =&gt; {
-        return await api.post(`/admin/orders/${id}/invoice`);
+    emitInvoice: <span class="fstat-no" title="function not covered" >async (i</span>d: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >        return await api.post(`/admin/orders/${id}/invoice`);</span>
     },
 &nbsp;
-    getXmlUrl: (id: string) =&gt; {
-        return `${api.defaults.baseURL}/admin/orders/${id}/nfe/xml`;
+    getXmlUrl: <span class="fstat-no" title="function not covered" >(i</span>d: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >        return `${api.defaults.baseURL}/admin/orders/${id}/nfe/xml`;</span>
     },
 &nbsp;
-    getDanfeUrl: (id: string) =&gt; {
-        return `${api.defaults.baseURL}/admin/orders/${id}/nfe/danfe`;
+    getDanfeUrl: <span class="fstat-no" title="function not covered" >(i</span>d: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >        return `${api.defaults.baseURL}/admin/orders/${id}/nfe/danfe`;</span>
     }
 };
 &nbsp;</pre></td></tr></table></pre>
@@ -208,7 +208,7 @@ export const OrderService = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-28T03:12:44.913Z
+                at 2026-02-28T03:24:10.991Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

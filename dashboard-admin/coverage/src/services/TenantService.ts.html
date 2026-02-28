@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>0/14</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -118,7 +118,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -135,41 +135,41 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { api } from '../api/axios';
 import type { Tenant, CreateTenantDTO } from '../types/tenant';
 &nbsp;
 // Mock inicial para desenvolvimento frontend sem backend pronto
-const MOCK_TENANTS: Tenant[] = [
+const MOCK_TENANTS: Tenant[] = <span class="cstat-no" title="statement not covered" >[</span>
     {
         id: '1',
         name: 'Loja Principal',
@@ -186,34 +186,34 @@ const MOCK_TENANTS: Tenant[] = [
     }
 ];
 &nbsp;
-export const TenantService = {
-    getAll: async (): Promise&lt;Tenant[]&gt; =&gt; {
-        try {
-            const { data } = await api.get&lt;Tenant[]&gt;('/admin/tenants');
-            return data;
+export const TenantService = <span class="cstat-no" title="statement not covered" >{</span>
+    getAll: <span class="fstat-no" title="function not covered" >async (): Promise&lt;Tenant[]&gt; =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >        try {</span>
+            const { data } = <span class="cstat-no" title="statement not covered" >await api.get&lt;Tenant[]&gt;('/admin/tenants');</span>
+<span class="cstat-no" title="statement not covered" >            return data;</span>
         } catch {
-            console.warn('Backend Tenant API not ready, using mock');
-            return MOCK_TENANTS;
+<span class="cstat-no" title="statement not covered" >            console.warn('Backend Tenant API not ready, using mock');</span>
+<span class="cstat-no" title="statement not covered" >            return MOCK_TENANTS;</span>
         }
     },
 &nbsp;
-    getById: async (id: string): Promise&lt;Tenant | undefined&gt; =&gt; {
-        try {
-            const { data } = await api.get&lt;Tenant&gt;(`/admin/tenants/${id}`);
-            return data;
+    getById: <span class="fstat-no" title="function not covered" >async (i</span>d: string): Promise&lt;Tenant | undefined&gt; =&gt; {
+<span class="cstat-no" title="statement not covered" >        try {</span>
+            const { data } = <span class="cstat-no" title="statement not covered" >await api.get&lt;Tenant&gt;(`/admin/tenants/${id}`);</span>
+<span class="cstat-no" title="statement not covered" >            return data;</span>
         } catch {
-            return MOCK_TENANTS.find(t =&gt; t.id === id);
+<span class="cstat-no" title="statement not covered" >            return MOCK_TENANTS.find(<span class="fstat-no" title="function not covered" >t =&gt; <span class="cstat-no" title="statement not covered" >t</span>.id === id)</span>;</span>
         }
     },
 &nbsp;
-    create: async (tenant: CreateTenantDTO) =&gt; {
-        return api.post('/admin/tenants', tenant);
+    create: <span class="fstat-no" title="function not covered" >async (t</span>enant: CreateTenantDTO) =&gt; {
+<span class="cstat-no" title="statement not covered" >        return api.post('/admin/tenants', tenant);</span>
     },
 &nbsp;
-    switchTenant: (tenantId: string) =&gt; {
-        localStorage.setItem('current_tenant_id', tenantId);
+    switchTenant: <span class="fstat-no" title="function not covered" >(t</span>enantId: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >        localStorage.setItem('current_tenant_id', tenantId);</span>
         // Em uma implementação real, isso poderia recarregar a página ou atualizar headers do axios
-        api.defaults.headers.common['X-Tenant-ID'] = tenantId;
+<span class="cstat-no" title="statement not covered" >        api.defaults.headers.common['X-Tenant-ID'] = tenantId;</span>
     }
 };
 &nbsp;</pre></td></tr></table></pre>
@@ -223,7 +223,7 @@ export const TenantService = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-28T03:12:45.164Z
+                at 2026-02-28T03:24:11.183Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
