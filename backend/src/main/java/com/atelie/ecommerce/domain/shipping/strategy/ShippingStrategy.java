@@ -16,7 +16,8 @@ public interface ShippingStrategy {
             String destinationCep,
             BigDecimal subtotal,
             List<ShippingItem> items,
-            String tenantId) {
+            String tenantId,
+            String providerName) {
     }
 
     record ShippingItem(

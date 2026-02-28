@@ -5,6 +5,7 @@ import { AdminProviderService } from '../../services/AdminProviderService';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { MelhorEnvioConfig } from '../../components/shipping/MelhorEnvioConfig';
 import { MandaBemConfig } from '../../components/shipping/MandaBemConfig';
+import { CustomShippingConfig } from '../../components/shipping/CustomShippingConfig';
 import BaseModal from '../../components/ui/BaseModal';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
@@ -12,6 +13,7 @@ import { useToast } from '../../context/ToastContext';
 const RECOMMENDED_PROVIDERS = [
     { name: 'Melhor Envio', code: 'MELHOR_ENVIO', driverKey: 'shipping.melhorenvio', icon: '📦' },
     { name: 'Manda Bem', code: 'MANDA_BEM', driverKey: 'shipping.mandabem', icon: '🚚' },
+    { name: 'Entrega Local / Customizada', code: 'CUSTOM_LOCAL', driverKey: 'shipping.custom', icon: '🛵' },
 ];
 
 export function ShippingPage() {
@@ -22,6 +24,8 @@ export function ShippingPage() {
     const [configData, setConfigData] = useState<Record<string, unknown>>({});
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newProvider, setNewProvider] = useState({ name: '', code: '', driverKey: '' });
+    const [customCepCount, setCustomCepCount] = useState<number>(0);
+    const [isCustomUploading, setIsCustomUploading] = useState<boolean>(false);
     const { addToast } = useToast();
 
     useEffect(() => {
@@ -95,6 +99,15 @@ export function ShippingPage() {
         } catch {
             setConfigData({});
         }
+
+        if (provider.driverKey === 'shipping.custom') {
+            try {
+                const data = await AdminProviderService.countShippingCeps(provider.id);
+                setCustomCepCount(data.totalCeps || 0);
+            } catch {
+                setCustomCepCount(0);
+            }
+        }
     };
 
     const handleSaveConfig = async () => {
@@ -107,8 +120,34 @@ export function ShippingPage() {
             });
             addToast('Configuração de frete salva!', 'success');
             setEditingProvider(null);
-        } catch {
+        } catch (err) {
             addToast('Erro ao salvar configuração.', 'error');
+            throw err;
+        }
+    };
+
+    const handleSaveCustomConfig = async (fileToUpload: File | null) => {
+        if (!editingProvider) return;
+        try {
+            await AdminProviderService.saveProviderConfig({
+                providerId: editingProvider.id,
+                configJson: JSON.stringify(configData),
+                environment: 'PRODUCTION'
+            });
+
+            if (fileToUpload) {
+                setIsCustomUploading(true);
+                const res = await AdminProviderService.uploadShippingCsv(editingProvider.id, fileToUpload);
+                setCustomCepCount(res.totalCeps);
+                addToast(`Foram carregados ${res.totalCeps} CEPs com sucesso!`, 'success');
+            } else {
+                addToast('Configurações do frete local salvas!', 'success');
+            }
+        } catch (err) {
+            addToast('Erro ao salvar configuração de frete ou processar CSV.', 'error');
+            throw err;
+        } finally {
+            setIsCustomUploading(false);
         }
     };
 
@@ -219,6 +258,14 @@ export function ShippingPage() {
                                             config={configData}
                                             onChange={(newConfig) => setConfigData(newConfig as Record<string, unknown>)}
                                         />
+                                    ) : provider.driverKey === 'shipping.custom' ? (
+                                        <CustomShippingConfig
+                                            config={configData}
+                                            onChange={(newConfig) => setConfigData(newConfig as Record<string, unknown>)}
+                                            onSaveConfig={handleSaveCustomConfig}
+                                            totalCeps={customCepCount}
+                                            uploading={isCustomUploading}
+                                        />
                                     ) : (
                                         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-3">
                                             <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2 tracking-widest">
@@ -235,15 +282,17 @@ export function ShippingPage() {
                                         </div>
                                     )}
 
-                                    <div className="flex justify-end pt-2">
-                                        <Button
-                                            onClick={handleSaveConfig}
-                                            variant="primary"
-                                            className="px-8 shadow-lg shadow-indigo-100"
-                                        >
-                                            <Save size={18} /> Salvar Alterações
-                                        </Button>
-                                    </div>
+                                    {provider.driverKey !== 'shipping.custom' && (
+                                        <div className="flex justify-end pt-2">
+                                            <Button
+                                                onClick={handleSaveConfig}
+                                                variant="primary"
+                                                className="px-8 shadow-lg shadow-indigo-100"
+                                            >
+                                                <Save size={18} /> Salvar Alterações
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -298,7 +347,10 @@ export function ShippingPage() {
                                 value={newProvider.code}
                                 onChange={e => {
                                     const code = e.target.value.toUpperCase();
-                                    const driverKey = code === 'MELHOR_ENVIO' ? 'shipping.melhorenvio' : code.toLowerCase();
+                                    const driverKey = code === 'MELHOR_ENVIO' ? 'shipping.melhorenvio'
+                                        : code === 'MANDA_BEM' ? 'shipping.mandabem'
+                                            : code === 'CUSTOM_LOCAL' ? 'shipping.custom'
+                                                : code.toLowerCase();
                                     setNewProvider({ ...newProvider, code, driverKey });
                                 }}
                             />

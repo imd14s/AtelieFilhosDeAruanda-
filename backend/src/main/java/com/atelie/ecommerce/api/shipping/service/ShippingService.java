@@ -48,7 +48,7 @@ public class ShippingService {
                 .toList();
 
         var params = new com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingParams(
-                rawCep, subtotal, domainItems, "default-tenant");
+                rawCep, subtotal, domainItems, "default-tenant", providerName);
 
         log.info("[LOGISTICS] Iniciando orquestração assíncrona para provedor: {}", providerName);
 

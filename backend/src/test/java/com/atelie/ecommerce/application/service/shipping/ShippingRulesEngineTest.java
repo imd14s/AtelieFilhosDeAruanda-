@@ -51,7 +51,7 @@ class ShippingRulesEngineTest {
         return new ShippingStrategy.ShippingParams("01000-000", subtotal, List.of(
                 new ShippingStrategy.ShippingItem(UUID.randomUUID(), UUID.randomUUID(), 1, BigDecimal.ONE,
                         BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN)),
-                "tenant");
+                "tenant", "TEST_PROVIDER");
     }
 
     private ShippingStrategy.ShippingResult createOriginalResult(BigDecimal cost) {

@@ -33,5 +33,19 @@ export const AdminProviderService = {
 
     deleteProvider: async (id: string) => {
         return api.delete(`/admin/providers/${id}`);
+    },
+
+    uploadShippingCsv: async (providerId: string, file: File): Promise<{ message: string, totalCeps: number }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const { data } = await api.post(`/admin/providers/${providerId}/ceps/upload`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return data;
+    },
+
+    countShippingCeps: async (providerId: string): Promise<{ totalCeps: number }> => {
+        const { data } = await api.get(`/admin/providers/${providerId}/ceps/count`);
+        return data;
     }
 };
