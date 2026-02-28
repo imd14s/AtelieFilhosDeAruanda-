@@ -23,7 +23,7 @@ public class CustomShippingRegionService {
             return;
 
         List<CustomShippingRegionEntity> entitiesToSave = cepsChunk.stream()
-                .filter(cep -> cep != null && cep.length() == 8)
+                .filter(cep -> cep != null && cep.matches("\\d{8}"))
                 .map(cep -> CustomShippingRegionEntity.builder()
                         .id(UUID.randomUUID())
                         .providerId(providerId)

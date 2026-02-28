@@ -18,8 +18,8 @@ const getAuthUser = (): User | null => {
 };
 
 export const cartService = {
-    get: async (): Promise<CartItem[]> => {
-        const user = getAuthUser();
+    get: async (userOverride?: User | null): Promise<CartItem[]> => {
+        const user = userOverride !== undefined ? userOverride : getAuthUser();
         const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
         const cartData = JSON.parse(localStorage.getItem(cartKey) || '[]');
         let cart = Array.isArray(cartData) ? cartData : (cartData.items || []);
@@ -41,8 +41,8 @@ export const cartService = {
         return cart;
     },
 
-    save: async (cart: CartItem[]): Promise<void> => {
-        const user = getAuthUser();
+    save: async (cart: CartItem[], userOverride?: User | null): Promise<void> => {
+        const user = userOverride !== undefined ? userOverride : getAuthUser();
         const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
         localStorage.setItem(cartKey, JSON.stringify(cart));
 
@@ -58,8 +58,8 @@ export const cartService = {
         window.dispatchEvent(new Event('cart-updated'));
     },
 
-    add: async (product: Partial<Product> & { id: string; name?: string; title?: string; price: number }, quantity: number = 1, variantId: string | null = null): Promise<CartItem[]> => {
-        const cart = await cartService.get();
+    add: async (product: Partial<Product> & { id: string; name?: string; title?: string; price: number }, quantity: number = 1, variantId: string | null = null, userOverride?: User | null): Promise<CartItem[]> => {
+        const cart = await cartService.get(userOverride);
         const vId = variantId || "";
         const existingItem = cart.find(item =>
             item.id === product.id && item.variantId === vId
@@ -78,22 +78,22 @@ export const cartService = {
             });
         }
 
-        await cartService.save(cart);
+        await cartService.save(cart, userOverride);
         return cart;
     },
 
-    remove: async (productId: string, variantId: string | null = null): Promise<CartItem[]> => {
-        let cart = await cartService.get();
+    remove: async (productId: string, variantId: string | null = null, userOverride?: User | null): Promise<CartItem[]> => {
+        let cart = await cartService.get(userOverride);
         const vId = variantId || "";
         cart = cart.filter(item =>
             !(item.id === productId && item.variantId === vId)
         );
-        await cartService.save(cart);
+        await cartService.save(cart, userOverride);
         return cart;
     },
 
-    updateQuantity: async (productId: string, quantity: number, variantId: string | null = null): Promise<CartItem[]> => {
-        const cart = await cartService.get();
+    updateQuantity: async (productId: string, quantity: number, variantId: string | null = null, userOverride?: User | null): Promise<CartItem[]> => {
+        const cart = await cartService.get(userOverride);
         const vId = variantId || "";
         const item = cart.find(item =>
             item.id === productId && item.variantId === vId
@@ -101,13 +101,13 @@ export const cartService = {
 
         if (item) {
             item.quantity = Math.max(1, quantity);
-            await cartService.save(cart);
+            await cartService.save(cart, userOverride);
         }
         return cart;
     },
 
-    clear: async (): Promise<void> => {
-        const user = getAuthUser();
+    clear: async (userOverride?: User | null): Promise<void> => {
+        const user = userOverride !== undefined ? userOverride : getAuthUser();
         const cartKey = user ? `cart_user_${user.id}` : 'cart_guest';
         localStorage.removeItem(cartKey);
 
@@ -123,13 +123,15 @@ export const cartService = {
         window.dispatchEvent(new Event('cart-updated'));
     },
 
-    migrate: async (_userId: string): Promise<void> => {
+    migrate: async (userId: string): Promise<void> => {
         try {
             const guestCartJson = localStorage.getItem('cart_guest');
             const guestCart: CartItem[] = guestCartJson ? JSON.parse(guestCartJson) : [];
             if (guestCart.length === 0) return;
 
-            const userCart = await cartService.get();
+            // Para migração, o usuário é obrigatório
+            const userObj = { id: userId } as User;
+            const userCart = await cartService.get(userObj);
 
             guestCart.forEach(guestItem => {
                 const existingItem = userCart.find(item =>
@@ -142,7 +144,7 @@ export const cartService = {
                 }
             });
 
-            await cartService.save(userCart);
+            await cartService.save(userCart, userObj);
             localStorage.removeItem('cart_guest');
         } catch (error) {
             console.error("[cartService] Erro ao migrar carrinho", error);

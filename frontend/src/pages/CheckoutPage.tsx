@@ -1,18 +1,25 @@
 /* eslint-disable */
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { ChevronLeft, CreditCard, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Loader2, AlertCircle, ShieldCheck, CreditCard, Truck } from 'lucide-react';
 import { cartService } from '../services/cartService';
 import { authService } from '../services/authService';
 import { orderService } from '../services/orderService';
 import marketingService from '../services/marketingService';
-import { getImageUrl } from '../utils/imageUtils';
 import SEO from '../components/SEO';
 import { useMercadoPago } from '../hooks/useMercadoPago';
-import { User, Address, Card, Coupon, ShippingOption, CartItem, Order, CreateOrderData } from '../types';
-import { MaskedInput } from '../components/ui/MaskedInput';
+import { useAuth } from '../context/AuthContext';
+import { Coupon, ShippingOption, CartItem, Order, CreateOrderData, Address } from '../types';
 import { isValidCPF, isValidCNPJ, sanitizeDocument } from '../utils/fiscal';
 import { SafeAny } from "../types/safeAny";
+
+// Novos componentes modulares
+import CheckoutContact from '../components/checkout/CheckoutContact';
+import CheckoutFiscal from '../components/checkout/CheckoutFiscal';
+import CheckoutAddress from '../components/checkout/CheckoutAddress';
+import CheckoutShipping from '../components/checkout/CheckoutShipping';
+import CheckoutPayment from '../components/checkout/CheckoutPayment';
+import CheckoutSummary from '../components/checkout/CheckoutSummary';
 
 interface CheckoutFormData {
     email: string;
@@ -31,6 +38,7 @@ interface CheckoutFormData {
 const CheckoutPage: React.FC = () => {
     const location = useLocation();
     const { shippingSelected, cep } = (location.state as { shippingSelected?: ShippingOption; cep?: string }) || {};
+    const { user, addresses, cards } = useAuth();
 
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -40,13 +48,10 @@ const CheckoutPage: React.FC = () => {
     const [couponError, setCouponError] = useState<string>('');
     const [validatingCoupon, setValidatingCoupon] = useState<boolean>(false);
 
-    // Simplificado para evitar parse repetitivo
-    const user: Partial<User> = JSON.parse(localStorage.getItem('user') || '{}');
-
     const [formData, setFormData] = useState<CheckoutFormData>({
-        email: user.email || '',
-        nome: user.name?.split(' ')[0] || '',
-        sobrenome: user.name?.split(' ').slice(1).join(' ') || '',
+        email: user?.email || '',
+        nome: user?.name?.split(' ')[0] || '',
+        sobrenome: user?.name?.split(' ').slice(1).join(' ') || '',
         endereco: '',
         cidade: '',
         estado: '',
@@ -54,7 +59,7 @@ const CheckoutPage: React.FC = () => {
         metodoPagamento: 'pix',
         saveAddress: false,
         saveCard: false,
-        document: user.document || ''
+        document: user?.document || ''
     });
 
     const { mp, loading: mpLoading, isConfigured, pixActive, cardActive, pixDiscountPercent, error: mpError } = useMercadoPago();
@@ -72,10 +77,8 @@ const CheckoutPage: React.FC = () => {
     const cardFormRef = useRef<SafeAny>(null); // External SDK Ref usually needs any or complex interface
     const pendingOrderRef = useRef<CreateOrderData | null>(null);
 
-    const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
     const [isAddingNewAddress, setIsAddingNewAddress] = useState<boolean>(!cep);
-    const [savedCards, setSavedCards] = useState<Card[]>([]);
     const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
     const [isAddingNewCard, setIsAddingNewCard] = useState<boolean>(true);
     const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
@@ -92,7 +95,7 @@ const CheckoutPage: React.FC = () => {
         : 0;
 
     // Aplicar desconto PIX dinâmico vindo da configuração do backend
-    const currentPixDiscountPercent = pixDiscountPercent / 100;
+    const currentPixDiscountPercent = (pixDiscountPercent || 0) / 100;
     const pixDiscount = formData.metodoPagamento === 'pix' ? (subtotal * currentPixDiscountPercent) : 0;
 
     const total = subtotal + (currentShipping?.price || 0) - discount - pixDiscount;
@@ -102,7 +105,7 @@ const CheckoutPage: React.FC = () => {
             const currentCart = await cartService.get();
             setCart(currentCart);
 
-            if (user.id) {
+            if (user && user.id) {
                 setFormData(prev => ({
                     ...prev,
                     email: user.email || prev.email,
@@ -111,24 +114,24 @@ const CheckoutPage: React.FC = () => {
                     document: user.document || prev.document
                 }));
 
-                try {
-                    const addresses = await authService.address.get(user.id);
-                    setSavedAddresses(addresses);
-                    if (addresses.length > 0 && !cep) {
+                // Inicializa seleção de endereço se houver endereços e nenhum selecionado
+                if (addresses.length > 0) {
+                    if (!selectedAddressId && !cep) {
                         setIsAddingNewAddress(false);
-                        // Seleciona o padrão se existir
-                        const def = addresses.find(a => a.isDefault);
+                        const def = addresses.find(a => a.isDefault) || addresses[0];
                         if (def) handleSelectAddress(def);
                     }
+                } else {
+                    setIsAddingNewAddress(true);
+                }
 
-                    const cards = await authService.cards.get();
-                    setSavedCards(cards);
-                    if (cards.length > 0) {
-                        setIsAddingNewCard(false);
-                        setSelectedCardId(cards[0].id);
+                // Inicializa seleção de cartão se houver cartões
+                if (cards.length > 0 && !selectedCardId) {
+                    setIsAddingNewCard(false);
+                    const firstCard = cards[0];
+                    if (firstCard) {
+                        setSelectedCardId(firstCard.id || null);
                     }
-                } catch (e) {
-                    console.error("Erro ao carregar dados do usuário", e);
                 }
             }
 
@@ -271,7 +274,7 @@ const CheckoutPage: React.FC = () => {
     };
 
     const handleApplyCoupon = async () => {
-        if (!couponCode || !user.id) return;
+        if (!couponCode || !user?.id) return;
         setValidatingCoupon(true);
         setCouponError('');
         try {
@@ -306,7 +309,7 @@ const CheckoutPage: React.FC = () => {
 
         setLoading(true);
         try {
-            const userId = user.id || user.googleId;
+            const userId = user?.id || user?.googleId;
             // 1. Salvar endereço se solicitado
             if (formData.saveAddress && isAddingNewAddress && userId) {
                 const parts = formData.endereco.split(',');
@@ -437,419 +440,109 @@ const CheckoutPage: React.FC = () => {
                 </Link>
 
                 <div className="flex flex-col lg:flex-row gap-16">
-                    {/* Formulário */}
+                    {/* Formulário Modularizado */}
                     <div className="flex-[1.5] space-y-12">
-                        <section className="space-y-8">
-                            <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">1</span>
-                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Informações de Contato</h2>
-                            </div>
-                            <div className="grid grid-cols-1 gap-6">
-                                <input
-                                    type="email" name="email" required placeholder="E-mail para acompanhamento"
-                                    value={formData.email} onChange={handleInputChange}
-                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                />
-                            </div>
-                        </section>
+                        <CheckoutContact
+                            email={formData.email}
+                            onChange={handleInputChange}
+                        />
 
-                        <section className="space-y-8">
-                            <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">2</span>
-                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Identificação Fiscal</h2>
-                            </div>
-                            <div className="grid grid-cols-1 gap-6">
-                                <MaskedInput
-                                    mask="cpf-cnpj"
-                                    required
-                                    label="CPF ou CNPJ (para Nota Fiscal)"
-                                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                                    value={formData.document}
-                                    onChange={(val) => setFormData(prev => ({ ...prev, document: val }))}
-                                    className="border-[var(--azul-profundo)]/10"
-                                />
-                                <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40 uppercase tracking-widest leading-relaxed">
-                                    Necessário para a emissão da Nota Fiscal Eletrônica (NF-e).
-                                </p>
-                            </div>
-                        </section>
+                        <CheckoutFiscal
+                            document={formData.document}
+                            onDocumentChange={(val) => setFormData(prev => ({ ...prev, document: val }))}
+                        />
 
-                        <section className="space-y-8">
-                            <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">3</span>
-                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Endereço de Entrega</h2>
-                            </div>
+                        <CheckoutAddress
+                            formData={formData}
+                            onChange={handleInputChange}
+                            onSelectAddress={handleSelectAddress}
+                            onSetSaveAddress={(val) => setFormData(prev => ({ ...prev, saveAddress: val }))}
+                            isAddingNewAddress={isAddingNewAddress}
+                            setIsAddingNewAddress={setIsAddingNewAddress}
+                            selectedAddressId={selectedAddressId}
+                            onCalculateShipping={handleCalculateShipping}
+                        />
 
-                            {savedAddresses.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                                    {savedAddresses.map(addr => (
-                                        <div
-                                            key={addr.id}
-                                            onClick={() => handleSelectAddress(addr)}
-                                            className={`p-4 border cursor-pointer transition-all ${selectedAddressId === addr.id && !isAddingNewAddress ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/30'}`}
-                                        >
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="font-lato text-[10px] font-bold uppercase tracking-widest text-[var(--azul-profundo)]">{addr.street}, {addr.number}</span>
-                                                {selectedAddressId === addr.id && !isAddingNewAddress && <Check size={14} className="text-[var(--dourado-suave)]" />}
-                                            </div>
-                                            <p className="font-lato text-xs text-[var(--azul-profundo)]/60 line-clamp-1">{addr.city} - {addr.state}</p>
-                                            <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40 mt-1">{addr.zipCode}</p>
-                                        </div>
-                                    ))}
-                                    <button
-                                        onClick={() => {
-                                            setIsAddingNewAddress(true);
-                                            setSelectedAddressId(null);
-                                            setFormData(prev => ({ ...prev, endereco: '', cidade: '', estado: '', cep: '' }));
-                                        }}
-                                        className={`p-4 border border-dashed flex items-center justify-center gap-2 font-lato text-[10px] uppercase tracking-widest transition-all ${isAddingNewAddress ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/40 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/60'}`}
-                                    >
-                                        + Novo Endereço
-                                    </button>
-                                </div>
-                            )}
+                        <CheckoutShipping
+                            shippingLoading={shippingLoading}
+                            shippingOptions={shippingOptions}
+                            currentShipping={currentShipping}
+                            onSelectShipping={setCurrentShipping}
+                            configMissing={configMissing.shipping}
+                            cepLength={formData.cep.length}
+                        />
 
-                            {isAddingNewAddress && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4">
-                                    <input
-                                        type="text" name="nome" required placeholder="Nome"
-                                        value={formData.nome} onChange={handleInputChange}
-                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <input
-                                        type="text" name="sobrenome" required placeholder="Sobrenome"
-                                        value={formData.sobrenome} onChange={handleInputChange}
-                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <input
-                                        type="text" name="endereco" required placeholder="Endereço e Número"
-                                        value={formData.endereco} onChange={handleInputChange}
-                                        className="md:col-span-2 w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <input
-                                        type="text" name="cidade" required placeholder="Cidade"
-                                        value={formData.cidade} onChange={handleInputChange}
-                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <input
-                                            type="text" name="estado" required placeholder="UF"
-                                            value={formData.estado} onChange={handleInputChange}
-                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                        />
-                                        <input
-                                            type="text" name="cep" required placeholder="CEP"
-                                            value={formData.cep} onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, '').substring(0, 8);
-                                                handleInputChange({ target: { name: 'cep', value: val } } as SafeAny);
-                                                if (val.length === 8) handleCalculateShipping(val);
-                                            }}
-                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                        />
-                                    </div>
-                                    {user.id && (
-                                        <label className="md:col-span-2 flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.saveAddress}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, saveAddress: e.target.checked }))}
-                                                className="accent-[var(--azul-profundo)]"
-                                            />
-                                            <span className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)]/60">Salvar este endereço para futuras compras</span>
-                                        </label>
-                                    )}
-                                </div>
-                            )}
-                        </section>
-
-                        <section className="space-y-8">
-                            <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">4</span>
-                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Escolha o Frete</h2>
-                            </div>
-
-                            {shippingLoading ? (
-                                <div className="flex items-center gap-3 text-[var(--azul-profundo)]/40 p-8 border border-dashed border-[var(--azul-profundo)]/10">
-                                    <Loader2 size={16} className="animate-spin" />
-                                    <span className="font-lato text-xs uppercase tracking-widest">Calculando opções de frete...</span>
-                                </div>
-                            ) : shippingOptions.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {shippingOptions.map((opt, i) => (
-                                        <label
-                                            key={i}
-                                            className={`flex items-center justify-between p-6 border cursor-pointer transition-colors ${currentShipping?.provider === opt.provider ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/30'}`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <input
-                                                    type="radio"
-                                                    name="shipping"
-                                                    checked={currentShipping?.provider === opt.provider}
-                                                    onChange={() => setCurrentShipping(opt)}
-                                                    className="accent-[var(--azul-profundo)]"
-                                                />
-                                                <div className="flex flex-col">
-                                                    <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">{opt.provider}</span>
-                                                    <span className="font-lato text-[10px] text-[var(--azul-profundo)]/40">{opt.days} dias úteis</span>
-                                                </div>
-                                            </div>
-                                            <span className="font-lato text-sm font-bold text-[var(--azul-profundo)]">
-                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(opt.price)}
-                                            </span>
-                                        </label>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="bg-gray-50 p-8 border border-[var(--azul-profundo)]/5 flex flex-col items-center gap-4 text-center">
-                                    <Truck size={32} className="text-[var(--azul-profundo)]/10" />
-                                    <p className="font-lato text-xs text-[var(--azul-profundo)]/40 uppercase tracking-widest max-w-[200px]">
-                                        {configMissing.shipping
-                                            ? "Cálculo de frete em manutenção. Por favor, tente novamente mais tarde."
-                                            : (formData.cep.length === 8 ? "Nenhuma opção de frete disponível para este CEP." : "Insira um CEP válido para ver as opções de frete.")
-                                        }
-                                    </p>
-                                </div>
-                            )}
-                        </section>
-
-                        <section className="space-y-8">
-                            <div className="flex items-center gap-4">
-                                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">5</span>
-                                <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Pagamento</h2>
-                            </div>
-                            {mpLoading ? (
-                                <div className="p-8 flex justify-center">
-                                    <Loader2 size={32} className="animate-spin text-[var(--dourado-suave)]" />
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {pixActive && (
-                                        <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'pix' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
-                                            <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange as SafeAny} className="accent-[var(--azul-profundo)]" />
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
-                                                <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">
-                                                    Pix {pixDiscountPercent > 0 ? `com ${pixDiscountPercent}% de desconto` : ''}
-                                                </span>
-                                            </div>
-                                        </label>
-                                    )}
-
-                                    {cardActive && (
-                                        <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'card' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
-                                            <input type="radio" name="metodoPagamento" value="card" checked={formData.metodoPagamento === 'card'} onChange={handleInputChange as SafeAny} className="accent-[var(--azul-profundo)]" />
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
-                                                    <CreditCard size={20} />
-                                                </div>
-                                                <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito / Débito</span>
-                                            </div>
-                                        </label>
-                                    )}
-
-                                    {formData.metodoPagamento === 'card' && (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
-                                            {savedCards.length > 0 && (
-                                                <div className="grid grid-cols-1 gap-3">
-                                                    {savedCards.map(card => (
-                                                        <div
-                                                            key={card.id}
-                                                            onClick={() => { setSelectedCardId(card.id); setIsAddingNewCard(false); }}
-                                                            className={`p-4 border flex items-center justify-between cursor-pointer transition-all ${selectedCardId === card.id && !isAddingNewCard ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white'}`}
-                                                        >
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-10 h-6 bg-gray-100 rounded flex items-center justify-center font-bold text-[8px] uppercase">{card.payment_method?.id || 'CARD'}</div>
-                                                                <div>
-                                                                    <p className="font-lato text-xs font-bold text-[var(--azul-profundo)]">**** **** **** {card.last_four_digits}</p>
-                                                                    <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40">Expira em {card.expiration_month}/{card.expiration_year}</p>
-                                                                </div>
-                                                            </div>
-                                                            {selectedCardId === card.id && !isAddingNewCard && <Check size={14} className="text-[var(--dourado-suave)]" />}
-                                                        </div>
-                                                    ))}
-                                                    <button
-                                                        onClick={() => { setIsAddingNewCard(true); setSelectedCardId(null); }}
-                                                        className={`p-4 border border-dashed flex items-center justify-center gap-2 font-lato text-[10px] uppercase tracking-widest transition-all ${isAddingNewCard ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/40 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/60'}`}
-                                                    >
-                                                        + Novo Cartão
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {isAddingNewCard && (
-                                                <div className="p-6 border border-[var(--azul-profundo)]/10 bg-white">
-                                                    <h3 className="font-lato text-xs font-bold uppercase tracking-widest text-[var(--azul-profundo)] mb-6 flex items-center gap-2">
-                                                        <ShieldCheck size={16} className="text-green-600" /> Novo Cartão via Mercado Pago
-                                                    </h3>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        {!isConfigured && !mpLoading ? (
-                                                            <div className="md:col-span-2 bg-amber-50 border border-amber-200 p-4 rounded text-amber-800 text-xs flex items-start gap-3">
-                                                                <AlertTriangle size={18} className="shrink-0" />
-                                                                <div>
-                                                                    <p className="font-bold uppercase tracking-widest mb-1">Pagamento com Cartão Indisponível</p>
-                                                                    <p className="opacity-80">A configuração do Mercado Pago está pendente. Por favor, utilize PIX ou aguarde a ativação pelo administrador.</p>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <form id="form-checkout" className="contents">
-                                                                <input type="hidden" id="cardholderEmail" value={formData.email} />
-                                                                <div className="md:col-span-2">
-                                                                    <label className="block text-xs text-gray-500 mb-1">Número do Cartão</label>
-                                                                    <div id="cardNumber" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 shadow-inner"></div>
-                                                                </div>
-                                                                <div className="md:col-span-2">
-                                                                    <label className="block text-xs text-gray-500 mb-1">Nome Impresso no Cartão</label>
-                                                                    <input type="text" id="cardholderName" placeholder="JOAO M SILVA" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] uppercase shadow-inner" />
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs text-gray-500 mb-1">Validade</label>
-                                                                    <div id="expirationDate" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 shadow-inner"></div>
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs text-gray-500 mb-1">CVV</label>
-                                                                    <div id="securityCode" className="h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 shadow-inner"></div>
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs text-gray-500 mb-1">Tipo de Doc.</label>
-                                                                    <select id="identificationType" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner"></select>
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs text-gray-500 mb-1">Número do Doc.</label>
-                                                                    <input type="text" id="identificationNumber" placeholder="CPF/CNPJ" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner" />
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs text-gray-500 mb-1">Banco Emissor</label>
-                                                                    <select id="issuer" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner"></select>
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs text-gray-500 mb-1">Parcelamento</label>
-                                                                    <select id="installments" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner"></select>
-                                                                </div>
-                                                            </form>
-                                                        )}
-
-                                                        {user.id && (
-                                                            <label className="md:col-span-2 flex items-center gap-2 cursor-pointer mt-2">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={formData.saveCard}
-                                                                    onChange={(e) => setFormData(prev => ({ ...prev, saveCard: e.target.checked }))}
-                                                                    className="accent-[var(--azul-profundo)]"
-                                                                />
-                                                                <span className="font-lato text-[10px] uppercase tracking-widest text-[var(--azul-profundo)]/60">Salvar este cartão para futuras compras</span>
-                                                            </label>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </section>
+                        <CheckoutPayment
+                            mpLoading={mpLoading}
+                            pixActive={pixActive}
+                            cardActive={cardActive}
+                            pixDiscountPercent={pixDiscountPercent}
+                            metodoPagamento={formData.metodoPagamento}
+                            onMetodoChange={(m) => setFormData(prev => ({ ...prev, metodoPagamento: m }))}
+                            savedCards={cards}
+                            selectedCardId={selectedCardId}
+                            onSelectCard={setSelectedCardId}
+                            isAddingNewCard={isAddingNewCard}
+                            setIsAddingNewCard={setIsAddingNewCard}
+                            isConfigured={isConfigured}
+                            email={formData.email}
+                            saveCard={formData.saveCard}
+                            onSetSaveCard={(val) => setFormData(prev => ({ ...prev, saveCard: val }))}
+                        />
                     </div>
 
-                    {/* Resumo */}
+                    {/* Resumo Modularizado */}
                     <div className="flex-1">
-                        <div className="sticky top-32 space-y-8">
-                            <div className="bg-white p-8 border border-[#0f2A44]/5 shadow-sm space-y-8">
-                                <h2 className="font-playfair text-2xl text-[#0f2A44]">Resumo do Pedido</h2>
+                        <CheckoutSummary
+                            cart={cart}
+                            subtotal={subtotal}
+                            currentShipping={currentShipping}
+                            appliedCoupon={appliedCoupon}
+                            discount={discount}
+                            pixDiscount={pixDiscount}
+                            total={total}
+                            metodoPagamento={formData.metodoPagamento}
+                        />
 
-                                <div className="space-y-6">
-                                    {cart.map((item, idx) => (
-                                        <div key={idx} className="flex justify-between items-start gap-4">
-                                            <div className="flex gap-4">
-                                                <div className="w-12 h-16 bg-[#F7F7F4] overflow-hidden flex-shrink-0">
-                                                    <img
-                                                        src={getImageUrl(item.image || '')}
-                                                        alt={item.name}
-                                                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = '/images/default.png'; }}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <p className="font-lato text-[11px] font-bold text-[#0f2A44] uppercase line-clamp-2">{item.name}</p>
-                                                    <p className="font-lato text-[10px] text-[#0f2A44]/40">Qtd: {item.quantity}</p>
-                                                </div>
-                                            </div>
-                                            <span className="font-lato text-xs text-[#0f2A44] whitespace-nowrap">
-                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price * item.quantity)}
-                                            </span>
-                                        </div>
-                                    ))}
+                        {/* Bloco de Cupom e Ação Final (Mantido aqui por interagir com múltiplos estados) */}
+                        <div className="mt-8 space-y-6">
+                            <div className="bg-white p-6 border border-[#0f2A44]/5">
+                                <h3 className="font-lato text-[10px] uppercase tracking-widest text-[#0f2A44]/60 mb-4">Cupom de Desconto</h3>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="CUPOM"
+                                        value={couponCode}
+                                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                        className="flex-1 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-[10px] outline-none focus:border-[var(--dourado-suave)]"
+                                    />
+                                    <button
+                                        onClick={handleApplyCoupon}
+                                        disabled={validatingCoupon || !couponCode}
+                                        className="bg-[var(--azul-profundo)] text-white px-6 py-3 font-lato text-[10px] uppercase tracking-widest hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30"
+                                    >
+                                        {validatingCoupon ? <Loader2 size={14} className="animate-spin" /> : 'Aplicar'}
+                                    </button>
                                 </div>
-
-                                <div className="border-t border-[#0f2A44]/5 pt-6 space-y-3">
-                                    <div className="flex justify-between text-[#0f2A44]/60 font-lato text-xs">
-                                        <span>Subtotal</span>
-                                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-[#0f2A44]/60 font-lato text-xs">
-                                        <div className="flex items-center gap-2">
-                                            <Truck size={14} className="text-[#C9A24D]" />
-                                            <span>Frete ({currentShipping?.provider || 'A calcular'})</span>
-                                        </div>
-                                        <span>{currentShipping ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentShipping.price) : '—'}</span>
-                                    </div>
-
-                                    {appliedCoupon && (
-                                        <div className="flex justify-between text-green-600 font-lato text-xs font-bold">
-                                            <span>Desconto ({appliedCoupon.code})</span>
-                                            <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discount)}</span>
-                                        </div>
-                                    )}
-
-                                    {pixDiscount > 0 && (
-                                        <div className="flex justify-between text-green-600 font-lato text-xs font-bold">
-                                            <span>Desconto Pix ({pixDiscountPercent}%)</span>
-                                            <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pixDiscount)}</span>
-                                        </div>
-                                    )}
-
-                                    <div className="flex justify-between text-[#0f2A44] font-lato text-lg font-bold pt-4 border-t border-[#0f2A44]/5">
-                                        <span>Total</span>
-                                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}</span>
-                                    </div>
-                                </div>
-
-                                {/* Cupom */}
-                                <div className="pt-4 border-t border-[#0f2A44]/5">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            placeholder="CUPOM DE DESCONTO"
-                                            value={couponCode}
-                                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                            className="flex-1 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-[10px] outline-none focus:border-[var(--dourado-suave)]"
-                                        />
-                                        <button
-                                            onClick={handleApplyCoupon}
-                                            disabled={validatingCoupon || !couponCode}
-                                            className="bg-[var(--azul-profundo)] text-white px-4 py-3 font-lato text-[10px] uppercase tracking-widest hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30"
-                                        >
-                                            {validatingCoupon ? <Loader2 size={14} className="animate-spin" /> : 'Aplicar'}
-                                        </button>
-                                    </div>
-                                    {couponError && <p className="text-[10px] text-red-500 mt-2 font-bold">{couponError}</p>}
-                                    {appliedCoupon && <p className="text-[10px] text-green-600 mt-2 font-bold">✓ Cupom aplicado!</p>}
-                                </div>
-
-                                <button
-                                    onClick={handleSubmit}
-                                    disabled={loading || !currentShipping || !formData.email || !formData.nome || !formData.document || (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)}
-                                    className="w-full bg-[var(--azul-profundo)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3 shadow-lg"
-                                >
-                                    {loading ? <Loader2 size={20} className="animate-spin" /> : 'Finalizar Pedido'}
-                                </button>
+                                {couponError && <p className="text-[10px] text-red-500 mt-2 font-bold">{couponError}</p>}
+                                {appliedCoupon && <p className="text-[10px] text-green-600 mt-2 font-bold">✓ Cupom {appliedCoupon.code} aplicado!</p>}
                             </div>
 
-                            <div className="flex flex-col items-center gap-4 opacity-40">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-8 h-8 rounded bg-gray-200" />
-                                    <div className="w-8 h-8 rounded bg-gray-200" />
-                                    <div className="w-8 h-8 rounded bg-gray-200" />
+                            <button
+                                onClick={handleSubmit}
+                                disabled={loading || !currentShipping || !formData.email || !formData.nome || !formData.document || (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)}
+                                className="w-full bg-[var(--azul-profundo)] text-white py-6 font-lato text-[11px] uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3 shadow-xl"
+                            >
+                                {loading ? <Loader2 size={20} className="animate-spin" /> : 'Finalizar Pedido'}
+                            </button>
+
+                            <div className="flex flex-col items-center gap-4 opacity-40 py-4">
+                                <div className="flex items-center gap-6">
+                                    <ShieldCheck size={24} />
+                                    <CreditCard size={24} />
+                                    <Truck size={24} />
                                 </div>
-                                <p className="font-lato text-[10px] uppercase tracking-widest">Pagamento 100% Seguro</p>
+                                <p className="font-lato text-[9px] uppercase tracking-widest text-center">Checkout 100% Seguro & Envio Garantido</p>
                             </div>
                         </div>
                     </div>
