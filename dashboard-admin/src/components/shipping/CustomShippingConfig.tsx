@@ -109,7 +109,7 @@ export function CustomShippingConfig({ config, onChange, onSaveConfig, totalCeps
                         <p className="font-bold text-sm text-gray-800 max-w-[80%] truncate">
                             {file ? file.name : "Clique ou arraste sua planilha de CEPs aqui"}
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <div className="text-xs text-gray-500 mt-2">
                             {isParsing ? (
                                 <span className="flex items-center gap-2 justify-center font-medium text-indigo-600">
                                     <div className="w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
@@ -120,7 +120,7 @@ export function CustomShippingConfig({ config, onChange, onSaveConfig, totalCeps
                             ) : (
                                 "Aceita apenas extensões .CSV"
                             )}
-                        </p>
+                        </div>
                     </div>
 
                     {(totalCeps > 0 || previewCount !== null) && (
