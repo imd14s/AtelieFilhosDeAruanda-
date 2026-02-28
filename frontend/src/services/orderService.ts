@@ -63,22 +63,28 @@ export const orderService = {
                 headers: TENANT_HEADER
             });
 
-            if (response.data?.options) {
-                return response.data.options.map((opt: SafeAny) => ({
-                    provider: opt.name,
-                    price: opt.price,
-                    days: opt.delivery_time,
-                    originalPrice: opt.original_price,
-                    free: opt.free_shipping
+            if (Array.isArray(response.data)) {
+                return response.data.map((opt: SafeAny) => ({
+                    provider: opt.provider,
+                    price: opt.shippingCost,
+                    days: opt.estimatedDays ? parseInt(opt.estimatedDays, 10) : 5,
+                    originalPrice: opt.originalCost || undefined,
+                    free: opt.freeShippingApplied
                 }));
             }
 
-            return [{
-                provider: response.data.provider,
-                price: response.data.shippingCost,
-                days: response.data.estimatedDays || 5,
-                free: response.data.free_shipping
-            }];
+            // Fallback para caso pontual do teste ou cache antigo
+            if (response.data?.options) {
+                return response.data.options.map((opt: SafeAny) => ({
+                    provider: opt.name || opt.provider,
+                    price: opt.price || opt.shippingCost,
+                    days: opt.delivery_time || opt.estimatedDays || 5,
+                    originalPrice: opt.original_price || opt.originalCost,
+                    free: opt.free_shipping || opt.freeShippingApplied
+                }));
+            }
+
+            return [];
         } catch (error) {
             console.error("[orderService] Erro ao calcular frete:", error);
             return [];

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.38% </span>
+                <span class="strong">69.23% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>34/49</span>
+                <span class='fraction'>36/52</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.23% </span>
+                <span class="strong">68.51% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>27/39</span>
+                <span class='fraction'>37/54</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.09% </span>
+                <span class="strong">71.11% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>31/43</span>
+                <span class='fraction'>32/45</span>
             </div>
         
             
@@ -200,7 +200,13 @@
 <a name='L135'></a><a href='#L135'>135</a>
 <a name='L136'></a><a href='#L136'>136</a>
 <a name='L137'></a><a href='#L137'>137</a>
-<a name='L138'></a><a href='#L138'>138</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -266,6 +272,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -275,12 +292,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -402,22 +414,28 @@ export const orderService = {
                 headers: TENANT_HEADER
             });
 &nbsp;
-            if (response.data?.options) {
-                return response.data.options.map((opt: SafeAny) =&gt; ({
-                    provider: opt.name,
-                    price: opt.price,
-                    days: opt.delivery_time,
-                    originalPrice: opt.original_price,
-                    free: opt.free_shipping
+            if (Array.isArray(response.data)) {
+                return response.data.map((opt: SafeAny) =&gt; ({
+                    provider: opt.provider,
+                    price: opt.shippingCost,
+                    days: opt.estimatedDays ? parseInt(opt.estimatedDays, 10) : <span class="branch-1 cbranch-no" title="branch not covered" >5,</span>
+                    originalPrice: opt.originalCost || undefined,
+                    free: opt.freeShippingApplied
                 }));
             }
 &nbsp;
-            return [{
-                provider: response.data.provider,
-                price: response.data.shippingCost,
-                days: response.data.estimatedDays || <span class="branch-1 cbranch-no" title="branch not covered" >5,</span>
-                free: response.data.free_shipping
-            }];
+            // Fallback para caso pontual do teste ou cache antigo
+            <span class="missing-if-branch" title="else path not taken" >E</span>if (response.data?.options) {
+                return response.data.options.map((opt: SafeAny) =&gt; ({
+                    provider: opt.name || <span class="branch-1 cbranch-no" title="branch not covered" >opt.provider,</span>
+                    price: opt.price || <span class="branch-1 cbranch-no" title="branch not covered" >opt.shippingCost,</span>
+                    days: opt.delivery_time || <span class="branch-1 cbranch-no" title="branch not covered" >opt.estimatedDays || <span class="branch-2 cbranch-no" title="branch not covered" >5</span>,</span>
+                    originalPrice: opt.original_price || opt.originalCost,
+                    free: opt.free_shipping || opt.freeShippingApplied
+                }));
+            }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >            return [];</span>
         } catch (error) {
 <span class="cstat-no" title="statement not covered" >            console.error("[orderService] Erro ao calcular frete:", error);</span>
 <span class="cstat-no" title="statement not covered" >            return [];</span>
@@ -481,7 +499,7 @@ export const configService = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-28T06:45:14.576Z
+                at 2026-02-28T07:15:00.581Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -54,7 +54,7 @@ public class StorefrontIntegrationTest {
                                                 org.mockito.ArgumentMatchers.any(),
                                                 org.mockito.ArgumentMatchers.any(),
                                                 org.mockito.ArgumentMatchers.any()))
-                                .thenReturn(mockResponse);
+                                .thenReturn(java.util.List.of(mockResponse));
 
                 mockMvc.perform(post("/api/shipping/quote")
                                 .contentType(MediaType.APPLICATION_JSON)

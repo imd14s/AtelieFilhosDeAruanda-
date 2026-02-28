@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import java.util.List;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,13 +26,13 @@ public class ShippingController {
     }
 
     @PostMapping("/quote")
-    public ResponseEntity<ShippingQuoteResponse> quote(@Valid @RequestBody ShippingQuoteRequest req) {
+    public ResponseEntity<List<ShippingQuoteResponse>> quote(@Valid @RequestBody ShippingQuoteRequest req) {
         log.info("[DEBUG] Requisição de frete para o CEP: {}", req.getCep());
         try {
-            ShippingQuoteResponse response = shippingService.quote(req.getCep(), req.getSubtotal(), req.getProvider(),
+            List<ShippingQuoteResponse> response = shippingService.quote(req.getCep(), req.getSubtotal(),
+                    req.getProvider(),
                     req.getItems());
-            log.info("[DEBUG] Cálculo de frete concluído. Provider: {}, Preço: {}", response.getProvider(),
-                    response.getShippingCost());
+            log.info("[DEBUG] Cálculo de frete concluído. {} opções retornadas.", response.size());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("[DEBUG] Erro crítico no cálculo de frete: {}", e.getMessage(), e);

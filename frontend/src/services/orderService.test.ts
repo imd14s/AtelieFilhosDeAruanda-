@@ -40,15 +40,23 @@ describe('orderService', () => {
         expect(result![0]!.price).toBe(10);
     });
 
-    it('should calculate shipping with fallback format', async () => {
-        const mockResp = { provider: 'PAC', shippingCost: 15, estimatedDays: 5 };
+    it('should calculate shipping with new List pattern format', async () => {
+        const mockResp = [
+            { provider: 'PAC', shippingCost: 15, estimatedDays: "5", freeShippingApplied: false },
+            { provider: 'SEDEX', shippingCost: 30, estimatedDays: "2", freeShippingApplied: false }
+        ];
         (api.post as import('vitest').Mock).mockResolvedValueOnce({ data: mockResp });
 
         const result = await orderService.calculateShipping('123', []);
-        if (result && result.length > 0) {
-            expect(result[0]!.provider).toBe('PAC');
-            expect(result[0]!.price).toBe(15);
-        }
+
+        expect(result).toHaveLength(2);
+        expect(result[0]!.provider).toBe('PAC');
+        expect(result[0]!.price).toBe(15);
+        expect(result[0]!.days).toBe(5);
+
+        expect(result[1]!.provider).toBe('SEDEX');
+        expect(result[1]!.price).toBe(30);
+        expect(result[1]!.days).toBe(2);
     });
 
     describe('history', () => {

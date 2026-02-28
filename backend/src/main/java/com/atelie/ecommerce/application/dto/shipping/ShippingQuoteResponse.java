@@ -12,6 +12,7 @@ public class ShippingQuoteResponse {
     private String appliedRuleName;
     private BigDecimal originalShippingCost;
     private String persuasiveMessage;
+    private String estimatedDays;
 
     public ShippingQuoteResponse() {
     }
@@ -27,7 +28,7 @@ public class ShippingQuoteResponse {
 
     public ShippingQuoteResponse(String provider, boolean eligible, boolean freeShippingApplied,
             BigDecimal shippingCost, BigDecimal freeShippingThreshold, String appliedRuleName,
-            BigDecimal originalShippingCost, String persuasiveMessage) {
+            BigDecimal originalShippingCost, String persuasiveMessage, String estimatedDays) {
         this.provider = provider;
         this.eligible = eligible;
         this.freeShippingApplied = freeShippingApplied;
@@ -36,6 +37,7 @@ public class ShippingQuoteResponse {
         this.appliedRuleName = appliedRuleName;
         this.originalShippingCost = originalShippingCost;
         this.persuasiveMessage = persuasiveMessage;
+        this.estimatedDays = estimatedDays;
     }
 
     public String getProvider() {
@@ -100,5 +102,13 @@ public class ShippingQuoteResponse {
 
     public void setPersuasiveMessage(String persuasiveMessage) {
         this.persuasiveMessage = persuasiveMessage;
+    }
+
+    public String getEstimatedDays() {
+        return estimatedDays;
+    }
+
+    public void setEstimatedDays(String estimatedDays) {
+        this.estimatedDays = estimatedDays;
     }
 }
