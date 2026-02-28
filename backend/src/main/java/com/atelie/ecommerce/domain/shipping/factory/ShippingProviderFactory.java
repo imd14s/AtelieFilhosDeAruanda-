@@ -23,10 +23,7 @@ public class ShippingProviderFactory {
         return strategies.stream()
                 .filter(s -> s.supports(providerName))
                 .findFirst()
-                .orElseGet(() -> strategies.stream()
-                        .filter(s -> s.supports("OFFLINE"))
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException(
-                                "Nenhuma estratégia de frete disponível (inclusive contingência).")));
+                .orElseThrow(
+                        () -> new RuntimeException("Nenhuma estratégia de frete disponível para: " + providerName));
     }
 }

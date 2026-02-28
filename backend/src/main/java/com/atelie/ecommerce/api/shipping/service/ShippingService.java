@@ -34,7 +34,7 @@ public class ShippingService {
     public ShippingQuoteResponse quote(String rawCep, BigDecimal subtotal, String forcedProvider,
             List<com.atelie.ecommerce.application.dto.shipping.ShippingQuoteRequest.ShippingItem> items) {
 
-        String providerName = forcedProvider != null ? forcedProvider : "OFFLINE";
+        String providerName = forcedProvider != null ? forcedProvider : "MELHOR_ENVIO";
 
         var domainItems = items.stream()
                 .map(i -> new com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingItem(
@@ -65,8 +65,10 @@ public class ShippingService {
         var result = futureResult.join();
 
         if (result == null || !result.success()) {
-            log.warn("[LOGISTICS] Estratégia {} falhou ou expirou. Acionando contingência OFFLINE.", providerName);
-            result = shippingFactory.getStrategy("OFFLINE").calculate(params);
+            log.warn("[LOGISTICS] Estratégia {} falhou ou expirou. Nenhuma opção de frete disponível retornada.",
+                    providerName);
+            // O fallback foi removido. Se o frete da API real falhar, o cliente não recebe
+            // cotações falsas.
         }
 
         // --- DYNAMIC RULES ENGINE INTERCEPT ---

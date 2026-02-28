@@ -1,7 +1,7 @@
 import React from 'react';
 import { Address } from '../../types';
 import { useAuth } from '../../context/AuthContext';
-import { Check } from 'lucide-react';
+
 
 interface CheckoutAddressProps {
     formData: {
@@ -42,31 +42,62 @@ const CheckoutAddress: React.FC<CheckoutAddressProps> = ({
             </div>
 
             {addresses.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    {addresses.map(addr => (
-                        <div
-                            key={addr.id}
-                            onClick={() => onSelectAddress(addr)}
-                            className={`p-4 border cursor-pointer transition-all ${selectedAddressId === addr.id && !isAddingNewAddress ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/30'}`}
-                        >
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="font-lato text-[10px] font-bold uppercase tracking-widest text-[var(--azul-profundo)]">{addr.street}, {addr.number}</span>
-                                {selectedAddressId === addr.id && !isAddingNewAddress && <Check size={14} className="text-[var(--dourado-suave)]" />}
-                            </div>
-                            <p className="font-lato text-xs text-[var(--azul-profundo)]/60 line-clamp-1">{addr.city} - {addr.state}</p>
-                            <p className="font-lato text-[10px] text-[var(--azul-profundo)]/40 mt-1">{addr.zipCode}</p>
-                        </div>
-                    ))}
+                <div role="radiogroup" aria-label="Selecione um endereço de entrega" className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    {addresses.map(addr => {
+                        const isSelected = selectedAddressId === addr.id && !isAddingNewAddress;
+                        return (
+                            <label
+                                key={addr.id}
+                                className={`relative flex flex-col p-5 border cursor-pointer transition-all duration-200 group focus-within:ring-2 focus-within:ring-[var(--dourado-suave)] focus-within:border-transparent ${isSelected ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5 shadow-sm' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50 hover:shadow-sm hover:-translate-y-0.5'}`}
+                            >
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`flex items-center justify-center w-5 h-5 rounded-full border flex-shrink-0 transition-colors ${isSelected ? 'border-[var(--dourado-suave)]' : 'border-[var(--azul-profundo)]/30 group-hover:border-[var(--dourado-suave)]'}`}>
+                                            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[var(--dourado-suave)]" />}
+                                        </div>
+                                        <span className="font-lato text-xs font-bold uppercase tracking-widest text-[var(--azul-profundo)]">
+                                            {addr.street}, {addr.number}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <input
+                                    type="radio"
+                                    name="selectedAddress"
+                                    value={addr.id}
+                                    checked={isSelected}
+                                    onChange={() => onSelectAddress(addr)}
+                                    className="sr-only"
+                                    aria-label={`Selecionar endereço ${addr.street}, ${addr.number}`}
+                                />
+
+                                <div className="pl-8 flex flex-col gap-1">
+                                    <p className="font-lato text-sm text-[var(--azul-profundo)]/80 line-clamp-1">
+                                        {addr.city} - {addr.state}
+                                    </p>
+                                    <p className="font-lato text-xs text-[var(--azul-profundo)]/50 tracking-wide font-medium">
+                                        CEP: {addr.zipCode}
+                                    </p>
+                                </div>
+                            </label>
+                        );
+                    })}
                     <button
-                        onClick={() => {
-                            setIsAddingNewAddress(true);
-                        }}
-                        className={`p-4 border border-dashed flex items-center justify-center gap-2 font-lato text-[10px] uppercase tracking-widest transition-all ${isAddingNewAddress ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/40 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/60'}`}
+                        type="button"
+                        onClick={() => setIsAddingNewAddress(true)}
+                        aria-pressed={isAddingNewAddress}
+                        className={`flex flex-col items-center justify-center gap-3 p-5 border-2 border-dashed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--dourado-suave)] focus:border-transparent ${isAddingNewAddress ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/60 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/80 hover:bg-[var(--azul-profundo)]/5'}`}
                     >
-                        + Novo Endereço
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${isAddingNewAddress ? 'bg-[var(--dourado-suave)]/20 text-[var(--dourado-suave)]' : 'bg-[var(--azul-profundo)]/10 text-[var(--azul-profundo)]/60'}`}>
+                            <span className="text-lg leading-none">+</span>
+                        </div>
+                        <span className="font-lato text-xs uppercase font-bold tracking-widest">
+                            Novo Endereço
+                        </span>
                     </button>
                 </div>
             )}
+
 
             {isAddingNewAddress && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4">

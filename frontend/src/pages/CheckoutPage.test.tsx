@@ -171,6 +171,7 @@ describe('CheckoutPage Component', () => {
         const docInput = await screen.findByPlaceholderText(/000\.000\.000-00/i, {}, { timeout: 10000 });
         fireEvent.change(docInput, { target: { value: '12345678909' } });
 
+
         // Fill address details
         fireEvent.change(await screen.findByPlaceholderText(/^Nome$/i), { target: { value: 'Maria' } });
         fireEvent.change(await screen.findByPlaceholderText(/Sobrenome/i), { target: { value: 'Silva' } });
