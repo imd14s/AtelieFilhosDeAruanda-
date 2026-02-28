@@ -103,16 +103,6 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                         </p>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-sm font-bold text-gray-700">Access Token (Chave Secreta)</label>
-                        <input
-                            type="password"
-                            className="w-full border p-3 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="APP_USR-..."
-                            value={config.credentials.accessToken}
-                            onChange={e => setConfig({ ...config, credentials: { ...config.credentials, accessToken: e.target.value } })}
-                        />
-                    </div>
-                    <div className="space-y-1">
                         <label className="text-sm font-bold text-gray-700">Public Key (Chave Pública)</label>
                         <input
                             type="text"
@@ -120,6 +110,16 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                             placeholder="APP_USR-..."
                             value={config.credentials.publicKey}
                             onChange={e => setConfig({ ...config, credentials: { ...config.credentials, publicKey: e.target.value } })}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-sm font-bold text-gray-700">Access Token (Chave Secreta)</label>
+                        <input
+                            type="password"
+                            className="w-full border p-3 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="APP_USR-..."
+                            value={config.credentials.accessToken}
+                            onChange={e => setConfig({ ...config, credentials: { ...config.credentials, accessToken: e.target.value } })}
                         />
                     </div>
                 </div>
@@ -144,6 +144,26 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                                 </div>
                             </div>
                             <p className="text-[11px] text-gray-500">Liberação instantânea do pedido após o pagamento.</p>
+                            {config.methods.enabled.pix.active && (
+                                <div className="mt-4 pt-4 border-t border-green-200">
+                                    <label className="text-[10px] font-bold text-green-700 uppercase block mb-1">Desconto PIX (%)</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            className="w-20 border border-green-300 p-2 rounded-lg text-sm bg-white"
+                                            value={config.methods.enabled.pix.discountPercent || 0}
+                                            onChange={e => {
+                                                e.stopPropagation();
+                                                setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, discountPercent: Number(e.target.value) } } } });
+                                            }}
+                                            onClick={e => e.stopPropagation()}
+                                        />
+                                        <span className="text-xs text-green-600 font-bold">% OFF</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Cartão */}

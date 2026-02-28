@@ -18,6 +18,9 @@ interface UseMercadoPago {
     mp: MercadoPagoInstance | null;
     loading: boolean;
     isConfigured: boolean;
+    pixActive: boolean;
+    cardActive: boolean;
+    pixDiscountPercent: number;
     error: string | null;
 }
 
@@ -25,6 +28,9 @@ export const useMercadoPago = (): UseMercadoPago => {
     const [mp, setMp] = useState<MercadoPagoInstance | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [isConfigured, setIsConfigured] = useState<boolean>(false);
+    const [pixActive, setPixActive] = useState<boolean>(false);
+    const [cardActive, setCardActive] = useState<boolean>(false);
+    const [pixDiscountPercent, setPixDiscountPercent] = useState<number>(0);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -56,6 +62,9 @@ export const useMercadoPago = (): UseMercadoPago => {
                 if (mounted) {
                     setMp(mpInstance);
                     setIsConfigured(true);
+                    setPixActive(configData?.pixActive ?? false);
+                    setCardActive(configData?.cardActive ?? false);
+                    setPixDiscountPercent(configData?.pixDiscountPercent ?? 0);
                     setLoading(false);
                 }
             } catch (err: unknown) {
@@ -74,5 +83,5 @@ export const useMercadoPago = (): UseMercadoPago => {
         };
     }, []);
 
-    return { mp, loading, isConfigured, error };
+    return { mp, loading, isConfigured, pixActive, cardActive, pixDiscountPercent, error };
 };

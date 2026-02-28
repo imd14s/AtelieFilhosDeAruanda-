@@ -44,6 +44,7 @@ public class PublicConfigController {
                         }
 
                         boolean pixActive = false;
+                        double pixDiscountPercent = 0.0;
                         boolean cardActive = false;
                         int maxInstallments = 12;
 
@@ -52,6 +53,7 @@ public class PublicConfigController {
                             JsonNode pixNode = methodsNode.path("pix");
                             if (!pixNode.isMissingNode()) {
                                 pixActive = pixNode.path("active").asBoolean(false);
+                                pixDiscountPercent = pixNode.path("discountPercent").asDouble(0.0);
                             }
 
                             JsonNode cardNode = methodsNode.path("card");
@@ -64,6 +66,7 @@ public class PublicConfigController {
                         Map<String, Object> responseConfig = new HashMap<>();
                         responseConfig.put("publicKey", publicKey);
                         responseConfig.put("pixActive", pixActive);
+                        responseConfig.put("pixDiscountPercent", pixDiscountPercent);
                         responseConfig.put("cardActive", cardActive);
                         responseConfig.put("maxInstallments", maxInstallments);
 

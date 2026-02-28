@@ -50,6 +50,7 @@ export interface MercadoPagoConfig {
             pix: {
                 active: boolean;
                 expirationMinutes: number;
+                discountPercent?: number;
                 instructions?: string;
             };
             boleto: {

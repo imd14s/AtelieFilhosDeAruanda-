@@ -57,6 +57,21 @@ const CheckoutPage: React.FC = () => {
         document: user.document || ''
     });
 
+    const { mp, loading: mpLoading, isConfigured, pixActive, cardActive, pixDiscountPercent, error: mpError } = useMercadoPago();
+
+    // Ajuste inicial do método de pagamento baseado na disponibilidade
+    useEffect(() => {
+        if (!mpLoading && !pixActive && cardActive) {
+            setFormData(prev => ({ ...prev, metodoPagamento: 'card' }));
+        } else if (!mpLoading && pixActive) {
+            setFormData(prev => ({ ...prev, metodoPagamento: 'pix' }));
+        }
+    }, [mpLoading, pixActive, cardActive]);
+
+    const [_cardForm, setCardForm] = useState<unknown>(null);
+    const cardFormRef = useRef<SafeAny>(null); // External SDK Ref usually needs any or complex interface
+    const pendingOrderRef = useRef<CreateOrderData | null>(null);
+
     const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
     const [isAddingNewAddress, setIsAddingNewAddress] = useState<boolean>(!cep);
@@ -68,11 +83,6 @@ const CheckoutPage: React.FC = () => {
     const [currentShipping, setCurrentShipping] = useState<ShippingOption | null>(shippingSelected || null);
     const [configMissing, setConfigMissing] = useState<{ mp: boolean; shipping: boolean }>({ mp: false, shipping: false });
 
-    const { mp, loading: mpLoading, isConfigured, error: mpError } = useMercadoPago();
-    const [_cardForm, setCardForm] = useState<unknown>(null);
-    const cardFormRef = useRef<SafeAny>(null); // External SDK Ref usually needs any or complex interface
-    const pendingOrderRef = useRef<CreateOrderData | null>(null);
-
     // Cálculos de preço
     const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
     const discount = appliedCoupon
@@ -81,8 +91,9 @@ const CheckoutPage: React.FC = () => {
             : appliedCoupon.value)
         : 0;
 
-    // Aplicar desconto de 5% no PIX se não houver cupom (ou conforme regra de negócio)
-    const pixDiscount = formData.metodoPagamento === 'pix' ? (subtotal * 0.05) : 0;
+    // Aplicar desconto PIX dinâmico vindo da configuração do backend
+    const currentPixDiscountPercent = pixDiscountPercent / 100;
+    const pixDiscount = formData.metodoPagamento === 'pix' ? (subtotal * currentPixDiscountPercent) : 0;
 
     const total = subtotal + (currentShipping?.price || 0) - discount - pixDiscount;
 
@@ -612,23 +623,29 @@ const CheckoutPage: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'pix' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
-                                        <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange as SafeAny} className="accent-[var(--azul-profundo)]" />
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
-                                            <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Pix com 5% de desconto</span>
-                                        </div>
-                                    </label>
-
-                                    <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'card' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
-                                        <input type="radio" name="metodoPagamento" value="card" checked={formData.metodoPagamento === 'card'} onChange={handleInputChange as SafeAny} className="accent-[var(--azul-profundo)]" />
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
-                                                <CreditCard size={20} />
+                                    {pixActive && (
+                                        <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'pix' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
+                                            <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange as SafeAny} className="accent-[var(--azul-profundo)]" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
+                                                <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">
+                                                    Pix {pixDiscountPercent > 0 ? `com ${pixDiscountPercent}% de desconto` : ''}
+                                                </span>
                                             </div>
-                                            <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito / Débito</span>
-                                        </div>
-                                    </label>
+                                        </label>
+                                    )}
+
+                                    {cardActive && (
+                                        <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'card' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
+                                            <input type="radio" name="metodoPagamento" value="card" checked={formData.metodoPagamento === 'card'} onChange={handleInputChange as SafeAny} className="accent-[var(--azul-profundo)]" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
+                                                    <CreditCard size={20} />
+                                                </div>
+                                                <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito / Débito</span>
+                                            </div>
+                                        </label>
+                                    )}
 
                                     {formData.metodoPagamento === 'card' && (
                                         <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
@@ -784,7 +801,7 @@ const CheckoutPage: React.FC = () => {
 
                                     {pixDiscount > 0 && (
                                         <div className="flex justify-between text-green-600 font-lato text-xs font-bold">
-                                            <span>Desconto Pix (5%)</span>
+                                            <span>Desconto Pix ({pixDiscountPercent}%)</span>
                                             <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pixDiscount)}</span>
                                         </div>
                                     )}

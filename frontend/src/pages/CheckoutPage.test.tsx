@@ -2,7 +2,9 @@ import { render, screen, fireEvent, waitFor } from '../test-utils';
 import CheckoutPage from './CheckoutPage';
 import { cartService } from '../services/cartService';
 import { orderService } from '../services/orderService';
+import { authService } from '../services/authService';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+
 import { useLocation } from 'react-router-dom';
 import { SafeAny } from "../types/safeAny";
 
@@ -14,30 +16,38 @@ vi.mock('../components/SEO', () => ({
 // Mock services
 vi.mock('../services/cartService', () => ({
     cartService: {
-        get: vi.fn(),
+        get: vi.fn(() => Promise.resolve([])),
         clear: vi.fn(),
         add: vi.fn(),
         remove: vi.fn(),
-        update: vi.fn()
+        update: vi.fn(),
+        migrate: vi.fn(() => Promise.resolve())
     },
 }));
 
 vi.mock('../services/authService', () => ({
     authService: {
         address: {
-            create: vi.fn(() => Promise.resolve()),
-            list: vi.fn(() => Promise.resolve([])),
+            create: vi.fn().mockResolvedValue({}),
+            list: vi.fn().mockResolvedValue([]),
+            get: vi.fn().mockResolvedValue([]),
+        },
+        cards: {
+            get: vi.fn().mockResolvedValue([]),
+            delete: vi.fn().mockResolvedValue(undefined),
         },
         user: {
             get: vi.fn(),
             update: vi.fn(),
-        }
+        },
+        getUser: vi.fn().mockReturnValue({ id: 'user-123', name: 'Test User', email: 'test@example.com' }),
+        isAuthenticated: vi.fn().mockReturnValue(true)
     }
 }));
 
 vi.mock('../services/orderService', () => ({
     orderService: {
-        calculateShipping: vi.fn(),
+        calculateShipping: vi.fn(() => Promise.resolve([])),
         createOrder: vi.fn(),
     },
     configService: {
@@ -65,6 +75,9 @@ vi.mock('../hooks/useMercadoPago', () => ({
         mp: { cardForm: vi.fn() },
         loading: false,
         isConfigured: true,
+        pixActive: true,
+        cardActive: true,
+        pixDiscountPercent: 5,
         error: null
     }))
 }));
@@ -147,10 +160,56 @@ describe('CheckoutPage Component', () => {
         await waitFor(() => {
             expect(orderService.createOrder).toHaveBeenCalledWith(expect.objectContaining({
                 email: 'cliente@teste.com',
-                paymentMethod: 'pix' // Assumindo default
+                paymentMethod: 'pix'
             }));
             expect(screen.getByText('Que o Axé te acompanhe!')).toBeInTheDocument();
             expect(screen.getByText(/ORD-123/)).toBeInTheDocument();
+        });
+    });
+
+    it('should select an existing address from the list', async () => {
+        const mockAddress = {
+            id: 'addr-1',
+            street: 'Rua de Teste',
+            number: '123',
+            city: 'São Paulo',
+            state: 'SP',
+            zipCode: '01000-000',
+            isDefault: true
+        };
+
+        const mockAuthService = vi.mocked(authService);
+        (mockAuthService.address.get as Mock).mockResolvedValue([mockAddress]);
+
+        render(<CheckoutPage />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/Rua de Teste/i)).toBeInTheDocument();
+        });
+
+        const addressCard = screen.getByText(/Rua de Teste/i).closest('div');
+        if (addressCard) {
+            fireEvent.click(addressCard);
+        }
+    });
+
+    it('should switch to credit card if PIX is disabled', async () => {
+        const { useMercadoPago } = await import('../hooks/useMercadoPago');
+        (useMercadoPago as Mock).mockReturnValue({
+            mp: { cardForm: vi.fn() },
+            loading: false,
+            isConfigured: true,
+            pixActive: false,
+            cardActive: true,
+            pixDiscountPercent: 0,
+            error: null
+        });
+
+        render(<CheckoutPage />);
+
+        await waitFor(() => {
+            const cardRadio = screen.getByLabelText(/Cartão de Crédito/i) as HTMLInputElement;
+            expect(cardRadio.checked).toBe(true);
         });
     });
 });
