@@ -145,6 +145,18 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
             )}
 
             {/* Formulário de Upload */}
+            {currentMetadata && (
+                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-2xl flex items-start gap-3 animate-fadeIn">
+                    <AlertCircle className="text-orange-500 mt-0.5" size={20} />
+                    <div>
+                        <h5 className="font-bold text-orange-800 text-sm">Atenção: Substituição de Certificado</h5>
+                        <p className="text-orange-700 text-xs mt-1 leading-relaxed">
+                            Ao fazer o upload de um novo arquivo, as chaves do certificado <strong>atual e ativo</strong> serão permanentemente apagadas.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div
                     onClick={() => fileInputRef.current?.click()}
@@ -226,9 +238,9 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
                     <button
                         type="submit"
                         disabled={!file || !password || isLoading}
-                        className="px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all flex items-center gap-2 disabled:opacity-50 shadow-md"
+                        className={`px-6 py-3 text-white rounded-xl font-bold transition-all flex items-center gap-2 disabled:opacity-50 shadow-md ${currentMetadata ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-900 hover:bg-black'}`}
                     >
-                        {isLoading ? 'Cifrando arquivo...' : 'Fazer Upload Seguro'}
+                        {isLoading ? 'Processando...' : (currentMetadata ? 'Substituir Certificado Atual' : 'Fazer Upload Seguro')}
                     </button>
                 </div>
             </form>
