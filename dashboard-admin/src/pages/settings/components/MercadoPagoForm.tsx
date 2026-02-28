@@ -150,13 +150,16 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="number"
+                                            step="0.01"
                                             min="0"
                                             max="100"
                                             className="w-20 border border-green-300 p-2 rounded-lg text-sm bg-white"
-                                            value={config.methods.enabled.pix.discountPercent || 0}
+                                            value={config.methods.enabled.pix.discountPercent === 0 ? '' : config.methods.enabled.pix.discountPercent}
+                                            placeholder="0.00"
                                             onChange={e => {
                                                 e.stopPropagation();
-                                                setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, discountPercent: Number(e.target.value) } } } });
+                                                const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                                setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, discountPercent: val } } } });
                                             }}
                                             onClick={e => e.stopPropagation()}
                                         />

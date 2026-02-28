@@ -510,7 +510,7 @@ export function ProductForm() {
                 className="w-full p-2 text-sm border rounded bg-white"
                 value={variantInput.stock}
                 onChange={e => setVariantInput({ ...variantInput, stock: e.target.value })}
-                placeholder="0 (ou herdar)"
+                placeholder="0"
               />
             </div>
             <div className="col-span-1 border-l-2 border-gray-200 pl-2">
@@ -562,45 +562,73 @@ export function ProductForm() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Peso (g)</label>
-              <input
-                type="number"
-                step="any"
-                {...register('weight', { valueAsNumber: true })}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
-                placeholder="Ex: 300 ou 0.5"
+              <Controller
+                name="weight"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                    placeholder="0.00"
+                    value={field.value === 0 ? '' : field.value}
+                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                  />
+                )}
               />
               {errors.weight && <p className="text-red-500 text-xs mt-1">{errors.weight.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Altura (cm)</label>
-              <input
-                type="number"
-                step="any"
-                {...register('height', { valueAsNumber: true })}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
-                placeholder="Ex: 10"
+              <Controller
+                name="height"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                    placeholder="0.00"
+                    value={field.value === 0 ? '' : field.value}
+                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                  />
+                )}
               />
               {errors.height && <p className="text-red-500 text-xs mt-1">{errors.height.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Largura (cm)</label>
-              <input
-                type="number"
-                step="any"
-                {...register('width', { valueAsNumber: true })}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
-                placeholder="Ex: 20"
+              <Controller
+                name="width"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                    placeholder="0.00"
+                    value={field.value === 0 ? '' : field.value}
+                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                  />
+                )}
               />
               {errors.width && <p className="text-red-500 text-xs mt-1">{errors.width.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento (cm)</label>
-              <input
-                type="number"
-                step="any"
-                {...register('length', { valueAsNumber: true })}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
-                placeholder="Ex: 30"
+              <Controller
+                name="length"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                    placeholder="0.00"
+                    value={field.value === 0 ? '' : field.value}
+                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                  />
+                )}
               />
               {errors.length && <p className="text-red-500 text-xs mt-1">{errors.length.message}</p>}
             </div>

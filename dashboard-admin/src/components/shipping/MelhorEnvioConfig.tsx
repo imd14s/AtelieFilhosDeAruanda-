@@ -200,8 +200,8 @@ export function MelhorEnvioConfig({ config, onChange }: MelhorEnvioConfigProps) 
                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Valor Mínimo (R$)</label>
                                 <input
                                     type="number"
-                                    value={rule.minAmount}
-                                    placeholder="0"
+                                    value={rule.minAmount === '0' || rule.minAmount === '' ? '' : rule.minAmount}
+                                    placeholder="0.00"
                                     onChange={(e) => updateRule(rule.id, 'minAmount', e.target.value)}
                                     className="w-full border p-2 rounded-lg text-sm bg-white"
                                 />

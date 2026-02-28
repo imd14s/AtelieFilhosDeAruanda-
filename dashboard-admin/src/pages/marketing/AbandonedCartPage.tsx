@@ -185,9 +185,10 @@ export function AbandonedCartPage() {
                                             <input
                                                 type="number"
                                                 min="1"
-                                                value={trigger.delayMinutes ?? 0}
-                                                onChange={(e) => updateTrigger(index, 'delayMinutes', parseInt(e.target.value) || 1)}
+                                                value={trigger.delayMinutes === 0 || trigger.delayMinutes === undefined ? '' : trigger.delayMinutes}
+                                                onChange={(e) => updateTrigger(index, 'delayMinutes', e.target.value === '' ? 0 : (parseInt(e.target.value) || 0))}
                                                 className="w-24 p-3 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-800 focus:border-indigo-500 outline-none text-center"
+                                                placeholder="60"
                                             />
                                             <span className="text-sm text-gray-600 font-medium">minutos após o abandono</span>
                                             <div className="hidden lg:block ml-auto text-xs font-black text-indigo-400 uppercase tracking-tighter bg-indigo-50 px-2 py-1 rounded">

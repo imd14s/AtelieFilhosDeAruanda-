@@ -54,11 +54,11 @@ export function EmissionConfigForm({ data, onChange, disabled }: EmissionConfigF
                             type="number"
                             min="1"
                             max="999"
-                            value={data.invoiceSeries}
+                            value={data.invoiceSeries === '0' || data.invoiceSeries === '' ? '' : data.invoiceSeries}
                             onChange={(e) => onChange('invoiceSeries', e.target.value)}
                             disabled={disabled}
                             className="w-full mt-1 p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 transition-all font-mono text-sm disabled:opacity-50"
-                            placeholder="Ex: 1"
+                            placeholder="0"
                         />
                         <p className="text-[10px] text-gray-400 mt-1">Normalmente "1" para a matriz.</p>
                     </div>
@@ -68,11 +68,11 @@ export function EmissionConfigForm({ data, onChange, disabled }: EmissionConfigF
                         <input
                             type="number"
                             min="0"
-                            value={data.invoiceNumber}
+                            value={data.invoiceNumber === '0' || data.invoiceNumber === '' ? '' : data.invoiceNumber}
                             onChange={(e) => onChange('invoiceNumber', e.target.value)}
                             disabled={disabled}
                             className="w-full mt-1 p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 transition-all font-mono text-sm disabled:opacity-50"
-                            placeholder="Ex: 1450"
+                            placeholder="0"
                         />
                         <p className="text-[10px] text-gray-400 mt-1">A próxima nota utilizará o (Nº Atual + 1).</p>
                     </div>

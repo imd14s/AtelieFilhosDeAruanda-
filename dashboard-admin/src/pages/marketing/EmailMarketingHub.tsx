@@ -1197,7 +1197,7 @@ export default function EmailMarketingHub() {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Porta</label>
-                                    <input type="number" className="w-full px-3 py-2 border rounded-xl text-center" value={smtpConfig.mailPort} onChange={e => setSmtpConfig({ ...smtpConfig, mailPort: parseInt(e.target.value) })} />
+                                    <input type="number" className="w-full px-3 py-2 border rounded-xl text-center" placeholder="587" value={smtpConfig.mailPort === 0 ? '' : smtpConfig.mailPort} onChange={e => setSmtpConfig({ ...smtpConfig, mailPort: e.target.value === '' ? 0 : parseInt(e.target.value) })} />
                                 </div>
                             </div>
                             <div>

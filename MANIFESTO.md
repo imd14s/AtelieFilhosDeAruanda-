@@ -1,8 +1,8 @@
 🛡️ MANIFESTO DE INTEGRIDADE E FUNCIONALIDADE (MIF)
 Este documento é o guia supremo de verdade sobre o estado atual e as capacidades do ecossistema Ateliê Filhos de Aruanda. Ele serve tanto como transparência para o **Usuário** quanto como contexto de alta fidelidade para a **IA**.
 
-Última Atualização: 28/02/2026 00:10
-Status Global: 🟢 Operacional (Dynamic Payment & PIX Discount Validated)
+Última Atualização: 01/03/2026 00:20
+Status Global: 🟢 Operacional (Input Standardization & UX Refactor Completed)
 
 📊 1. Painel de Saúde (Métricas de Qualidade)
 

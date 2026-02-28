@@ -291,7 +291,7 @@ export function SubscriptionPlansPage() {
                                 <input
                                     type="number"
                                     step="0.01"
-                                    value={(editingPlan.basePrice as number) || ''}
+                                    value={editingPlan.basePrice === 0 ? '' : (editingPlan.basePrice as number | string)}
                                     onChange={(e) => setEditingPlan({ ...editingPlan, basePrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                                     className="w-full border rounded-lg p-2 pl-9 outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="0.00"
@@ -370,7 +370,7 @@ export function SubscriptionPlansPage() {
                                     <label className="text-[10px] font-bold text-amber-600 uppercase">Qtd. Cupons</label>
                                     <input
                                         type="number"
-                                        value={(editingPlan.couponBundleCount as number) || ''}
+                                        value={editingPlan.couponBundleCount === 0 ? '' : (editingPlan.couponBundleCount as number | string)}
                                         onChange={(e) => setEditingPlan({ ...editingPlan, couponBundleCount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
                                         placeholder="0"
@@ -380,20 +380,20 @@ export function SubscriptionPlansPage() {
                                     <label className="text-[10px] font-bold text-amber-600 uppercase">% Desconto</label>
                                     <input
                                         type="number"
-                                        value={(editingPlan.couponDiscountPercentage as number) || ''}
+                                        value={editingPlan.couponDiscountPercentage === 0 ? '' : (editingPlan.couponDiscountPercentage as number | string)}
                                         onChange={(e) => setEditingPlan({ ...editingPlan, couponDiscountPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
-                                        placeholder="0"
+                                        placeholder="0.00"
                                     />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-amber-600 uppercase">Validade (Dias)</label>
                                     <input
                                         type="number"
-                                        value={(editingPlan.couponValidityDays as number) || ''}
+                                        value={editingPlan.couponValidityDays === 0 ? '' : (editingPlan.couponValidityDays as number | string)}
                                         onChange={(e) => setEditingPlan({ ...editingPlan, couponValidityDays: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                                         className="w-full p-2 border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-center"
-                                        placeholder="0"
+                                        placeholder="30"
                                     />
                                 </div>
                             </div>
@@ -422,9 +422,10 @@ export function SubscriptionPlansPage() {
                                                 <input
                                                     type="number"
                                                     min="1"
-                                                    value={(p.quantity as number) || 1}
-                                                    onChange={(e) => updateProductQuantity((p.product as Record<string, unknown>)?.id as string || (p.productId as string), Number(e.target.value))}
+                                                    value={p.quantity === 0 ? '' : (p.quantity as number | string)}
+                                                    onChange={(e) => updateProductQuantity((p.product as Record<string, unknown>)?.id as string || (p.productId as string), e.target.value === '' ? 0 : Number(e.target.value))}
                                                     className="w-12 border rounded p-1 text-center text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    placeholder="1"
                                                 />
                                                 <button type="button" onClick={() => toggleProduct(product)} className="text-red-500 hover:bg-red-50 p-1 rounded transition">
                                                     <Plus size={16} className="rotate-45" />
@@ -508,9 +509,9 @@ export function SubscriptionPlansPage() {
                                         )}>
                                             <input
                                                 type="number"
-                                                value={rule ? ((rule.discountPercentage as number) || '') : ''}
+                                                value={rule ? (rule.discountPercentage === 0 ? '' : (rule.discountPercentage as number | string)) : ''}
                                                 onChange={(e) => updateDiscount(freq.key, e.target.value)}
-                                                placeholder="0"
+                                                placeholder="0.00"
                                                 className="w-full p-2 text-sm outline-none text-center"
                                             />
                                             <span className="bg-gray-50 px-2 py-2 text-xs text-gray-400 font-bold">%</span>

@@ -95,7 +95,7 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                             step="0.01"
                             value={formData.value === 0 ? '' : formData.value}
                             onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                            placeholder={formData.type === 'PERCENTAGE' ? "10" : "50.00"}
+                            placeholder={formData.type === 'PERCENTAGE' ? "0.00" : "0.00"}
                             className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                     </div>
@@ -109,7 +109,7 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                             type="number"
                             value={formData.usageLimit === 0 ? '' : formData.usageLimit}
                             onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value === '' ? 0 : parseInt(e.target.value) })}
-                            placeholder="100"
+                            placeholder="0 (Sem Limite)"
                             className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                     </div>
@@ -120,7 +120,7 @@ export function CouponModal({ isOpen, onClose, onSave, initialData }: CouponModa
                             type="number"
                             value={formData.usageLimitPerUser === 0 ? '' : formData.usageLimitPerUser}
                             onChange={(e) => setFormData({ ...formData, usageLimitPerUser: e.target.value === '' ? 0 : parseInt(e.target.value) })}
-                            placeholder="1"
+                            placeholder="0"
                             className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                     </div>

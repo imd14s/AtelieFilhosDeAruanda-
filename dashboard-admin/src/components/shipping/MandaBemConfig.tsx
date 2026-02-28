@@ -108,7 +108,7 @@ export function MandaBemConfig({ config, onChange }: MandaBemConfigProps) {
                                 type="number"
                                 step="0.1"
                                 min="0"
-                                value={defaultWeight}
+                                value={defaultWeight === '0' || defaultWeight === 0 || defaultWeight === '' ? '' : defaultWeight}
                                 onChange={(e) => setDefaultWeight(e.target.value)}
                                 className="w-full border p-3 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                                 placeholder="0.5"
@@ -122,7 +122,7 @@ export function MandaBemConfig({ config, onChange }: MandaBemConfigProps) {
                             <input
                                 type="number"
                                 min="0"
-                                value={estimatedDays}
+                                value={estimatedDays === '0' || estimatedDays === 0 || estimatedDays === '' ? '' : estimatedDays}
                                 onChange={(e) => setEstimatedDays(e.target.value)}
                                 className="w-full border p-3 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                                 placeholder="0"
@@ -149,10 +149,10 @@ export function MandaBemConfig({ config, onChange }: MandaBemConfigProps) {
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                value={freeShippingMinAmount}
+                                value={freeShippingMinAmount === '0' || freeShippingMinAmount === 0 || freeShippingMinAmount === '' ? '' : freeShippingMinAmount}
                                 onChange={(e) => setFreeShippingMinAmount(e.target.value)}
                                 className="w-full border p-3 pl-10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                                placeholder="Deixe vazio para desativar"
+                                placeholder="0.00"
                             />
                         </div>
                         <p className="text-xs text-gray-400 mt-1">

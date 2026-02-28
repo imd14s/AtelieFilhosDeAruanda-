@@ -191,8 +191,8 @@ export function EmailSettingsPage() {
                                 required
                                 placeholder="587"
                                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                value={configs.mailPort}
-                                onChange={(e) => setConfigs({ ...configs, mailPort: parseInt(e.target.value) })}
+                                value={configs.mailPort === 0 ? '' : configs.mailPort}
+                                onChange={(e) => setConfigs({ ...configs, mailPort: e.target.value === '' ? 0 : (parseInt(e.target.value) || 0) })}
                             />
                         </div>
 

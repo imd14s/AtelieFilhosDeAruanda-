@@ -139,9 +139,10 @@ export function StockAlertPage() {
                                                     <span className="text-[10px] font-bold text-gray-400 uppercase">Abaixo de</span>
                                                     <input
                                                         type="number"
-                                                        value={p.maxLevel}
-                                                        onChange={e => updatePriority(idx, 'maxLevel', parseInt(e.target.value))}
+                                                        value={p.maxLevel === 0 ? '' : p.maxLevel}
+                                                        onChange={e => updatePriority(idx, 'maxLevel', e.target.value === '' ? 0 : parseInt(e.target.value))}
                                                         className="w-16 bg-white border rounded text-center text-sm font-bold py-1"
+                                                        placeholder="0"
                                                     />
                                                 </div>
                                             </div>
