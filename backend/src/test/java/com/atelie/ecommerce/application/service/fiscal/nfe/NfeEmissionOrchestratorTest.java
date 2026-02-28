@@ -11,10 +11,12 @@ import com.atelie.ecommerce.domain.fiscal.nfe.integration.SefazRejectionExceptio
 import com.atelie.ecommerce.domain.fiscal.nfe.security.NfeSignatureException;
 import com.atelie.ecommerce.domain.fiscal.nfe.security.NfeSignaturePort;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.application.service.config.SystemConfigService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +32,7 @@ class NfeEmissionOrchestratorTest {
         private NfeXmlValidatorPort xmlValidatorMock;
         private NfeSignaturePort signaturePortMock;
         private SefazIntegrationPort sefazIntegrationPortMock;
+        private SystemConfigService configServiceMock;
         private NfeEmissionOrchestrator orchestrator;
 
         private OrderEntity mockOrder;
@@ -41,12 +44,16 @@ class NfeEmissionOrchestratorTest {
                 xmlValidatorMock = mock(NfeXmlValidatorPort.class);
                 signaturePortMock = mock(NfeSignaturePort.class);
                 sefazIntegrationPortMock = mock(SefazIntegrationPort.class);
+                configServiceMock = mock(SystemConfigService.class);
+
+                when(configServiceMock.listAll()).thenReturn(Collections.emptyList());
 
                 orchestrator = new NfeEmissionOrchestrator(
                                 dataMapperMock,
                                 xmlValidatorMock,
                                 signaturePortMock,
-                                sefazIntegrationPortMock);
+                                sefazIntegrationPortMock,
+                                configServiceMock);
 
                 mockOrder = new OrderEntity();
                 mockOrder.setId(UUID.randomUUID());
@@ -62,7 +69,7 @@ class NfeEmissionOrchestratorTest {
                 String signedXml = "<nfe>SIGNED</nfe>";
                 String sefazReceipt = "<retEnviNFe><cStat>104</cStat></retEnviNFe>";
 
-                when(dataMapperMock.generateNfeXml(mockOrder)).thenReturn(rawXml);
+                when(dataMapperMock.generateNfeXml(eq(mockOrder), any())).thenReturn(rawXml);
                 doNothing().when(xmlValidatorMock).validate(rawXml);
                 when(signaturePortMock.sign(rawXml, credentials.getCertificateBytes(),
                                 credentials.getEncryptedPassword()))
@@ -84,7 +91,7 @@ class NfeEmissionOrchestratorTest {
 
     @Test
     void shouldThrowIssuanceExceptionWhenDataMapperFails() throws Exception {
-        when(dataMapperMock.generateNfeXml(mockOrder)).thenThrow(new RuntimeException("Incomplete Order"));
+        when(dataMapperMock.generateNfeXml(eq(mockOrder), any())).thenThrow(new RuntimeException("Incomplete Order"));
 
         assertThatThrownBy(() -> orchestrator.emit(mockOrder, credentials))
                 .isInstanceOf(NfeIssuanceException.class)
@@ -96,7 +103,7 @@ class NfeEmissionOrchestratorTest {
         @Test
         void shouldThrowIssuanceExceptionWhenXmlIsInvalid() throws Exception {
                 String rawXml = "<nfe>RAW</nfe>";
-                when(dataMapperMock.generateNfeXml(mockOrder)).thenReturn(rawXml);
+                when(dataMapperMock.generateNfeXml(eq(mockOrder), any())).thenReturn(rawXml);
                 doThrow(new NfeValidationException("Schema Rejeitado")).when(xmlValidatorMock).validate(rawXml);
 
                 assertThatThrownBy(() -> orchestrator.emit(mockOrder, credentials))
@@ -109,7 +116,7 @@ class NfeEmissionOrchestratorTest {
         @Test
         void shouldThrowIssuanceExceptionWhenSignatureFails() throws Exception {
                 String rawXml = "<nfe>RAW</nfe>";
-                when(dataMapperMock.generateNfeXml(mockOrder)).thenReturn(rawXml);
+                when(dataMapperMock.generateNfeXml(eq(mockOrder), any())).thenReturn(rawXml);
                 when(signaturePortMock.sign(anyString(), any(byte[].class), anyString()))
                                 .thenThrow(new NfeSignatureException("Senha Inválida", null));
 
@@ -125,7 +132,7 @@ class NfeEmissionOrchestratorTest {
                 String rawXml = "<nfe>RAW</nfe>";
                 String signedXml = "<nfe>SIGNED</nfe>";
 
-                when(dataMapperMock.generateNfeXml(mockOrder)).thenReturn(rawXml);
+                when(dataMapperMock.generateNfeXml(eq(mockOrder), any())).thenReturn(rawXml);
                 when(signaturePortMock.sign(anyString(), any(byte[].class), anyString())).thenReturn(signedXml);
 
                 when(sefazIntegrationPortMock.authorizeNfe(anyString(), anyString(), anyBoolean(), any(byte[].class),
@@ -148,7 +155,7 @@ class NfeEmissionOrchestratorTest {
                 String rawXml = "<nfe>RAW</nfe>";
                 String signedXml = "<nfe>SIGNED</nfe>";
 
-                when(dataMapperMock.generateNfeXml(mockOrder)).thenReturn(rawXml);
+                when(dataMapperMock.generateNfeXml(eq(mockOrder), any())).thenReturn(rawXml);
                 when(signaturePortMock.sign(anyString(), any(byte[].class), anyString())).thenReturn(signedXml);
 
                 when(sefazIntegrationPortMock.authorizeNfe(anyString(), anyString(), anyBoolean(), any(byte[].class),

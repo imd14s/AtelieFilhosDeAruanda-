@@ -1,8 +1,8 @@
 🛡️ MANIFESTO DE INTEGRIDADE E FUNCIONALIDADE (MIF)
 Este documento é o guia supremo de verdade sobre o estado atual e as capacidades do ecossistema Ateliê Filhos de Aruanda. Ele serve tanto como transparência para o **Usuário** quanto como contexto de alta fidelidade para a **IA**.
 
-Última Atualização: 27/02/2026 21:30
-Status Global: 🟢 Operacional (Fixes for Product Save Deployed)
+Última Atualização: 27/02/2026 22:15
+Status Global: 🟢 Operacional (Fiscal Sync & Product Saves Validated)
 
 📊 1. Painel de Saúde (Métricas de Qualidade)
 
@@ -98,7 +98,7 @@ Rota Backend | Uso | Acesso | Dados Expostos | Permissão
 `/api/orders/user/{id}` | Loja | 🟡 Cliente | Histórico, Endereço | Leitura
 `/api/admin/orders` | Dashboard | 🔴 Admin | **CPF**, Endereço Detalhado | Leitura/Escrita
 `/api/admin/orders/{id}/invoice`| Dashboard | 🔴 Admin | NF-e, XML, Chave Sefaz | Escrita (Fiscal)
-`/api/fiscal/ncm` | Dashboard | 🔴 Admin | Códigos NCM/SH | Leitura
+`/api/fiscal/settings`| Dashboard | 🔴 Admin | Emitente, Série, Certificado | Leitura/Escrita
 
 ---
 

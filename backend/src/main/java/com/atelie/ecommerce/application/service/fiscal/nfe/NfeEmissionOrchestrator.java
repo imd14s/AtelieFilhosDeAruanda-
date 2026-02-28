@@ -12,6 +12,10 @@ import com.atelie.ecommerce.domain.fiscal.nfe.integration.SefazRejectionExceptio
 import com.atelie.ecommerce.domain.fiscal.nfe.security.NfeSignatureException;
 import com.atelie.ecommerce.domain.fiscal.nfe.security.NfeSignaturePort;
 import com.atelie.ecommerce.domain.order.model.OrderModel;
+import com.atelie.ecommerce.application.service.config.SystemConfigService;
+import com.atelie.ecommerce.domain.config.SystemConfig;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import java.util.logging.Level;
@@ -26,16 +30,19 @@ public class NfeEmissionOrchestrator implements NfeEmissionStrategy {
     private final NfeXmlValidatorPort xmlValidator;
     private final NfeSignaturePort signaturePort;
     private final SefazIntegrationPort sefazIntegrationPort;
+    private final SystemConfigService configService;
 
     public NfeEmissionOrchestrator(
             NfeDataMapperPort dataMapper,
             NfeXmlValidatorPort xmlValidator,
             NfeSignaturePort signaturePort,
-            SefazIntegrationPort sefazIntegrationPort) {
+            SefazIntegrationPort sefazIntegrationPort,
+            SystemConfigService configService) {
         this.dataMapper = dataMapper;
         this.xmlValidator = xmlValidator;
         this.signaturePort = signaturePort;
         this.sefazIntegrationPort = sefazIntegrationPort;
+        this.configService = configService;
     }
 
     @Override
@@ -43,8 +50,12 @@ public class NfeEmissionOrchestrator implements NfeEmissionStrategy {
         try {
             logger.info("Iniciando orquestração de emissão NF-e para Pedido Externo: " + order.getExternalId());
 
-            // 1. Data Mapping to raw XML
-            String rawXml = dataMapper.generateNfeXml(order);
+            // 1. Fetch all system configs for the mapper
+            Map<String, String> configs = configService.listAll().stream()
+                    .collect(Collectors.toMap(SystemConfig::key, SystemConfig::value));
+
+            // 2. Data Mapping to raw XML
+            String rawXml = dataMapper.generateNfeXml(order, configs);
 
             // 2. Off-line validation against XSD
             if (rawXml == null || rawXml.isBlank()) {

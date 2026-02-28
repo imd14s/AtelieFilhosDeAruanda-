@@ -21,7 +21,6 @@ const schema = z.object({
   title: z.string().min(3, 'Título muito curto'),
   description: z.string(),
   category: z.string().min(1, 'Categoria obrigatória'),
-  tenantId: z.string(),
   marketplaceIds: z.array(z.string()).optional(),
   weight: z.coerce.number().optional().default(0),
   height: z.coerce.number().optional().default(0),
@@ -67,7 +66,6 @@ export function ProductForm() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema) as any,
     defaultValues: {
-      tenantId: '1',
       weight: 0,
       height: 0,
       width: 0,
@@ -114,7 +112,6 @@ export function ProductForm() {
   const loadProduct = useCallback(async () => {
     if (!id) {
       reset({
-        tenantId: '1',
         weight: 0,
         height: 0,
         width: 0,
@@ -139,12 +136,11 @@ export function ProductForm() {
         title: product.title || '',
         description: product.description || '',
         category: product.category || '',
-        tenantId: product.tenantId || '1',
         marketplaceIds: product.marketplaceIds || [],
-        weight: product.dimensions?.weight || 0,
-        height: product.dimensions?.height || 0,
-        width: product.dimensions?.width || 0,
-        length: product.dimensions?.length || 0,
+        weight: product.weight || 0,
+        height: product.height || 0,
+        width: product.width || 0,
+        length: product.length || 0,
         ncm: product.ncm || '',
         productionType: product.productionType || 'REVENDA',
         origin: product.origin || 'NACIONAL',
@@ -375,16 +371,13 @@ export function ProductForm() {
         variants,
         media: sortedMedia,
         marketplaceIds: selectedMarketplaces,
-        dimensions: {
-          weight: data.weight || 0,
-          width: data.width || 0,
-          height: data.height || 0,
-          length: data.length || 0
-        },
+        weight: data.weight || 0,
+        width: data.width || 0,
+        height: data.height || 0,
+        length: data.length || 0,
         ncm: data.ncm,
         productionType: data.productionType,
         origin: data.origin,
-        tenantId: data.tenantId || '1'
       };
 
       if (id) {

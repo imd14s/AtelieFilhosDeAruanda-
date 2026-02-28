@@ -46,9 +46,11 @@ export interface Product {
     variants: ProductVariant[];
     media: ProductMedia[];
     marketplaceIds?: string[];
-    dimensions?: ProductDimensions;
+    weight?: number;
+    width?: number;
+    height?: number;
+    length?: number;
     seo?: ProductSEO;
-    tenantId: string;
     ncm?: string;
     productionType?: 'PROPRIA' | 'REVENDA';
     origin?: string;

@@ -21,6 +21,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+import java.util.Map;
+
 /**
  * Motor de mapeamento e serialização de dados de Negócio para o formato SEFAZ
  * NF-e 4.00.
@@ -35,7 +37,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
     }
 
     @Override
-    public String generateNfeXml(OrderModel order) {
+    public String generateNfeXml(OrderModel order, Map<String, String> configs) {
         if (order == null) {
             throw new RuntimeException("Falha catastrófica ao mapear XML da NF-e para Pedido null");
         }
@@ -49,21 +51,24 @@ public class NfeDataMapper implements NfeDataMapperPort {
             nfeElement.setAttribute("xmlns", "http://www.portalfiscal.inf.br/nfe");
             doc.appendChild(nfeElement);
 
-            // <infNFe> : Chave deve ser gerada/mockada com a lógica real da Sefaz depois
-            // (UF+AAMM+CNPJ+MOD+SERIE+NUM+TIPO_EMISSAO+COD_NUM+DV)
+            // <infNFe>
+            boolean isProd = "PRODUCAO".equalsIgnoreCase(configs.getOrDefault("FISCAL_ENVIRONMENT", "HOMOLOGACAO"));
+            String serie = configs.getOrDefault("FISCAL_INVOICE_SERIES", "1");
+            String nNF = String.valueOf(Integer.parseInt(configs.getOrDefault("FISCAL_INVOICE_NUMBER", "0")) + 1);
+
             Element infNFe = doc.createElement("infNFe");
-            infNFe.setAttribute("Id", "NFe" + generateMockChaveAcesso());
+            infNFe.setAttribute("Id", "NFe" + generateChaveAcesso(order, configs, isProd, serie, nNF));
             infNFe.setAttribute("versao", "4.00");
             nfeElement.appendChild(infNFe);
 
             // <ide>
-            infNFe.appendChild(buildIdeElement(doc, order));
+            infNFe.appendChild(buildIdeElement(doc, order, isProd, serie, nNF));
 
             // <emit>
-            infNFe.appendChild(buildEmitElement(doc));
+            infNFe.appendChild(buildEmitElement(doc, configs));
 
             // <dest>
-            infNFe.appendChild(buildDestElement(doc, order));
+            infNFe.appendChild(buildDestElement(doc, order, isProd));
 
             // <det> - Itens (Produtos)
             int itemNum = 1;
@@ -110,15 +115,15 @@ public class NfeDataMapper implements NfeDataMapperPort {
         }
     }
 
-    private Element buildIdeElement(Document doc, OrderModel order) {
+    private Element buildIdeElement(Document doc, OrderModel order, boolean isProd, String serie, String nNF) {
         Element ide = doc.createElement("ide");
 
         ide.appendChild(createElementWithValue(doc, "cUF", "35")); // SP por padrão do Ateliê
-        ide.appendChild(createElementWithValue(doc, "cNF", "12345678")); // Exemplo
+        ide.appendChild(createElementWithValue(doc, "cNF", "12345678")); // Código numérico aleatório
         ide.appendChild(createElementWithValue(doc, "natOp", "Venda de Mercadoria"));
         ide.appendChild(createElementWithValue(doc, "mod", "55"));
-        ide.appendChild(createElementWithValue(doc, "serie", "1"));
-        ide.appendChild(createElementWithValue(doc, "nNF", "1234")); // Número sequencial controle
+        ide.appendChild(createElementWithValue(doc, "serie", serie));
+        ide.appendChild(createElementWithValue(doc, "nNF", nNF));
 
         // Data timezone MOC - UTC-03:00 - Offset
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
@@ -130,7 +135,7 @@ public class NfeDataMapper implements NfeDataMapperPort {
         ide.appendChild(createElementWithValue(doc, "cMunFG", "3550308")); // SP - Capital Município Fato Gerador
         ide.appendChild(createElementWithValue(doc, "tpImp", "1")); // Retrato
         ide.appendChild(createElementWithValue(doc, "tpEmis", "1")); // Normal
-        ide.appendChild(createElementWithValue(doc, "tpAmb", "2")); // 2=Homologação, 1=Produção
+        ide.appendChild(createElementWithValue(doc, "tpAmb", isProd ? "1" : "2")); // 1=Produção, 2=Homologação
         ide.appendChild(createElementWithValue(doc, "finNFe", "1")); // Normal
         ide.appendChild(createElementWithValue(doc, "indFinal", "1")); // Consumidor final
         ide.appendChild(createElementWithValue(doc, "indPres", "2")); // Internet
@@ -144,27 +149,51 @@ public class NfeDataMapper implements NfeDataMapperPort {
         return targetState.equalsIgnoreCase("SP") ? "1" : "2"; // 1 = Estadual, 2 = Interestadual
     }
 
-    private Element buildEmitElement(Document doc) {
+    private Element buildEmitElement(Document doc, Map<String, String> configs) {
         Element emit = doc.createElement("emit");
-        emit.appendChild(createElementWithValue(doc, "CNPJ", "12345678000195")); // CNPJ Base Ateliê Mock
-        emit.appendChild(createElementWithValue(doc, "xNome", "Ateliê Filhos de Aruanda LTDA"));
-        emit.appendChild(createElementWithValue(doc, "CRT", "1")); // Simples Nacional
+        emit.appendChild(createElementWithValue(doc, "CNPJ", sanitizeDocument(configs.get("FISCAL_ISSUER_CNPJ"))));
+        emit.appendChild(createElementWithValue(doc, "xNome", configs.get("FISCAL_ISSUER_NAME")));
+
+        String taxRegime = configs.get("FISCAL_TAX_REGIME");
+        String crt = "1"; // Default Simples
+        if ("REGIME_NORMAL".equals(taxRegime))
+            crt = "3";
+        else if ("SIMPLES_EXCESSO_RECEITA".equals(taxRegime))
+            crt = "2";
+
+        emit.appendChild(createElementWithValue(doc, "CRT", crt));
 
         Element enderEmit = doc.createElement("enderEmit");
-        enderEmit.appendChild(createElementWithValue(doc, "xLgr", "Rua do Comércio"));
-        enderEmit.appendChild(createElementWithValue(doc, "nro", "123"));
-        enderEmit.appendChild(createElementWithValue(doc, "xBairro", "Centro"));
-        enderEmit.appendChild(createElementWithValue(doc, "cMun", "3550308"));
-        enderEmit.appendChild(createElementWithValue(doc, "xMun", "São Paulo"));
-        enderEmit.appendChild(createElementWithValue(doc, "UF", "SP"));
-        enderEmit.appendChild(createElementWithValue(doc, "CEP", "01000000"));
-        enderEmit.appendChild(createElementWithValue(doc, "fone", "11999999999"));
+        enderEmit.appendChild(createElementWithValue(doc, "xLgr", configs.get("FISCAL_ADDRESS_STREET")));
+        enderEmit.appendChild(createElementWithValue(doc, "nro", configs.get("FISCAL_ADDRESS_NUMBER")));
+
+        String compl = configs.get("FISCAL_ADDRESS_COMPLEMENT");
+        if (compl != null && !compl.isBlank()) {
+            enderEmit.appendChild(createElementWithValue(doc, "xCpl", compl));
+        }
+
+        enderEmit.appendChild(createElementWithValue(doc, "xBairro", configs.get("FISCAL_ADDRESS_NEIGHBORHOOD")));
+        enderEmit.appendChild(createElementWithValue(doc, "cMun", "3550308")); // IBGE SP
+        enderEmit.appendChild(createElementWithValue(doc, "xMun", configs.get("FISCAL_ADDRESS_CITY")));
+        enderEmit.appendChild(createElementWithValue(doc, "UF", configs.get("FISCAL_ADDRESS_STATE")));
+        enderEmit.appendChild(createElementWithValue(doc, "CEP", sanitizeDocument(configs.get("FISCAL_ADDRESS_ZIP"))));
+
+        String fone = configs.get("FISCAL_ISSUER_FONE"); // Opcional
+        if (fone != null && !fone.isBlank()) {
+            enderEmit.appendChild(createElementWithValue(doc, "fone", sanitizeDocument(fone)));
+        }
+
         emit.appendChild(enderEmit);
+
+        String ie = sanitizeDocument(configs.get("FISCAL_ISSUER_IE"));
+        if (ie != null && !ie.isBlank()) {
+            emit.appendChild(createElementWithValue(doc, "IE", ie));
+        }
 
         return emit;
     }
 
-    private Element buildDestElement(Document doc, OrderModel order) {
+    private Element buildDestElement(Document doc, OrderModel order, boolean isProd) {
         Element dest = doc.createElement("dest");
 
         String docSanitized = sanitizeDocument(order.getCustomerDocument());
@@ -175,8 +204,12 @@ public class NfeDataMapper implements NfeDataMapperPort {
                     docSanitized == null || docSanitized.isEmpty() ? "00000000000" : docSanitized));
         }
 
-        dest.appendChild(createElementWithValue(doc, "xNome",
-                order.getCustomerName() == null ? "CONSUMIDOR" : order.getCustomerName()));
+        // Homologation Recipient Name Safety
+        String recipientName = order.getCustomerName() == null ? "CONSUMIDOR" : order.getCustomerName();
+        if (!isProd) {
+            recipientName = "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL";
+        }
+        dest.appendChild(createElementWithValue(doc, "xNome", recipientName));
 
         Element enderDest = doc.createElement("enderDest");
         enderDest.appendChild(createElementWithValue(doc, "xLgr",
@@ -332,11 +365,43 @@ public class NfeDataMapper implements NfeDataMapperPort {
 
     private String sanitizeDocument(String docString) {
         if (docString == null)
-            return "";
-        return docString.replaceAll("[^0-9]", "");
+            return "00000000000000";
+        String sanitized = docString.replaceAll("[^0-9]", "");
+        return sanitized.isEmpty() ? "00000000000000" : sanitized;
     }
 
-    private String generateMockChaveAcesso() {
-        return "35" + "2602" + "12345678000195" + "55" + "001" + "000001234" + "1" + "10203040" + "5";
+    private String generateChaveAcesso(OrderModel order, Map<String, String> configs, boolean isProd, String serie,
+            String nNF) {
+        // UF(2) + AAMM(4) + CNPJ(14) + MOD(2) + SERIE(3) + NUM(9) + tpEmis(1) + cNF(8)
+        // + cDV(1)
+        String cUF = "35";
+        DateTimeFormatter aaMM = DateTimeFormatter.ofPattern("yyMM");
+        String data = aaMM.format(order.getCreatedAt().atZone(ZoneId.of("America/Sao_Paulo")));
+        String cnpj = sanitizeDocument(configs.get("FISCAL_ISSUER_CNPJ"));
+        String mod = "55";
+        String ser = String.format("%03d", Integer.parseInt(serie));
+        String num = String.format("%09d", Integer.parseInt(nNF));
+        String tpEmis = "1";
+        String cNF = "12345678"; // Em produção real deve ser randômico fixo por nota
+
+        String base = cUF + data + String.format("%014d", Long.parseLong(cnpj)) + mod + ser + num + tpEmis + cNF;
+
+        // Cálculo do DV (Módulo 11)
+        int dv = calculateDV(base);
+
+        return base + dv;
+    }
+
+    private int calculateDV(String chave) {
+        int peso = 2;
+        int soma = 0;
+        for (int i = chave.length() - 1; i >= 0; i--) {
+            soma += Character.getNumericValue(chave.charAt(i)) * peso;
+            peso++;
+            if (peso > 9)
+                peso = 2;
+        }
+        int resto = soma % 11;
+        return (resto == 0 || resto == 1) ? 0 : (11 - resto);
     }
 }

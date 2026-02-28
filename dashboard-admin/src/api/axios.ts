@@ -21,6 +21,12 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Padronização Multi-tenancy via Header conforme arquitetura Backend
+    if (config.headers) {
+      config.headers['X-Tenant-ID'] = '1';
+    }
+
     return config;
   },
   (error) => {
