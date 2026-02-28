@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileType, CheckCircle2, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { UploadCloud, FileType, CheckCircle2, Lock, Eye, EyeOff, AlertCircle, ShieldOff, Calendar, User, Building2 } from 'lucide-react';
 
 export interface CertificateMetadata {
     subjectName: string;
@@ -21,6 +21,7 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [confirmRevoke, setConfirmRevoke] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,8 +53,6 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
 
     const validateAndSetFile = (selectedFile: File) => {
         setError(null);
-
-        // Allowed extensions: .pfx, .p12
         const validExtensions = ['.pfx', '.p12'];
         const fileExtension = selectedFile.name.substring(selectedFile.name.lastIndexOf('.')).toLowerCase();
 
@@ -63,7 +62,6 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
             return;
         }
 
-        // Limit to 5MB (very large for a cert, but a safe upper bound)
         if (selectedFile.size > 5 * 1024 * 1024) {
             setError('Arquivo muito grande. O limite máximo é de 5MB.');
             setFile(null);
@@ -86,7 +84,6 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
 
         try {
             await onUpload(file, password);
-            // Clear on success
             setFile(null);
             setPassword('');
         } catch (err) {
@@ -96,154 +93,228 @@ export function CertificateUploadForm({ currentMetadata, onUpload, onRevoke, isL
     };
 
     const handleRevoke = async () => {
-        if (window.confirm('Tem certeza que deseja revogar/apagar o certificado atual? A emissão de notas ficará suspensa.')) {
+        try {
             await onRevoke();
+            setConfirmRevoke(false);
+        } catch (err) {
+            const revokeError = err as Error;
+            setError(revokeError.message || 'Erro ao revogar o certificado.');
         }
     };
+
+    const hasCertificate = currentMetadata !== null;
 
     return (
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <h3 className="text-lg font-bold text-gray-900 mb-1">Certificado Digital A1</h3>
-            <p className="text-sm text-gray-500 mb-6">Importe o arquivo (.pfx/.p12) e forneça a senha de instalação. Os dados serão cifrados antes de salvar.</p>
+            <p className="text-sm text-gray-500 mb-6">
+                {hasCertificate
+                    ? 'Gerencie o certificado digital vinculado à emissão de notas fiscais.'
+                    : 'Importe o arquivo (.pfx/.p12) e forneça a senha de instalação. Os dados serão cifrados antes de salvar.'}
+            </p>
 
-            {/* Quadro de Status Atual */}
-            {currentMetadata && (
-                <div className={`mb-8 p-5 rounded-2xl border-2 flex items-start gap-4 transition-all ${currentMetadata.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                    <div className={currentMetadata.isValid ? 'text-green-600' : 'text-red-500'}>
-                        {currentMetadata.isValid ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
-                    </div>
-                    <div className="flex-1">
-                        <h4 className={`font-bold text-lg mb-1 ${currentMetadata.isValid ? 'text-green-800' : 'text-red-800'}`}>
-                            {currentMetadata.isValid ? 'Certificado Ativo' : 'Certificado Expirado ou Inválido'}
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm mt-3">
-                            <div>
-                                <span className={`font-bold ${currentMetadata.isValid ? 'text-green-700' : 'text-red-700'}`}>Titular (CN):</span>
-                                <p className="text-gray-700">{currentMetadata.subjectName}</p>
+            {/* ═══════════════════════════════════════════════════════ */}
+            {/* ESTADO 1: Certificado Existente — Apenas Visualização  */}
+            {/* ═══════════════════════════════════════════════════════ */}
+            {hasCertificate && !confirmRevoke && (
+                <div className="space-y-4">
+                    {/* Card de Status do Certificado */}
+                    <div className={`p-5 rounded-2xl border-2 transition-all ${currentMetadata.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                        {/* Header */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className={`p-2.5 rounded-xl ${currentMetadata.isValid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
+                                {currentMetadata.isValid ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
                             </div>
                             <div>
-                                <span className={`font-bold ${currentMetadata.isValid ? 'text-green-700' : 'text-red-700'}`}>Validade:</span>
-                                <p className="text-gray-700 font-mono">{currentMetadata.expirationDate}</p>
-                            </div>
-                            <div className="md:col-span-2 mt-1">
-                                <span className={`font-bold ${currentMetadata.isValid ? 'text-green-700' : 'text-red-700'}`}>Autoridade (CA):</span>
-                                <p className="text-gray-700 text-xs">{currentMetadata.issuerName}</p>
+                                <h4 className={`font-bold text-base ${currentMetadata.isValid ? 'text-green-800' : 'text-red-800'}`}>
+                                    {currentMetadata.isValid ? 'Certificado Ativo' : 'Certificado Expirado'}
+                                </h4>
+                                <p className="text-xs text-gray-500">Emissão de NF-e {currentMetadata.isValid ? 'habilitada' : 'suspensa'}</p>
                             </div>
                         </div>
 
-                        <div className="mt-4 pt-4 border-t border-opacity-20 border-gray-800 flex justify-end">
-                            <button
-                                onClick={handleRevoke}
-                                disabled={isLoading}
-                                className="text-sm font-bold text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
-                            >
-                                {isLoading ? 'Processando...' : 'Revogar Certificado e Chaves'}
-                            </button>
+                        {/* Dados do Certificado */}
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3 p-3 bg-white bg-opacity-60 rounded-xl">
+                                <User size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                                <div>
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Titular (CN)</span>
+                                    <p className="text-sm text-gray-800 font-medium mt-0.5">{currentMetadata.subjectName}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 p-3 bg-white bg-opacity-60 rounded-xl">
+                                <Calendar size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                                <div>
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Validade</span>
+                                    <p className="text-sm text-gray-800 font-mono font-medium mt-0.5">{currentMetadata.expirationDate}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 p-3 bg-white bg-opacity-60 rounded-xl">
+                                <Building2 size={16} className="text-gray-400 mt-0.5 shrink-0" />
+                                <div>
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Autoridade Certificadora (CA)</span>
+                                    <p className="text-sm text-gray-800 font-medium mt-0.5">{currentMetadata.issuerName}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Botão de Revogar */}
+                    <button
+                        type="button"
+                        onClick={() => setConfirmRevoke(true)}
+                        disabled={isLoading}
+                        className="w-full py-3 px-4 border-2 border-red-200 text-red-600 rounded-xl font-bold text-sm hover:bg-red-50 hover:border-red-300 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        aria-label="Revogar certificado digital e chaves criptográficas"
+                    >
+                        <ShieldOff size={18} />
+                        Revogar Certificado e Chaves
+                    </button>
                 </div>
             )}
 
-            {/* Formulário de Upload */}
-            {currentMetadata && (
-                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-2xl flex items-start gap-3 animate-fadeIn">
-                    <AlertCircle className="text-orange-500 mt-0.5" size={20} />
-                    <div>
-                        <h5 className="font-bold text-orange-800 text-sm">Atenção: Substituição de Certificado</h5>
-                        <p className="text-orange-700 text-xs mt-1 leading-relaxed">
-                            Ao fazer o upload de um novo arquivo, as chaves do certificado <strong>atual e ativo</strong> serão permanentemente apagadas.
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${isDragging
-                        ? 'border-blue-500 bg-blue-50'
-                        : file ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-blue-400 hover:bg-gray-50'
-                        } ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
-                >
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileSelect}
-                        accept=".pfx,.p12"
-                        className="hidden"
-                    />
-
-                    {file ? (
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="p-3 bg-green-100 text-green-600 rounded-full">
-                                <FileType size={32} />
-                            </div>
-                            <span className="font-bold text-gray-800 mt-2">{file.name}</span>
-                            <span className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB Selecionado</span>
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                                className="mt-2 text-xs font-bold text-red-500 hover:text-red-700"
-                            >
-                                Trocar Arquivo
-                            </button>
+            {/* ═══════════════════════════════════════════════════════ */}
+            {/* ESTADO 2: Confirmação de Revogação                     */}
+            {/* ═══════════════════════════════════════════════════════ */}
+            {hasCertificate && confirmRevoke && (
+                <div className="p-5 bg-red-50 border-2 border-red-200 rounded-2xl space-y-4">
+                    <div className="flex items-start gap-3">
+                        <div className="p-2 bg-red-100 rounded-xl text-red-500">
+                            <AlertCircle size={22} />
                         </div>
-                    ) : (
-                        <div className="flex flex-col items-center gap-2">
-                            <div className={`p-4 rounded-full transition-colors ${isDragging ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
-                                <UploadCloud size={32} />
-                            </div>
-                            <span className="font-bold text-gray-700 mt-2">Clique para buscar ou arraste o arquivo aqui</span>
-                            <span className="text-xs text-gray-500">Documentos suportados: .PFX, .P12 (Máx. 5MB)</span>
+                        <div>
+                            <h4 className="font-bold text-red-800 text-base">Confirmar Revogação</h4>
+                            <p className="text-red-700 text-sm mt-1 leading-relaxed">
+                                Esta ação é <strong>irreversível</strong>. As chaves criptográficas serão permanentemente apagadas e
+                                a emissão de notas ficará <strong>suspensa</strong> até que um novo certificado seja importado.
+                            </p>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="p-3 bg-red-100 text-red-700 text-sm rounded-lg flex items-center gap-2 font-medium">
+                            <AlertCircle size={16} />
+                            {error}
                         </div>
                     )}
-                </div>
 
-                <div className="relative">
-                    <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
-                        <Lock size={12} /> Senha do Certificado
-                    </label>
-                    <div className="relative mt-1">
-                        <input
-                            type={showPassword ? 'text' : 'password'}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={isLoading}
-                            placeholder="DiG1t3 5uA 5eNh4!"
-                            className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 transition-all font-mono text-sm disabled:opacity-50 pr-12"
-                        />
+                    <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={() => setShowPassword(!showPassword)}
+                            onClick={() => { setConfirmRevoke(false); setError(null); }}
                             disabled={isLoading}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                            tabIndex={-1}
+                            className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all disabled:opacity-50"
                         >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleRevoke}
+                            disabled={isLoading}
+                            className="flex-1 py-3 px-4 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            <ShieldOff size={16} />
+                            {isLoading ? 'Revogando...' : 'Sim, Revogar Agora'}
                         </button>
                     </div>
                 </div>
+            )}
 
-                {error && (
-                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2 font-medium">
-                        <AlertCircle size={16} />
-                        {error}
-                    </div>
-                )}
-
-                <div className="flex justify-end pt-2">
-                    <button
-                        type="submit"
-                        disabled={!file || !password || isLoading}
-                        className={`px-6 py-3 text-white rounded-xl font-bold transition-all flex items-center gap-2 disabled:opacity-50 shadow-md ${currentMetadata ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-900 hover:bg-black'}`}
+            {/* ═══════════════════════════════════════════════════════ */}
+            {/* ESTADO 3: Sem Certificado — Formulário de Upload       */}
+            {/* ═══════════════════════════════════════════════════════ */}
+            {!hasCertificate && (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${isDragging
+                            ? 'border-blue-500 bg-blue-50'
+                            : file ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-blue-400 hover:bg-gray-50'
+                            } ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
                     >
-                        {isLoading ? 'Processando...' : (currentMetadata ? 'Substituir Certificado Atual' : 'Fazer Upload Seguro')}
-                    </button>
-                </div>
-            </form>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                            accept=".pfx,.p12"
+                            className="hidden"
+                        />
+
+                        {file ? (
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="p-3 bg-green-100 text-green-600 rounded-full">
+                                    <FileType size={32} />
+                                </div>
+                                <span className="font-bold text-gray-800 mt-2">{file.name}</span>
+                                <span className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB Selecionado</span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                                    className="mt-2 text-xs font-bold text-red-500 hover:text-red-700"
+                                >
+                                    Trocar Arquivo
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center gap-2">
+                                <div className={`p-4 rounded-full transition-colors ${isDragging ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                    <UploadCloud size={32} />
+                                </div>
+                                <span className="font-bold text-gray-700 mt-2">Clique para buscar ou arraste o arquivo aqui</span>
+                                <span className="text-xs text-gray-500">Documentos suportados: .PFX, .P12 (Máx. 5MB)</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="relative">
+                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                            <Lock size={12} /> Senha do Certificado
+                        </label>
+                        <div className="relative mt-1">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={isLoading}
+                                placeholder="Digite a senha do certificado"
+                                className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-blue-600 transition-all font-mono text-sm disabled:opacity-50 pr-12"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                disabled={isLoading}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                                tabIndex={-1}
+                                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2 font-medium">
+                            <AlertCircle size={16} />
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end pt-2">
+                        <button
+                            type="submit"
+                            disabled={!file || !password || isLoading}
+                            className="px-6 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all flex items-center gap-2 disabled:opacity-50 shadow-md"
+                        >
+                            {isLoading ? 'Processando...' : 'Fazer Upload Seguro'}
+                        </button>
+                    </div>
+                </form>
+            )}
         </div>
     );
 }
