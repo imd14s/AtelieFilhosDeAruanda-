@@ -41,7 +41,7 @@ describe('orderService', () => {
     });
 
     it('should calculate shipping with fallback format', async () => {
-        const mockResp = { provider: 'PAC', cost: 15, estimatedDays: 5 };
+        const mockResp = { provider: 'PAC', shippingCost: 15, estimatedDays: 5 };
         (api.post as import('vitest').Mock).mockResolvedValueOnce({ data: mockResp });
 
         const result = await orderService.calculateShipping('123', []);

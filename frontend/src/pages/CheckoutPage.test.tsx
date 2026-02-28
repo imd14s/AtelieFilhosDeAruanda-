@@ -164,7 +164,7 @@ describe('CheckoutPage Component', () => {
         render(<CheckoutPage />);
 
         // Fill contact
-        const emailInput = await screen.findByPlaceholderText(/E-mail/i, {}, { timeout: 10000 });
+        const emailInput = await screen.findByPlaceholderText(/seu@email\.com/i, {}, { timeout: 10000 });
         fireEvent.change(emailInput, { target: { value: 'cliente@teste.com' } });
 
         // Fill fiscal

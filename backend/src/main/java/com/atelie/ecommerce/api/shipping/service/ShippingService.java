@@ -34,7 +34,7 @@ public class ShippingService {
     public ShippingQuoteResponse quote(String rawCep, BigDecimal subtotal, String forcedProvider,
             List<com.atelie.ecommerce.application.dto.shipping.ShippingQuoteRequest.ShippingItem> items) {
 
-        String providerName = forcedProvider != null ? forcedProvider : "MELHOR_ENVIO";
+        String providerName = forcedProvider != null ? forcedProvider : "OFFLINE";
 
         var domainItems = items.stream()
                 .map(i -> new com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingItem(

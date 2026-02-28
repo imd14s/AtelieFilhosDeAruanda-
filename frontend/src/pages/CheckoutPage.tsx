@@ -15,7 +15,6 @@ import { SafeAny } from "../types/safeAny";
 
 // Novos componentes modulares
 import CheckoutContact from '../components/checkout/CheckoutContact';
-import CheckoutFiscal from '../components/checkout/CheckoutFiscal';
 import CheckoutAddress from '../components/checkout/CheckoutAddress';
 import CheckoutShipping from '../components/checkout/CheckoutShipping';
 import CheckoutPayment from '../components/checkout/CheckoutPayment';
@@ -444,11 +443,8 @@ const CheckoutPage: React.FC = () => {
                     <div className="flex-[1.5] space-y-12">
                         <CheckoutContact
                             email={formData.email}
-                            onChange={handleInputChange}
-                        />
-
-                        <CheckoutFiscal
                             document={formData.document}
+                            onChange={handleInputChange}
                             onDocumentChange={(val) => setFormData(prev => ({ ...prev, document: val }))}
                         />
 
@@ -492,7 +488,7 @@ const CheckoutPage: React.FC = () => {
                     </div>
 
                     {/* Resumo Modularizado */}
-                    <div className="flex-1">
+                    <div className="flex-1 sticky top-32 space-y-8">
                         <CheckoutSummary
                             cart={cart}
                             subtotal={subtotal}

@@ -28,7 +28,7 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
     return (
-        <div className="sticky top-32 space-y-8">
+        <div className="space-y-8">
             <div className="bg-white p-8 border border-[#0f2A44]/5 shadow-sm space-y-8">
                 <h2 className="font-playfair text-2xl text-[#0f2A44]">Resumo do Pedido</h2>
 

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -122,7 +122,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -132,17 +132,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">51x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">51x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">51x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">51x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -172,27 +172,27 @@ interface ButtonProps extends ButtonHTMLAttributes&lt;HTMLButtonElement&gt; {
     isLoading?: boolean;
 }
 &nbsp;
-const Button: React.FC&lt;ButtonProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span></span>
+const Button: React.FC&lt;ButtonProps&gt; = ({
     children,
-    type = <span class="branch-0 cbranch-no" title="branch not covered" >'button',</span>
-    variant = <span class="branch-0 cbranch-no" title="branch not covered" >'primary',</span>
-    isLoading = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-    disabled = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+    type = 'button',
+    variant = 'primary',
+    isLoading = false,
+    disabled = false,
     onClick,
-    className = <span class="branch-0 cbranch-no" title="branch not covered" >'',</span>
+    className = '',
     ...props
 }) =&gt; {
-    const baseStyles = <span class="cstat-no" title="statement not covered" >"relative flex items-center justify-center gap-2 font-lato text-xs uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed";</span>
+    const baseStyles = "relative flex items-center justify-center gap-2 font-lato text-xs uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed";
 &nbsp;
-    const variants = <span class="cstat-no" title="statement not covered" >{</span>
+    const variants = {
         primary: "bg-[#0f2A44] text-white hover:bg-[#C9A24D]",
         outline: "bg-transparent border border-[#0f2A44] text-[#0f2A44] hover:bg-[#0f2A44] hover:text-white",
         gold: "bg-[#C9A24D] text-white hover:bg-[#0f2A44]",
     };
 &nbsp;
-    const currentVariant = <span class="cstat-no" title="statement not covered" >variants[variant] || variants.primary;</span>
+    const currentVariant = variants[variant] || variants.primary;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
+    return (
         &lt;button
             type={type}
             disabled={disabled || isLoading}
@@ -220,7 +220,7 @@ export default Button;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-28T06:16:02.904Z
+                at 2026-02-28T06:30:37.569Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -75,7 +75,7 @@ export const orderService = {
 
             return [{
                 provider: response.data.provider,
-                price: response.data.cost,
+                price: response.data.shippingCost,
                 days: response.data.estimatedDays || 5,
                 free: response.data.free_shipping
             }];
