@@ -78,7 +78,7 @@ public class ProductControllerTest {
                                 BigDecimal.valueOf(1.0), // width
                                 BigDecimal.valueOf(1.0), // length
                                 new ArrayList<>(), // marketplaceIds
-                                "61091000",
+                                "6109.10.00",
                                 ProductionType.REVENDA,
                                 ProductOrigin.NACIONAL);
                 org.springframework.mock.web.MockMultipartFile productPart = new org.springframework.mock.web.MockMultipartFile(
@@ -119,8 +119,8 @@ public class ProductControllerTest {
                                 BigDecimal.valueOf(1.0),
                                 BigDecimal.valueOf(1.0),
                                 BigDecimal.valueOf(1.0),
-                                new ArrayList<>(),
-                                "61091000",
+                                new ArrayList<>(), // marketplaceIds
+                                "6109.10.00",
                                 ProductionType.REVENDA,
                                 ProductOrigin.NACIONAL);
 
@@ -161,7 +161,7 @@ public class ProductControllerTest {
                                 BigDecimal.valueOf(1.0),
                                 BigDecimal.valueOf(1.0),
                                 new ArrayList<>(),
-                                "61091000",
+                                "6109.10.00",
                                 ProductionType.REVENDA,
                                 ProductOrigin.NACIONAL);
 

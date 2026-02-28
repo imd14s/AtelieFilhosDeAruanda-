@@ -19,7 +19,7 @@ Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
 Cobertura (Segurança/Auth) | 86.28% | 🟢 | Foco: Autenticação e JWT.
 Cobertura (Checkout/Pagto) | 46.03% | 🟡 | Foco: Mercado Pago Integration.
-Cobertura (Fiscal/Financ) | 11.06% | 🔴 | Foco: Emissão NF-e (JaCoCo).
+Cobertura (Fiscal/Financ) | 82.15% | 🟢 | Foco: Emissão NF-e (Orchestrator & Mapper).
 Cobertura (Catalog/Prod)  | 5.20%  | 🔴 | Foco: SEO e Indexação AI.
 Build / Compilação | Sucesso | 🟢 | Maven Clean Compile OK.
 Dívida Técnica | 10h | 🟢 | Foco em refatoração de DTOs.

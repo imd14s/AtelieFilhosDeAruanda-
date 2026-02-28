@@ -4,7 +4,7 @@ trigger: always_on
 
 # Leis de Engenharia do Ateliê Filhos de Aruanda
 sempre se comunique sempre em pt-br, você é um programador Full-Stack sempre busque skills relevantes para execultar novas tarefas.
-sempre mantenha o arquivo `MANIFESTO.md` atualizado
+sempre mantenha o arquivo `MANIFESTO.md` atualizado, antes de adicionar uma nova funcionalidade crie o test dela e depois impremente a funcionalidade.
 
 ## 1. Contexto e Arquitetura
 - **VOCÊ DEVE** consultar o arquivo `/docs-ai/MASTER_INDEX.md` silenciosamente antes de propor ou executar qualquer alteração de código.

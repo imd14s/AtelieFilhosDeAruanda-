@@ -1,26 +1,31 @@
 import type { Order } from '../../types/order';
 import BaseModal from '../../components/ui/BaseModal';
-import { FileText, Truck, Calendar, CreditCard, Tag, Package, ExternalLink, RefreshCw, Download } from 'lucide-react';
-import { useState } from 'react';
+import { FileText, Calendar, CreditCard, Tag, ExternalLink, Download, CheckCircle, Truck, Ban, Package } from 'lucide-react';
 import { OrderService } from '../../services/OrderService';
-import { useToast } from '../../context/ToastContext';
 
 interface OrderDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     order: Order | null;
+    isActionLoading?: boolean;
+    onApprove?: (id: string) => void;
+    onShip?: (id: string) => void;
+    onDeliver?: (id: string) => void;
+    onEmitInvoice?: (id: string) => void;
+    onRequestCancel?: (id: string) => void;
 }
 
-export default function OrderDetailModal({ isOpen, onClose, order: initialOrder }: OrderDetailModalProps) {
-    const [order, setOrder] = useState(initialOrder);
-    const [isEmitting, setIsEmitting] = useState(false);
-    const { addToast } = useToast();
-
-    // Sync state with props when modal opens
-    useState(() => {
-        setOrder(initialOrder);
-    });
-
+export default function OrderDetailModal({
+    isOpen,
+    onClose,
+    order,
+    isActionLoading,
+    onApprove,
+    onShip,
+    onDeliver,
+    onEmitInvoice,
+    onRequestCancel
+}: OrderDetailModalProps) {
     if (!order) return null;
 
     const getStatusBadge = (status: string) => {
@@ -32,14 +37,14 @@ export default function OrderDetailModal({ isOpen, onClose, order: initialOrder 
             DELIVERED: 'bg-indigo-100 text-indigo-700'
         };
         return (
-            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
+            <span className={`px - 2.5 py - 1 rounded - full text - xs font - bold ${styles[status] || 'bg-gray-100 text-gray-700'} `}>
                 {status}
             </span>
         );
     };
 
     return (
-        <BaseModal isOpen={isOpen} onClose={onClose} title={`Detalhes do Pedido #${order.id.substring(0, 8)}`}>
+        <BaseModal isOpen={isOpen} onClose={onClose} title={`Detalhes do Pedido #${order.id.substring(0, 8)} `}>
             <div className="space-y-6">
                 {/* Header Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -99,28 +104,6 @@ export default function OrderDetailModal({ isOpen, onClose, order: initialOrder 
                                     <FileText size={20} className="text-gray-400" />
                                     <span className="text-sm text-gray-500 italic">NF-e não emitida</span>
                                 </div>
-                                {order.status === 'PAID' && (
-                                    <button
-                                        onClick={async () => {
-                                            try {
-                                                setIsEmitting(true);
-                                                await OrderService.emitInvoice(order.id);
-                                                addToast(' NF-e solicitada!', 'success');
-                                                // No mundo ideal aqui buscaríamos o pedido atualizado.
-                                                // Por simplicidade, assumimos que o link externo seria o padrão.
-                                            } catch {
-                                                addToast('Falha na emissão.', 'error');
-                                            } finally {
-                                                setIsEmitting(false);
-                                            }
-                                        }}
-                                        disabled={isEmitting}
-                                        className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
-                                    >
-                                        <RefreshCw size={14} className={isEmitting ? 'animate-spin' : ''} />
-                                        {isEmitting ? 'Emitindo...' : 'Emitir Agora'}
-                                    </button>
-                                )}
                             </div>
                         )}
 
@@ -190,6 +173,64 @@ export default function OrderDetailModal({ isOpen, onClose, order: initialOrder 
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                {/* Ações do Pedido (Rodapé) */}
+                <div className="pt-4 border-t border-gray-100 flex flex-wrap gap-3 justify-end items-center">
+                    {order.status === 'PENDING' && onApprove && (
+                        <button
+                            onClick={() => onApprove(order.id)}
+                            disabled={isActionLoading}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            <CheckCircle size={18} />
+                            {isActionLoading ? 'Processando...' : 'Aprovar Pedido'}
+                        </button>
+                    )}
+
+                    {order.status === 'PAID' && !order.invoiceUrl && onEmitInvoice && (
+                        <button
+                            onClick={() => onEmitInvoice(order.id)}
+                            disabled={isActionLoading}
+                            className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            <FileText size={18} />
+                            {isActionLoading ? 'Faturando...' : 'Faturar NF-e'}
+                        </button>
+                    )}
+
+                    {order.status === 'PAID' && onShip && (
+                        <button
+                            onClick={() => onShip(order.id)}
+                            disabled={isActionLoading}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            <Truck size={18} />
+                            {isActionLoading ? 'Processando...' : 'Marcar como Enviado'}
+                        </button>
+                    )}
+
+                    {order.status === 'SHIPPED' && onDeliver && (
+                        <button
+                            onClick={() => onDeliver(order.id)}
+                            disabled={isActionLoading}
+                            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            <CheckCircle size={18} />
+                            {isActionLoading ? 'Processando...' : 'Finalizar Pedido'}
+                        </button>
+                    )}
+
+                    {order.status !== 'CANCELED' && order.status !== 'SHIPPED' && order.status !== 'DELIVERED' && onRequestCancel && (
+                        <button
+                            onClick={() => onRequestCancel(order.id)}
+                            disabled={isActionLoading}
+                            className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-5 py-2.5 rounded-lg font-semibold text-sm transition flex items-center gap-2 ml-auto disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            <Ban size={18} />
+                            Cancelar Pedido
+                        </button>
+                    )}
                 </div>
             </div>
         </BaseModal>

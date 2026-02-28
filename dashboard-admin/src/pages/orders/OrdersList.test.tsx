@@ -34,16 +34,22 @@ describe('OrdersPage Component', () => {
         expect(screen.getByText('PENDING')).toBeInTheDocument();
     });
 
-    it('should open cancel modal and cancel order', async () => {
+    it('should open cancel modal from order details and cancel order', async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         vi.mocked(OrderService.cancel).mockResolvedValue({ status: 200 } as any);
         render(<OrdersPage />);
 
-        const cancelButtons = await screen.findAllByTitle('Cancelar Pedido');
-        expect(cancelButtons[1]).toBeDefined();
-        fireEvent.click(cancelButtons[1]!); // Cancel ORD2 (PENDING)
+        // Click on the order row to open detail modal
+        const row = await screen.findByText('Cliente 2');
+        fireEvent.click(row);
 
-        expect(screen.getByText('Cancelar Pedido')).toBeInTheDocument();
+        // Find cancel button inside the detail modal
+        const detailCancelButton = await screen.findByRole('button', { name: /Cancelar Pedido/i });
+        fireEvent.click(detailCancelButton);
+
+        // Expect the cancel reason modal to open (wait for 200ms timeout from component)
+        const modalTitle = await screen.findByText("Informe o motivo do cancelamento:", {}, { timeout: 1000 });
+        expect(modalTitle).toBeInTheDocument();
 
         const textArea = screen.getByPlaceholderText(/Ex: Produto fora de estoque/i);
         fireEvent.change(textArea, { target: { value: 'Motivo de teste' } });
