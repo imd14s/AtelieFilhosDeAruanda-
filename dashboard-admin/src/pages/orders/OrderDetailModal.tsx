@@ -61,7 +61,7 @@ export default function OrderDetailModal({
                     <div className="bg-gray-50 p-4 rounded-xl space-y-3">
                         <div className="flex items-center gap-2 text-gray-500">
                             <CreditCard size={16} />
-                            <span className="text-sm">Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}</span>
+                            <span className="text-sm">Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.totalAmount)}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-500">
                             <Tag size={16} />

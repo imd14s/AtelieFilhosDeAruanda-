@@ -44,15 +44,36 @@ export function CustomShippingConfig({ config, onChange, onSaveConfig, totalCeps
             const lines = text.split('\n').filter(line => line.trim().length > 0);
 
             let startIndex = 0;
-            if (lines.length > 0 && lines[0]?.toLowerCase().includes('cep')) {
-                startIndex = 1;
+            let cepColIndex = -1;
+
+            if (lines.length > 0) {
+                const header = lines[0]?.toLowerCase() || '';
+                if (header.includes('cep')) {
+                    startIndex = 1;
+                    const sep = header.includes(';') ? ';' : ',';
+                    const headers = header.split(sep);
+                    const foundIndex = headers.findIndex(h => h.trim().replace(/["']/g, '') === 'cep');
+                    if (foundIndex !== -1) {
+                        cepColIndex = foundIndex;
+                    }
+                }
             }
+
+            const separator = lines[0]?.includes(';') ? ';' : ',';
 
             for (let i = startIndex; i < lines.length; i++) {
                 const line = lines[i]?.trim();
                 if (!line) continue;
-                const cols = line.split(',');
-                const rawCep = cols[0] ? cols[0].split(';')[0] : '';
+
+                const cols = line.split(separator);
+                let rawCep = '';
+
+                if (cepColIndex !== -1 && cols[cepColIndex]) {
+                    rawCep = cols[cepColIndex] || '';
+                } else {
+                    rawCep = cols.find(c => c.replace(/\D/g, '').length === 8) || cols[0] || '';
+                }
+
                 if (!rawCep) continue;
 
                 const clean = rawCep.replace(/\D/g, '');

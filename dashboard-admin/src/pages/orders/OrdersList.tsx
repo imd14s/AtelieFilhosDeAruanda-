@@ -190,7 +190,7 @@ export function OrdersPage() {
                                         <td className="p-4 font-mono text-xs text-gray-500">#{order.id}</td>
                                         <td className="p-4 font-medium text-gray-800">{order.customerName}</td>
                                         <td className="p-4 text-gray-600">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.totalAmount)}
                                         </td>
                                         <td className="p-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-100 text-green-700' :
