@@ -3,10 +3,12 @@ package com.atelie.ecommerce.api.fiscal;
 import com.atelie.ecommerce.application.dto.fiscal.CertificateInfoResponse;
 import com.atelie.ecommerce.application.service.fiscal.CertificateService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/fiscal/certificate")
 @RequiredArgsConstructor
@@ -24,14 +26,16 @@ public class CertificateController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<CertificateInfoResponse> upload(
+    public ResponseEntity<?> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam("password") String password) {
         try {
             CertificateInfoResponse response = certificateService.upload(file.getBytes(), password);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            log.error("Falha no upload do certificado digital", e);
+            return ResponseEntity.badRequest().body(java.util.Map.of("message",
+                    e.getMessage() != null ? e.getMessage() : "Erro desconhecido ao processar o certificado."));
         }
     }
 
