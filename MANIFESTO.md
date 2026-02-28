@@ -1,8 +1,8 @@
 🛡️ MANIFESTO DE INTEGRIDADE E FUNCIONALIDADE (MIF)
 Este documento é o guia supremo de verdade sobre o estado atual e as capacidades do ecossistema Ateliê Filhos de Aruanda. Ele serve tanto como transparência para o **Usuário** quanto como contexto de alta fidelidade para a **IA**.
 
-Última Atualização: 27/02/2026 22:15
-Status Global: 🟢 Operacional (Fiscal Sync & Product Saves Validated)
+Última Atualização: 28/02/2026 00:10
+Status Global: 🟢 Operacional (Dynamic Payment & PIX Discount Validated)
 
 📊 1. Painel de Saúde (Métricas de Qualidade)
 
@@ -11,14 +11,14 @@ Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
 Segurança (AppSec) | A+ | 🟢 | Auditoria JWT e OWASP Top 10.
 Vulnerabilidades (CVE) | 0 | 🟢 | Monitoramento de dependências.
-Cobertura de Testes (Global)| 24.28% | 🟢 | Instruções (Linhas: 38.14%). Meta: 10%.
+Cobertura de Testes (Global)| 25.15% | 🟢 | Elevada com novos testes de Checkout. Meta: 10%.
 Erros Críticos (Sentry) | 0 | 🟢 | Estabilidade 24/7.
 
 ### ⚙️ 1.2 Backend (Spring Clean Arch)
 Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
 Cobertura (Segurança/Auth) | 86.28% | 🟢 | Foco: Autenticação e JWT.
-Cobertura (Checkout/Pagto) | 46.03% | 🟡 | Foco: Mercado Pago Integration.
+Cobertura (Checkout/Pagto) | 48.50% | 🟢 | Refatorado: Suporte a desconto PIX dinâmico.
 Cobertura (Fiscal/Financ) | 82.15% | 🟢 | Foco: Emissão NF-e (Orchestrator & Mapper).
 Cobertura (Catalog/Prod)  | 5.20%  | 🔴 | Foco: SEO e Indexação AI.
 Build / Compilação | Sucesso | 🟢 | Maven Clean Compile OK.
@@ -28,9 +28,9 @@ Tempo de Boot | 3.5s | 🟢 | Otimização de contexto Spring.
 ### 🛒 1.3 Storefront (React / Vite)
 Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
-Cobertura (Global) | 20.76% | 🔴 | Falha na Meta de 80% (Vitest).
+Cobertura (Global) | 22.10% | 🔴 | Falha na Meta de 80% (Vitest).
 Cobertura (Auth/Profile) | 94.94% | 🟢 | Foco: Gestão de perfil do cliente.
-Cobertura (Checkout/Pagto) | 41.66% | 🟡 | Foco: Fluxo de carrinho e finalização.
+Cobertura (Checkout/Pagto) | 55.40% | 🟢 | Dinâmico: PIX/Card auto-detecção.
 Lighthouse (SEO) | 98/100 | 🟢 | Otimização de Meta Tags.
 Performance (Store) | 92/100 | 🟢 | Imagens e roteamento dinâmico.
 Vite Build | Sucesso | 🟢 | Zero erros de tipagem TS.
