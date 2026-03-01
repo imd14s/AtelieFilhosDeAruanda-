@@ -60,6 +60,7 @@ export function MercadoPagoForm({ initialConfig, isProviderEnabled = true, onSav
                     active: initialConfig.methods?.enabled?.pix?.active ?? false,
                     expirationMinutes: initialConfig.methods?.enabled?.pix?.expirationMinutes || 30,
                     instructions: initialConfig.methods?.enabled?.pix?.instructions || '',
+                    discountPercent: initialConfig.methods?.enabled?.pix?.discountPercent || 0,
                 },
                 boleto: {
                     active: initialConfig.methods?.enabled?.boleto?.active ?? false,
