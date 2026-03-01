@@ -15,7 +15,6 @@ interface CheckoutSummaryProps {
     installmentOptions?: InstallmentOption[];
     selectedInstallment?: InstallmentOption | null;
     onSelectInstallment?: (opt: InstallmentOption) => void;
-    interestFree?: number;
 }
 
 const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
@@ -29,8 +28,7 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
     metodoPagamento,
     installmentOptions = [],
     selectedInstallment = null,
-    onSelectInstallment,
-    interestFree = 1
+    onSelectInstallment
 }) => {
     const formatCurrency = (val: number) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -126,7 +124,7 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
                             >
                                 {installmentOptions.map((opt, idx) => (
                                     <option key={idx} value={opt.installments}>
-                                        {opt.installments <= interestFree ? `[Sem Juros] ${opt.recommended_message}` : opt.recommended_message}
+                                        {opt.recommended_message}
                                     </option>
                                 ))}
                             </select>

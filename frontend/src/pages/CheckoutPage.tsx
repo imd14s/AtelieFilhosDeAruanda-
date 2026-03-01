@@ -69,7 +69,7 @@ const CheckoutPage: React.FC = () => {
     const [selectedDocType, setSelectedDocType] = useState<'cpf' | 'cnpj'>('cpf');
     const [loadingCep, setLoadingCep] = useState<boolean>(false);
 
-    const { mp, loading: mpLoading, isConfigured, pixActive, cardActive, pixDiscountPercent, maxInstallments, interestFree, error: mpError } = useMercadoPago();
+    const { mp, loading: mpLoading, isConfigured, pixActive, cardActive, pixDiscountPercent, maxInstallments, error: mpError } = useMercadoPago();
 
     const cardFormRef = useRef<SafeAny>(null);
     const pendingOrderRef = useRef<CreateOrderData | null>(null);
@@ -647,7 +647,6 @@ const CheckoutPage: React.FC = () => {
                             installmentOptions={installmentOptions}
                             selectedInstallment={selectedInstallment}
                             onSelectInstallment={setSelectedInstallment}
-                            interestFree={interestFree}
                         />
 
                         {/* Bloco de Cupom e Ação Final (Mantido aqui por interagir com múltiplos estados) */}
