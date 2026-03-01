@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">92.85% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>13/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -146,7 +146,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -156,19 +156,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -176,13 +173,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState } from 'react';
@@ -207,26 +207,26 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes&lt;HTMLImageElemen
  * - Cloudinary format/quality optimization.
  * - Semantic alt generation.
  */
-const OptimizedImage = <span class="cstat-no" title="statement not covered" >React.forwardRef&lt;HTMLImageElement, OptimizedImageProps&gt;(<span class="fstat-no" title="function not covered" >({</span></span>
+const OptimizedImage = React.forwardRef&lt;HTMLImageElement, OptimizedImageProps&gt;(({
     src,
     alt,
     width,
     height,
-    priority = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+    priority = false,
     productContext,
-    className = <span class="branch-0 cbranch-no" title="branch not covered" >'',</span>
+    className = '',
     ...props
 }, ref) =&gt; {
-    const [error, setError<span class="cstat-no" title="statement not covered" >] = useState(false);</span>
+    const [error, setError] = useState(false);
 &nbsp;
     // Dynamic semantic alt: [Name] - [Category] - Ateliê Filhos de Aruanda
-    const semanticAlt = <span class="cstat-no" title="statement not covered" >productContext</span>
+    const semanticAlt = productContext
         ? `${productContext.name}${productContext.category ? ` - ${productContext.category}` : ''} - Ateliê Filhos de Aruanda`
-        : alt || 'Imagem Ateliê Filhos de Aruanda';
+        : alt || <span class="branch-1 cbranch-no" title="branch not covered" >'Imagem Ateliê Filhos de Aruanda';</span>
 &nbsp;
-    const <span class="cstat-no" title="statement not covered" >optimizedSrc = getOptimizedImageUrl(src, width, height);</span>
+    const optimizedSrc = getOptimizedImageUrl(src, width, height);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
+    return (
         &lt;img
             ref={ref}
             src={error ? '/images/default.png' : optimizedSrc}
@@ -237,13 +237,13 @@ const OptimizedImage = <span class="cstat-no" title="statement not covered" >Rea
             fetchPriority={priority ? 'high' : 'auto'}
             decoding="async"
             className={`transition-opacity duration-300 ${className}`}
-            onError={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >s</span>etError(true)}</span>
+            onError={() =&gt; setError(true)}
             {...props}
         /&gt;
     );
 });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >OptimizedImage.displayName = 'OptimizedImage';</span>
+OptimizedImage.displayName = 'OptimizedImage';
 &nbsp;
 export default OptimizedImage;
 &nbsp;</pre></td></tr></table></pre>
@@ -253,7 +253,7 @@ export default OptimizedImage;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-01T20:14:01.920Z
+                at 2026-03-01T20:15:55.129Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

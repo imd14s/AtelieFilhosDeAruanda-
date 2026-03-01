@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">58.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>7/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">66.66% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>8/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">58.33% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>7/12</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -147,25 +147,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -177,8 +160,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -222,8 +222,8 @@ interface RatingSummaryProps {
     isLoading?: boolean;
 }
 &nbsp;
-const RatingSummary: React.FC&lt;RatingSummaryProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> averageRating, totalReviews, isLoading }) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (isLoading) {</span>
+const RatingSummary: React.FC&lt;RatingSummaryProps&gt; = ({ averageRating, totalReviews, isLoading }) =&gt; {
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (isLoading) {
 <span class="cstat-no" title="statement not covered" >        return (</span>
             &lt;div className="flex items-center gap-2 animate-pulse"&gt;
                 &lt;div className="flex gap-0.5"&gt;
@@ -236,24 +236,24 @@ const RatingSummary: React.FC&lt;RatingSummaryProps&gt; = <span class="cstat-no"
         );
     }
 &nbsp;
-    const avg = <span class="cstat-no" title="statement not covered" >averageRating ?? 0;</span>
+    const avg = averageRating ?? 0;
 &nbsp;
-    const scrollToReviews = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+    const scrollToReviews = <span class="fstat-no" title="function not covered" >() =&gt; {</span>
         const element = <span class="cstat-no" title="statement not covered" >document.getElementById('reviews');</span>
 <span class="cstat-no" title="statement not covered" >        if (element) {</span>
 <span class="cstat-no" title="statement not covered" >            element.scrollIntoView({ behavior: 'smooth' });</span>
         }
     };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
+    return (
         &lt;button
             onClick={scrollToReviews}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity group text-left"
         &gt;
             &lt;div className="flex items-center gap-0.5"&gt;
-                {[1, 2, 3, 4, 5].map(<span class="fstat-no" title="function not covered" >(s</span>tar) =&gt; {
-                    const fill = <span class="cstat-no" title="statement not covered" >Math.min(Math.max(avg - (star - 1), 0), 1);</span>
-<span class="cstat-no" title="statement not covered" >                    return (</span>
+                {[1, 2, 3, 4, 5].map((star) =&gt; {
+                    const fill = Math.min(Math.max(avg - (star - 1), 0), 1);
+                    return (
                         &lt;div key={star} className="relative w-4 h-4"&gt;
                             &lt;Star
                                 size={16}
@@ -276,7 +276,7 @@ const RatingSummary: React.FC&lt;RatingSummaryProps&gt; = <span class="cstat-no"
             &lt;/div&gt;
             {totalReviews &gt; 0 ? (
                 &lt;span className="text-sm font-lato text-gray-500 group-hover:text-[var(--azul-profundo)] transition-colors underline underline-offset-4 decoration-gray-200"&gt;
-                    {avg.toFixed(1)} ({totalReviews} {totalReviews === 1 ? 'avaliação' : 'avaliações'})
+                    {avg.toFixed(1)} ({totalReviews} {totalReviews === 1 ? <span class="branch-0 cbranch-no" title="branch not covered" >'avaliação' : '</span>avaliações'})
                 &lt;/span&gt;
             ) : (
                 &lt;span className="text-xs font-lato text-gray-400 uppercase tracking-widest group-hover:text-gray-600 transition-colors"&gt;
@@ -295,7 +295,7 @@ export default RatingSummary;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-01T20:14:01.920Z
+                at 2026-03-01T20:15:55.129Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

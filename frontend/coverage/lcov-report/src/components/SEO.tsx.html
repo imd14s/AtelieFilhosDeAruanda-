@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>10/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -148,7 +148,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -158,10 +158,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -215,20 +215,20 @@ interface SEOProps {
  * Componente SEO para gerenciar metadados da página de forma centralizada.
  * Suporta Open Graph, Twitter Cards e injeção SSR via Backend.
  */
-const SEO: React.FC&lt;SEOProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span></span>
+const SEO: React.FC&lt;SEOProps&gt; = ({
     title,
-    description = <span class="branch-0 cbranch-no" title="branch not covered" >"Descubra a magia do Ateliê Filhos de Aruanda. Velas, Guias, Ervas e artigos artesanais feitos com axé e devoção.",</span>
-    image = <span class="branch-0 cbranch-no" title="branch not covered" >"/og-image.jpg",</span>
-    url = <span class="branch-0 cbranch-no" title="branch not covered" >window.location.href,</span>
-    type = <span class="branch-0 cbranch-no" title="branch not covered" >"website",</span>
-    keywords = <span class="branch-0 cbranch-no" title="branch not covered" >"artigos religiosos, umbanda, candomblé, velas artesanais, guias de proteção",</span>
-    twitterCard = <span class="branch-0 cbranch-no" title="branch not covered" >"summary_large_image",</span>
+    description = "Descubra a magia do Ateliê Filhos de Aruanda. Velas, Guias, Ervas e artigos artesanais feitos com axé e devoção.",
+    image = "/og-image.jpg",
+    url = window.location.href,
+    type = "website",
+    keywords = "artigos religiosos, umbanda, candomblé, velas artesanais, guias de proteção",
+    twitterCard = "summary_large_image",
     jsonLd
 }) =&gt; {
-    const siteName = <span class="cstat-no" title="statement not covered" >"Ateliê Filhos de Aruanda";</span>
-    const fullTitle = <span class="cstat-no" title="statement not covered" >title ? (title.includes(siteName) ? title : `${title} | ${siteName}`) : siteName;</span>
+    const siteName = "Ateliê Filhos de Aruanda";
+    const fullTitle = title ? (title.includes(siteName) ? <span class="branch-0 cbranch-no" title="branch not covered" >title : `</span>${title} | ${siteName}`) : <span class="branch-1 cbranch-no" title="branch not covered" >siteName;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
+    return (
         &lt;Helmet&gt;
             {/* Títulos e Meta Tags Básicas */}
             &lt;title&gt;{fullTitle}&lt;/title&gt;
@@ -271,7 +271,7 @@ export default SEO;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-01T20:14:01.920Z
+                at 2026-03-01T20:15:55.129Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

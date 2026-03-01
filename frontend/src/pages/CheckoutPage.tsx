@@ -203,7 +203,7 @@ const CheckoutPage: React.FC = () => {
                         // Para cartões salvos, às vezes o SDK tem métodos específicos, 
                         // mas o getInstallments costuma funcionar com o amount.
                         const installments = await mp.getInstallments({
-                            amount: total.toString(),
+                            amount: total.toFixed(2),
                             bin: '411111' // Fallback ou bin real se disponível no objeto Card
                         });
 
@@ -319,7 +319,18 @@ const CheckoutPage: React.FC = () => {
                 cardFormRef.current = null;
             }
         };
-    }, [mp, isConfigured, isAddingNewCard, formData.metodoPagamento, total, maxInstallments]);
+    }, [mp, isConfigured, isAddingNewCard, formData.metodoPagamento, maxInstallments]);
+
+    // Atualiza o valor do formulário de cartão dinamicamente quando o total muda (ex: frete ou cupom)
+    useEffect(() => {
+        if (cardFormRef.current && total > 0) {
+            try {
+                cardFormRef.current.update('amount', total.toFixed(2));
+            } catch (e) {
+                console.error("Erro ao atualizar o amount do CardForm:", e);
+            }
+        }
+    }, [total]);
 
     const handleCalculateShipping = async (targetCep: string) => {
         if (!targetCep || targetCep.length < 8) return;
