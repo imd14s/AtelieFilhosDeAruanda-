@@ -57,7 +57,7 @@ const AboutPage: React.FC = () => {
                         <div className="absolute -inset-4 bg-[var(--dourado-suave)]/10 rounded-sm scale-95 group-hover:scale-100 transition-transform duration-700"></div>
                         <div className="relative overflow-hidden rounded-sm shadow-2xl">
                             <img
-                                src="/images/orixas.jpg"
+                                src="/images/art.jpg"
                                 alt="Nossa Missão"
                                 className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-1000"
                             />
