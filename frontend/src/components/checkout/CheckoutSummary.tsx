@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Truck } from 'lucide-react';
 import { CartItem, ShippingOption, Coupon, InstallmentOption } from '../../types';
 import { getImageUrl } from '../../utils/imageUtils';
@@ -41,20 +42,22 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
                 <div className="space-y-6">
                     {cart.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-start gap-4">
-                            <div className="flex gap-4">
+                            <Link to={`/produto/${item.id}`} className="flex gap-4 group cursor-pointer">
                                 <div className="w-12 h-16 bg-[#F7F7F4] overflow-hidden flex-shrink-0">
                                     <img
                                         src={getImageUrl(item.image || '')}
                                         alt={item.name}
                                         onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = '/images/default.png'; }}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
                                 </div>
                                 <div>
-                                    <p className="font-lato text-[11px] font-bold text-[#0f2A44] uppercase line-clamp-2">{item.name}</p>
-                                    <p className="font-lato text-[10px] text-[#0f2A44]/40">Qtd: {item.quantity}</p>
+                                    <p className="font-lato text-[11px] font-bold text-[#0f2A44] uppercase line-clamp-2 group-hover:text-[#a08d5c] transition-colors duration-300">
+                                        {item.name}
+                                    </p>
+                                    <p className="font-lato text-[10px] text-[#0f2A44]/40 mt-1">Qtd: {item.quantity}</p>
                                 </div>
-                            </div>
+                            </Link>
                             <span className="font-lato text-xs text-[#0f2A44] whitespace-nowrap">
                                 {formatCurrency(item.price * item.quantity)}
                             </span>
