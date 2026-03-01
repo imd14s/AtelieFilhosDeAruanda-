@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/config/public")
@@ -30,17 +31,34 @@ public class PublicConfigController {
     @GetMapping("/mercado-pago/public-key")
     public ResponseEntity<Map<String, Object>> getMercadoPagoPublicKey() {
         log.info("[DEBUG] Iniciando busca da chave pública do Mercado Pago");
-        return configGateway.findConfigJson("MERCADO_PAGO", "PRODUCTION")
+
+        // Tenta buscar em PRODUCTION primeiro
+        return findConfigForEnvironment("PRODUCTION")
+                .or(() -> {
+                    log.info("[DEBUG] Chave de PRODUCTION não encontrada, tentando fallback para SANDBOX");
+                    return findConfigForEnvironment("SANDBOX");
+                })
+                .orElseGet(() -> {
+                    log.warn(
+                            "[DEBUG] Nenhuma configuração de Mercado Pago (PRODUCTION ou SANDBOX) encontrada no banco.");
+                    Map<String, Object> errorMap = new HashMap<>();
+                    errorMap.put("error", "CONFIG_MISSING");
+                    errorMap.put("message", "A configuração de pagamento ainda não foi realizada pelo administrador.");
+                    return ResponseEntity.status(404).body(errorMap);
+                });
+    }
+
+    private Optional<ResponseEntity<Map<String, Object>>> findConfigForEnvironment(String env) {
+        return configGateway.findConfigJson("MERCADO_PAGO", env)
                 .map(json -> {
                     try {
-                        log.debug("[DEBUG] JSON bruto recuperado: {}", json);
+                        log.debug("[DEBUG] JSON bruto recuperado para ambiente {}: {}", env, json);
                         JsonNode root = objectMapper.readTree(json);
                         String publicKey = root.path("credentials").path("publicKey").asText();
-                        log.info("[DEBUG] Chave pública extraída com sucesso");
 
                         if (publicKey == null || publicKey.isBlank()) {
-                            log.warn("[DEBUG] Chave pública encontrada está vazia ou nula no JSON");
-                            return ResponseEntity.notFound().<Map<String, Object>>build();
+                            log.warn("[DEBUG] Chave pública encontrada no ambiente {} está vazia ou nula", env);
+                            return null; // Força entrar no fallback/orElse do Optional externo
                         }
 
                         boolean pixActive = false;
@@ -65,6 +83,7 @@ public class PublicConfigController {
 
                         Map<String, Object> responseConfig = new HashMap<>();
                         responseConfig.put("publicKey", publicKey);
+                        responseConfig.put("env", env); // Adiciona o ambiente na resposta para debug
                         responseConfig.put("pixActive", pixActive);
                         responseConfig.put("pixDiscountPercent", pixDiscountPercent);
                         responseConfig.put("cardActive", cardActive);
@@ -72,17 +91,9 @@ public class PublicConfigController {
 
                         return ResponseEntity.ok(responseConfig);
                     } catch (Exception e) {
-                        log.error("[DEBUG] Erro catastrófico ao processar JSON: {}", e.getMessage(), e);
-                        return ResponseEntity.internalServerError().<Map<String, Object>>build();
+                        log.error("[DEBUG] Erro ao processar JSON para ambiente {}: {}", env, e.getMessage());
+                        return null;
                     }
-                })
-                .orElseGet(() -> {
-                    log.warn(
-                            "[DEBUG] Configuração MERCADO_PAGO/PRODUCTION não encontrada no banco. O administrador ainda não configurou as chaves.");
-                    Map<String, Object> errorMap = new HashMap<>();
-                    errorMap.put("error", "CONFIG_MISSING");
-                    errorMap.put("message", "A configuração de pagamento ainda não foi realizada pelo administrador.");
-                    return ResponseEntity.status(404).body(errorMap);
                 });
     }
 }
