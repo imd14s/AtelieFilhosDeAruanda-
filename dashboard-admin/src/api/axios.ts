@@ -24,7 +24,7 @@ api.interceptors.request.use(
 
     // Padronização Multi-tenancy via Header conforme arquitetura Backend
     if (config.headers) {
-      config.headers['X-Tenant-ID'] = '1';
+      config.headers['X-Tenant-ID'] = 'atelie-aruanda';
     }
 
     return config;

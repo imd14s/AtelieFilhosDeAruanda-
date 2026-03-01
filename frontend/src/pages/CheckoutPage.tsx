@@ -9,7 +9,7 @@ import marketingService from '../services/marketingService';
 import SEO from '../components/SEO';
 import { useMercadoPago } from '../hooks/useMercadoPago';
 import { useAuth } from '../context/AuthContext';
-import { Coupon, ShippingOption, CartItem, Order, CreateOrderData, Address } from '../types';
+import { Coupon, ShippingOption, CartItem, Order, CreateOrderData, Address, InstallmentOption } from '../types';
 import { isValidCPF, isValidCNPJ, sanitizeDocument } from '../utils/fiscal';
 import { SafeAny } from "../types/safeAny";
 
@@ -38,7 +38,7 @@ interface CheckoutFormData {
 const CheckoutPage: React.FC = () => {
     const location = useLocation();
     const { shippingSelected, cep } = (location.state as { shippingSelected?: ShippingOption; cep?: string }) || {};
-    const { user, addresses, cards } = useAuth();
+    const { user, addresses, cards, refreshCards } = useAuth();
 
     const [cart, setCart] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -63,22 +63,15 @@ const CheckoutPage: React.FC = () => {
         document: user?.document || ''
     });
 
+    const [installmentOptions, setInstallmentOptions] = useState<InstallmentOption[]>([]);
+    const [selectedInstallment, setSelectedInstallment] = useState<InstallmentOption | null>(null);
+
     const [selectedDocType, setSelectedDocType] = useState<'cpf' | 'cnpj'>('cpf');
     const [loadingCep, setLoadingCep] = useState<boolean>(false);
 
-    const { mp, loading: mpLoading, isConfigured, pixActive, cardActive, pixDiscountPercent, error: mpError } = useMercadoPago();
+    const { mp, loading: mpLoading, isConfigured, pixActive, cardActive, pixDiscountPercent, maxInstallments, interestFree, error: mpError } = useMercadoPago();
 
-    // Ajuste inicial do método de pagamento baseado na disponibilidade
-    useEffect(() => {
-        if (!mpLoading && !pixActive && cardActive) {
-            setFormData(prev => ({ ...prev, metodoPagamento: 'card' }));
-        } else if (!mpLoading && pixActive) {
-            setFormData(prev => ({ ...prev, metodoPagamento: 'pix' }));
-        }
-    }, [mpLoading, pixActive, cardActive]);
-
-    const [_cardForm, setCardForm] = useState<unknown>(null);
-    const cardFormRef = useRef<SafeAny>(null); // External SDK Ref usually needs any or complex interface
+    const cardFormRef = useRef<SafeAny>(null);
     const pendingOrderRef = useRef<CreateOrderData | null>(null);
 
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -111,6 +104,17 @@ const CheckoutPage: React.FC = () => {
             setCepError('');
         }
     }, [formData.cep]);
+
+    // Alternar método de pagamento se o PIX estiver desativado nas configurações
+    useEffect(() => {
+        if (!mpLoading && isConfigured) {
+            if (!pixActive && cardActive && formData.metodoPagamento === 'pix') {
+                setFormData(prev => ({ ...prev, metodoPagamento: 'card' }));
+            } else if (pixActive && !cardActive && formData.metodoPagamento === 'card') {
+                setFormData(prev => ({ ...prev, metodoPagamento: 'pix' }));
+            }
+        }
+    }, [pixActive, cardActive, mpLoading, isConfigured, formData.metodoPagamento]);
 
     // Cálculos de preço
     const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
@@ -159,6 +163,8 @@ const CheckoutPage: React.FC = () => {
                         setSelectedCardId(firstCard.id || null);
                     }
                 }
+
+                refreshCards(); // Garante que os cartões estão atualizados no checkout
             }
 
             if (formData.cep && formData.cep.length === 8 && currentCart.length > 0) {
@@ -174,6 +180,48 @@ const CheckoutPage: React.FC = () => {
 
         return () => window.removeEventListener('cart-updated', handleCartChange);
     }, []);
+
+    // Reage à atualização assíncrona dos cartões
+    useEffect(() => {
+        if (cards.length > 0 && !selectedCardId && formData.metodoPagamento === 'card') {
+            setIsAddingNewCard(false);
+            const firstCard = cards[0];
+            if (firstCard) {
+                setSelectedCardId(firstCard.id || null);
+            }
+        }
+    }, [cards.length, selectedCardId, formData.metodoPagamento, cards, setSelectedCardId]);
+
+    // Busca parcelas para cartões salvos
+    useEffect(() => {
+        const fetchInstallmentsForSavedCard = async () => {
+            if (mp && isConfigured && selectedCardId && !isAddingNewCard && formData.metodoPagamento === 'card') {
+                try {
+                    const card = cards.find(c => c.id === selectedCardId);
+                    if (card && card.last_four_digits) {
+                        // O SDK do MP requer valor e BIN (ou as primeiras 6 posições)
+                        // Para cartões salvos, às vezes o SDK tem métodos específicos, 
+                        // mas o getInstallments costuma funcionar com o amount.
+                        const installments = await mp.getInstallments({
+                            amount: total.toString(),
+                            bin: '411111' // Fallback ou bin real se disponível no objeto Card
+                        });
+
+                        if (installments && installments.length > 0 && installments[0].payer_costs) {
+                            const filtered = (installments[0].payer_costs || []).filter((opt: any) => opt.installments <= maxInstallments);
+                            setInstallmentOptions(filtered);
+                            // Seleciona a primeira opção (geralmente 1x) por padrão
+                            if (filtered.length > 0) setSelectedInstallment(filtered[0]);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar parcelas para cartão salvo", e);
+                }
+            }
+        };
+
+        fetchInstallmentsForSavedCard();
+    }, [selectedCardId, isAddingNewCard, formData.metodoPagamento, mp, isConfigured, total, maxInstallments]);
 
     // Inicializa/Reseta CardForm
     useEffect(() => {
@@ -207,6 +255,19 @@ const CheckoutPage: React.FC = () => {
                                     onFormMounted: (error: SafeAny) => {
                                         if (error) console.error('Erro ao montar fields:', error);
                                     },
+                                    onInstallmentsReceived: (error: SafeAny, installments: SafeAny) => {
+                                        if (error) {
+                                            console.error('Erro ao receber parcelas:', error);
+                                            return;
+                                        }
+                                        if (installments && installments.payer_costs) {
+                                            const filtered = (installments.payer_costs || []).filter((opt: any) => opt.installments <= maxInstallments);
+                                            setInstallmentOptions(filtered);
+                                            // Seleciona 1x por padrão
+                                            const first = filtered[0];
+                                            if (first) setSelectedInstallment(first);
+                                        }
+                                    },
                                     onSubmit: async (event: React.FormEvent) => {
                                         event.preventDefault();
                                         setLoading(true);
@@ -219,8 +280,8 @@ const CheckoutPage: React.FC = () => {
                                             const order = pendingOrderRef.current;
                                             if (order) {
                                                 order.paymentToken = cardData.token;
-                                                // @ts-ignore - Complementando CreateOrderData se necessário
-                                                order.installments = cardData.installments ? parseInt(cardData.installments) : 1;
+                                                // @ts-ignore
+                                                order.installments = selectedInstallment ? selectedInstallment.installments : 1;
                                                 // @ts-ignore
                                                 order.issuerId = cardData.issuer || null;
 
@@ -240,7 +301,7 @@ const CheckoutPage: React.FC = () => {
                                     onError: (errors: SafeAny[]) => console.error('Erros no cardForm:', errors)
                                 }
                             });
-                            setCardForm(cf);
+                            // Form montado com sucesso
                             cardFormRef.current = cf;
                         } catch (e) {
                             console.error("Erro ao inicializar CardForm", e);
@@ -251,8 +312,14 @@ const CheckoutPage: React.FC = () => {
         };
 
         if (formData.metodoPagamento === 'card') initCardForm();
-        return () => { mounted = false; };
-    }, [mp, isConfigured, isAddingNewCard, formData.metodoPagamento]);
+        return () => {
+            mounted = false;
+            if (cardFormRef.current) {
+                console.log("[CheckoutPage] Limpando CardForm Ref no unmount");
+                cardFormRef.current = null;
+            }
+        };
+    }, [mp, isConfigured, isAddingNewCard, formData.metodoPagamento, total, maxInstallments]);
 
     const handleCalculateShipping = async (targetCep: string) => {
         if (!targetCep || targetCep.length < 8) return;
@@ -537,6 +604,7 @@ const CheckoutPage: React.FC = () => {
 
                         <CheckoutPayment
                             mpLoading={mpLoading}
+                            mpError={mpError}
                             pixActive={pixActive}
                             cardActive={cardActive}
                             pixDiscountPercent={pixDiscountPercent}
@@ -565,6 +633,10 @@ const CheckoutPage: React.FC = () => {
                             pixDiscount={pixDiscount}
                             total={total}
                             metodoPagamento={formData.metodoPagamento}
+                            installmentOptions={installmentOptions}
+                            selectedInstallment={selectedInstallment}
+                            onSelectInstallment={setSelectedInstallment}
+                            interestFree={interestFree}
                         />
 
                         {/* Bloco de Cupom e Ação Final (Mantido aqui por interagir com múltiplos estados) */}
@@ -600,8 +672,7 @@ const CheckoutPage: React.FC = () => {
                                     !formData.nome ||
                                     !formData.document ||
                                     documentError !== '' ||
-                                    cepError !== '' ||
-                                    formData.cep.length !== 8 ||
+                                    (formData.metodoPagamento === 'card' && !selectedInstallment) ||
                                     (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)
                                 }
                                 className="w-full bg-[var(--azul-profundo)] text-white py-6 font-lato text-[11px] uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3 shadow-xl"

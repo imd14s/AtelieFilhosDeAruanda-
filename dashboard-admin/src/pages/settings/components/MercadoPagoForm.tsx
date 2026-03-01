@@ -4,6 +4,7 @@ import type { MercadoPagoConfig } from '../../../types/store-settings';
 
 interface Props {
     initialConfig: Partial<MercadoPagoConfig>;
+    isProviderEnabled?: boolean;
     onSave: (config: MercadoPagoConfig) => void;
     onCancel: () => void;
 }
@@ -26,7 +27,7 @@ const SectionHeader = ({ id, icon: Icon, title, desc, isActive, onToggle }: { id
     </button>
 );
 
-export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
+export function MercadoPagoForm({ initialConfig, isProviderEnabled = true, onSave, onCancel }: Props) {
     const [config, setConfig] = useState<MercadoPagoConfig>({
         identification: {
             name: initialConfig.identification?.name || 'Mercado Pago Principal',
@@ -89,8 +90,20 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
 
     const toggleSection = (id: string) => setActiveSection(activeSection === id ? null : id);
 
+    const isPublicKeyValid = (key: string) => !key || key.startsWith('APP_USR-') || key.startsWith('TEST-');
+    const isAccessTokenValid = (key: string) => !key || key.startsWith('APP_USR-') || key.startsWith('TEST-');
+
     return (
         <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            {!isProviderEnabled && (
+                <div className="bg-amber-50 border-b border-amber-200 p-4 flex gap-3 items-center animate-pulse">
+                    <AlertCircle size={24} className="text-amber-600 shrink-0" />
+                    <div className="text-amber-800 text-sm font-medium">
+                        <strong>Aviso:</strong> Este provedor está **desativado** na listagem principal.
+                        Mesmo salvando as chaves, ele não aparecerá no checkout até ser ativado.
+                    </div>
+                </div>
+            )}
             {/* 1. Credenciais - O mais importante */}
             <SectionHeader id="creds" icon={Shield} title="1. Chaves de Integração" desc="Insira suas credenciais do Mercado Pago" isActive={activeSection === 'creds'} onToggle={toggleSection} />
             {activeSection === 'creds' && (
@@ -106,21 +119,33 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                         <label className="text-sm font-bold text-gray-700">Public Key (Chave Pública)</label>
                         <input
                             type="text"
-                            className="w-full border p-3 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                            className={`w-full border p-3 rounded-xl font-mono focus:ring-2 outline-none transition-colors ${!isPublicKeyValid(config.credentials.publicKey)
+                                    ? 'border-red-500 bg-red-50 focus:ring-red-200'
+                                    : 'focus:ring-blue-500'
+                                }`}
                             placeholder="APP_USR-..."
                             value={config.credentials.publicKey}
-                            onChange={e => setConfig({ ...config, credentials: { ...config.credentials, publicKey: e.target.value } })}
+                            onChange={e => setConfig({ ...config, credentials: { ...config.credentials, publicKey: e.target.value.trim() } })}
                         />
+                        {!isPublicKeyValid(config.credentials.publicKey) && (
+                            <p className="text-[10px] text-red-500 font-bold">Formato inválido. Deve começar com APP_USR- ou TEST-.</p>
+                        )}
                     </div>
                     <div className="space-y-1">
                         <label className="text-sm font-bold text-gray-700">Access Token (Chave Secreta)</label>
                         <input
                             type="password"
-                            className="w-full border p-3 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                            className={`w-full border p-3 rounded-xl font-mono focus:ring-2 outline-none transition-colors ${!isAccessTokenValid(config.credentials.accessToken)
+                                    ? 'border-red-500 bg-red-50 focus:ring-red-200'
+                                    : 'focus:ring-blue-500'
+                                }`}
                             placeholder="APP_USR-..."
                             value={config.credentials.accessToken}
-                            onChange={e => setConfig({ ...config, credentials: { ...config.credentials, accessToken: e.target.value } })}
+                            onChange={e => setConfig({ ...config, credentials: { ...config.credentials, accessToken: e.target.value.trim() } })}
                         />
+                        {!isAccessTokenValid(config.credentials.accessToken) && (
+                            <p className="text-[10px] text-red-500 font-bold">Formato inválido. Deve começar com APP_USR- ou TEST-.</p>
+                        )}
                     </div>
                 </div>
             )}

@@ -5,6 +5,7 @@ import SEO from '../components/SEO';
 import { useOutletContext } from 'react-router-dom';
 import cardService from '../services/cardService';
 import { useMercadoPago } from '../hooks/useMercadoPago';
+import { useAuth } from '../context/AuthContext';
 import { User, Card } from '../types';
 import { SafeAny } from "../types/safeAny";
 
@@ -23,6 +24,7 @@ const brandLogos: Record<string, string> = {
 const SavedCardsPage: React.FC = () => {
     const { user } = useOutletContext<UserContext>();
     const { mp, loading: mpLoading, isConfigured, error: mpError } = useMercadoPago();
+    const { refreshCards } = useAuth();
     const [cards, setCards] = useState<Card[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [showAddForm, setShowAddForm] = useState<boolean>(false);
@@ -45,12 +47,15 @@ const SavedCardsPage: React.FC = () => {
 
         const initCardForm = () => {
             if (showAddForm && mp && isConfigured && !cardFormRef.current) {
-                // Pequeno timeout para garantir que os elementos ID estão no DOM
+                // Aumentado timeout para garantir renderização completa do DOM
                 setTimeout(() => {
-                    if (!mounted) return;
+                    if (!mounted || !showAddForm) return;
 
-                    const container = document.getElementById('mp-card-number');
-                    if (!container) return;
+                    const container = document.getElementById('cardNumber');
+                    if (!container) {
+                        console.warn("[SavedCardsPage] Container 'cardNumber' não encontrado no DOM");
+                        return;
+                    }
 
                     try {
                         console.log("[SavedCardsPage] Inicializando CardForm...");
@@ -59,12 +64,15 @@ const SavedCardsPage: React.FC = () => {
                             iframe: true,
                             form: {
                                 id: 'mp-card-form',
-                                cardNumber: { id: 'mp-card-number', placeholder: '0000 0000 0000 0000' },
-                                expirationDate: { id: 'mp-expiration-date', placeholder: 'MM/AA' },
-                                securityCode: { id: 'mp-security-code', placeholder: 'CVV' },
-                                cardholderName: { id: 'mp-cardholder-name' },
-                                identificationType: { id: 'mp-identification-type' },
-                                identificationNumber: { id: 'mp-identification-number' },
+                                cardNumber: { id: 'cardNumber', placeholder: '0000 0000 0000 0000' },
+                                expirationDate: { id: 'expirationDate', placeholder: 'MM/AA' },
+                                securityCode: { id: 'securityCode', placeholder: 'CVV' },
+                                cardholderName: { id: 'cardholderName' },
+                                identificationType: { id: 'identificationType' },
+                                identificationNumber: { id: 'identificationNumber' },
+                                issuer: { id: 'issuer' },
+                                installments: { id: 'installments' },
+                                cardholderEmail: { id: 'cardholderEmail' }
                             },
                             callbacks: {
                                 onFormMounted: (error: SafeAny) => {
@@ -85,6 +93,7 @@ const SavedCardsPage: React.FC = () => {
                                         if (formData.token) {
                                             await cardService.saveCard(formData.token);
                                             fetchCards();
+                                            refreshCards(); // Sincroniza estado global
                                             setShowAddForm(false);
                                             cardFormRef.current = null;
                                         }
@@ -112,6 +121,10 @@ const SavedCardsPage: React.FC = () => {
 
         return () => {
             mounted = false;
+            if (cardFormRef.current) {
+                console.log("[SavedCardsPage] Unmounting... Limpando CardForm");
+                cardFormRef.current = null;
+            }
         };
     }, [showAddForm, mp, isConfigured]);
 
@@ -204,6 +217,18 @@ const SavedCardsPage: React.FC = () => {
                             Novo Cartão de Crédito
                         </h3>
 
+                        <div className="bg-blue-50 border border-blue-100 p-4 rounded-md mb-6 flex items-start gap-3 text-blue-800">
+                            <ShieldCheck size={18} className="shrink-0 mt-0.5" />
+                            <div className="text-xs leading-relaxed">
+                                <p className="font-bold mb-1">Tecnologia de Proteção Mercado Pago</p>
+                                <p className="opacity-80">
+                                    Seus dados são transformados em um "token" codificado.
+                                    Isso significa que as informações sensíveis nunca tocam nossos servidores,
+                                    garantindo 100% de segurança em sua transação.
+                                </p>
+                            </div>
+                        </div>
+
                         {mpLoading ? (
                             <div className="flex flex-col items-center justify-center py-8 text-gray-400">
                                 <Loader2 size={32} className="animate-spin mb-2" />
@@ -217,34 +242,46 @@ const SavedCardsPage: React.FC = () => {
                         ) : (
                             <form id="mp-card-form" onSubmit={handleFormSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <input type="hidden" id="cardholderEmail" value={user.email} />
+
                                     <div className="md:col-span-2">
                                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Número do Cartão</label>
-                                        <div id="mp-card-number" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
+                                        <div id="cardNumber" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
                                     </div>
 
                                     <div className="md:col-span-2">
                                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Nome do Titular</label>
-                                        <input type="text" id="mp-cardholder-name" placeholder="Como impresso no cartão" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm uppercase" />
+                                        <input type="text" id="cardholderName" placeholder="Como impresso no cartão" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm uppercase" />
                                     </div>
 
                                     <div>
                                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Vencimento</label>
-                                        <div id="mp-expiration-date" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
+                                        <div id="expirationDate" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Código de Segurança</label>
-                                        <div id="mp-security-code" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">CVV</label>
+                                        <div id="securityCode" className="h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus-within:border-[var(--dourado-suave)] transition-colors"></div>
                                     </div>
 
                                     <div>
                                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Tipo de Documento</label>
-                                        <select id="mp-identification-type" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm"></select>
+                                        <select id="identificationType" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm"></select>
                                     </div>
 
                                     <div>
                                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Número do Documento</label>
-                                        <input type="text" id="mp-identification-number" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm" />
+                                        <input type="text" id="identificationNumber" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Banco Emissor</label>
+                                        <select id="issuer" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm"></select>
+                                    </div>
+
+                                    {/* Campo técnico exigido pelo SDK (Oculto para o usuário) */}
+                                    <div className="hidden" aria-hidden="true">
+                                        <select id="installments"></select>
                                     </div>
                                 </div>
 

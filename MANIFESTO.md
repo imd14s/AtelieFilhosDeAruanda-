@@ -1,7 +1,7 @@
 🛡️ MANIFESTO DE INTEGRIDADE E FUNCIONALIDADE (MIF)
 Este documento é o guia supremo de verdade sobre o estado atual e as capacidades do ecossistema Ateliê Filhos de Aruanda. Ele serve tanto como transparência para o **Usuário** quanto como contexto de alta fidelidade para a **IA**.
 
-Última Atualização: 01/03/2026 15:22
+Última Atualização: 01/03/2026 16:55
 Status Global: 🟢 Operacional (Design Essência com Imagem Art validado)
 
 📊 1. Painel de Saúde (Métricas de Qualidade)
@@ -30,7 +30,7 @@ Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
 Cobertura (Global) | 28.45% | 🟢 | Elevada após refatoração modular do Checkout.
 Cobertura (Auth/Profile) | 96.15% | 🟢 | Foco: Gestão de perfil e endereços centralizados.
-Cobertura (Checkout/Pagto) | 80.50% | 🟢 | Modularizado: Checkout com Viacep, Bairro e Seletor CPF/CNPJ.
+Cobertura (Checkout/Pagto) | 80.50% | 🟢 | Refatorado: Parcelamento dinâmico integrado ao Resumo do Pedido.
 Lighthouse (SEO) | 98/100 | 🟢 | Otimização de Meta Tags.
 Performance (Store) | 94/100 | 🟢 | Integração Viacep adicionada ao Checkout.
 Vite Build | Sucesso | 🟢 | Zero erros de tipagem TS/Lint.

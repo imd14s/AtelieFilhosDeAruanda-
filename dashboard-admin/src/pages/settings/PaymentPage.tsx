@@ -198,6 +198,7 @@ export function PaymentPage() {
                                     {provider.code === 'MERCADO_PAGO' ? (
                                         <MercadoPagoForm
                                             initialConfig={JSON.parse(localStorage.getItem(`mp-config-${provider.id}`) || '{}')}
+                                            isProviderEnabled={provider.enabled}
                                             onSave={(config) => {
                                                 localStorage.setItem(`mp-config-${provider.id}`, JSON.stringify(config));
                                                 handleSaveConfig(config);

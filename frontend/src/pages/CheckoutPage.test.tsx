@@ -99,6 +99,8 @@ vi.mock('../hooks/useMercadoPago', () => ({
         pixActive: true,
         cardActive: true,
         pixDiscountPercent: 5,
+        maxInstallments: 12,
+        interestFree: 3,
         error: null
     }))
 }));
@@ -227,6 +229,8 @@ describe('CheckoutPage Component', () => {
             pixActive: false,
             cardActive: true,
             pixDiscountPercent: 0,
+            maxInstallments: 12,
+            interestFree: 3,
             error: null
         });
 

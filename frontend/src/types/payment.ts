@@ -10,3 +10,12 @@ export interface Card {
     expiration_month?: number;
     expiration_year?: number;
 }
+
+export interface InstallmentOption {
+    installments: number;
+    installment_rate: number;
+    discount_rate: number;
+    installment_amount: number;
+    total_amount: number;
+    recommended_message: string;
+}

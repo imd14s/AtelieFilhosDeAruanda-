@@ -21,6 +21,8 @@ interface UseMercadoPago {
     pixActive: boolean;
     cardActive: boolean;
     pixDiscountPercent: number;
+    maxInstallments: number;
+    interestFree: number;
     error: string | null;
 }
 
@@ -31,6 +33,8 @@ export const useMercadoPago = (): UseMercadoPago => {
     const [pixActive, setPixActive] = useState<boolean>(false);
     const [cardActive, setCardActive] = useState<boolean>(false);
     const [pixDiscountPercent, setPixDiscountPercent] = useState<number>(0);
+    const [maxInstallments, setMaxInstallments] = useState<number>(12);
+    const [interestFree, setInterestFree] = useState<number>(1);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -41,36 +45,49 @@ export const useMercadoPago = (): UseMercadoPago => {
                 const configData = await configService.getMercadoPagoPublicKey();
                 const publicKey = configData?.publicKey;
 
-                if (!publicKey || publicKey === 'YOUR_PUBLIC_KEY') {
+                if (!publicKey || publicKey === 'YOUR_PUBLIC_KEY' || publicKey.includes('...')) {
+                    console.warn('[useMercadoPago] Chave pública inválida ou ausente:', publicKey);
                     if (mounted) {
                         setIsConfigured(false);
                         setLoading(false);
+                        setError('Configuração de pagamento incompleta');
                     }
                     return;
                 }
 
                 if (!window.MercadoPago) {
-                    // Se o script não carregou, tentamos novamente em 1s
+                    console.warn('[useMercadoPago] SDK não encontrado, tentando novamente...');
                     setTimeout(initMP, 1000);
                     return;
                 }
 
-                const mpInstance = new window.MercadoPago(publicKey, {
-                    locale: 'pt-BR'
-                });
+                try {
+                    const mpInstance = new window.MercadoPago(publicKey, {
+                        locale: 'pt-BR'
+                    });
 
-                if (mounted) {
-                    setMp(mpInstance);
-                    setIsConfigured(true);
-                    setPixActive(configData?.pixActive ?? false);
-                    setCardActive(configData?.cardActive ?? false);
-                    setPixDiscountPercent(configData?.pixDiscountPercent ?? 0);
-                    setLoading(false);
+                    if (mounted) {
+                        setMp(mpInstance);
+                        setIsConfigured(true);
+                        setPixActive(configData?.pixActive ?? false);
+                        setCardActive(configData?.cardActive ?? false);
+                        setPixDiscountPercent(configData?.pixDiscountPercent ?? 0);
+                        setMaxInstallments(configData?.maxInstallments ?? 12);
+                        setInterestFree(configData?.interestFree ?? 1);
+                        setLoading(false);
+                        setError(null);
+                    }
+                } catch (sdkErr) {
+                    console.error('[useMercadoPago] Erro ao instanciar SDK:', sdkErr);
+                    if (mounted) {
+                        setError('Falha na conexão com Mercado Pago');
+                        setLoading(false);
+                    }
                 }
             } catch (err: unknown) {
-                console.error('[useMercadoPago] Erro:', err);
+                console.error('[useMercadoPago] Erro na requisição de config:', err);
                 if (mounted) {
-                    setError('Erro ao carregar Mercado Pago');
+                    setError('Erro ao carregar configurações de pagamento');
                     setLoading(false);
                 }
             }
@@ -83,5 +100,5 @@ export const useMercadoPago = (): UseMercadoPago => {
         };
     }, []);
 
-    return { mp, loading, isConfigured, pixActive, cardActive, pixDiscountPercent, error };
+    return { mp, loading, isConfigured, pixActive, cardActive, pixDiscountPercent, maxInstallments, interestFree, error };
 };

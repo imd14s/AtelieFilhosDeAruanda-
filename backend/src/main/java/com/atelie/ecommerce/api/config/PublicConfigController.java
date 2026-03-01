@@ -65,6 +65,7 @@ public class PublicConfigController {
                         double pixDiscountPercent = 0.0;
                         boolean cardActive = false;
                         int maxInstallments = 12;
+                        int interestFree = 1;
 
                         JsonNode methodsNode = root.path("methods").path("enabled");
                         if (!methodsNode.isMissingNode()) {
@@ -78,16 +79,18 @@ public class PublicConfigController {
                             if (!cardNode.isMissingNode()) {
                                 cardActive = cardNode.path("active").asBoolean(false);
                                 maxInstallments = cardNode.path("maxInstallments").asInt(12);
+                                interestFree = cardNode.path("interestFree").asInt(1);
                             }
                         }
 
                         Map<String, Object> responseConfig = new HashMap<>();
                         responseConfig.put("publicKey", publicKey);
-                        responseConfig.put("env", env); // Adiciona o ambiente na resposta para debug
+                        responseConfig.put("env", env);
                         responseConfig.put("pixActive", pixActive);
                         responseConfig.put("pixDiscountPercent", pixDiscountPercent);
                         responseConfig.put("cardActive", cardActive);
                         responseConfig.put("maxInstallments", maxInstallments);
+                        responseConfig.put("interestFree", interestFree);
 
                         return ResponseEntity.ok(responseConfig);
                     } catch (Exception e) {

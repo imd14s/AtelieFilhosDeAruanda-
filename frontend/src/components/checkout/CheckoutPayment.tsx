@@ -4,8 +4,10 @@ import { Card } from '../../types';
 
 interface CheckoutPaymentProps {
     mpLoading: boolean;
+    mpError?: string | null;
     pixActive: boolean;
     cardActive: boolean;
+    // ... (rest of props)
     pixDiscountPercent: number;
     metodoPagamento: 'pix' | 'card';
     onMetodoChange: (metodo: 'pix' | 'card') => void;
@@ -22,8 +24,10 @@ interface CheckoutPaymentProps {
 
 const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
     mpLoading,
+    mpError,
     pixActive,
     cardActive,
+    // ... (rest of props)
     pixDiscountPercent,
     metodoPagamento,
     onMetodoChange,
@@ -112,8 +116,14 @@ const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
                                             <div className="md:col-span-2 bg-amber-50 border border-amber-200 p-4 rounded text-amber-800 text-xs flex items-start gap-3">
                                                 <AlertTriangle size={18} className="shrink-0" />
                                                 <div>
-                                                    <p className="font-bold uppercase tracking-widest mb-1">Pagamento com Cartão Indisponível</p>
-                                                    <p className="opacity-80">A configuração do Mercado Pago está pendente. Por favor, utilize PIX ou aguarde a ativação pelo administrador.</p>
+                                                    <p className="font-bold uppercase tracking-widest mb-1">
+                                                        {mpError ? 'Erro de Conexão' : 'Pagamento com Cartão Indisponível'}
+                                                    </p>
+                                                    <p className="opacity-80">
+                                                        {mpError
+                                                            ? `${mpError}. Por favor, verifique sua conexão ou utilize PIX.`
+                                                            : 'A configuração do Mercado Pago está pendente. Por favor, utilize PIX.'}
+                                                    </p>
                                                 </div>
                                             </div>
                                         ) : (
@@ -143,12 +153,8 @@ const CheckoutPayment: React.FC<CheckoutPaymentProps> = ({
                                                     <label className="block text-xs text-gray-500 mb-1">Número do Doc.</label>
                                                     <input type="text" id="identificationNumber" placeholder="CPF/CNPJ" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner" />
                                                 </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Banco Emissor</label>
+                                                <div className="hidden">
                                                     <select id="issuer" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner"></select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Parcelamento</label>
                                                     <select id="installments" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner"></select>
                                                 </div>
                                             </form>

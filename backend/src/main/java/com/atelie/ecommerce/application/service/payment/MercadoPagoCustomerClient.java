@@ -8,6 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.Optional;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
 
 /**
  * Client para gerenciar Customers na API do Mercado Pago.
@@ -19,11 +23,20 @@ public class MercadoPagoCustomerClient {
     private final RestTemplate restTemplate;
     private final Environment env;
     private final UserRepository userRepository;
+    private final ServiceProviderConfigGateway configGateway;
+    private final ObjectMapper objectMapper;
 
-    public MercadoPagoCustomerClient(RestTemplate restTemplate, Environment env, UserRepository userRepository) {
+    public MercadoPagoCustomerClient(
+            RestTemplate restTemplate,
+            Environment env,
+            UserRepository userRepository,
+            ServiceProviderConfigGateway configGateway,
+            ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.env = env;
         this.userRepository = userRepository;
+        this.configGateway = configGateway;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -152,11 +165,41 @@ public class MercadoPagoCustomerClient {
     }
 
     private String getAccessToken() {
+        // 1. Tenta buscar em PRODUCTION no banco
+        Optional<String> productionJson = configGateway.findConfigJson("MERCADO_PAGO", "PRODUCTION");
+        if (productionJson.isPresent()) {
+            String token = extractTokenFromJson(productionJson.get());
+            if (token != null && !token.isBlank()) {
+                return token;
+            }
+        }
+
+        // 2. Tenta buscar em SANDBOX no banco
+        Optional<String> sandboxJson = configGateway.findConfigJson("MERCADO_PAGO", "SANDBOX");
+        if (sandboxJson.isPresent()) {
+            String token = extractTokenFromJson(sandboxJson.get());
+            if (token != null && !token.isBlank()) {
+                return token;
+            }
+        }
+
+        // 3. Fallback para variável de ambiente (legado)
         String token = env.getProperty("MP_ACCESS_TOKEN");
         if (token == null || token.isBlank()) {
             return null;
         }
         return token;
+    }
+
+    private String extractTokenFromJson(String json) {
+        try {
+            JsonNode root = objectMapper.readTree(json);
+            return root.path("credentials").path("accessToken").asText();
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
+                    .error("[DEBUG] Erro ao extrair accessToken do JSON: {}", e.getMessage());
+            return null;
+        }
     }
 
     private String getBaseUrl() {

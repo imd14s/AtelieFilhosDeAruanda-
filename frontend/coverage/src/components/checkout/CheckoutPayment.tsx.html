@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">48.48% </span>
+                <span class="strong">43.24% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>16/33</span>
+                <span class='fraction'>16/37</span>
             </div>
         
             
@@ -240,7 +240,15 @@
 <a name='L175'></a><a href='#L175'>175</a>
 <a name='L176'></a><a href='#L176'>176</a>
 <a name='L177'></a><a href='#L177'>177</a>
-<a name='L178'></a><a href='#L178'>178</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -279,7 +287,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -337,6 +347,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -423,8 +435,10 @@ import { Card } from '../../types';
 &nbsp;
 interface CheckoutPaymentProps {
     mpLoading: boolean;
+    mpError?: string | null;
     pixActive: boolean;
     cardActive: boolean;
+    // ... (rest of props)
     pixDiscountPercent: number;
     metodoPagamento: 'pix' | 'card';
     onMetodoChange: (metodo: 'pix' | 'card') =&gt; void;
@@ -441,8 +455,10 @@ interface CheckoutPaymentProps {
 &nbsp;
 const CheckoutPayment: React.FC&lt;CheckoutPaymentProps&gt; = ({
     mpLoading,
+    mpError,
     pixActive,
     cardActive,
+    // ... (rest of props)
     pixDiscountPercent,
     metodoPagamento,
     onMetodoChange,
@@ -531,8 +547,14 @@ const CheckoutPayment: React.FC&lt;CheckoutPaymentProps&gt; = ({
 <span class="branch-0 cbranch-no" title="branch not covered" >                                            &lt;div className="md:col-span-2 bg-amber-50 border border-amber-200 p-4 rounded text-amber-800 text-xs flex items-start gap-3"&gt;</span>
                                                 &lt;AlertTriangle size={18} className="shrink-0" /&gt;
                                                 &lt;div&gt;
-                                                    &lt;p className="font-bold uppercase tracking-widest mb-1"&gt;Pagamento com Cartão Indisponível&lt;/p&gt;
-                                                    &lt;p className="opacity-80"&gt;A configuração do Mercado Pago está pendente. Por favor, utilize PIX ou aguarde a ativação pelo administrador.&lt;/p&gt;
+                                                    &lt;p className="font-bold uppercase tracking-widest mb-1"&gt;
+                                                        {mpError ? 'Erro de Conexão' : 'Pagamento com Cartão Indisponível'}
+                                                    &lt;/p&gt;
+                                                    &lt;p className="opacity-80"&gt;
+                                                        {mpError
+                                                            ? `${mpError}. Por favor, verifique sua conexão ou utilize PIX.`
+                                                            : 'A configuração do Mercado Pago está pendente. Por favor, utilize PIX.'}
+                                                    &lt;/p&gt;
                                                 &lt;/div&gt;
                                             &lt;/div&gt;
                                         ) : (
@@ -562,12 +584,8 @@ const CheckoutPayment: React.FC&lt;CheckoutPaymentProps&gt; = ({
                                                     &lt;label className="block text-xs text-gray-500 mb-1"&gt;Número do Doc.&lt;/label&gt;
                                                     &lt;input type="text" id="identificationNumber" placeholder="CPF/CNPJ" className="w-full border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner" /&gt;
                                                 &lt;/div&gt;
-                                                &lt;div&gt;
-                                                    &lt;label className="block text-xs text-gray-500 mb-1"&gt;Banco Emissor&lt;/label&gt;
+                                                &lt;div className="hidden"&gt;
                                                     &lt;select id="issuer" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner"&gt;&lt;/select&gt;
-                                                &lt;/div&gt;
-                                                &lt;div&gt;
-                                                    &lt;label className="block text-xs text-gray-500 mb-1"&gt;Parcelamento&lt;/label&gt;
                                                     &lt;select id="installments" className="w-full h-12 border border-[var(--azul-profundo)]/10 bg-gray-50 px-4 py-3 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] shadow-inner"&gt;&lt;/select&gt;
                                                 &lt;/div&gt;
                                             &lt;/form&gt;
@@ -601,7 +619,7 @@ export default CheckoutPayment;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-01T18:04:06.078Z
+                at 2026-03-01T20:14:02.101Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

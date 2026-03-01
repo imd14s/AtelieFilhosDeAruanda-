@@ -1,6 +1,6 @@
 import React from 'react';
 import { Truck } from 'lucide-react';
-import { CartItem, ShippingOption, Coupon } from '../../types';
+import { CartItem, ShippingOption, Coupon, InstallmentOption } from '../../types';
 import { getImageUrl } from '../../utils/imageUtils';
 
 interface CheckoutSummaryProps {
@@ -12,6 +12,10 @@ interface CheckoutSummaryProps {
     pixDiscount: number;
     total: number;
     metodoPagamento: string;
+    installmentOptions?: InstallmentOption[];
+    selectedInstallment?: InstallmentOption | null;
+    onSelectInstallment?: (opt: InstallmentOption) => void;
+    interestFree?: number;
 }
 
 const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
@@ -22,7 +26,11 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
     discount,
     pixDiscount,
     total,
-    metodoPagamento
+    metodoPagamento,
+    installmentOptions = [],
+    selectedInstallment = null,
+    onSelectInstallment,
+    interestFree = 1
 }) => {
     const formatCurrency = (val: number) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -85,8 +93,45 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
 
                     <div className="border-t border-[#0f2A44]/10 pt-4 flex justify-between items-center">
                         <span className="font-playfair text-xl text-[#0f2A44]">Total</span>
-                        <span className="font-playfair text-2xl text-[#C9A24D] font-bold">{formatCurrency(total)}</span>
+                        <div className="text-right">
+                            <span className="font-playfair text-2xl text-[#C9A24D] font-bold">
+                                {formatCurrency(selectedInstallment ? selectedInstallment.total_amount : total)}
+                            </span>
+                            {selectedInstallment && selectedInstallment.installments > 1 && (
+                                <p className="font-lato text-[10px] text-[#0f2A44]/40 uppercase tracking-tighter">
+                                    {selectedInstallment.installments}x de {formatCurrency(selectedInstallment.installment_amount)}
+                                </p>
+                            )}
+                        </div>
                     </div>
+
+                    {metodoPagamento === 'card' && installmentOptions.length > 0 && (
+                        <div className="pt-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                            <label className="font-lato text-[10px] uppercase tracking-widest text-[#0f2A44]/60 mb-2 block">
+                                Escolha o Parcelamento
+                            </label>
+                            <select
+                                value={selectedInstallment?.installments || 1}
+                                onChange={(e) => {
+                                    const opt = installmentOptions.find(o => o.installments === parseInt(e.target.value));
+                                    if (opt && onSelectInstallment) onSelectInstallment(opt);
+                                }}
+                                className="w-full bg-[#F7F7F4] border border-[#0f2A44]/10 p-4 font-lato text-xs text-[#0f2A44] outline-none focus:border-[var(--dourado-suave)] appearance-none cursor-pointer"
+                                style={{
+                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f2A44'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: 'right 1rem center',
+                                    backgroundSize: '1em'
+                                }}
+                            >
+                                {installmentOptions.map((opt, idx) => (
+                                    <option key={idx} value={opt.installments}>
+                                        {opt.installments <= interestFree ? `[Sem Juros] ${opt.recommended_message}` : opt.recommended_message}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

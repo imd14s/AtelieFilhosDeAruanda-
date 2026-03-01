@@ -53,6 +53,10 @@ public class CustomerCardController {
             return ResponseEntity.badRequest().body(Map.of("error", "Token do cartão é obrigatório."));
         }
         String customerId = mpClient.getOrCreateCustomerId(user);
+        if (customerId == null) {
+            return ResponseEntity.status(500).body(Map.of("error", "CUSTOMER_INIT_FAILED", "message",
+                    "Não foi possível vincular seu perfil ao Mercado Pago."));
+        }
         Map<String, Object> saved = mpClient.saveCard(customerId, cardToken);
         return ResponseEntity.ok(saved);
     }
