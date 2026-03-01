@@ -89,7 +89,7 @@ const AboutPage: React.FC = () => {
             {/* Imagem de Rodapé */}
             <section className="h-96 w-full overflow-hidden">
                 <img
-                    src="https://images.unsplash.com/photo-1594911772125-07fc7a2d8d9b?q=80&w=2070&auto=format&fit=crop"
+                    src="/images/about-footer-bg.png"
                     alt="Footer Background"
                     className="w-full h-full object-cover"
                 />
