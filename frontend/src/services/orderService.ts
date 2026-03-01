@@ -1,6 +1,6 @@
 import api from './api';
 import { CreateOrderData, ShippingOption, CartItem, Order, Product } from '../types';
-import { TENANT_HEADER } from './productService';
+import { TENANT_HEADER, normalizeProduct } from './productService';
 import { SafeAny } from "../types/safeAny";
 
 /**
@@ -99,7 +99,7 @@ export const orderService = {
                 const response = await api.get(`/history/user/${userId}`, {
                     headers: TENANT_HEADER
                 });
-                return (response.data || []).map((h: SafeAny) => h.product);
+                return (response.data || []).map((h: SafeAny) => normalizeProduct(h.product));
             } catch (e) {
                 console.error("[orderService] Erro ao buscar histórico da API", e);
                 return [];
