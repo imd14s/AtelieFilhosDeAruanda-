@@ -8,6 +8,7 @@ interface CheckoutAddressProps {
         nome: string;
         sobrenome: string;
         endereco: string;
+        bairro: string;
         cidade: string;
         estado: string;
         cep: string;
@@ -17,9 +18,11 @@ interface CheckoutAddressProps {
     onSelectAddress: (addr: Address) => void;
     onSetSaveAddress: (val: boolean) => void;
     isAddingNewAddress: boolean;
-    setIsAddingNewAddress: (val: boolean) => void;
+    onAddNewAddress: () => void;
     selectedAddressId: string | null;
     onCalculateShipping: (cep: string) => void;
+    cepError?: string;
+    loadingCep?: boolean;
 }
 
 const CheckoutAddress: React.FC<CheckoutAddressProps> = ({
@@ -28,19 +31,22 @@ const CheckoutAddress: React.FC<CheckoutAddressProps> = ({
     onSelectAddress,
     onSetSaveAddress,
     isAddingNewAddress,
-    setIsAddingNewAddress,
+    onAddNewAddress,
     selectedAddressId,
-    onCalculateShipping
+    onCalculateShipping,
+    cepError,
+    loadingCep
 }) => {
     const { user, addresses } = useAuth();
 
     return (
         <section className="space-y-8">
             <div className="flex items-center gap-4">
-                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">3</span>
+                <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">2</span>
                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Endereço de Entrega</h2>
             </div>
 
+            {/* ... keeping existing address selection ... */}
             {addresses.length > 0 && (
                 <div role="radiogroup" aria-label="Selecione um endereço de entrega" className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     {addresses.map(addr => {
@@ -73,7 +79,7 @@ const CheckoutAddress: React.FC<CheckoutAddressProps> = ({
 
                                 <div className="pl-8 flex flex-col gap-1">
                                     <p className="font-lato text-sm text-[var(--azul-profundo)]/80 line-clamp-1">
-                                        {addr.city} - {addr.state}
+                                        {addr.neighborhood ? `${addr.neighborhood}, ` : ''}{addr.city} - {addr.state}
                                     </p>
                                     <p className="font-lato text-xs text-[var(--azul-profundo)]/50 tracking-wide font-medium">
                                         CEP: {addr.zipCode}
@@ -84,7 +90,7 @@ const CheckoutAddress: React.FC<CheckoutAddressProps> = ({
                     })}
                     <button
                         type="button"
-                        onClick={() => setIsAddingNewAddress(true)}
+                        onClick={onAddNewAddress}
                         aria-pressed={isAddingNewAddress}
                         className={`flex flex-col items-center justify-center gap-3 p-5 border-2 border-dashed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--dourado-suave)] focus:border-transparent ${isAddingNewAddress ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/60 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/80 hover:bg-[var(--azul-profundo)]/5'}`}
                     >
@@ -98,7 +104,6 @@ const CheckoutAddress: React.FC<CheckoutAddressProps> = ({
                 </div>
             )}
 
-
             {isAddingNewAddress && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4">
                     <input
@@ -111,29 +116,49 @@ const CheckoutAddress: React.FC<CheckoutAddressProps> = ({
                         value={formData.sobrenome} onChange={onChange}
                         className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                     />
+
+                    <div className="md:col-span-2 space-y-1 relative">
+                        <label className="block text-[9px] uppercase tracking-widest text-[var(--azul-profundo)]/40 font-lato ml-2 mb-1">CEP (Preenche endereço automaticamente)</label>
+                        <div className="relative">
+                            <input
+                                type="text" name="cep" required placeholder="00000-000"
+                                value={formData.cep} onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '').substring(0, 8);
+                                    onChange({ target: { name: 'cep', value: val } } as unknown as React.ChangeEvent<HTMLInputElement>);
+                                    if (val.length === 8) onCalculateShipping(val);
+                                }}
+                                className={`w-full border ${cepError ? 'border-red-500 bg-red-50/10' : 'border-[var(--azul-profundo)]/10'} bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] transition-colors`}
+                            />
+                            {loadingCep && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                    <span className="block w-4 h-4 border-2 border-[var(--dourado-suave)] border-t-transparent rounded-full animate-spin"></span>
+                                </div>
+                            )}
+                        </div>
+                        {cepError && <p className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{cepError}</p>}
+                    </div>
+
                     <input
-                        type="text" name="endereco" required placeholder="Endereço e Número"
+                        type="text" name="endereco" required placeholder="Logradouro e Número"
                         value={formData.endereco} onChange={onChange}
                         className="md:col-span-2 w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                     />
+
                     <input
-                        type="text" name="cidade" required placeholder="Cidade"
-                        value={formData.cidade} onChange={onChange}
+                        type="text" name="bairro" required placeholder="Bairro"
+                        value={formData.bairro} onChange={onChange}
                         className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                     />
-                    <div className="grid grid-cols-2 gap-6">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <input
-                            type="text" name="estado" required placeholder="UF"
-                            value={formData.estado} onChange={onChange}
+                            type="text" name="cidade" required placeholder="Cidade"
+                            value={formData.cidade} onChange={onChange}
                             className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                         />
                         <input
-                            type="text" name="cep" required placeholder="CEP"
-                            value={formData.cep} onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, '').substring(0, 8);
-                                onChange({ target: { name: 'cep', value: val } } as unknown as React.ChangeEvent<HTMLInputElement>);
-                                if (val.length === 8) onCalculateShipping(val);
-                            }}
+                            type="text" name="estado" required placeholder="UF"
+                            value={formData.estado} onChange={onChange}
                             className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
                         />
                     </div>

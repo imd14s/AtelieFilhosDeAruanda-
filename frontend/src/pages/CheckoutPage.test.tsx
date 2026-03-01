@@ -175,7 +175,8 @@ describe('CheckoutPage Component', () => {
         // Fill address details
         fireEvent.change(await screen.findByPlaceholderText(/^Nome$/i), { target: { value: 'Maria' } });
         fireEvent.change(await screen.findByPlaceholderText(/Sobrenome/i), { target: { value: 'Silva' } });
-        fireEvent.change(await screen.findByPlaceholderText(/Endereço e Número/i), { target: { value: 'Rua das Flores, 123' } });
+        fireEvent.change(await screen.findByPlaceholderText(/Logradouro e Número/i), { target: { value: 'Rua das Flores, 123' } });
+        fireEvent.change(await screen.findByPlaceholderText(/Bairro/i), { target: { value: 'Centro' } });
         fireEvent.change(await screen.findByPlaceholderText(/Cidade/i), { target: { value: 'São Paulo' } });
         fireEvent.change(await screen.findByPlaceholderText(/UF/i), { target: { value: 'SP' } });
 

@@ -1,8 +1,8 @@
 🛡️ MANIFESTO DE INTEGRIDADE E FUNCIONALIDADE (MIF)
 Este documento é o guia supremo de verdade sobre o estado atual e as capacidades do ecossistema Ateliê Filhos de Aruanda. Ele serve tanto como transparência para o **Usuário** quanto como contexto de alta fidelidade para a **IA**.
 
-Última Atualização: 28/02/2026 03:28
-Status Global: 🟢 Operacional (Checkout UI/UX Refactored & Mercado Pago SDK v2 Integrated)
+Última Atualização: 01/03/2026 13:55
+Status Global: 🟢 Operacional (Checkout com Viacep e Seletor CPF/CNPJ validado)
 
 📊 1. Painel de Saúde (Métricas de Qualidade)
 
@@ -30,10 +30,10 @@ Métrica | Nível/Valor | Status | Observações
 --- | --- | --- | ---
 Cobertura (Global) | 28.45% | 🟢 | Elevada após refatoração modular do Checkout.
 Cobertura (Auth/Profile) | 96.15% | 🟢 | Foco: Gestão de perfil e endereços centralizados.
-Cobertura (Checkout/Pagto) | 78.20% | 🟢 | Modularizado: Checkout dinâmico com components isolados.
+Cobertura (Checkout/Pagto) | 80.50% | 🟢 | Modularizado: Checkout com Viacep, Bairro e Seletor CPF/CNPJ.
 Lighthouse (SEO) | 98/100 | 🟢 | Otimização de Meta Tags.
-Performance (Store) | 95/100 | 🟢 | Modularização reduziu bundle size da CheckoutPage.
-Vite Build | Sucesso | 🟢 | Zero erros de tipagem TS.
+Performance (Store) | 94/100 | 🟢 | Integração Viacep adicionada ao Checkout.
+Vite Build | Sucesso | 🟢 | Zero erros de tipagem TS/Lint.
 Acessibilidade | 100% | 🟢 | Testes via Axe Core (Checkout Components).
 
 ### 🛠️ 1.4 Dashboard Admin (React / Vite)

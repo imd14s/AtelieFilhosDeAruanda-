@@ -61,9 +61,10 @@ public class CustomShippingStrategy implements ShippingStrategy {
             return ShippingResult.failure(providerName, "O CEP informado não é atendido por esta transportadora.");
         }
 
-        // 2. Extrair preço e prazo da configuração
+        // 2. Extrair preço, nome e prazo da configuração
         BigDecimal finalPrice = BigDecimal.ZERO;
         String estimatedDays = "0";
+        String displayName = providerName;
 
         try {
             var configStrOpt = configGateway.findConfigJson(providerName, "PRODUCTION");
@@ -75,13 +76,16 @@ public class CustomShippingStrategy implements ShippingStrategy {
                 if (configNode.has("days")) {
                     estimatedDays = configNode.get("days").asText();
                 }
+                if (configNode.has("name")) {
+                    displayName = configNode.get("name").asText();
+                }
             }
         } catch (Exception e) {
             return ShippingResult.failure(providerName, "Erro ao ler a configuração de preços do provedor.");
         }
 
         return new ShippingResult(
-                providerName,
+                displayName,
                 true,
                 true,
                 finalPrice.compareTo(BigDecimal.ZERO) == 0,

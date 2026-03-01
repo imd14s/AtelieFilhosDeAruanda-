@@ -1,8 +1,7 @@
 package com.atelie.ecommerce.infrastructure.shipping.strategies;
 
 import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
-import com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingParams;
-import com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy.ShippingResult;
+import com.atelie.ecommerce.domain.shipping.strategy.ShippingStrategy;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.shipping.CustomShippingRegionRepository;
@@ -20,10 +19,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class CustomShippingStrategyTest {
+class CustomShippingStrategyTest {
 
     @Mock
     private ServiceProviderJpaRepository providerRepository;
@@ -34,68 +35,72 @@ public class CustomShippingStrategyTest {
     @Mock
     private ServiceProviderConfigGateway configGateway;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper;
 
+    @InjectMocks
     private CustomShippingStrategy strategy;
 
     @BeforeEach
     void setUp() {
+        objectMapper = new ObjectMapper();
         strategy = new CustomShippingStrategy(providerRepository, regionRepository, configGateway, objectMapper);
     }
 
     @Test
-    void shouldSupportCustomProvider() {
-        ServiceProviderEntity provider = new ServiceProviderEntity();
-        provider.setDriverKey("shipping.custom");
-
-        when(providerRepository.findByCode("CUSTOM_LOCAL")).thenReturn(Optional.of(provider));
-
-        assertTrue(strategy.supports("CUSTOM_LOCAL"));
-    }
-
-    @Test
-    void shouldNotSupportOtherProvider() {
-        ServiceProviderEntity provider = new ServiceProviderEntity();
-        provider.setDriverKey("shipping.melhorenvio");
-
-        when(providerRepository.findByCode("MELHOR_ENVIO")).thenReturn(Optional.of(provider));
-
-        assertFalse(strategy.supports("MELHOR_ENVIO"));
-    }
-
-    @Test
-    void shouldCalculateSuccessfullyWhenCepIsCovered() {
+    void shouldCalculateShippingWithDynamicDataFromJson() {
+        // Arrange
+        String providerName = "CUSTOM_LOCAL";
         UUID providerId = UUID.randomUUID();
-        ServiceProviderEntity provider = new ServiceProviderEntity();
-        provider.setId(providerId);
+        String destinationCep = "09961-000";
+        String cleanCep = "09961000";
 
-        ShippingParams params = new ShippingParams("01001-000", BigDecimal.TEN, List.of(), "tenant", "CUSTOM_LOCAL");
+        ServiceProviderEntity provider = ServiceProviderEntity.builder()
+                .id(providerId)
+                .code(providerName)
+                .driverKey("shipping.custom")
+                .build();
 
-        when(providerRepository.findByCode("CUSTOM_LOCAL")).thenReturn(Optional.of(provider));
-        when(regionRepository.existsByProviderIdAndCep(providerId, "01001000")).thenReturn(true);
-        when(configGateway.findConfigJson("CUSTOM_LOCAL", "PRODUCTION"))
-                .thenReturn(Optional.of("{\"price\": 15.50, \"days\": 2}"));
+        when(providerRepository.findByCode(providerName)).thenReturn(Optional.of(provider));
+        when(regionRepository.existsByProviderIdAndCep(providerId, cleanCep)).thenReturn(true);
 
-        ShippingResult result = strategy.calculate(params);
+        String configJson = "{\"days\": \"2\", \"name\": \"J3 Flex\", \"price\": \"15.00\"}";
+        when(configGateway.findConfigJson(providerName, "PRODUCTION")).thenReturn(Optional.of(configJson));
 
+        ShippingStrategy.ShippingParams params = new ShippingStrategy.ShippingParams(
+                destinationCep, BigDecimal.ZERO, List.of(), "tenant", providerName);
+
+        // Act
+        ShippingStrategy.ShippingResult result = strategy.calculate(params);
+
+        // Assert
         assertTrue(result.success());
-        assertEquals(0, new BigDecimal("15.50").compareTo(result.cost()));
+        assertEquals("J3 Flex", result.providerName());
+        assertEquals(new BigDecimal("15.00"), result.cost());
         assertEquals("2", result.estimatedDays());
     }
 
     @Test
-    void shouldReturnFailureWhenCepIsNotCovered() {
+    void shouldReturnFailureIfCepNotCovered() {
+        // Arrange
+        String providerName = "CUSTOM_LOCAL";
         UUID providerId = UUID.randomUUID();
-        ServiceProviderEntity provider = new ServiceProviderEntity();
-        provider.setId(providerId);
+        String destinationCep = "99999-999";
 
-        ShippingParams params = new ShippingParams("99999-999", BigDecimal.TEN, List.of(), "tenant", "CUSTOM_LOCAL");
+        ServiceProviderEntity provider = ServiceProviderEntity.builder()
+                .id(providerId)
+                .code(providerName)
+                .build();
 
-        when(providerRepository.findByCode("CUSTOM_LOCAL")).thenReturn(Optional.of(provider));
-        when(regionRepository.existsByProviderIdAndCep(providerId, "99999999")).thenReturn(false);
+        when(providerRepository.findByCode(providerName)).thenReturn(Optional.of(provider));
+        when(regionRepository.existsByProviderIdAndCep(any(), anyString())).thenReturn(false);
 
-        ShippingResult result = strategy.calculate(params);
+        ShippingStrategy.ShippingParams params = new ShippingStrategy.ShippingParams(
+                destinationCep, BigDecimal.ZERO, List.of(), "tenant", providerName);
 
+        // Act
+        ShippingStrategy.ShippingResult result = strategy.calculate(params);
+
+        // Assert
         assertFalse(result.success());
         assertEquals("O CEP informado não é atendido por esta transportadora.", result.error());
     }

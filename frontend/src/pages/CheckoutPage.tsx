@@ -25,6 +25,7 @@ interface CheckoutFormData {
     nome: string;
     sobrenome: string;
     endereco: string;
+    bairro: string;
     cidade: string;
     estado: string;
     cep: string;
@@ -52,6 +53,7 @@ const CheckoutPage: React.FC = () => {
         nome: user?.name?.split(' ')[0] || '',
         sobrenome: user?.name?.split(' ').slice(1).join(' ') || '',
         endereco: '',
+        bairro: '',
         cidade: '',
         estado: '',
         cep: cep || '',
@@ -60,6 +62,9 @@ const CheckoutPage: React.FC = () => {
         saveCard: false,
         document: user?.document || ''
     });
+
+    const [selectedDocType, setSelectedDocType] = useState<'cpf' | 'cnpj'>('cpf');
+    const [loadingCep, setLoadingCep] = useState<boolean>(false);
 
     const { mp, loading: mpLoading, isConfigured, pixActive, cardActive, pixDiscountPercent, error: mpError } = useMercadoPago();
 
@@ -84,6 +89,28 @@ const CheckoutPage: React.FC = () => {
     const [shippingLoading, setShippingLoading] = useState<boolean>(false);
     const [currentShipping, setCurrentShipping] = useState<ShippingOption | null>(shippingSelected || null);
     const [configMissing, setConfigMissing] = useState<{ mp: boolean; shipping: boolean }>({ mp: false, shipping: false });
+    const [documentError, setDocumentError] = useState<string>('');
+    const [cepError, setCepError] = useState<string>('');
+
+    useEffect(() => {
+        const doc = sanitizeDocument(formData.document);
+        const targetLen = selectedDocType === 'cpf' ? 11 : 14;
+
+        if (doc.length >= targetLen) {
+            const isValid = selectedDocType === 'cpf' ? isValidCPF(doc) : isValidCNPJ(doc);
+            setDocumentError(isValid ? '' : 'Documento Inválido');
+        } else {
+            setDocumentError('');
+        }
+    }, [formData.document, selectedDocType]);
+
+    useEffect(() => {
+        if (formData.cep.length === 8) {
+            // CEP Completo, o erro será tratado pelo Viacep/Frete
+        } else {
+            setCepError('');
+        }
+    }, [formData.cep]);
 
     // Cálculos de preço
     const subtotal = Array.isArray(cart) ? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) : 0;
@@ -230,7 +257,28 @@ const CheckoutPage: React.FC = () => {
     const handleCalculateShipping = async (targetCep: string) => {
         if (!targetCep || targetCep.length < 8) return;
         setShippingLoading(true);
+        setLoadingCep(true);
         try {
+            // Busca Viacep simultânea
+            fetch(`https://viacep.com.br/ws/${targetCep}/json/`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.erro) {
+                        setFormData(prev => ({
+                            ...prev,
+                            endereco: data.logradouro || prev.endereco,
+                            bairro: data.bairro || prev.bairro,
+                            cidade: data.localidade || prev.cidade,
+                            estado: data.uf || prev.estado
+                        }));
+                        setCepError('');
+                    } else {
+                        setCepError('CEP não encontrado');
+                    }
+                })
+                .catch(err => console.error("Viacep falhou", err))
+                .finally(() => setLoadingCep(false));
+
             const items = await cartService.get();
             const options = await orderService.calculateShipping(targetCep, items);
             const isMissing = options.some(o => o.provider === 'CONFIG_MISSING');
@@ -264,12 +312,27 @@ const CheckoutPage: React.FC = () => {
         setFormData(prev => ({
             ...prev,
             endereco: addr.street + (addr.number ? `, ${addr.number}` : '') + (addr.complement ? ` - ${addr.complement}` : ''),
+            bairro: addr.neighborhood || '',
             cidade: addr.city,
             estado: addr.state,
             cep: normalizedCep,
             document: addr.document || prev.document
         }));
         handleCalculateShipping(normalizedCep);
+    };
+
+    const handleAddNewAddress = () => {
+        setIsAddingNewAddress(true);
+        setSelectedAddressId(null);
+        setFormData(prev => ({
+            ...prev,
+            endereco: '',
+            bairro: '',
+            cidade: '',
+            estado: '',
+            cep: '',
+            saveAddress: false
+        }));
     };
 
     const handleApplyCoupon = async () => {
@@ -337,7 +400,7 @@ const CheckoutPage: React.FC = () => {
                     city: formData.cidade,
                     state: formData.estado,
                     zipCode: formData.cep,
-                    neighborhood: 'Centro' // Default or extracted
+                    neighborhood: formData.bairro || 'Centro'
                 },
                 // @ts-ignore - Estendendo se o backend usar 'shipping' opcionalmente
                 shipping: {
@@ -444,8 +507,10 @@ const CheckoutPage: React.FC = () => {
                         <CheckoutContact
                             email={formData.email}
                             document={formData.document}
-                            onChange={handleInputChange}
+                            docType={selectedDocType}
+                            onDocTypeChange={setSelectedDocType}
                             onDocumentChange={(val) => setFormData(prev => ({ ...prev, document: val }))}
+                            documentError={documentError}
                         />
 
                         <CheckoutAddress
@@ -454,9 +519,11 @@ const CheckoutPage: React.FC = () => {
                             onSelectAddress={handleSelectAddress}
                             onSetSaveAddress={(val) => setFormData(prev => ({ ...prev, saveAddress: val }))}
                             isAddingNewAddress={isAddingNewAddress}
-                            setIsAddingNewAddress={setIsAddingNewAddress}
+                            onAddNewAddress={handleAddNewAddress}
                             selectedAddressId={selectedAddressId}
                             onCalculateShipping={handleCalculateShipping}
+                            cepError={cepError}
+                            loadingCep={loadingCep}
                         />
 
                         <CheckoutShipping
@@ -526,7 +593,17 @@ const CheckoutPage: React.FC = () => {
 
                             <button
                                 onClick={handleSubmit}
-                                disabled={loading || !currentShipping || !formData.email || !formData.nome || !formData.document || (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)}
+                                disabled={
+                                    loading ||
+                                    !currentShipping ||
+                                    !formData.email ||
+                                    !formData.nome ||
+                                    !formData.document ||
+                                    documentError !== '' ||
+                                    cepError !== '' ||
+                                    formData.cep.length !== 8 ||
+                                    (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)
+                                }
                                 className="w-full bg-[var(--azul-profundo)] text-white py-6 font-lato text-[11px] uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3 shadow-xl"
                             >
                                 {loading ? <Loader2 size={20} className="animate-spin" /> : 'Finalizar Pedido'}
