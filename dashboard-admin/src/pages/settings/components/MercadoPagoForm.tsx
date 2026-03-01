@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Shield, Zap, CreditCard, Settings, ChevronDown, ChevronUp, AlertCircle, Check, Copy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, Zap, CreditCard, Settings, ChevronDown, ChevronUp, AlertCircle, Check, Copy, Loader2 } from 'lucide-react';
 import type { MercadoPagoConfig } from '../../../types/store-settings';
 
 interface Props {
@@ -81,6 +81,110 @@ export function MercadoPagoForm({ initialConfig, isProviderEnabled = true, onSav
 
     const [activeSection, setActiveSection] = useState<string | null>('creds');
     const [copied, setCopied] = useState(false);
+
+    // Novas variaveis de estado para parcelamento dinamico
+    const [availableInstallments, setAvailableInstallments] = useState<number[]>([1]);
+    const [availableInterestFree, setAvailableInterestFree] = useState<number[]>([1]);
+    const [isLoadingInstallments, setIsLoadingInstallments] = useState<boolean>(false);
+    const [installmentsError, setInstallmentsError] = useState<string | null>(null);
+
+    const isPublicKeyValid = (key: string) => !key || key.startsWith('APP_USR-') || key.startsWith('TEST-');
+    const isAccessTokenValid = (key: string) => !key || key.startsWith('APP_USR-') || key.startsWith('TEST-');
+
+    // Buscar parcelas disponíveis dinamicamente via SDK do Mercado Pago
+    useEffect(() => {
+        const pk = config.credentials.publicKey;
+        if (!isPublicKeyValid(pk) || !pk) {
+            setAvailableInstallments([1]);
+            setAvailableInterestFree([1]);
+            setInstallmentsError("Insira uma Public Key válida para carregar as opções.");
+            return;
+        }
+
+        const fetchInstallments = async () => {
+            setIsLoadingInstallments(true);
+            setInstallmentsError(null);
+
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (!(window as any).MercadoPago) {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://sdk.mercadopago.com/js/v2';
+                        script.onload = resolve;
+                        script.onerror = () => reject(new Error('Falha ao carregar SDK'));
+                        document.body.appendChild(script);
+                    });
+                }
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const mp = new (window as any).MercadoPago(pk, { locale: 'pt-BR' });
+                // Usa um valor genérico alto e BIN padrão (Visa) para descobrir o limite global da conta
+                const installments = await mp.getInstallments({ amount: "1000", bin: "411111" });
+
+                if (installments && installments.length > 0 && installments[0].payer_costs) {
+                    const costs = installments[0].payer_costs;
+
+                    // Extrai todas as opções disponíveis
+                    const options = costs.map((c: { installments: number }) => c.installments);
+                    setAvailableInstallments(options.length > 0 ? options : [1]);
+
+                    // Extrai as opções sem juros (installment_rate === 0)
+                    const interestFreeOptions = costs
+                        .filter((c: { installment_rate: number, installments: number }) => c.installment_rate === 0)
+                        .map((c: { installment_rate: number, installments: number }) => c.installments);
+                    setAvailableInterestFree(interestFreeOptions.length > 0 ? interestFreeOptions : [1]);
+
+                    // Atualiza a config para respeitar os novos limites se o atual não estiver contido
+                    setConfig(prev => {
+                        const newConfig = { ...prev };
+                        const maxAllowed = Math.max(...(options.length > 0 ? options : [1]));
+                        const currentSelectedMax = newConfig.methods.enabled.card.maxInstallments;
+                        if (!options.includes(currentSelectedMax)) {
+                            newConfig.methods.enabled.card.maxInstallments = maxAllowed;
+                        }
+
+                        const maxInterestFree = Math.max(...(interestFreeOptions.length > 0 ? interestFreeOptions : [1]));
+                        const currentSelectedInterestFree = newConfig.methods.enabled.card.interestFree;
+                        if (!interestFreeOptions.includes(currentSelectedInterestFree)) {
+                            newConfig.methods.enabled.card.interestFree = maxInterestFree;
+                        }
+
+                        return newConfig;
+                    });
+                } else {
+                    throw new Error("Resposta inválida do SDK");
+                }
+            } catch (err: unknown) {
+                console.error("Erro ao buscar parcelas MP no Dashboard:", err);
+                setAvailableInstallments([1]);
+                setAvailableInterestFree([1]);
+                setInstallmentsError("Não foi possível carregar as opções para esta credencial. Apenas à vista estará disponível.");
+
+                // Força config a 1x se falhar
+                setConfig(prev => ({
+                    ...prev,
+                    methods: {
+                        ...prev.methods,
+                        enabled: {
+                            ...prev.methods.enabled,
+                            card: {
+                                ...prev.methods.enabled.card,
+                                maxInstallments: 1,
+                                interestFree: 1
+                            }
+                        }
+                    }
+                }));
+            } finally {
+                setIsLoadingInstallments(false);
+            }
+        };
+
+        const timer = setTimeout(fetchInstallments, 1500); // Debounce
+        return () => clearTimeout(timer);
+    }, [config.credentials.publicKey]);
+
     const handleCopy = () => {
         if (!config.webhooks.url) return;
         navigator.clipboard.writeText(config.webhooks.url);
@@ -89,9 +193,6 @@ export function MercadoPagoForm({ initialConfig, isProviderEnabled = true, onSav
     };
 
     const toggleSection = (id: string) => setActiveSection(activeSection === id ? null : id);
-
-    const isPublicKeyValid = (key: string) => !key || key.startsWith('APP_USR-') || key.startsWith('TEST-');
-    const isAccessTokenValid = (key: string) => !key || key.startsWith('APP_USR-') || key.startsWith('TEST-');
 
     return (
         <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -120,8 +221,8 @@ export function MercadoPagoForm({ initialConfig, isProviderEnabled = true, onSav
                         <input
                             type="text"
                             className={`w-full border p-3 rounded-xl font-mono focus:ring-2 outline-none transition-colors ${!isPublicKeyValid(config.credentials.publicKey)
-                                    ? 'border-red-500 bg-red-50 focus:ring-red-200'
-                                    : 'focus:ring-blue-500'
+                                ? 'border-red-500 bg-red-50 focus:ring-red-200'
+                                : 'focus:ring-blue-500'
                                 }`}
                             placeholder="APP_USR-..."
                             value={config.credentials.publicKey}
@@ -136,8 +237,8 @@ export function MercadoPagoForm({ initialConfig, isProviderEnabled = true, onSav
                         <input
                             type="password"
                             className={`w-full border p-3 rounded-xl font-mono focus:ring-2 outline-none transition-colors ${!isAccessTokenValid(config.credentials.accessToken)
-                                    ? 'border-red-500 bg-red-50 focus:ring-red-200'
-                                    : 'focus:ring-blue-500'
+                                ? 'border-red-500 bg-red-50 focus:ring-red-200'
+                                : 'focus:ring-blue-500'
                                 }`}
                             placeholder="APP_USR-..."
                             value={config.credentials.accessToken}
@@ -216,20 +317,35 @@ export function MercadoPagoForm({ initialConfig, isProviderEnabled = true, onSav
                     {config.methods.enabled.card.active && (
                         <div className="bg-gray-50 p-4 rounded-xl space-y-3 border">
                             <h5 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Configurações de Parcelamento</h5>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-medium text-gray-600 block mb-1">Máx. Parcelas</label>
-                                    <select className="w-full border p-2 rounded-lg" value={config.methods.enabled.card.maxInstallments} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, maxInstallments: Number(e.target.value) } } } })}>
-                                        {[1, 2, 3, 4, 5, 6, 10, 12].map(n => <option key={n} value={n}>{n}x</option>)}
-                                    </select>
+                            {isLoadingInstallments ? (
+                                <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    <Loader2 size={14} className="animate-spin" />
+                                    <span>Consultando opções disponíveis na sua conta Mercado Pago...</span>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-medium text-gray-600 block mb-1">Sem juros até</label>
-                                    <select className="w-full border p-2 rounded-lg" value={config.methods.enabled.card.interestFree} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, interestFree: Number(e.target.value) } } } })}>
-                                        {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}x</option>)}
-                                    </select>
+                            ) : installmentsError ? (
+                                <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                    <AlertCircle size={14} className="shrink-0" />
+                                    <span>{installmentsError}</span>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-600 block mb-1">Máx. Parcelas (Permitido MP)</label>
+                                        <select className="w-full border p-2 rounded-lg" value={config.methods.enabled.card.maxInstallments} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, maxInstallments: Number(e.target.value) } } } })}>
+                                            {availableInstallments.map(n => <option key={n} value={n}>{n}x</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-600 block mb-1">Sem juros até (Taxa 0% MP)</label>
+                                        <select className="w-full border p-2 rounded-lg" value={config.methods.enabled.card.interestFree} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, interestFree: Number(e.target.value) } } } })}>
+                                            {availableInterestFree.map(n => <option key={n} value={n}>{n}x</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+                            <p className="text-[10px] text-gray-500 italic mt-2">
+                                * Estas opções refletem dinamicamente o que o Mercado Pago libera para a Public Key informada acima.
+                            </p>
                         </div>
                     )}
                 </div>
