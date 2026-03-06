@@ -82,8 +82,82 @@ const AUTOMATION_TYPES = [
     { id: 'ORDER_CONFIRM', label: 'Confirmação de Pedido', icon: '🛍️' },
     { id: 'PASSWORD_RESET', label: 'Troca de Senha', icon: '🔑' },
     { id: 'PRODUCT_PRICE_DROP', label: 'Alerta de Preço', icon: '🏷️' },
+    { id: 'NEWSLETTER_CONFIRM', label: 'Boas-vindas Newsletter', icon: '✨' },
     { id: 'CAMPAIGN', label: 'Campanha Manual', icon: '🚀' }
 ];
+
+const DEFAULT_TEMPLATES: Record<string, { subject: string, content: string }> = {
+    USER_VERIFY: {
+        subject: 'Seu código de verificação: {{{code}}}',
+        content: `
+            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+                <h2 style="color: #0f2A44;">Olá, {{{name}}}!</h2>
+                <p>Use o código abaixo para verificar seu cadastro no Ateliê:</p>
+                <div style="background: #f7f7f4; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;">
+                    <h1 style="letter-spacing: 8px; color: #C9A24D; margin: 0;">{{{code}}}</h1>
+                </div>
+                <p style="font-size: 12px; color: #777;">O código expira em 15 minutos.</p>
+            </div>
+        `
+    },
+    ORDER_CONFIRM: {
+        subject: 'Pedido Recebido! #{{{order_id}}}',
+        content: `
+            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+                <h2 style="color: #0f2A44;">Obrigado pelo seu pedido, {{{customer_name}}}!</h2>
+                <p>Recebemos seu pedido <strong>#{{{order_id}}}</strong> e ele já está sendo processado.</p>
+                <p>Assim que o pagamento for confirmado, iniciaremos a preparação com todo carinho.</p>
+                <div style="margin-top: 30px; border-top: 1px solid #eee; pt: 20px;">
+                    <p style="font-size: 12px; color: #777;">Acompanhe o status na sua área do cliente.</p>
+                </div>
+            </div>
+        `
+    },
+    PASSWORD_RESET: {
+        subject: 'Recuperação de Senha - Ateliê Filhos de Aruanda',
+        content: `
+            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+                <h2 style="color: #0f2A44;">Olá, {{{name}}}!</h2>
+                <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
+                <p>Clique no botão abaixo para escolher uma nova senha:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{{{reset_link}}}" style="background: #C9A24D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">REDEFINIR MINHA SENHA</a>
+                </div>
+                <p style="font-size: 12px; color: #777;">Se você não solicitou isso, pode ignorar este e-mail.</p>
+            </div>
+        `
+    },
+    PRODUCT_PRICE_DROP: {
+        subject: 'O preço baixou! {{{product_name}}} com {{{discount_percentage}}}% OFF',
+        content: `
+            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+                <h2 style="color: #C9A24D;">Uma oferta que você vai amar!</h2>
+                <p>Olá! O produto que você favoritou, <strong>{{{product_name}}}</strong>, acabou de baixar de preço!</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <p style="text-decoration: line-through; color: #999; margin: 0;">De: R$ {{{old_price}}}</p>
+                    <p style="font-size: 24px; font-weight: bold; color: #C9A24D; margin: 5px 0;">Por: R$ {{{new_price}}}</p>
+                    <a href="{{{product_link}}}" style="background: #0f2A44; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin-top: 15px;">APROVEITAR AGORA</a>
+                </div>
+            </div>
+        `
+    },
+    NEWSLETTER_CONFIRM: {
+        subject: '✨ Bem-vindo ao Ateliê Filhos de Aruanda!',
+        content: `
+            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+                <h2 style="color: #0f2A44;">Seja muito bem-vindo(a)!</h2>
+                <p>É uma alegria ter você em nossa lista de novidades.</p>
+                <p>A partir de agora, você receberá em primeira mão:</p>
+                <ul style="color: #555;">
+                    <li>Lançamentos exclusivos de guias e ferramentas</li>
+                    <li>Cupons de desconto para assinantes</li>
+                    <li>Conteúdos sobre espiritualidade e arte</li>
+                </ul>
+                <p>Fique de olho na sua caixa de entrada!</p>
+            </div>
+        `
+    }
+};
 
 const SMTP_PROVIDERS = [
     { name: 'Gmail', host: 'smtp.gmail.com', port: 587 },
@@ -703,11 +777,21 @@ export default function EmailMarketingHub() {
                                                 className="w-full p-4 border-2 rounded-xl bg-gray-50 outline-none focus:border-indigo-600 font-bold text-sm text-gray-700 transition-all"
                                                 value={newTemplate.slug}
                                                 onChange={e => {
-                                                    const selected = AUTOMATION_TYPES.find(t => t.id === e.target.value);
+                                                    const typeId = e.target.value;
+                                                    const selected = AUTOMATION_TYPES.find(t => t.id === typeId);
+                                                    const defaults = DEFAULT_TEMPLATES[typeId] || { subject: '', content: '' };
+
+                                                    // Se já tiver conteúdo, avisa o usuário
+                                                    if (newTemplate.content && newTemplate.content.length > 50) {
+                                                        if (!confirm('Trocar o tipo de automação irá carregar o modelo padrão e substituir seu texto atual. Continuar?')) return;
+                                                    }
+
                                                     setNewTemplate({
                                                         ...newTemplate,
-                                                        slug: e.target.value,
-                                                        name: selected?.label || ''
+                                                        slug: typeId,
+                                                        name: selected?.label || '',
+                                                        subject: defaults.subject,
+                                                        content: defaults.content
                                                     });
                                                 }}
                                                 required

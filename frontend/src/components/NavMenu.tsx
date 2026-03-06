@@ -36,7 +36,8 @@ const NavMenu: React.FC<NavMenuProps> = ({ isMobile, closeMenu }) => {
         { name: 'Home', path: '/' },
         { name: 'Assinaturas', path: '/assinaturas' },
         { name: 'Nossa História', path: '/about' },
-        { name: 'Axé & Ética', path: '/ethics' }
+        { name: 'Axé & Ética', path: '/ethics' },
+        { name: 'Contato', path: '/contato' }
     ];
 
     if (isMobile) {

@@ -1,5 +1,5 @@
 import React, { useState, FormEvent, ChangeEvent } from 'react';
-import { Mail, Phone, MapPin, Send, MessageSquare, Instagram, Facebook } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, MessageSquare, Instagram, Youtube, Video } from 'lucide-react';
 import SEO from '../components/SEO';
 import Button from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
@@ -75,7 +75,8 @@ const ContactPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <h4 className="font-playfair text-lg text-[#0f2A44] mb-1">WhatsApp</h4>
-                                    <p className="font-lato text-sm text-gray-500">(11) 99999-9999</p>
+                                    <p className="font-lato text-sm text-gray-500">(11) 96321-2172</p>
+                                    <p className="font-lato text-sm text-gray-500">(11) 95348-2232</p>
                                 </div>
                             </div>
 
@@ -85,7 +86,7 @@ const ContactPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <h4 className="font-playfair text-lg text-[#0f2A44] mb-1">E-mail</h4>
-                                    <p className="font-lato text-sm text-gray-500">contato@ateliearuanda.com.br</p>
+                                    <p className="font-lato text-sm text-gray-500">mundodearuanda@gmail.com</p>
                                 </div>
                             </div>
 
@@ -104,11 +105,14 @@ const ContactPage: React.FC = () => {
                         <div className="pt-8 border-t border-[#0f2A44]/5">
                             <h4 className="font-lato text-[10px] uppercase tracking-[0.2em] text-[#C9A24D] mb-6">Siga-nos</h4>
                             <div className="flex gap-4">
-                                <a href="#" className="w-10 h-10 bg-white flex items-center justify-center rounded-full shadow-sm text-[#0f2A44] hover:bg-[#C9A24D] hover:text-white transition-all">
+                                <a href="https://www.instagram.com/atelie_filhosdearuanda/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white flex items-center justify-center rounded-full shadow-sm text-[#0f2A44] hover:bg-[#C9A24D] hover:text-white transition-all">
                                     <Instagram size={18} />
                                 </a>
-                                <a href="#" className="w-10 h-10 bg-white flex items-center justify-center rounded-full shadow-sm text-[#0f2A44] hover:bg-[#C9A24D] hover:text-white transition-all">
-                                    <Facebook size={18} />
+                                <a href="https://www.youtube.com/@MundodeAruanda" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white flex items-center justify-center rounded-full shadow-sm text-[#0f2A44] hover:bg-[#C9A24D] hover:text-white transition-all">
+                                    <Youtube size={18} />
+                                </a>
+                                <a href="https://www.tiktok.com/@atelie_filhos_de_aruanda" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white flex items-center justify-center rounded-full shadow-sm text-[#0f2A44] hover:bg-[#C9A24D] hover:text-white transition-all">
+                                    <Video size={18} />
                                 </a>
                             </div>
                         </div>

@@ -13,15 +13,20 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
-            PAID: 'bg-green-100 text-green-700',
-            PENDING: 'bg-yellow-100 text-yellow-700',
-            CANCELED: 'bg-red-100 text-red-700',
-            SHIPPED: 'bg-blue-100 text-blue-700',
-            DELIVERED: 'bg-indigo-100 text-indigo-700'
+            PAID: 'bg-emerald-100 text-emerald-700',
+            PENDING: 'bg-amber-100 text-amber-700',
+            CANCELED: 'bg-rose-100 text-rose-700',
+            SHIPPED: 'bg-sky-100 text-sky-700',
+            DELIVERED: 'bg-violet-100 text-violet-700'
         };
         return (
             <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${styles[status] || 'bg-gray-100 text-gray-700'}`}>
-                {status}
+                {status === 'PAID' ? 'Pago' :
+                    status === 'PENDING' ? 'Pendente' :
+                        status === 'CANCELED' ? 'Cancelado' :
+                            status === 'SHIPPED' ? 'Enviado' :
+                                status === 'DELIVERED' ? 'Entregue' :
+                                    status}
             </span>
         );
     };
@@ -44,7 +49,13 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
                     <div className="bg-gray-50 p-4 rounded-xl space-y-3">
                         <div className="flex items-center gap-2 text-gray-500">
                             <CreditCard size={16} />
-                            <span className="text-sm">Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}</span>
+                            <div className="text-sm space-y-1">
+                                <p>Produtos: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.totalAmount || 0)}</p>
+                                <p>Frete: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.shippingCost || 0)}</p>
+                                <p className="font-bold text-gray-800 border-t pt-1">
+                                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((order.totalAmount || 0) + (order.shippingCost || 0))}
+                                </p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2 text-gray-500">
                             <Tag size={16} />

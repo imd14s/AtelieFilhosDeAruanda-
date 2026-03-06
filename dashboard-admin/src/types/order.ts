@@ -2,6 +2,8 @@ export interface Order {
   id: string;
   customerName: string;
   total: number;
+  totalAmount: number;
+  shippingCost: number;
   status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELED';
   createdAt: string;
   labelUrlMe?: string;

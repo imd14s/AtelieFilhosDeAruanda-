@@ -14,8 +14,8 @@ const AboutPage: React.FC = () => {
             <section className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-[#0f2A44]">
                 <div className="absolute inset-0 opacity-40">
                     <img
-                        src="https://images.unsplash.com/photo-1605141162547-dec9eec1e075?q=80&w=2070&auto=format&fit=crop"
-                        alt="Artesanato"
+                        src="/images/wallpaper.jpg"
+                        alt="Artesanato Umbanda"
                         className="w-full h-full object-cover"
                     />
                 </div>
@@ -28,21 +28,42 @@ const AboutPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* Manifesto */}
-            <section className="py-24 px-4 bg-white border-b border-[#0f2A44]/5">
-                <div className="max-w-4xl mx-auto text-center">
-                    <Sparkles className="text-[#C9A24D] mx-auto mb-8" size={32} />
-                    <h2 className="font-playfair text-4xl text-[#0f2A44] mb-12">Mais que uma loja, um elo de fé.</h2>
-                    <div className="space-y-8 font-lato text-gray-600 leading-loose text-lg text-left md:text-center">
-                        <p>
-                            O Ateliê Filhos de Aruanda nasceu no coração do Axé, da necessidade de encontrar artigos religiosos que unissem o respeito às tradições com um acabamento impecável e artesanal.
-                        </p>
-                        <p>
-                            Não acreditamos em produção em massa. Acreditamos que cada guia, cada vela e cada peça de decoração carrega uma energia única. Por isso, nossas mãos são nosso principal instrumento, e a devoção é nossa matéria-prima.
-                        </p>
-                        <p>
-                            Cada detalhe é pensado para que, ao receber o seu produto, você sinta a vibração e o carinho com que ele foi confeccionado. É o nosso axé chegando até a sua casa.
-                        </p>
+            {/* História (Manifesto) */}
+            <section className="py-24 px-4 bg-[#F7F7F4]">
+                <div className="max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+                        {/* Text */}
+                        <div>
+                            <h2 className="font-playfair text-4xl text-[#0f2A44] mb-8">Trabalho de Fé e Amor</h2>
+                            <div className="space-y-6 font-lato text-gray-600 leading-relaxed text-lg">
+                                <p>
+                                    Ateliê Filhos de Aruanda nasceu do encontro de duas almas gêmeas unidas pelo amor, pela fé e pelo respeito à espiritualidade. Mais do que uma loja, somos um espaço criado com propósito, axé e cuidado em cada detalhe.
+                                </p>
+                                <p>
+                                    Acreditamos na Umbanda como caminho de luz, caridade e evolução espiritual. Por isso, cada produto é escolhido e preparado com carinho, respeito às tradições e intenção positiva, para apoiar sua caminhada espiritual com verdade e consciência.
+                                </p>
+                                <p>
+                                    Nosso compromisso é oferecer artigos que conectem corpo, mente e espírito, sempre prezando pela ética, pela simplicidade e pelo acolhimento. Aqui, cada cliente é recebido como parte da nossa corrente de fé.
+                                </p>
+                                <p>
+                                    Que este espaço seja um ponto de encontro com a paz, a proteção e o amor de Aruanda.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Image */}
+                        <div className="relative mt-8 lg:mt-0 lg:ml-8">
+                            <img
+                                src="/images/art.jpg"
+                                alt="Círculo de Guias Espirituais"
+                                className="w-full h-auto object-cover shadow-xl max-h-[600px]"
+                            />
+                            {/* Decorative Box */}
+                            <div className="absolute -bottom-6 -left-6 lg:-bottom-12 lg:-left-12 bg-[#0f2A44] p-8 shadow-2xl max-w-xs z-10 hidden sm:block">
+                                <Sparkles className="text-[#C9A24D] mb-4" size={24} />
+                                <p className="font-playfair italic text-white text-xl">"Cada guia é uma oração."</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -89,8 +110,8 @@ const AboutPage: React.FC = () => {
             {/* Imagem de Rodapé */}
             <section className="h-96 w-full overflow-hidden">
                 <img
-                    src="https://images.unsplash.com/photo-1594911772125-07fc7a2d8d9b?q=80&w=2070&auto=format&fit=crop"
-                    alt="Footer Background"
+                    src="/images/about/footer_ocean_sunset_1772830663230.png"
+                    alt="Footer Background Ocean Sunset"
                     className="w-full h-full object-cover"
                 />
             </section>

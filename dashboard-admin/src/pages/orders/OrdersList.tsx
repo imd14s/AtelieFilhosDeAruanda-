@@ -120,13 +120,13 @@ export function OrdersPage() {
                     <table className="w-full text-left min-w-[600px]">
                         <thead className="bg-gray-50 border-b">
                             <tr>
-                                <th className="p-4 text-sm font-semibold text-gray-600">ID</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Cliente</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Total</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Documentos</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600">Data</th>
-                                <th className="p-4 text-sm font-semibold text-gray-600 text-right">Ações</th>
+                                <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">ID</th>
+                                <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Cliente</th>
+                                <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Total</th>
+                                <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                                <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Documentos</th>
+                                <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Data</th>
+                                <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -163,17 +163,22 @@ export function OrdersPage() {
                                         <td className="p-4 font-mono text-xs text-gray-500">#{order.id}</td>
                                         <td className="p-4 font-medium text-gray-800">{order.customerName}</td>
                                         <td className="p-4 text-gray-600">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((order.totalAmount || 0) + (order.shippingCost || 0))}
                                         </td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-100 text-green-700' :
-                                                order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                                                    order.status === 'CANCELED' ? 'bg-red-100 text-red-700' :
-                                                        order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-700' :
-                                                            order.status === 'DELIVERED' ? 'bg-indigo-100 text-indigo-700' :
-                                                                'bg-gray-100 text-gray-700'
+                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${order.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' :
+                                                order.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                                                    order.status === 'CANCELED' ? 'bg-rose-100 text-rose-700' :
+                                                        order.status === 'SHIPPED' ? 'bg-sky-100 text-sky-700' :
+                                                            order.status === 'DELIVERED' ? 'bg-violet-100 text-violet-700' :
+                                                                'bg-slate-100 text-slate-700'
                                                 }`}>
-                                                {order.status}
+                                                {order.status === 'PAID' ? 'Pago' :
+                                                    order.status === 'PENDING' ? 'Pendente' :
+                                                        order.status === 'CANCELED' ? 'Cancelado' :
+                                                            order.status === 'SHIPPED' ? 'Enviado' :
+                                                                order.status === 'DELIVERED' ? 'Entregue' :
+                                                                    order.status}
                                             </span>
                                         </td>
                                         <td className="p-4">
@@ -206,7 +211,7 @@ export function OrdersPage() {
                                             </div>
                                         </td>
                                         <td className="p-4 text-sm text-gray-500">
-                                            {new Date(order.createdAt).toLocaleDateString()}
+                                            {new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                         </td>
                                         <td className="p-4 text-right flex justify-end gap-2">
                                             {order.status === 'PENDING' && (
