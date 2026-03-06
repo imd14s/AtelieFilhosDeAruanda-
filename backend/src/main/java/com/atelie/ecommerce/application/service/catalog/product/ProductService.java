@@ -14,8 +14,10 @@ import com.atelie.ecommerce.application.service.ai.GeminiIntegrationService;
 import com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity;
 import com.atelie.ecommerce.infrastructure.persistence.integration.repository.MarketplaceIntegrationRepository;
 import com.atelie.ecommerce.infrastructure.service.media.CloudinaryService;
-import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.StockMovementEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.StockMovementRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
+import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -25,12 +27,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import lombok.extern.slf4j.Slf4j;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import lombok.extern.slf4j.Slf4j;
 import java.util.*;
@@ -53,6 +49,7 @@ public class ProductService {
     private final MarketplaceIntegrationRepository marketplaceRepository;
     private final GeminiIntegrationService geminiIntegrationService;
     private final CloudinaryService cloudinaryService;
+    private final StockMovementRepository stockMovementRepository;
 
     public ProductService(ProductRepository productRepository,
             CategoryRepository categoryRepository,
@@ -64,7 +61,8 @@ public class ProductService {
             MarketplaceIntegrationFactory marketplaceFactory,
             MarketplaceIntegrationRepository marketplaceRepository,
             GeminiIntegrationService geminiIntegrationService,
-            CloudinaryService cloudinaryService) {
+            CloudinaryService cloudinaryService,
+            StockMovementRepository stockMovementRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.variantRepository = variantRepository;
@@ -76,6 +74,7 @@ public class ProductService {
         this.marketplaceRepository = marketplaceRepository;
         this.geminiIntegrationService = geminiIntegrationService;
         this.cloudinaryService = cloudinaryService;
+        this.stockMovementRepository = stockMovementRepository;
     }
 
     @Cacheable(value = "products", key = "#id")
@@ -103,11 +102,26 @@ public class ProductService {
         sanitizeAndMapEntityImages(product, variants, cidMap);
         handleMarketplaces(product);
 
+        // Se for novo e não tiver variantes, garante estoque >= 0
+        if (isNew && product.getStockQuantity() != null && product.getStockQuantity() < 0) {
+            throw new IllegalArgumentException("Estoque não pode ser negativo");
+        }
+
         ProductEntity saved = productRepository.save(product);
         saveOrUpdateVariants(saved, variants, isNew);
 
+        // Sincroniza estoque pai e grava log inicial se necessário
+        updateParentStockFromVariants(saved);
+        productRepository.save(saved);
+
         eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), isNew));
         syncMarketplaces(saved);
+
+        if (isNew) {
+            recordStockMovement(saved.getId(), null, saved.getStockQuantity(), saved.getStockQuantity(), "INITIAL_LOAD",
+                    "Produto criado");
+        }
+
         return saved;
     }
 
@@ -115,7 +129,11 @@ public class ProductService {
     @Transactional
     public ProductEntity updateProduct(UUID id, ProductEntity details, List<ProductVariantEntity> variants,
             MultipartFile[] images) {
-        ProductEntity existing = findById(id);
+        // Usa LOCK PESSIMISTA para evitar condições de corrida no estoque
+        ProductEntity existing = productRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new NotFoundException("Produto não encontrado: " + id));
+
+        int oldStock = existing.getStockQuantity() != null ? existing.getStockQuantity() : 0;
         Set<String> oldUrls = collectAllImageUrls(existing);
         Set<ServiceProviderEntity> oldMarketplaces = new HashSet<>(existing.getMarketplaces());
 
@@ -125,7 +143,6 @@ public class ProductService {
         existing.setName(details.getName());
         existing.setDescription(details.getDescription());
         existing.setPrice(details.getPrice());
-        existing.setStockQuantity(details.getStockQuantity());
         existing.setWeight(details.getWeight());
         existing.setHeight(details.getHeight());
         existing.setWidth(details.getWidth());
@@ -146,7 +163,17 @@ public class ProductService {
 
         if (variants != null) {
             updateVariants(existing, variants);
+        } else {
+            // Se não houver variantes na request, atualiza o estoque direto (se fornecido)
+            if (details.getStockQuantity() != null) {
+                if (details.getStockQuantity() < 0)
+                    throw new IllegalArgumentException("Estoque negativo proibido");
+                existing.setStockQuantity(details.getStockQuantity());
+            }
         }
+
+        // Sincroniza estoque pai a partir das variantes (se houver)
+        updateParentStockFromVariants(existing);
 
         Set<String> newUrls = collectAllImageUrls(existing);
         oldUrls.stream()
@@ -156,9 +183,14 @@ public class ProductService {
         existing.setUpdatedAt(LocalDateTime.now());
         ProductEntity saved = productRepository.save(existing);
 
-        eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), false));
+        // Auditoria
+        int newStock = saved.getStockQuantity() != null ? saved.getStockQuantity() : 0;
+        if (oldStock != newStock) {
+            recordStockMovement(saved.getId(), null, newStock - oldStock, newStock, "ADJUSTMENT",
+                    "Atualização manual via dashboard");
+        }
 
-        // Sincroniza adições (envia para novos) e deleções (remove dos velhos)
+        eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), false));
         handleRemovedMarketplaces(oldMarketplaces, saved);
         syncMarketplaces(saved);
 
@@ -282,6 +314,11 @@ public class ProductService {
                 if (variant.getPrice() == null || variant.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
                     variant.setPrice(saved.getPrice());
                 }
+                if (variant.getStockQuantity() == null)
+                    variant.setStockQuantity(0);
+                if (variant.getStockQuantity() < 0)
+                    throw new IllegalArgumentException("Estoque de variante negativo");
+
                 variantRepository.save(variant);
             }
         } else if (isNew) {
@@ -369,11 +406,15 @@ public class ProductService {
         for (ProductVariantEntity v : newVariants) {
             if (v.getId() != null && existingMap.containsKey(v.getId())) {
                 ProductVariantEntity existingVariant = existingMap.get(v.getId());
+
+                int oldVStock = existingVariant.getStockQuantity() != null ? existingVariant.getStockQuantity() : 0;
+                int newVStock = v.getStockQuantity() != null ? v.getStockQuantity() : 0;
+
                 existingVariant.setSku(v.getSku());
                 existingVariant.setPrice(
                         (v.getPrice() == null || v.getPrice().compareTo(BigDecimal.ZERO) <= 0) ? existing.getPrice()
                                 : v.getPrice());
-                existingVariant.setStockQuantity(v.getStockQuantity());
+                existingVariant.setStockQuantity(newVStock);
                 existingVariant.setAttributesJson(v.getAttributesJson());
                 existingVariant.setImageUrl(v.getImageUrl());
                 existingVariant.setOriginalPrice(v.getOriginalPrice());
@@ -382,6 +423,11 @@ public class ProductService {
                 existingVariant.setActive(v.getActive());
                 existingVariant.setUpdatedAt(LocalDateTime.now());
                 toKeep.add(existingVariant);
+
+                if (oldVStock != newVStock) {
+                    recordStockMovement(existing.getId(), v.getId(), newVStock - oldVStock, newVStock, "ADJUSTMENT",
+                            "Ajuste de variante manual");
+                }
             } else {
                 v.setProduct(existing);
                 if (v.getId() == null)
@@ -401,6 +447,9 @@ public class ProductService {
                 if (v.getPrice() == null || v.getPrice().compareTo(BigDecimal.ZERO) <= 0)
                     v.setPrice(existing.getPrice());
                 toAdd.add(v);
+
+                recordStockMovement(existing.getId(), v.getId(), v.getStockQuantity(), v.getStockQuantity(),
+                        "ADJUSTMENT", "Nova variante adicionada");
             }
         }
 
@@ -456,6 +505,30 @@ public class ProductService {
             } catch (Exception e) {
                 log.error("Error syncing to marketplace {}", provider.getCode(), e);
             }
+        }
+    }
+
+    private void recordStockMovement(UUID productId, UUID variantId, Integer change, Integer result, String type,
+            String reason) {
+        StockMovementEntity movement = StockMovementEntity.builder()
+                .productId(productId)
+                .variantId(variantId)
+                .quantityChange(change)
+                .resultingStock(result)
+                .movementType(type)
+                .reason(reason)
+                .createdBy("SYSTEM_ADMIN")
+                .build();
+        stockMovementRepository.save(movement);
+    }
+
+    private void updateParentStockFromVariants(ProductEntity product) {
+        if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+            int totalStock = product.getVariants().stream()
+                    .filter(v -> v.getActive() != null && v.getActive())
+                    .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
+                    .sum();
+            product.setStockQuantity(totalStock);
         }
     }
 }

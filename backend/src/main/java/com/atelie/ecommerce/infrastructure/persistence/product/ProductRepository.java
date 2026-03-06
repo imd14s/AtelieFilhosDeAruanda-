@@ -10,8 +10,16 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
+
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
+
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("SELECT p FROM ProductEntity p WHERE p.id = :id")
+        Optional<ProductEntity> findByIdWithLock(@org.springframework.data.repository.query.Param("id") UUID id);
 
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "marketplaces", "images" })
         Page<ProductEntity> findByActiveTrue(Pageable pageable);
