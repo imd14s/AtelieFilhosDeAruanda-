@@ -18,13 +18,17 @@ export const orderService = {
                     variantId: i.variantId || null,
                     quantity: i.quantity
                 })),
-                shippingAddress: orderData.shippingAddress,
+                shipping: {
+                    ...(typeof orderData.shippingAddress === 'object' ? orderData.shippingAddress : {}),
+                    ...(orderData.shipping || {})
+                },
                 paymentMethod: orderData.paymentMethod || 'pix',
                 paymentToken: orderData.paymentToken || null,
                 cardId: orderData.cardId || null,
                 saveCard: orderData.saveCard || false,
                 saveAddress: orderData.saveAddress || false,
-                couponCode: orderData.couponCode || null
+                couponCode: orderData.couponCode || null,
+                userId: orderData.userId || null
             };
 
             const response = await api.post('/checkout/process', payload, {

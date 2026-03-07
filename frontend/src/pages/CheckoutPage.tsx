@@ -467,18 +467,16 @@ const CheckoutPage: React.FC = () => {
                     neighborhood: formData.bairro,
                     complement: formData.complemento
                 },
-                // @ts-ignore - Estendendo se o backend usar 'shipping' opcionalmente
                 shipping: {
                     service: currentShipping?.provider,
                     price: currentShipping?.price
                 },
                 paymentMethod: formData.metodoPagamento,
-                couponCode: appliedCoupon?.code,
-                saveAddress: formData.saveAddress,
                 saveCard: formData.saveCard,
-                // @ts-ignore
+                couponCode: appliedCoupon?.code,
+                userId: userId,
+                saveAddress: formData.saveAddress,
                 documentType: formData.tipoDocumento,
-                // @ts-ignore
                 documentNumber: formData.documento
             };
 
@@ -744,7 +742,7 @@ const CheckoutPage: React.FC = () => {
                                         />
                                     </div>
                                     {user.id && (
-                                        <label className="md:col-span-2 flex items-center gap-2 cursor-pointer">
+                                        <label className="md:col-span-12 flex items-center gap-2 cursor-pointer mt-4">
                                             <input
                                                 type="checkbox"
                                                 checked={formData.saveAddress}
@@ -1017,10 +1015,10 @@ const CheckoutPage: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {user.id && effectivePixDiscountPercent > 0 && (
+                                    {user.id && effectivePixDiscountPercent > 0 && formData.metodoPagamento === 'pix' && (
                                         <div className="flex justify-between text-green-600 font-lato text-xs font-bold">
                                             <span>Desconto Pix ({effectivePixDiscountPercent}%)</span>
-                                            <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal * (effectivePixDiscountPercent / 100))}</span>
+                                            <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pixDiscount)}</span>
                                         </div>
                                     )}
 
@@ -1057,7 +1055,7 @@ const CheckoutPage: React.FC = () => {
                                         onClick={() => window.dispatchEvent(new CustomEvent('open-auth-modal'))}
                                         className="w-full bg-[var(--dourado-suave)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--azul-profundo)] transition-all flex items-center justify-center gap-3 shadow-lg"
                                     >
-                                        Identifique-se para finalizar
+                                        Entrar para Finalizar Pedido
                                     </button>
                                 ) : (
                                     <button
@@ -1078,11 +1076,11 @@ const CheckoutPage: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="flex flex-col items-center gap-4 opacity-40">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-8 h-8 rounded bg-gray-200" />
-                                    <div className="w-8 h-8 rounded bg-gray-200" />
-                                    <div className="w-8 h-8 rounded bg-gray-200" />
+                            <div className="flex flex-col items-center gap-4 opacity-40 grayscale">
+                                <div className="flex items-center gap-6">
+                                    <img src="/images/visa.svg" alt="Visa" className="h-2.5" />
+                                    <img src="/images/mastercard.svg" alt="Mastercard" className="h-5" />
+                                    <img src="/images/pix.svg" alt="Pix" className="h-3" />
                                 </div>
                                 <p className="font-lato text-[10px] uppercase tracking-widest">Pagamento 100% Seguro</p>
                             </div>

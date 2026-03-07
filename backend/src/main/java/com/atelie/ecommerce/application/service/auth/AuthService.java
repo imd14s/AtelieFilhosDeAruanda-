@@ -118,7 +118,7 @@ public class AuthService {
         communicationService.sendAutomation(
                 AutomationType.USER_VERIFY,
                 request.getEmail(),
-                Map.of("code", code));
+                Map.of("code", code, "name", request.getName()));
     }
 
     @Transactional

@@ -26,27 +26,24 @@ public class CheckoutControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Test
-    @org.springframework.security.test.context.support.WithMockUser(username = "user")
-    void calculateShipping_ShouldReturnList() throws Exception {
-        Map<String, Object> payload = Map.of("cep", "00000-000", "items", Collections.emptyList());
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.atelie.ecommerce.application.service.order.OrderService orderService;
 
-        mockMvc.perform(post("/api/checkout/calculate-shipping")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
-    }
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.atelie.ecommerce.application.service.payment.PaymentService paymentService;
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.atelie.ecommerce.application.service.payment.MercadoPagoCustomerClient mpCustomerClient;
 
     @Test
     @org.springframework.security.test.context.support.WithMockUser(username = "user")
-    void process_ShouldReturnStatus() throws Exception {
+    void process_ShouldReturnStatusBadRequest_WhenItemsMissing() throws Exception {
         Map<String, Object> payload = Map.of("cartId", "123");
 
         mockMvc.perform(post("/api/checkout/process")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").exists());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
     }
 }

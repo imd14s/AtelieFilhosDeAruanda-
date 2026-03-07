@@ -68,17 +68,11 @@ public class RealProductCreateIntegrationTest {
                     "media": [
                         { "url": "http://img.com/1.jpg", "type": "IMAGE", "isMain": true }
                     ],
-                    "dimensions": {
-                        "weight": 100,
-                        "width": 10,
-                        "height": 10,
-                        "length": 10
-                    },
-                    "seo": {
-                        "slug": "produto-teste-frontend",
-                        "title": "SEO Title",
-                        "tags": ["tag1", "tag2"]
-                    }
+                    "weight": 1.0,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "length": 10.0,
+                    "marketplaceIds": []
                 }
                 """.formatted(categoryId.toString());
 

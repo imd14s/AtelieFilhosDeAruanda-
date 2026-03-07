@@ -63,6 +63,7 @@ const SavedCardsPage: React.FC = () => {
                                 cardholderName: { id: 'mp-cardholder-name' },
                                 identificationType: { id: 'mp-identification-type' },
                                 identificationNumber: { id: 'mp-identification-number' },
+                                cardholderEmail: { id: 'mp-cardholder-email' },
                             },
                             callbacks: {
                                 onFormMounted: (error: any) => {
@@ -214,6 +215,7 @@ const SavedCardsPage: React.FC = () => {
                             </div>
                         ) : (
                             <form id="mp-card-form" onSubmit={handleFormSubmit} className="space-y-6">
+                                <input type="hidden" id="mp-cardholder-email" value={user.email} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="md:col-span-2">
                                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Número do Cartão</label>

@@ -133,6 +133,19 @@ public class MercadoPagoCustomerClient {
     }
 
     /**
+     * Busca o usuário pelo e-mail e salva o cartão tokenizado,
+     * garantindo que a API não precise lidar com UserEntity/UserRepository.
+     */
+    public void saveCardByEmail(String email, String cardToken) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String customerId = getOrCreateCustomerId(user);
+            if (customerId != null) {
+                saveCard(customerId, cardToken);
+            }
+        });
+    }
+
+    /**
      * Remove um cartão salvo do Customer.
      */
     public void deleteCard(String customerId, String cardId) {

@@ -13,16 +13,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.atelie.ecommerce.application.service.payment.MercadoPagoCustomerClient;
+
 @RestController
 @RequestMapping("/api/checkout")
 public class CheckoutController {
 
         private final OrderService orderService;
         private final PaymentService paymentService;
+        private final MercadoPagoCustomerClient mpCustomerClient;
 
-        public CheckoutController(OrderService orderService, PaymentService paymentService) {
+        public CheckoutController(OrderService orderService, PaymentService paymentService,
+                        MercadoPagoCustomerClient mpCustomerClient) {
                 this.orderService = orderService;
                 this.paymentService = paymentService;
+                this.mpCustomerClient = mpCustomerClient;
         }
 
         @PostMapping("/process")
@@ -36,6 +41,10 @@ public class CheckoutController {
 
                 // 2. Extrair itens
                 List<Map<String, Object>> itemsRaw = (List<Map<String, Object>>) payload.get("items");
+                if (itemsRaw == null || itemsRaw.isEmpty()) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "O pedido não possui itens válidos."));
+                }
+                
                 List<CreateOrderItemRequest> items = itemsRaw.stream().map(item -> new CreateOrderItemRequest(
                                 java.util.UUID.fromString((String) item.get("productId")),
                                 item.get("variantId") != null
@@ -64,13 +73,17 @@ public class CheckoutController {
                 }
 
                 // 4. Criar o pedido (Status PENDING)
+                String userIdStr = (String) payload.get("userId");
+                java.util.UUID userId = userIdStr != null ? java.util.UUID.fromString(userIdStr) : null;
+
                 CreateOrderRequest orderRequest = new CreateOrderRequest(
                                 "STOREFRONT",
                                 null,
                                 customerName,
                                 customerEmail,
                                 items,
-                                street, number, complement, neighborhood, city, state, zip, cost, provider);
+                                street, number, complement, neighborhood, city, state, zip, cost, provider,
+                                userId);
 
                 OrderEntity order = orderService.createOrder(orderRequest);
 
@@ -88,6 +101,16 @@ public class CheckoutController {
                                 cardId,
                                 installments,
                                 issuerId);
+
+                // 5.5. Salvar cartão se solicitado
+                Boolean saveCard = (Boolean) payload.getOrDefault("saveCard", false);
+                if (Boolean.TRUE.equals(saveCard) && paymentToken != null && customerEmail != null && "card".equals(paymentMethodId)) {
+                        try {
+                                mpCustomerClient.saveCardByEmail(customerEmail, paymentToken);
+                        } catch (Exception e) {
+                                org.slf4j.LoggerFactory.getLogger(CheckoutController.class).error("Erro ao salvar cartão durante checkout", e);
+                        }
+                }
 
                 // 6. Retornar dados combinados
                 return ResponseEntity.ok(Map.of(

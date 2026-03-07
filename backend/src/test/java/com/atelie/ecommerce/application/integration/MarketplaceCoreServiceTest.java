@@ -84,6 +84,7 @@ class MarketplaceCoreServiceTest {
         String expectedUrl = "https://auth.tiktok-shop.com/authorize?app_key=TT123&state=" + integrationId.toString();
 
         MarketplaceIntegrationEntity integration = new MarketplaceIntegrationEntity(provider, false);
+        org.springframework.test.util.ReflectionTestUtils.setField(integration, "id", integrationId);
         integration.setEncryptedCredentials("encrypted_creds");
 
         Map<String, String> decryptedCreds = Map.of("appId", "TT123", "appSecret", "secret");
@@ -112,6 +113,7 @@ class MarketplaceCoreServiceTest {
         String state = integrationId.toString();
 
         MarketplaceIntegrationEntity integration = new MarketplaceIntegrationEntity(provider, false);
+        org.springframework.test.util.ReflectionTestUtils.setField(integration, "id", integrationId);
         integration.setEncryptedCredentials("encrypted_creds");
 
         Map<String, String> decryptedCreds = Map.of("appId", "ML123", "clientSecret", "secret");

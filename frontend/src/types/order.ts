@@ -26,6 +26,7 @@ export interface CreateOrderData {
     nome?: string;
     sobrenome?: string;
     email?: string;
+    userId?: string;
     items: OrderItem[];
     shippingAddress: Address | string;
     paymentMethod: string;
@@ -34,6 +35,12 @@ export interface CreateOrderData {
     saveCard?: boolean;
     saveAddress?: boolean;
     couponCode?: string | null;
+    shipping?: {
+        service?: string;
+        price?: number;
+    };
+    documentType?: string;
+    documentNumber?: string;
 }
 
 export interface ShippingOption {

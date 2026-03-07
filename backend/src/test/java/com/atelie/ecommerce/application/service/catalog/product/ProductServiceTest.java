@@ -7,6 +7,7 @@ import com.atelie.ecommerce.infrastructure.persistence.category.CategoryReposito
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
+import com.atelie.ecommerce.infrastructure.persistence.product.StockMovementRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +47,9 @@ class ProductServiceTest {
 
     @Mock
     private ServiceProviderJpaRepository providerRepository;
+
+    @Mock
+    private StockMovementRepository stockMovementRepository;
 
     @InjectMocks
     private ProductService productService;
@@ -100,7 +104,7 @@ class ProductServiceTest {
         updates.setPrice(BigDecimal.valueOf(99.90));
         updates.setStockQuantity(10);
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(existing));
+        when(productRepository.findByIdWithLock(productId)).thenReturn(Optional.of(existing));
         when(productRepository.save(existing)).thenReturn(existing);
 
         // Act
@@ -123,7 +127,7 @@ class ProductServiceTest {
         UUID productId = UUID.randomUUID();
         ProductEntity updates = new ProductEntity();
 
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+        when(productRepository.findByIdWithLock(productId)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(NotFoundException.class, () -> productService.updateProduct(productId, updates));

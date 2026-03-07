@@ -24,5 +24,6 @@ public record CreateOrderRequest(
                 String shippingState,
                 String shippingZipCode,
                 java.math.BigDecimal shippingCost,
-                String shippingProvider) {
+                String shippingProvider,
+                java.util.UUID userId) {
 }

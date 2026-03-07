@@ -5,9 +5,9 @@ echo "🛡️  [Push Guard] Iniciando validação rigorosa do ecossistema antes 
 # 1. Backend Validation
 echo "☕ Verificando Backend (Compilação e Testes Arquiteturais)..."
 cd backend
-# Executa os testes de arquitetura requeridos pela CI em vez de apenas compilar
-if ! mvn clean test -Dtest=ArchitectureTest; then
-  echo "❌ Erro no Backend! Testes de arquitetura ou compilação falharam. Push cancelado."
+# Executa os testes do backend
+if ! mvn clean test; then
+  echo "❌ Erro no Backend! Testes ou compilação falharam. Push cancelado."
   exit 1
 fi
 cd ..

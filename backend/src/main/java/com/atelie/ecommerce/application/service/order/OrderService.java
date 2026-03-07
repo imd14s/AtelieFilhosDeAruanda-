@@ -32,6 +32,7 @@ import java.util.UUID;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
     private final InventoryService inventoryService;
@@ -41,6 +42,7 @@ public class OrderService {
     private final ShippingAutomationService shippingAutomationService;
 
     public OrderService(OrderRepository orderRepository,
+            com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository userRepository,
             ProductRepository productRepository,
             ProductVariantRepository variantRepository,
             InventoryService inventoryService,
@@ -49,6 +51,7 @@ public class OrderService {
             InvoiceService invoiceService,
             ShippingAutomationService shippingAutomationService) {
         this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.inventoryService = inventoryService;
@@ -166,6 +169,10 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING.name());
         order.setCreatedAt(Instant.now());
 
+        if (request.userId() != null) {
+            userRepository.findById(request.userId()).ifPresent(order::setUser);
+        }
+
         List<OrderItemEntity> items = new ArrayList<>();
         BigDecimal totalOrder = BigDecimal.ZERO;
 
@@ -266,12 +273,21 @@ public class OrderService {
 
         // Send confirmation email
         if (order.getCustomerEmail() != null) {
+            String productNames = order.getItems().stream()
+                    .map(item -> item.getProduct() != null ? item.getProduct().getName() : "Produto Excluído")
+                    .collect(java.util.stream.Collectors.joining(", "));
+
+            String formattedTotal = order.getTotalAmount() != null ? String.format("R$ %.2f", order.getTotalAmount()) : "R$ 0,00";
+
             communicationService.sendAutomation(
                     AutomationType.ORDER_CONFIRM,
                     order.getCustomerEmail(),
                     Map.of(
                             "customer_name", order.getCustomerName(),
-                            "order_id", order.getExternalId()));
+                            "name", order.getCustomerName(),
+                            "order_id", order.getExternalId(),
+                            "product_name", productNames,
+                            "total_amount", formattedTotal));
         }
 
         // Trigger automatisations

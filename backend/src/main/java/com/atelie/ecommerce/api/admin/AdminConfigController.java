@@ -34,7 +34,7 @@ public class AdminConfigController {
         }
         service.upsert(dto.getConfigKey(), dto.getConfigValue());
         eventPublisher.publishEvent(new EntityChangedEvent(this, "SYSTEM_CONFIG"));
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{key}")

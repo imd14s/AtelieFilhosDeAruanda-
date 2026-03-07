@@ -3,6 +3,11 @@ package com.atelie.ecommerce.api.marketing;
 import com.atelie.ecommerce.domain.marketing.model.NewsletterSubscriber;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.NewsletterSubscriberRepository;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailQueueRepository;
+import com.atelie.ecommerce.domain.marketing.model.AutomationType;
+import com.atelie.ecommerce.domain.marketing.model.EmailTemplate;
+import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
+import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
+import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailTemplateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,10 +38,36 @@ public class NewsletterControllerIntegrationTest {
     @Autowired
     private EmailQueueRepository emailQueueRepository;
 
+    @Autowired
+    private EmailTemplateRepository emailTemplateRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
     @BeforeEach
     void setUp() {
-        repository.deleteAll();
         emailQueueRepository.deleteAll();
+        repository.deleteAll();
+        emailTemplateRepository.deleteAll();
+        userRepository.deleteAll();
+
+        // Seed a user
+        UserEntity user = new UserEntity();
+        user.setEmail("test@example.com");
+        user.setName("Test User");
+        user.setPassword("password");
+        userRepository.save(user);
+
+        // Seed a template
+        EmailTemplate template = EmailTemplate.builder()
+                .slug("NEWSLETTER_CONFIRM")
+                .name("Newsletter Confirmation")
+                .subject("Bem-vindo!")
+                .content("Obrigado por se inscrever, {{name}}!")
+                .automationType(AutomationType.NEWSLETTER_CONFIRM)
+                .isActive(true)
+                .build();
+        emailTemplateRepository.save(template);
     }
 
     @Test

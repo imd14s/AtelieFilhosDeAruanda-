@@ -69,6 +69,7 @@ public class PriceDropNotificationService {
         context.put("product_link",
                 frontendUrl + "/produto/" + (product.getSlug() != null ? product.getSlug() : product.getId()));
         context.put("customer_name", "Cliente"); // Placeholder genérico para campanhas em massa
+        context.put("name", "Cliente");
 
         // Realizar substituição manual para o subject (o content será substituído no
         // loop da campanha se usássemos placeholders lá, mas passamos pronto aqui)

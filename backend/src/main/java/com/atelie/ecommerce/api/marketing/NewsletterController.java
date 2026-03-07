@@ -60,10 +60,12 @@ public class NewsletterController {
 
         try {
             // 1. Sincronizar na entidade User
-            userRepository.findByEmail(email).ifPresent(user -> {
+            UserEntity user = userRepository.findByEmail(email).orElse(null);
+            String subscriberName = user != null ? user.getName() : "Inscrito";
+            if (user != null) {
                 user.setSubscribedNewsletter(true);
                 userRepository.save(user);
-            });
+            }
 
             // 2. Garantir registro no NewsletterSubscriber para compatibilidade de
             // campanhas
@@ -83,7 +85,7 @@ public class NewsletterController {
                 communicationService.sendAutomation(
                         AutomationType.NEWSLETTER_CONFIRM,
                         email,
-                        Map.of("email", email));
+                        Map.of("email", email, "name", subscriberName));
             } catch (Exception e) {
                 log.error("Erro ao enviar e-mail de boas-vindas: {}", e.getMessage());
             }

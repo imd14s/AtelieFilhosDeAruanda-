@@ -56,6 +56,9 @@ class OrderControllerIntegrationTest {
         private InventoryRepository inventoryRepository;
 
         @Autowired
+        private com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository userRepository;
+
+        @Autowired
         private ObjectMapper objectMapper;
 
         private ProductEntity product;
@@ -111,7 +114,7 @@ class OrderControllerIntegrationTest {
                                 List.of(itemReq),
                                 "Rua A", "123", null, "Centro",
                                 "São Paulo", "SP", "01000-000",
-                                new BigDecimal("15.00"), "correios");
+                                new BigDecimal("15.00"), "correios", null);
 
                 mockMvc.perform(post("/api/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -128,6 +131,34 @@ class OrderControllerIntegrationTest {
                 // Verify Inventory Deduction
                 int stock = inventoryRepository.auditCalculatedStockByVariant(variant.getId());
                 assertThat(stock).isEqualTo(8); // 10 - 2
+        }
+
+        @Test
+        @WithMockUser
+        void createOrder_WithUserId_ShouldAssociateUser() throws Exception {
+                // 1. Criar um usuário de teste
+                var user = new com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity(
+                                "Test User", "test@user.com", "pass", "CUSTOMER");
+                user = userRepository.save(user);
+
+                CreateOrderItemRequest itemReq = new CreateOrderItemRequest(product.getId(), variant.getId(), 1);
+                CreateOrderRequest request = new CreateOrderRequest(
+                                "SITE", "EXT-002", "Test User", "test@user.com",
+                                List.of(itemReq), null, null, null, null, null, null, null, BigDecimal.ZERO, null,
+                                user.getId());
+
+                mockMvc.perform(post("/api/orders")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated());
+
+                List<OrderEntity> orders = orderRepository.findAll();
+                OrderEntity order = orders.stream()
+                                .filter(o -> "EXT-002".equals(o.getExternalId()))
+                                .findFirst().orElseThrow();
+
+                assertThat(order.getUser()).isNotNull();
+                assertThat(order.getUser().getId()).isEqualTo(user.getId());
         }
 
         @Test
