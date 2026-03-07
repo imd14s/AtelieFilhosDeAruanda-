@@ -43,9 +43,12 @@ public class CartController {
         return Map.of(
                 "id", cart.getId(),
                 "items", cart.getItems().stream().map(item -> {
-                    // Prioriza imagem da variante; fallback para imagem do produto
+                    // Prioriza imagem da variante (filtrando vídeos); fallback para imagem do produto
                     String variantImage = (item.getVariant() != null && item.getVariant().getImages() != null && !item.getVariant().getImages().isEmpty())
-                            ? item.getVariant().getImages().get(0)
+                            ? item.getVariant().getImages().stream()
+                                    .filter(url -> !com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity.isVideoUrl(url))
+                                    .findFirst()
+                                    .orElse(item.getVariant().getImages().get(0))
                             : (item.getVariant() != null && item.getVariant().getImageUrl() != null)
                                 ? item.getVariant().getImageUrl()
                                 : null;

@@ -11,6 +11,8 @@ export interface Order {
   invoiceUrl?: string;
   trackingCode?: string;
   shippingIdExternal?: string;
+  paymentMethod?: string;
+  discount?: number;
   items?: OrderItem[];
 }
 
@@ -20,7 +22,7 @@ export interface OrderItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  imageUrl: string;
+  productImage: string;
   variantId?: string;
 }
 

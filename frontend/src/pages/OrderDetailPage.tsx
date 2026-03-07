@@ -60,7 +60,10 @@ const OrderDetailPage: React.FC = () => {
 
     const status = statusMap[order.status] || statusMap.PENDING;
     const StatusIcon = status.icon;
-    const total = order.totalAmount || order.total || 0;
+    const subtotal = order.totalAmount || order.total || 0;
+    const shipping = order.shippingCost || 0;
+    const discount = order.discount || 0;
+    const total = subtotal + shipping - discount;
     const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
     return (
@@ -77,14 +80,19 @@ const OrderDetailPage: React.FC = () => {
                 <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 mb-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-xl font-bold text-gray-800 mb-1">
-                                Pedido #{order.id?.slice(0, 8).toUpperCase() || order.externalId || '—'}
+                            <h1 className="text-2xl font-playfair font-bold text-[var(--azul-profundo)] mb-1">
+                                Detalhes do Pedido
                             </h1>
-                            <p className="text-sm text-gray-500">{createdAt}</p>
+                            <div className="flex flex-col gap-0.5">
+                                <p className="text-sm font-mono text-gray-500 uppercase">
+                                    #{order.id?.toUpperCase() || order.externalId || '—'}
+                                </p>
+                                <p className="text-xs text-gray-400">{createdAt}</p>
+                            </div>
                         </div>
-                        <span className={`px-3 py-1.5 text-xs uppercase font-bold tracking-wider rounded flex items-center gap-1.5 w-fit ${status.color}`}>
-                            <StatusIcon size={14} />
-                            {status.label}
+                        <span className={`px-3 py-1.5 text-xs uppercase font-bold tracking-wider rounded flex items-center gap-1.5 w-fit ${statusMap[order.status]?.color || statusMap.PENDING.color}`}>
+                            {React.createElement(statusMap[order.status]?.icon || statusMap.PENDING.icon, { size: 14 })}
+                            {statusMap[order.status]?.label || statusMap.PENDING.label}
                         </span>
                     </div>
                 </div>
@@ -94,28 +102,34 @@ const OrderDetailPage: React.FC = () => {
                     <div className="lg:col-span-2 bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
                         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
                             <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                                <Package size={16} /> Itens do Pedido
+                                <Package size={16} /> Produtos Adquiridos
                             </h2>
                         </div>
                         <div className="divide-y divide-gray-100">
                             {(order.items || []).map((item, idx) => (
                                 <div key={idx} className="p-6 flex items-center gap-4">
-                                    <div className="w-16 h-16 shrink-0 border border-gray-200 rounded p-1 flex items-center justify-center overflow-hidden bg-gray-50">
+                                    <Link 
+                                        to={`/produto/${item.productId}`}
+                                        className="w-16 h-16 shrink-0 border border-gray-200 rounded p-1 flex items-center justify-center overflow-hidden bg-gray-50 hover:border-blue-300 transition-colors"
+                                    >
                                         <img
-                                            src={getImageUrl(item.productImage || item.product?.images?.[0] || '')}
-                                            alt={item.productName || item.product?.name || item.product?.title}
+                                            src={getImageUrl(item.productImage || '')}
+                                            alt={item.productName || 'Produto'}
                                             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                                                 const target = e.target as HTMLImageElement;
                                                 target.src = '/images/default.png';
                                             }}
                                             className="max-w-full max-h-full object-contain"
                                         />
-                                    </div>
+                                    </Link>
                                     <div className="flex-1">
-                                        <p className="text-sm font-semibold text-gray-800">
+                                        <Link 
+                                            to={`/produto/${item.productId}`}
+                                            className="text-sm font-semibold text-gray-800 hover:text-blue-600 transition-colors block mb-0.5"
+                                        >
                                             {item.productName || item.product?.name || item.product?.title || 'Produto'}
-                                        </p>
-                                        <p className="text-xs text-gray-400 mt-1">Qtd: {item.quantity}</p>
+                                        </Link>
+                                        <p className="text-xs text-gray-400">Qtd: {item.quantity}</p>
                                     </div>
                                     <div className="text-sm font-bold text-gray-800">
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.subtotal || ((item.unitPrice || item.price || 0) * item.quantity) || 0)}
@@ -133,23 +147,23 @@ const OrderDetailPage: React.FC = () => {
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between text-gray-600">
                                     <span>Subtotal</span>
-                                    <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}</span>
+                                    <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal)}</span>
                                 </div>
-                                {order.shippingCost !== undefined && (
+                                {shipping > 0 && (
                                     <div className="flex justify-between text-gray-600">
                                         <span>Frete</span>
-                                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.shippingCost || 0)}</span>
+                                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(shipping)}</span>
                                     </div>
                                 )}
-                                {(order.discount || 0) > 0 && (
+                                {discount > 0 && (
                                     <div className="flex justify-between text-green-600 font-bold">
                                         <span>Desconto</span>
-                                        <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.discount || 0)}</span>
+                                        <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discount)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-gray-800 font-bold text-base pt-2 border-t border-gray-100">
                                     <span>Total</span>
-                                    <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total + (order.shippingCost || 0) - (order.discount || 0))}</span>
+                                    <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}</span>
                                 </div>
                             </div>
                         </div>

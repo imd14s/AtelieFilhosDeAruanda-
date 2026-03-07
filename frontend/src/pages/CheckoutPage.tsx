@@ -474,6 +474,7 @@ const CheckoutPage: React.FC = () => {
                 paymentMethod: formData.metodoPagamento,
                 saveCard: formData.saveCard,
                 couponCode: appliedCoupon?.code,
+                discount: discount + pixDiscount,
                 userId: userId,
                 saveAddress: formData.saveAddress,
                 documentType: formData.tipoDocumento,

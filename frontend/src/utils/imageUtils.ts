@@ -1,3 +1,28 @@
+const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.avi', '.mov', '.mkv', '.ogg'];
+
+/**
+ * Verifica se a URL aponta para um arquivo de vídeo.
+ */
+export function isVideoUrl(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const lower = url.toLowerCase().split('?')[0]; // ignora query params
+    return VIDEO_EXTENSIONS.some(ext => lower.endsWith(ext));
+}
+
+/**
+ * Retorna a primeira URL de uma lista de mídias que NÃO seja vídeo.
+ * Se todas forem vídeos, retorna a primeira como fallback.
+ * Se a lista estiver vazia, retorna o fallback fornecido ou undefined.
+ */
+export function getFirstImageFromList(
+    mediaUrls: string[] | null | undefined,
+    fallback?: string
+): string | undefined {
+    if (!mediaUrls || mediaUrls.length === 0) return fallback;
+    const firstImage = mediaUrls.find(url => !isVideoUrl(url));
+    return firstImage ?? mediaUrls[0] ?? fallback;
+}
+
 export function getImageUrl(url?: string | null): string {
     if (!url || url.startsWith('blob:') || url.startsWith('cid:') || url.startsWith('data:')) {
         return '/images/default.png';
@@ -13,10 +38,17 @@ export function getImageUrl(url?: string | null): string {
         return parsedUrl;
     }
 
+    if (parsedUrl.startsWith('public/')) {
+        return parsedUrl.replace('public/', '/');
+    }
+
     // Strip /api suffix to get the host base
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
     const hostBase = apiBase.split('/api')[0];
-    return `${hostBase}${parsedUrl}`;
+    
+    // Garantir que o parsedUrl comece com / se nâo tiver protocolo
+    const normalizedPath = parsedUrl.startsWith('/') ? parsedUrl : `/${parsedUrl}`;
+    return `${hostBase}${normalizedPath}`;
 }
 
 export interface PixelCrop {

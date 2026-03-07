@@ -252,6 +252,8 @@ public class OrderService {
         order.setShippingZipCode(request.shippingZipCode());
         order.setShippingCost(request.shippingCost());
         order.setShippingProvider(request.shippingProvider());
+        order.setPaymentMethod(request.paymentMethod());
+        order.setDiscount(request.discount() != null ? request.discount() : BigDecimal.ZERO);
 
         OrderEntity saved = orderRepository.save(order);
 

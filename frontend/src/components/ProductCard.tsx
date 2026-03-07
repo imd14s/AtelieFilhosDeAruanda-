@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { cartService } from '../services/cartService';
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, Check, Heart } from 'lucide-react';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, getFirstImageFromList } from '../utils/imageUtils';
 import Button from './ui/Button';
 import Spinner from './ui/Spinner';
 import { useToast } from '../context/ToastContext';
@@ -47,9 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             id: product.id,
             name: product.name,
             price: firstVariant?.price ?? product.price,
-            images: (product.variants?.[0]?.images && product.variants[0].images.length > 0) 
-                ? [product.variants[0].images[0]] 
-                : (product.images && product.images.length > 0 ? [product.images[0]] : []),
+            images: [getFirstImageFromList(product.variants?.[0]?.images) ?? getFirstImageFromList(product.images) ?? ''].filter(Boolean),
         };
 
         setTimeout(() => {
@@ -64,7 +62,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const isOutOfStock = (product.stockQuantity || 0) <= 0;
 
     // Resolução unificada: usa exclusivamente o array de imagens
-    const imageUrl = getImageUrl(product.variants?.[0]?.images?.[0] || product.images?.[0] || '');
+    const imageUrl = getImageUrl(getFirstImageFromList(product.variants?.[0]?.images) ?? getFirstImageFromList(product.images) ?? '');
 
     // Calculate discount
     const originalPrice = product.originalPrice || product.price;

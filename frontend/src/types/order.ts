@@ -41,6 +41,7 @@ export interface CreateOrderData {
     };
     documentType?: string;
     documentNumber?: string;
+    discount?: number;
 }
 
 export interface ShippingOption {

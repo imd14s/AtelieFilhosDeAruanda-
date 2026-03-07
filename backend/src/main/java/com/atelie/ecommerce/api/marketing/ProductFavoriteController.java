@@ -41,7 +41,7 @@ public class ProductFavoriteController {
                         .map(p -> new FavoriteRankingDTO(
                                 dto.productId(),
                                 dto.productName(),
-                                (p.getImages() != null && !p.getImages().isEmpty()) ? p.getImages().get(0) : null,
+                                (p.getImages() != null && !p.getImages().isEmpty()) ? p.getFirstImageUrl() : null,
                                 dto.productPrice(),
                                 dto.favCount()))
                         .orElse(dto);

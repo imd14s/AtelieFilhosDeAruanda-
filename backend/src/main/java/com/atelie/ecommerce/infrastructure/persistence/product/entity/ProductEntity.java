@@ -135,11 +135,33 @@ public class ProductEntity {
     private LocalDateTime updatedAt;
 
     // --- MÉTODOS DE COMPATIBILIDADE ---
+
+    /**
+     * Verifica se a URL aponta para um arquivo de vídeo.
+     */
+    public static boolean isVideoUrl(String url) {
+        if (url == null || url.isBlank()) return false;
+        String lower = url.toLowerCase().split("\\?")[0]; // ignora query params
+        return lower.endsWith(".mp4") || lower.endsWith(".webm")
+                || lower.endsWith(".avi") || lower.endsWith(".mov")
+                || lower.endsWith(".mkv") || lower.endsWith(".ogg");
+    }
+
+    /**
+     * Retorna a primeira URL da lista de mídias que NÃO seja vídeo.
+     * Se todas forem vídeos, retorna a primeira URL como fallback.
+     */
+    public String getFirstImageUrl() {
+        if (images == null || images.isEmpty()) return this.imageUrl;
+        return images.stream()
+                .filter(url -> !isVideoUrl(url))
+                .findFirst()
+                .orElse(images.get(0));
+    }
+
     public String getImageUrl() {
-        if (images != null && !images.isEmpty()) {
-            return images.get(0);
-        }
-        return this.imageUrl;
+        String first = getFirstImageUrl();
+        return first != null ? first : this.imageUrl;
     }
 
     public String getMainImage() {
@@ -223,7 +245,7 @@ public class ProductEntity {
 
     private void syncImageUrl() {
         if ((this.imageUrl == null || this.imageUrl.isEmpty()) && this.images != null && !this.images.isEmpty()) {
-            this.imageUrl = this.images.get(0);
+            this.imageUrl = getFirstImageUrl();
         }
     }
 

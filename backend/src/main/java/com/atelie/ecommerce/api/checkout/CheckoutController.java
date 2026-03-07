@@ -76,13 +76,22 @@ public class CheckoutController {
                 String userIdStr = (String) payload.get("userId");
                 java.util.UUID userId = userIdStr != null ? java.util.UUID.fromString(userIdStr) : null;
 
+                // 3.5. Extrair discount e coupon
+                String couponCode = (String) payload.get("couponCode");
+                Object discountObj = payload.get("discount");
+                java.math.BigDecimal discount = java.math.BigDecimal.ZERO;
+                if (discountObj instanceof Number) {
+                        discount = new java.math.BigDecimal(discountObj.toString());
+                }
+
                 CreateOrderRequest orderRequest = new CreateOrderRequest(
                                 "STOREFRONT",
-                                null,
+                                java.util.UUID.randomUUID().toString(),
                                 customerName,
                                 customerEmail,
                                 items,
                                 street, number, complement, neighborhood, city, state, zip, cost, provider,
+                                paymentMethodId, discount, couponCode,
                                 userId);
 
                 OrderEntity order = orderService.createOrder(orderRequest);

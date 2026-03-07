@@ -14,9 +14,13 @@ vi.mock('../services/authService', () => ({
     },
 }));
 
-vi.mock('../context/ToastContext', () => ({
-    useToast: vi.fn(() => ({ showToast: vi.fn() }))
-}));
+vi.mock('../context/ToastContext', async () => {
+    const actual = await vi.importActual<any>('../context/ToastContext');
+    return {
+        ...actual,
+        useToast: vi.fn(() => ({ addToast: vi.fn(), removeToast: vi.fn() }))
+    };
+});
 
 // Mock window.location.reload
 const originalLocation = window.location;
@@ -90,7 +94,7 @@ describe('AuthModal Component', () => {
         fireEvent.click(screen.getByText('Entrar'));
 
         await waitFor(() => {
-            expect(screen.getByText('Credenciais inválidas.')).toBeInTheDocument();
+            expect(screen.getByText('E-mail ou senha incorretos.')).toBeInTheDocument();
         });
     });
 });

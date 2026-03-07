@@ -6,6 +6,7 @@ import com.atelie.ecommerce.api.order.dto.OrderItemResponse;
 import com.atelie.ecommerce.application.service.order.OrderService;
 import com.atelie.ecommerce.domain.order.OrderStatus;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
+import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -86,18 +87,32 @@ public class OrderController {
                     String imageUrl = "/images/default.png";
                     UUID variantId = null;
 
-                    if (i.getProduct() != null) {
-                        productId = i.getProduct().getId();
-                        if (productName == null) {
-                            productName = i.getProduct().getName();
-                        }
-                        if (i.getProduct().getImages() != null && !i.getProduct().getImages().isEmpty()) {
-                            imageUrl = i.getProduct().getImages().get(0);
+                    if (i.getVariant() != null) {
+                        variantId = i.getVariant().getId();
+                        if (i.getVariant().getImages() != null && !i.getVariant().getImages().isEmpty()) {
+                            // Pega a primeira imagem válida da variante, senão pega a primeira
+                            imageUrl = i.getVariant().getImages().stream()
+                                    .filter(url -> !ProductEntity.isVideoUrl(url))
+                                    .findFirst()
+                                    .orElse(i.getVariant().getImages().get(0));
+                        } else if (i.getVariant().getImageUrl() != null) {
+                            imageUrl = i.getVariant().getImageUrl();
                         }
                     }
 
-                    if (i.getVariant() != null) {
-                        variantId = i.getVariant().getId();
+                    if (i.getProduct() != null) {
+                        productId = i.getProduct().getId();
+                        if (productName == null || productName.isEmpty()) {
+                            productName = i.getProduct().getName();
+                        }
+                        if (imageUrl.equals("/images/default.png")) {
+                            imageUrl = i.getProduct().getImageUrl();
+                        }
+                    }
+
+                    // Normaliza a URL: Se não começar com http ou /, e não for o default do frontend, assume que é um upload local
+                    if (imageUrl != null && !imageUrl.startsWith("http") && !imageUrl.startsWith("/") && !imageUrl.equals("/images/default.png")) {
+                        imageUrl = "/uploads/" + imageUrl;
                     }
 
                     return new OrderItemResponse(
@@ -134,9 +149,9 @@ public class OrderController {
                 entity.getShippingCost(),
                 address,
                 entity.getShippingProvider(),
-                null, // paymentMethod (not yet persisted in OrderEntity)
-                null, // paymentStatus (not yet persisted in OrderEntity)
-                BigDecimal.ZERO, // discount (not yet persisted in OrderEntity)
+                entity.getPaymentMethod(),
+                null, // paymentStatus ainda nao implementado
+                entity.getDiscount() != null ? entity.getDiscount() : BigDecimal.ZERO,
                 entity.getCreatedAt() != null
                         ? entity.getCreatedAt().atZone(java.time.ZoneId.of("UTC")).toLocalDateTime()
                         : java.time.LocalDateTime.now(),

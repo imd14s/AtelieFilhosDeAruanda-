@@ -29,6 +29,11 @@ public class OrderEntity {
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
+    private BigDecimal discount;
+
     // Campos exigidos pelo código legado
     private String source; // Ex: "SITE", "MERCADO_LIVRE"
 
@@ -133,21 +138,17 @@ public class OrderEntity {
         this.status = status;
     }
 
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
 
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
 
-    public String getSource() {
-        return source;
-    }
+    public BigDecimal getDiscount() { return discount; }
+    public void setDiscount(BigDecimal discount) { this.discount = discount; }
 
-    public void setSource(String source) {
-        this.source = source;
-    }
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 
     public String getExternalId() {
         return externalId;

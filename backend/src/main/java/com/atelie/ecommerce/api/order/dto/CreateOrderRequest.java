@@ -25,5 +25,8 @@ public record CreateOrderRequest(
                 String shippingZipCode,
                 java.math.BigDecimal shippingCost,
                 String shippingProvider,
+                String paymentMethod,
+                java.math.BigDecimal discount,
+                String couponCode,
                 java.util.UUID userId) {
 }

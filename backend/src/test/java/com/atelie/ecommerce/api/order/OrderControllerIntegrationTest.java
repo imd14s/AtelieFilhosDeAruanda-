@@ -113,7 +113,8 @@ class OrderControllerIntegrationTest {
                                 List.of(itemReq),
                                 "Rua A", "123", null, "Centro",
                                 "São Paulo", "SP", "01000-000",
-                                new BigDecimal("15.00"), "correios", null);
+                                new BigDecimal("15.00"), "correios",
+                                "pix", BigDecimal.ZERO, null, null);
 
                 mockMvc.perform(post("/api/orders")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -144,7 +145,7 @@ class OrderControllerIntegrationTest {
                 CreateOrderRequest request = new CreateOrderRequest(
                                 "SITE", "EXT-002", "Test User", "test@user.com",
                                 List.of(itemReq), null, null, null, null, null, null, null, BigDecimal.ZERO, null,
-                                user.getId());
+                                "pix", BigDecimal.ZERO, null, user.getId());
 
                 mockMvc.perform(post("/api/orders")
                                 .contentType(MediaType.APPLICATION_JSON)

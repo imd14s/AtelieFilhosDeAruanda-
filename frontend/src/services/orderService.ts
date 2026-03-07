@@ -28,7 +28,8 @@ export const orderService = {
                 saveCard: orderData.saveCard || false,
                 saveAddress: orderData.saveAddress || false,
                 couponCode: orderData.couponCode || null,
-                userId: orderData.userId || null
+                userId: orderData.userId || null,
+                discount: orderData.discount || 0
             };
 
             const response = await api.post('/checkout/process', payload, {

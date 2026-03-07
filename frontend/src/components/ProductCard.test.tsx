@@ -21,9 +21,13 @@ vi.mock('../context/FavoritesContext', () => ({
     }))
 }));
 
-vi.mock('../context/ToastContext', () => ({
-    useToast: vi.fn(() => ({ showToast: vi.fn() }))
-}));
+vi.mock('../context/ToastContext', async () => {
+    const actual = await vi.importActual<any>('../context/ToastContext');
+    return {
+        ...actual,
+        useToast: vi.fn(() => ({ addToast: vi.fn(), removeToast: vi.fn() }))
+    };
+});
 
 describe('ProductCard Component', () => {
     const mockProduct: Product = {
@@ -66,7 +70,12 @@ describe('ProductCard Component', () => {
             vi.advanceTimersByTime(300);
         });
 
-        expect(cartService.add).toHaveBeenCalledWith(mockProduct, 1);
+        expect(cartService.add).toHaveBeenCalledWith({
+            id: mockProduct.id,
+            name: mockProduct.name,
+            price: mockProduct.price,
+            images: mockProduct.images
+        }, 1, null);
         vi.useRealTimers();
     });
 
