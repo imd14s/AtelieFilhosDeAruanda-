@@ -224,8 +224,12 @@ public class ProductService {
             for (MultipartFile img : images) {
                 if (!img.isEmpty()) {
                     String cid = img.getOriginalFilename();
-                    String url = cloudinaryService.upload(img);
-                    cidMap.put(cid, url);
+                    if (cid != null && !cidMap.containsKey(cid)) {
+                        String url = cloudinaryService.upload(img);
+                        cidMap.put(cid, url);
+                    } else if (cid != null) {
+                        log.warn("CID duplicado detectado na requisição: {}. Ignorando upload redundante.", cid);
+                    }
                 }
             }
         }

@@ -64,13 +64,13 @@ export const ProductService = {
 
   create: async (product: CreateProductDTO) => {
     const formData = new FormData();
-    const filesMapping: { file: File, id: string }[] = [];
+    const filesMapping = new Map<string, File>();
 
     // Helper to process media and collect files
     const processMedia = (mediaList: any[]) => {
       return (mediaList || []).map(m => {
         if (m.file) {
-          filesMapping.push({ file: m.file, id: m.id });
+          filesMapping.set(m.id, m.file);
           return { ...m, url: `cid:${m.id}`, file: undefined };
         }
         return m;
@@ -98,7 +98,7 @@ export const ProductService = {
     };
 
     formData.append('product', new Blob([JSON.stringify(productToSave)], { type: 'application/json' }));
-    filesMapping.forEach(({ file, id }) => {
+    filesMapping.forEach((file, id) => {
       formData.append('images', file, id);
     });
 
@@ -109,12 +109,12 @@ export const ProductService = {
 
   update: async (id: string, product: Partial<CreateProductDTO>) => {
     const formData = new FormData();
-    const filesMapping: { file: File, id: string }[] = [];
+    const filesMapping = new Map<string, File>();
 
     const processMedia = (mediaList: any[]) => {
       return (mediaList || []).map(m => {
         if (m.file) {
-          filesMapping.push({ file: m.file, id: m.id });
+          filesMapping.set(m.id, m.file);
           return { ...m, url: `cid:${m.id}`, file: undefined };
         }
         return m;
@@ -142,7 +142,7 @@ export const ProductService = {
     };
 
     formData.append('product', new Blob([JSON.stringify(productToUpdate)], { type: 'application/json' }));
-    filesMapping.forEach(({ file, id }) => {
+    filesMapping.forEach((file, id) => {
       formData.append('images', file, id);
     });
 
