@@ -38,6 +38,13 @@ public class CommunicationService {
             EmailQueue.EmailPriority priority) {
         log.info("Processando automação {} para {} com prioridade {}", type, recipient, priority);
 
+        // --- IDEMPOTÊNCIA: Evitar duplicatas em curto intervalo ---
+        // Verifica se já existe um e-mail PENDENTE para o mesmo destinatário e tipo.
+        if (emailQueueRepository.existsByRecipientAndTypeAndStatus(recipient, type.name(), EmailQueue.EmailStatus.PENDING)) {
+            log.warn("Automação {} já está pendente para {}. Ignorando solicitação duplicada.", type, recipient);
+            return;
+        }
+
         Optional<EmailTemplate> templateOpt = emailTemplateRepository.findByAutomationTypeAndIsActiveTrue(type);
 
         if (templateOpt.isEmpty()) {
@@ -49,13 +56,10 @@ public class CommunicationService {
         String subject = template.getSubject();
         String content = template.getContent();
 
-        // Substituição de placeholders {{{key}}} - Suportando o padrão Triplo-chaves
-        // usado no Hub
+        // Substituição de placeholders {{{key}}}
         if (context != null) {
             for (Map.Entry<String, Object> entry : context.entrySet()) {
                 String value = entry.getValue() != null ? entry.getValue().toString() : "";
-
-                // Suporta {{key}} e {{{key}}}
                 content = content.replace("{{{" + entry.getKey() + "}}}", value);
                 content = content.replace("{{" + entry.getKey() + "}}", value);
                 subject = subject.replace("{{{" + entry.getKey() + "}}}", value);
@@ -68,7 +72,7 @@ public class CommunicationService {
                 .subject(subject)
                 .content(content)
                 .priority(priority != null ? priority : EmailQueue.EmailPriority.LOW)
-                .status(EmailQueue.EmailStatus.PENDING)
+                .status(EmailQueue.EmailStatus.PENDING) // Voltou a ser PENDING por padrão
                 .type(type.name())
                 .signatureId(template.getSignatureId())
                 .build();
@@ -76,8 +80,7 @@ public class CommunicationService {
         EmailQueue savedEmail = emailQueueRepository.save(email);
         log.info("E-mail de automação {} enfileirado para {} com ID {}", type, recipient, savedEmail.getId());
 
-        // Se for prioridade HIGH (como USER_VERIFY ou PASSWORD_RESET), tenta disparar
-        // imediatamente
+        // Se for prioridade HIGH, tenta disparar imediatamente (usando o objeto salvo)
         if (savedEmail.getPriority() == EmailQueue.EmailPriority.HIGH) {
             CompletableFuture.runAsync(() -> {
                 try {
@@ -90,7 +93,7 @@ public class CommunicationService {
                 } catch (Exception e) {
                     log.error("Falha no envio assíncrono imediato para {}: {}", recipient, e.getMessage());
                     savedEmail.setLastError(e.getMessage());
-                    savedEmail.setRetryCount(savedEmail.getRetryCount() + 1);
+                    savedEmail.setRetryCount(1);
                     emailQueueRepository.save(savedEmail);
                 }
             });

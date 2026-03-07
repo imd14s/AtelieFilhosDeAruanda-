@@ -6,6 +6,7 @@ import { useOutletContext, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import PasswordChangeForm from '../components/profile/PasswordChangeForm';
 
 interface UserContext {
     user: User | null;
@@ -246,7 +247,7 @@ const ProfilePage: React.FC = () => {
 
             {/* Modals Extras */}
             {modal && (
-                <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[1000] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
                     <div className={`${modal === 'crop' ? 'max-w-xl' : 'max-w-md'} bg-white w-full rounded shadow-2xl p-6 relative`}>
                         <button onClick={() => { setModal(null); setActionMsg(''); }} className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-800 bg-white rounded-full p-1">
                             <X size={20} />
@@ -262,16 +263,22 @@ const ProfilePage: React.FC = () => {
 
                         {modal === 'security' && (
                             <div>
-                                <h2 className="text-xl font-bold mb-4 text-gray-800">Trocar Senha</h2>
-                                <p className="text-sm text-gray-600 mb-4">Você receberá um e-mail com um link seguro para redefinir sua senha.</p>
-                                <button
-                                    onClick={() => handleAction('/auth/forgot-password', { email: user.email }, 'Link de redefinição enviado!')}
-                                    disabled={loading}
-                                    className="w-full bg-[var(--azul-profundo)] text-white py-2 rounded font-bold hover:bg-[#0a1e33] disabled:opacity-50"
-                                >
-                                    {loading ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Solicitar Redefinição'}
-                                </button>
-                                {actionMsg && <p className="mt-3 text-sm font-bold text-green-600 text-center">{actionMsg}</p>}
+                                <h2 className="text-xl font-bold mb-4 text-gray-800">Segurança da Conta</h2>
+                                <p className="text-sm text-gray-600 mb-6">Mantenha sua conta protegida atualizando sua senha regularmente.</p>
+                                
+                                <PasswordChangeForm 
+                                    onSuccess={() => {
+                                        setModal(null);
+                                        setActionMsg('Senha alterada com sucesso!');
+                                    }}
+                                    onCancel={() => setModal(null)}
+                                />
+
+                                <div className="mt-6 pt-6 border-t border-gray-100">
+                                    <p className="text-xs text-gray-400 text-center">
+                                        Esqueceu sua senha atual? <button onClick={() => handleAction('/auth/forgot-password', { email: user.email }, 'Link de redefinição enviado!')} className="text-[var(--azul-profundo)] hover:underline font-bold">Solicitar redefinição por e-mail</button>
+                                    </p>
+                                </div>
                             </div>
                         )}
 

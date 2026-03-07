@@ -1,9 +1,13 @@
 package com.atelie.ecommerce.api.user;
 
+import com.atelie.ecommerce.api.user.dto.ChangePasswordRequest;
 import com.atelie.ecommerce.api.user.dto.UserProfileResponse;
+import com.atelie.ecommerce.application.service.user.UserProfileService;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
 import com.atelie.ecommerce.infrastructure.security.UserPrincipal;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +17,11 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users/profile")
+@RequiredArgsConstructor
 public class UserProfileController {
 
     private final UserRepository userRepository;
-
-    public UserProfileController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final UserProfileService userProfileService;
 
     @GetMapping
     public ResponseEntity<UserProfileResponse> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
@@ -55,6 +57,17 @@ public class UserProfileController {
         user.setPhotoUrl(photoUrl);
         userRepository.save(user);
 
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password")
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        userProfileService.changePassword(UUID.fromString(principal.getId()), request);
         return ResponseEntity.ok().build();
     }
 }

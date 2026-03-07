@@ -60,7 +60,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, cartItems, onU
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[150] overflow-hidden">
+        <div className="fixed inset-0 z-[1000] overflow-hidden">
             <div className="absolute inset-0 bg-[#0f2A44]/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
             <div className="absolute inset-y-0 right-0 max-w-full flex">
