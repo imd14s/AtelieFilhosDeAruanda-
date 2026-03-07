@@ -20,6 +20,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.atelie.ecommerce.api.serviceengine.ServiceResult;
+import com.atelie.ecommerce.application.service.payment.PaymentService;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -40,6 +44,9 @@ public class OrderService {
     private final CommunicationService communicationService;
     private final InvoiceService invoiceService;
     private final ShippingAutomationService shippingAutomationService;
+    private final PaymentService paymentService;
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     public OrderService(OrderRepository orderRepository,
             com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository userRepository,
@@ -49,7 +56,8 @@ public class OrderService {
             com.atelie.ecommerce.application.service.audit.AuditService auditService,
             CommunicationService communicationService,
             InvoiceService invoiceService,
-            ShippingAutomationService shippingAutomationService) {
+            ShippingAutomationService shippingAutomationService,
+            PaymentService paymentService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
@@ -59,6 +67,7 @@ public class OrderService {
         this.communicationService = communicationService;
         this.invoiceService = invoiceService;
         this.shippingAutomationService = shippingAutomationService;
+        this.paymentService = paymentService;
     }
 
     @Transactional
@@ -370,6 +379,26 @@ public class OrderService {
             }
         }
 
+        // --- NOVO: Lógica de Estorno Automático ---
+        if (OrderStatus.PAID.name().equals(order.getStatus()) && order.getPaymentExternalId() != null) {
+            try {
+                ServiceResult refundResult = paymentService.refundPayment(order.getPaymentExternalId(), order.getTotalAmount());
+                if (refundResult.success()) {
+                    String refundId = (String) refundResult.payload().get("refund_id");
+                    order.setRefundId(refundId);
+                    auditService.log(
+                            com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditAction.UPDATE,
+                            com.atelie.ecommerce.infrastructure.persistence.audit.entity.AuditResource.ORDER,
+                            orderId.toString(),
+                            "Automated refund requested. Refund ID: " + refundId);
+                } else {
+                    log.error("[REFUND-ERROR] Falha no estorno automático para o pedido {}: {}", orderId, refundResult.error());
+                }
+            } catch (Exception e) {
+                log.error("[REFUND-ERROR] Exceção ao processar estorno para o pedido {}", orderId, e);
+            }
+        }
+
         order.setStatus(OrderStatus.CANCELED.name());
         order.setCancelReason(reason);
         orderRepository.save(order);
@@ -395,5 +424,13 @@ public class OrderService {
     public OrderEntity getOrderById(UUID id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Pedido não encontrado: " + id));
+    }
+
+    @Transactional
+    public void updatePaymentInfo(UUID orderId, String paymentExternalId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Pedido não encontrado"));
+        order.setPaymentExternalId(paymentExternalId);
+        orderRepository.save(order);
     }
 }

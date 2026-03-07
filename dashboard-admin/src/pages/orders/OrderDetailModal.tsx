@@ -2,6 +2,8 @@ import type { Order } from '../../types/order';
 import BaseModal from '../../components/ui/BaseModal';
 import { FileText, Truck, Calendar, CreditCard, Tag, Package, ExternalLink } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageUtils';
+import { useState } from 'react';
+import { OrderService } from '../../services/OrderService';
 
 interface OrderDetailModalProps {
     isOpen: boolean;
@@ -10,7 +12,26 @@ interface OrderDetailModalProps {
 }
 
 export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetailModalProps) {
+    const [isGeneratingReverse, setIsGeneratingReverse] = useState(false);
+
     if (!order) return null;
+
+    const handleCreateReverseLogistics = async () => {
+        if (!order) return;
+        
+        setIsGeneratingReverse(true);
+        try {
+            await OrderService.createReverseLogistics(order.id);
+            alert('Solicitação de logística reversa enviada com sucesso!');
+            // Idealmente deveríamos atualizar o estado do pedido aqui ou fechar o modal
+            onClose();
+        } catch (error) {
+            console.error('Erro ao gerar logística reversa:', error);
+            alert('Ocorreu um erro ao gerar a logística reversa.');
+        } finally {
+            setIsGeneratingReverse(false);
+        }
+    };
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
@@ -144,6 +165,39 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
                                     {order.trackingCode && <Truck size={20} className="text-indigo-600" />}
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Logística Reversa */}
+                        <div className="sm:col-span-2 mt-2 pt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                    <Truck size={16} className="text-orange-500 rotate-180" />
+                                    Logística Reversa (Devolução)
+                                </h4>
+                                {!order.reverseTrackingCode && order.status === 'CANCELED' && (
+                                    <button 
+                                        onClick={() => handleCreateReverseLogistics()}
+                                        disabled={isGeneratingReverse}
+                                        className="text-xs bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isGeneratingReverse ? 'Gerando...' : 'Gerar Etiqueta Reversa'}
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {order.reverseTrackingCode ? (
+                                <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 flex items-center justify-between">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] uppercase font-black text-orange-400 tracking-widest">Código de Devolução</span>
+                                        <span className="font-mono text-base text-orange-800 font-bold">{order.reverseTrackingCode}</span>
+                                    </div>
+                                    <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
+                                        <Truck size={20} className="rotate-180" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-gray-400 italic">Nenhum código de devolução gerado.</p>
+                            )}
                         </div>
                     </div>
                 </div>

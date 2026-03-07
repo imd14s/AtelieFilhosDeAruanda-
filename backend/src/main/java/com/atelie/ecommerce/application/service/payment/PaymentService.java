@@ -64,4 +64,13 @@ public class PaymentService {
     public PaymentResponse createPixPayment(CreatePixPaymentRequest req) {
         return createPixPayment(req.orderId(), "Cliente", req.email(), req.amount());
     }
+
+    public ServiceResult refundPayment(String paymentExternalId, BigDecimal amount) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("action", "REFUND");
+        request.put("paymentId", paymentExternalId);
+        if (amount != null) request.put("amount", amount);
+
+        return orchestrator.execute(ServiceType.PAYMENT, request, "PRODUCTION");
+    }
 }

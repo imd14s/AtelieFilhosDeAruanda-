@@ -45,6 +45,97 @@ public class MelhorEnvioDriver implements ServiceDriver {
 
     @Override
     public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
+        String action = (String) request.getOrDefault("action", "CALCULATE");
+
+        if ("CREATE_REVERSE_LABEL".equalsIgnoreCase(action)) {
+            return executeCreateReverseLabel(request, config);
+        }
+
+        return executeCalculate(request, config);
+    }
+
+    private Map<String, Object> executeCreateReverseLabel(Map<String, Object> request, Map<String, Object> config) {
+        try {
+            String token = DriverConfigReader.requireString(config, "token");
+            Map<String, Object> seller = (Map<String, Object>) config.get("seller");
+            Map<String, Object> customer = (Map<String, Object>) request.get("customer");
+            List<Map<String, Object>> items = (List<Map<String, Object>>) request.get("items");
+            Integer serviceId = (Integer) request.get("serviceId"); // Ex: 1 (PAC), 2 (SEDEX)
+
+            if (seller == null || customer == null || items == null || serviceId == null) {
+                return error("Dados insuficientes para gerar logística reversa (seller, customer, items ou serviceId ausentes)");
+            }
+
+            // Para Logística Reversa:
+            // FROM = Customer (Remetente original virou destinatário, mas na reversa ele é o remetente)
+            // TO = Seller (Ateliê)
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("service", serviceId);
+            payload.put("agency", request.get("agency")); // Opcional para algumas transportadoras
+
+            // Remetente (Cliente)
+            payload.put("from", Map.of(
+                    "name", customer.get("name"),
+                    "email", customer.get("email"),
+                    "phone", customer.get("phone"),
+                    "document", customer.get("document"),
+                    "address", customer.get("address"),
+                    "number", customer.get("number"),
+                    "district", customer.get("district"),
+                    "city", customer.get("city"),
+                    "state_abbr", customer.get("state"),
+                    "postal_code", customer.get("cep")
+            ));
+
+            // Destinatário (Vendedor/Ateliê)
+            payload.put("to", Map.of(
+                    "name", seller.get("name"),
+                    "email", seller.get("email"),
+                    "phone", seller.get("phone"),
+                    "document", seller.get("document"),
+                    "address", seller.get("address"),
+                    "number", seller.get("number"),
+                    "district", seller.get("district"),
+                    "city", seller.get("city"),
+                    "state_abbr", seller.get("state"),
+                    "postal_code", seller.get("cep")
+            ));
+
+            payload.put("products", items);
+            payload.put("volumes", request.get("volumes")); // Lista de volumes com weight, height, etc.
+            payload.put("options", Map.of("receipt", false, "own_hand", false, "reverse", true));
+
+            // 1. Adicionar ao carrinho
+            Map<String, Object> cartResponse = client.addToCart(token, payload);
+            String labelId = (String) cartResponse.get("id");
+
+            if (labelId == null) {
+                return error("Falha ao adicionar etiqueta ao carrinho Melhor Envio");
+            }
+
+            // 2. Checkout (Pagamento/Confirmação)
+            Map<String, Object> checkoutPayload = Map.of("orders", List.of(labelId));
+            Map<String, Object> checkoutResponse = client.checkout(token, checkoutPayload);
+
+            // 3. Resultado
+            Map<String, Object> result = new HashMap<>();
+            result.put("label_id", labelId);
+            result.put("status", "pending"); // Geralmente pendente até processar
+            
+            // Tenta extrair o tracking se já disponível
+            if (checkoutResponse.containsKey("purchase") && checkoutResponse.get("purchase") instanceof Map) {
+                 // Dependendo da resposta do checkout, o tracking pode vir depois via webhook ou polling
+                 // Por ora retornamos o que temos
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            return error("Erro ao gerar logística reversa: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executeCalculate(Map<String, Object> request, Map<String, Object> config) {
         try {
             String token = DriverConfigReader.requireString(config, "token");
             String originZipCode = DriverConfigReader.requireString(config, "zipCode");

@@ -4,9 +4,11 @@ import com.atelie.ecommerce.api.order.dto.CreateOrderRequest;
 import com.atelie.ecommerce.api.order.dto.OrderResponse;
 import com.atelie.ecommerce.api.order.dto.OrderItemResponse;
 import com.atelie.ecommerce.application.service.order.OrderService;
+import com.atelie.ecommerce.application.service.order.ReverseLogisticsService;
 import com.atelie.ecommerce.domain.order.OrderStatus;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
+import com.atelie.ecommerce.infrastructure.security.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,20 +19,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import com.atelie.ecommerce.infrastructure.security.UserPrincipal;
 
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
 
     private final OrderService orderService;
+    private final ReverseLogisticsService reverseLogisticsService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, ReverseLogisticsService reverseLogisticsService) {
         this.orderService = orderService;
+        this.reverseLogisticsService = reverseLogisticsService;
     }
 
     @PostMapping
@@ -96,6 +100,11 @@ public class OrderController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{id}/reverse-logistics")
+    public ResponseEntity<Map<String, Object>> createReverseLabel(@PathVariable UUID id, @RequestParam Integer serviceId) {
+        return ResponseEntity.ok(reverseLogisticsService.createReverseLabel(id, serviceId));
+    }
+
     // Mapper Simples
     private OrderResponse toResponse(OrderEntity entity) {
         var items = entity.getItems().stream()
@@ -108,7 +117,6 @@ public class OrderController {
                     if (i.getVariant() != null) {
                         variantId = i.getVariant().getId();
                         if (i.getVariant().getImages() != null && !i.getVariant().getImages().isEmpty()) {
-                            // Pega a primeira imagem válida da variante, senão pega a primeira
                             imageUrl = i.getVariant().getImages().stream()
                                     .filter(url -> !ProductEntity.isVideoUrl(url))
                                     .findFirst()
@@ -128,7 +136,6 @@ public class OrderController {
                         }
                     }
 
-                    // Normaliza a URL: Se não começar com http ou /, e não for o default do frontend, assume que é um upload local
                     if (imageUrl != null && !imageUrl.startsWith("http") && !imageUrl.startsWith("/") && !imageUrl.equals("/images/default.png")) {
                         imageUrl = "/uploads/" + imageUrl;
                     }
@@ -168,7 +175,7 @@ public class OrderController {
                 address,
                 entity.getShippingProvider(),
                 entity.getPaymentMethod(),
-                null, // paymentStatus ainda nao implementado
+                null,
                 entity.getDiscount() != null ? entity.getDiscount() : BigDecimal.ZERO,
                 entity.getCreatedAt() != null
                         ? entity.getCreatedAt().atZone(java.time.ZoneId.of("UTC")).toLocalDateTime()
@@ -179,15 +186,14 @@ public class OrderController {
                 entity.getLabelUrlCustom(),
                 entity.getTrackingCode(),
                 entity.getShippingIdExternal(),
-                entity.getCancelReason());
+                entity.getCancelReason(),
+                entity.getReverseTrackingCode());
     }
 
     private OrderStatus parseStatus(String status) {
         if (status == null) return OrderStatus.PENDING;
         try {
-            // Suporte legado para "CANCELLED" com 2 L's
             if ("CANCELLED".equalsIgnoreCase(status)) return OrderStatus.CANCELED;
-            
             return OrderStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
             return OrderStatus.PENDING;

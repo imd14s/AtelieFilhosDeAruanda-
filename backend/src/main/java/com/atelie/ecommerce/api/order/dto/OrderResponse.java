@@ -26,5 +26,6 @@ public record OrderResponse(
         String labelUrlCustom,
         String trackingCode,
         String shippingIdExternal,
-        String cancelReason) {
+        String cancelReason,
+        String reverseTrackingCode) {
 }

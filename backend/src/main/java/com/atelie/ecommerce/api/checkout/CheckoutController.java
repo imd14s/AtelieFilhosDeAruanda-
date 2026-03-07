@@ -121,6 +121,11 @@ public class CheckoutController {
                                 installments,
                                 issuerId);
 
+                // --- NOVO: Salva ID externo do pagamento para estornos futuros ---
+                if (payment.metadata() != null && payment.metadata().get("external_id") != null) {
+                        orderService.updatePaymentInfo(order.getId(), payment.metadata().get("external_id").toString());
+                }
+
                 // 6. Retornar dados combinados
                 return ResponseEntity.ok(Map.of(
                                 "orderId", order.getId().toString(),

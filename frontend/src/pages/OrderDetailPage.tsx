@@ -262,6 +262,24 @@ const OrderDetailPage: React.FC = () => {
                                 <p className="text-sm text-gray-600 font-mono bg-gray-50 px-3 py-2 rounded">{order.trackingCode}</p>
                             </div>
                         )}
+
+                        {/* Rastreio de Devolução (Logística Reversa) */}
+                        {order.reverseTrackingCode && (
+                            <div className="bg-orange-50 rounded-md shadow-sm border border-orange-200 p-6">
+                                <h3 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
+                                    <Truck size={14} className="rotate-180" /> Rastreio de Devolução
+                                </h3>
+                                <p className="text-xs text-orange-700 mb-2">
+                                    Utilize este código para realizar a postagem de devolução nos Correios:
+                                </p>
+                                <p className="text-base text-orange-900 font-mono bg-white px-3 py-2 rounded border border-orange-200 font-bold text-center">
+                                    {order.reverseTrackingCode}
+                                </p>
+                                <p className="text-[10px] text-orange-600 mt-2 italic text-center uppercase tracking-wider font-bold">
+                                    Postagem sem custos para você
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

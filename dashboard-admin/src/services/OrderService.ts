@@ -30,5 +30,11 @@ export const OrderService = {
 
     delivered: async (id: string) => {
         return await api.put(`/orders/${id}/delivered`);
+    },
+    
+    createReverseLogistics: async (id: string, serviceId: number = 1) => {
+        return await api.post(`/orders/${id}/reverse-logistics`, null, {
+            params: { serviceId }
+        });
     }
 };

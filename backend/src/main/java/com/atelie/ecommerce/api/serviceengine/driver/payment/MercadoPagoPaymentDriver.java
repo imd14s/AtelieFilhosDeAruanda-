@@ -42,25 +42,57 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
 
     @Override
     public Map<String, Object> execute(Map<String, Object> request, Map<String, Object> config) {
+        String action = (String) request.getOrDefault("action", "CREATE");
+
+        if ("REFUND".equalsIgnoreCase(action)) {
+            return executeRefund(request, config);
+        }
+
+        return executePayment(request, config);
+    }
+
+    private Map<String, Object> executeRefund(Map<String, Object> request, Map<String, Object> config) {
+        try {
+            String accessToken = getAccessToken(config);
+            String paymentId = (String) request.get("paymentId");
+            BigDecimal amount = (BigDecimal) request.get("amount");
+
+            if (paymentId == null) {
+                return Map.of("error", true, "message", "ID do pagamento ausente para estorno");
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(accessToken);
+            headers.set("X-Idempotency-Key", UUID.randomUUID().toString());
+
+            Map<String, Object> refundRequest = new HashMap<>();
+            if (amount != null) {
+                refundRequest.put("amount", amount);
+            }
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(refundRequest, headers);
+            String apiUrl = env.getProperty("MP_API_URL_REFUND", "https://api.mercadopago.com/v1/payments/" + paymentId + "/refunds");
+
+            log.info("[MP-REFUND] Solicitando estorno para pagamento {}", paymentId);
+            Map response = restTemplate.postForObject(apiUrl.trim(), entity, Map.class);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("provider", "MERCADO_PAGO");
+            if (response != null) {
+                result.put("status", response.get("status"));
+                result.put("refund_id", response.get("id"));
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("[MP-REFUND] Erro ao processar estorno", e);
+            return Map.of("error", true, "message", "Erro MP Refund: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> executePayment(Map<String, Object> request, Map<String, Object> config) {
         String paymentMethodId = (String) request.getOrDefault("payment_method_id", "pix");
-        String accessToken = null;
-
-        if (config.get("credentials") instanceof Map) {
-            Map<String, Object> credentials = (Map<String, Object>) config.get("credentials");
-            accessToken = (String) credentials.get("accessToken");
-            log.info("[DEBUG-MP] Token extraído das configurações do banco: {}",
-                    accessToken != null ? accessToken.substring(0, Math.min(accessToken.length(), 10)) + "..."
-                            : "nulo");
-        }
-
-        if (accessToken == null || accessToken.isBlank()) {
-            accessToken = env.getProperty("MP_ACCESS_TOKEN");
-            log.info("[DEBUG-MP] Fallback para variável de ambiente MP_ACCESS_TOKEN: {}",
-                    accessToken != null ? accessToken.substring(0, Math.min(accessToken.length(), 10)) + "..."
-                            : "nulo");
-        }
-
-        accessToken = DriverConfigReader.requireNonBlank(accessToken, "access_token (Config MP)");
+        String accessToken = getAccessToken(config);
         String notificationUrl = (String) config.get("notification_url");
         BigDecimal amount = (BigDecimal) request.get("amount");
         String email = (String) request.get("email");
@@ -134,5 +166,20 @@ public class MercadoPagoPaymentDriver implements ServiceDriver {
         } catch (Exception e) {
             return Map.of("error", true, "message", "Erro MP: " + e.getMessage());
         }
+    }
+
+    private String getAccessToken(Map<String, Object> config) {
+        String accessToken = null;
+
+        if (config.get("credentials") instanceof Map) {
+            Map<String, Object> credentials = (Map<String, Object>) config.get("credentials");
+            accessToken = (String) credentials.get("accessToken");
+        }
+
+        if (accessToken == null || accessToken.isBlank()) {
+            accessToken = env.getProperty("MP_ACCESS_TOKEN");
+        }
+
+        return DriverConfigReader.requireNonBlank(accessToken, "access_token (Config MP)");
     }
 }

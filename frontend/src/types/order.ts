@@ -68,4 +68,5 @@ export interface Order {
     paymentStatus?: string;
     trackingCode?: string;
     cancelReason?: string;
+    reverseTrackingCode?: string;
 }

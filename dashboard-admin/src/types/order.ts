@@ -15,6 +15,7 @@ export interface Order {
   discount?: number;
   items?: OrderItem[];
   cancelReason?: string;
+  reverseTrackingCode?: string;
 }
 
 export interface OrderItem {

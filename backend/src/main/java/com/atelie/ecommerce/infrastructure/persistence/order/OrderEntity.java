@@ -97,6 +97,15 @@ public class OrderEntity {
     @Column(name = "cancel_reason", length = 500)
     private String cancelReason;
 
+    @Column(name = "payment_external_id")
+    private String paymentExternalId;
+
+    @Column(name = "refund_id")
+    private String refundId;
+
+    @Column(name = "reverse_tracking_code")
+    private String reverseTrackingCode;
+
     public OrderEntity() {
     }
 
@@ -319,6 +328,30 @@ public class OrderEntity {
 
     public void setCancelReason(String cancelReason) {
         this.cancelReason = cancelReason;
+    }
+
+    public String getPaymentExternalId() {
+        return paymentExternalId;
+    }
+
+    public void setPaymentExternalId(String paymentExternalId) {
+        this.paymentExternalId = paymentExternalId;
+    }
+
+    public String getRefundId() {
+        return refundId;
+    }
+
+    public void setRefundId(String refundId) {
+        this.refundId = refundId;
+    }
+
+    public String getReverseTrackingCode() {
+        return reverseTrackingCode;
+    }
+
+    public void setReverseTrackingCode(String reverseTrackingCode) {
+        this.reverseTrackingCode = reverseTrackingCode;
     }
 
     @PrePersist
