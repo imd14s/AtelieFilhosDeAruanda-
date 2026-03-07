@@ -41,8 +41,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         e.stopPropagation();
         setLoading(true);
 
+        const firstVariant = product.variants?.[0];
+
+        const cartProduct = {
+            id: product.id,
+            name: product.name,
+            price: firstVariant?.price ?? product.price,
+            image: firstVariant?.images?.[0] ?? product.images?.[0],
+        };
+
         setTimeout(() => {
-            cartService.add(product, 1);
+            cartService.add(cartProduct, 1, firstVariant?.id ?? null);
             addToast(`${product.name} adicionado!`, "success");
             setAdded(true);
             setLoading(false);

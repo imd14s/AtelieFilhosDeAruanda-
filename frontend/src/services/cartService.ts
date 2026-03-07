@@ -71,7 +71,7 @@ export const cartService = {
                 id: product.id,
                 name: product.name || product.title || '',
                 price: product.price,
-                image: product.image || (product.images && product.images[0]) || (product.media && product.media[0]?.url),
+                image: product.image,
                 quantity: quantity,
                 variantId: vId
             });

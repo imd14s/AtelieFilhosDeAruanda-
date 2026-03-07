@@ -46,14 +46,14 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, cartItems, onU
         }
     };
 
-    const removeItem = async (id: string) => {
-        const updatedCart = await cartService.remove(id);
+    const removeItem = async (id: string, variantId: string) => {
+        const updatedCart = await cartService.remove(id, variantId);
         onUpdateCart({ items: updatedCart });
     };
 
-    const updateQuantity = async (id: string, newQty: number) => {
+    const updateQuantity = async (id: string, newQty: number, variantId: string) => {
         if (newQty < 1) return;
-        const updatedCart = await cartService.updateQuantity(id, newQty);
+        const updatedCart = await cartService.updateQuantity(id, newQty, variantId);
         onUpdateCart({ items: updatedCart });
     };
 
@@ -97,11 +97,11 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, cartItems, onU
                                             </p>
                                             <div className="flex items-center justify-between mt-auto">
                                                 <div className="flex items-center border border-[#0f2A44]/10 bg-white">
-                                                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-2 py-1 text-[#0f2A44]">-</button>
+                                                    <button onClick={() => updateQuantity(item.id, item.quantity - 1, item.variantId)} className="px-2 py-1 text-[#0f2A44]">-</button>
                                                     <span className="px-2 text-xs font-lato">{item.quantity}</span>
-                                                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-2 py-1 text-[#0f2A44]">+</button>
+                                                    <button onClick={() => updateQuantity(item.id, item.quantity + 1, item.variantId)} className="px-2 py-1 text-[#0f2A44]">+</button>
                                                 </div>
-                                                <button onClick={() => removeItem(item.id)} className="text-[#0f2A44]/30 hover:text-red-800 transition-colors">
+                                                <button onClick={() => removeItem(item.id, item.variantId)} className="text-[#0f2A44]/30 hover:text-red-800 transition-colors">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>

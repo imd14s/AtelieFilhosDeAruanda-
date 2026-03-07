@@ -246,21 +246,18 @@ const ProductPage: React.FC = () => {
             return;
         }
 
-        let validVariantImg = currentVariant?.imageUrl && !currentVariant.imageUrl.includes('default.png') ? currentVariant.imageUrl : null;
-        if (validVariantImg && validVariantImg.includes(',')) {
-            validVariantImg = validVariantImg.split(',')[0].trim();
-        }
+        const variantImage = currentVariant?.images?.[0] ?? product.images?.[0];
 
         const cartProduct = {
-            ...product,
-            id: currentVariant ? currentVariant.id : product.id,
-            name: currentVariant ? `${product.name} (${Object.values(selectedOptions).join(', ')})` : product.name,
+            id: product.id,
+            name: currentVariant
+                ? `${product.name} (${Object.values(selectedOptions).join(', ')})`
+                : product.name,
             price: displayPrice,
-            images: validVariantImg ? [validVariantImg] : product.images,
-            image: validVariantImg || product.images?.[0] || product.image
+            image: variantImage,
         };
 
-        cartService.add(cartProduct as any, finalQuantity);
+        cartService.add(cartProduct, finalQuantity, currentVariant?.id ?? null);
         addToast(`${product.name} adicionado ao carrinho!`, "success");
         setAdded(true);
         setTimeout(() => setAdded(false), 3000);
