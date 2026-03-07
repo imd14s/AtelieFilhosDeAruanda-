@@ -25,9 +25,6 @@ public class ShippingService {
     private final ServiceOrchestrator orchestrator;
     private final ServiceProviderGateway providerGateway;
 
-    @Value("${spring.profiles.active:prod}")
-    private String activeProfile;
-
     public ShippingService(ServiceOrchestrator orchestrator, ServiceProviderGateway providerGateway) {
         this.orchestrator = orchestrator;
         this.providerGateway = providerGateway;
@@ -58,7 +55,7 @@ public class ShippingService {
                 continue;
 
             log.debug("[DEBUG] Cotando frete com provedor: {}", p.code());
-            ServiceResult result = orchestrator.executeWithProvider(p, request, activeProfile);
+            ServiceResult result = orchestrator.executeWithProvider(p, request, "PRODUCTION");
 
             if (result.success()) {
                 Map<String, Object> payload = result.payload();
