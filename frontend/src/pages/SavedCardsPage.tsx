@@ -64,6 +64,8 @@ const SavedCardsPage: React.FC = () => {
                                 identificationType: { id: 'mp-identification-type' },
                                 identificationNumber: { id: 'mp-identification-number' },
                                 cardholderEmail: { id: 'mp-cardholder-email' },
+                                issuer: { id: 'mp-issuer' },
+                                installments: { id: 'mp-installments' },
                             },
                             callbacks: {
                                 onFormMounted: (error: any) => {
@@ -246,6 +248,10 @@ const SavedCardsPage: React.FC = () => {
                                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Número do Documento</label>
                                         <input type="text" id="mp-identification-number" className="w-full h-12 border border-gray-200 rounded-md px-4 py-3 bg-gray-50 focus:outline-none focus:border-[var(--dourado-suave)] transition-colors text-sm" />
                                     </div>
+
+                                    {/* Campos ocultos exigidos pelo SDK do MP para montar o cardForm */}
+                                    <select id="mp-issuer" className="hidden" aria-hidden="true"></select>
+                                    <select id="mp-installments" className="hidden" aria-hidden="true"></select>
                                 </div>
 
                                 <div className="flex gap-4 pt-4">

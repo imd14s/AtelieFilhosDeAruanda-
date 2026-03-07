@@ -1,7 +1,12 @@
 package com.atelie.ecommerce.application.service.payment;
 
+import com.atelie.ecommerce.domain.service.port.ServiceProviderConfigGateway;
 import com.atelie.ecommerce.infrastructure.persistence.auth.UserRepository;
 import com.atelie.ecommerce.infrastructure.persistence.auth.entity.UserEntity;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -16,14 +21,25 @@ import java.util.*;
 @Service
 public class MercadoPagoCustomerClient {
 
+    private static final Logger log = LoggerFactory.getLogger(MercadoPagoCustomerClient.class);
+
     private final RestTemplate restTemplate;
     private final Environment env;
     private final UserRepository userRepository;
+    private final ServiceProviderConfigGateway configGateway;
+    private final ObjectMapper objectMapper;
 
-    public MercadoPagoCustomerClient(RestTemplate restTemplate, Environment env, UserRepository userRepository) {
+    public MercadoPagoCustomerClient(
+            RestTemplate restTemplate,
+            Environment env,
+            UserRepository userRepository,
+            ServiceProviderConfigGateway configGateway,
+            ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.env = env;
         this.userRepository = userRepository;
+        this.configGateway = configGateway;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -37,14 +53,11 @@ public class MercadoPagoCustomerClient {
 
         String accessToken = getAccessToken();
         if (accessToken == null) {
-            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
-                    .warn("[DEBUG] MP_ACCESS_TOKEN não configurado ou vazio.");
+            log.warn("[MpCustomer] Access token não disponível. Verifique a configuração MERCADO_PAGO no Dashboard.");
             return null;
         }
         String baseUrl = getBaseUrl();
-        org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class).info(
-                "[DEBUG] Iniciando getOrCreateCustomerId para usuário: {}, usando base URL: {}", user.getEmail(),
-                baseUrl);
+        log.info("[MpCustomer] getOrCreateCustomerId para: {}", user.getEmail());
 
         // Tenta buscar por email
         String searchUrl = baseUrl + "/v1/customers/search?email=" + user.getEmail();
@@ -83,11 +96,10 @@ public class MercadoPagoCustomerClient {
                 return customerId;
             }
         } catch (Exception e) {
-            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
-                    .error("[DEBUG] Erro ao criar customer no Mercado Pago: {}", e.getMessage());
+            log.error("[MpCustomer] Erro ao criar customer no Mercado Pago: {}", e.getMessage());
         }
 
-        return null; // Falha silenciosa se não configurado ou erro na API
+        return null;
     }
 
     /**
@@ -98,8 +110,7 @@ public class MercadoPagoCustomerClient {
             return Collections.emptyList();
         String accessToken = getAccessToken();
         if (accessToken == null) {
-            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
-                    .warn("[DEBUG] MP_ACCESS_TOKEN não configurado. Abortando listagem de cartões.");
+            log.warn("[MpCustomer] Access token não disponível. Abortando listagem de cartões.");
             return Collections.emptyList();
         }
         String url = getBaseUrl() + "/v1/customers/" + customerId + "/cards";
@@ -120,8 +131,7 @@ public class MercadoPagoCustomerClient {
     public Map<String, Object> saveCard(String customerId, String cardToken) {
         String accessToken = getAccessToken();
         if (accessToken == null) {
-            org.slf4j.LoggerFactory.getLogger(MercadoPagoCustomerClient.class)
-                    .error("[DEBUG] MP_ACCESS_TOKEN não configurado. Não é possível salvar cartão.");
+            log.error("[MpCustomer] Access token não disponível. Não é possível salvar cartão.");
             return Map.of("error", "CONFIG_MISSING", "message", "Configuração de pagamento incompleta.");
         }
         String url = getBaseUrl() + "/v1/customers/" + customerId + "/cards";
@@ -164,12 +174,33 @@ public class MercadoPagoCustomerClient {
         return headers;
     }
 
+    /**
+     * Busca o access token da configuração dinâmica (banco de dados) primeiro,
+     * com fallback para a variável de ambiente MP_ACCESS_TOKEN.
+     * Espelha o padrão usado pelo MercadoPagoPaymentDriver.
+     */
     private String getAccessToken() {
-        String token = env.getProperty("MP_ACCESS_TOKEN");
-        if (token == null || token.isBlank()) {
-            return null;
+        // 1. Tentar buscar das configurações dinâmicas do banco (ServiceEngine)
+        try {
+            Optional<String> configJson = configGateway.findConfigJson("MERCADO_PAGO", "PRODUCTION");
+            if (configJson.isPresent()) {
+                JsonNode root = objectMapper.readTree(configJson.get());
+                String token = root.path("credentials").path("accessToken").asText(null);
+                if (token != null && !token.isBlank()) {
+                    return token;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[MpCustomer] Erro ao ler access token da config dinâmica: {}", e.getMessage());
         }
-        return token;
+
+        // 2. Fallback para variável de ambiente
+        String token = env.getProperty("MP_ACCESS_TOKEN");
+        if (token != null && !token.isBlank()) {
+            return token;
+        }
+
+        return null;
     }
 
     private String getBaseUrl() {
@@ -177,3 +208,4 @@ public class MercadoPagoCustomerClient {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 }
+

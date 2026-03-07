@@ -120,7 +120,7 @@ const BenefitsPage: React.FC = () => {
                 <div className="relative z-10 max-w-lg">
                     <h3 className="text-xl font-playfair mb-2">Seja um Assinante VIP</h3>
                     <p className="text-blue-100 text-sm mb-4 leading-relaxed">
-                        Assine nosso Kit Mensal e receba mensalmente guias, velas e ervas exclusivas, além de cupons fixos de 10% em todas as compras.
+                        Em breve receba Kit Mensal, guias, velas e ervas.
                     </p>
                     <Link to="/assinaturas" className="inline-block bg-[var(--dourado-suave)] hover:bg-yellow-600 text-[var(--azul-profundo)] px-6 py-2 rounded-full text-xs font-bold transition-transform group-hover:scale-105">
                         CONHECER ASSINATURAS

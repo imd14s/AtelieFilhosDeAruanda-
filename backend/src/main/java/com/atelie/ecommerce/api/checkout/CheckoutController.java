@@ -90,6 +90,16 @@ public class CheckoutController {
                 Integer installments = (Integer) payload.getOrDefault("installments", 1);
                 String issuerId = (String) payload.get("issuerId");
 
+                // 4.5. Salvar cartão ANTES do pagamento (card_token é single-use no MP)
+                Boolean saveCard = (Boolean) payload.getOrDefault("saveCard", false);
+                if (Boolean.TRUE.equals(saveCard) && paymentToken != null && customerEmail != null && "card".equals(paymentMethodId)) {
+                        try {
+                                mpCustomerClient.saveCardByEmail(customerEmail, paymentToken);
+                        } catch (Exception e) {
+                                org.slf4j.LoggerFactory.getLogger(CheckoutController.class).error("Erro ao salvar cartão durante checkout", e);
+                        }
+                }
+
                 // 5. Gerar o pagamento
                 PaymentResponse payment = paymentService.processPayment(
                                 order.getId(),
@@ -102,16 +112,6 @@ public class CheckoutController {
                                 installments,
                                 issuerId);
 
-                // 5.5. Salvar cartão se solicitado
-                Boolean saveCard = (Boolean) payload.getOrDefault("saveCard", false);
-                if (Boolean.TRUE.equals(saveCard) && paymentToken != null && customerEmail != null && "card".equals(paymentMethodId)) {
-                        try {
-                                mpCustomerClient.saveCardByEmail(customerEmail, paymentToken);
-                        } catch (Exception e) {
-                                org.slf4j.LoggerFactory.getLogger(CheckoutController.class).error("Erro ao salvar cartão durante checkout", e);
-                        }
-                }
-
                 // 6. Retornar dados combinados
                 return ResponseEntity.ok(Map.of(
                                 "orderId", order.getId().toString(),
@@ -119,3 +119,4 @@ public class CheckoutController {
                                 "payment", payment));
         }
 }
+
