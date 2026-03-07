@@ -57,8 +57,16 @@ export const useMercadoPago = (): UseMercadoPago => {
                 }
 
                 if (!window.MercadoPago) {
-                    // Se o script não carregou, tentamos novamente em 1s
-                    setTimeout(initMP, 1000);
+                    const script = document.createElement('script');
+                    script.src = 'https://sdk.mercadopago.com/js/v2';
+                    script.async = true;
+                    script.onload = () => initMP();
+                    script.onerror = () => {
+                        console.error('[useMercadoPago] Erro ao carregar script do SDK');
+                        setLoading(false);
+                        setError('Não foi possível carregar o sistema de pagamento.');
+                    };
+                    document.body.appendChild(script);
                     return;
                 }
 

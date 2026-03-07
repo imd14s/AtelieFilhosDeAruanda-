@@ -37,30 +37,25 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
         const fetchSettings = async () => {
             try {
                 setLoading(true);
-                const response = await api.get('/settings/payment', { headers: TENANT_HEADER });
-                const providers = response.data;
+                const response = await api.get('/config/public/mercado-pago/public-key', { headers: TENANT_HEADER });
+                const config = response.data;
 
-                const mp = providers.find((p: any) => p.code === 'MERCADO_PAGO');
-
-                if (mp) {
-                    const config = mp.config ? (typeof mp.config === 'string' ? JSON.parse(mp.config) : mp.config) : {};
-                    const methods = config.methods?.enabled || {};
-
+                if (config && config.publicKey) {
                     setSettings({
                         mercadoPago: {
-                            enabled: mp.enabled,
+                            enabled: true, // Se o endpoint retornou, assumimos habilitado ou validamos pelo config
                             methods: {
                                 card: {
-                                    active: methods.card?.active || false,
-                                    maxInstallments: methods.card?.maxInstallments || 12,
-                                    interestFree: methods.card?.interestFree || 1,
+                                    active: config.cardActive || false,
+                                    maxInstallments: config.maxInstallments || 12,
+                                    interestFree: config.interestFree || 1,
                                 },
                                 pix: {
-                                    active: methods.pix?.active || false,
-                                    discountPercent: methods.pix?.discountPercent || 0,
+                                    active: config.pixActive || false,
+                                    discountPercent: config.pixDiscountPercent || 0,
                                 },
                                 boleto: {
-                                    active: methods.boleto?.active || false,
+                                    active: false, // Pode ser adicionado ao backend se necessário
                                 }
                             }
                         }
