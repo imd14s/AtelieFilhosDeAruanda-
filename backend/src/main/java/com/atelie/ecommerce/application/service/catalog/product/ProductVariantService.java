@@ -7,6 +7,8 @@ import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEnt
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
+import com.atelie.ecommerce.application.service.inventory.InventoryService;
+import com.atelie.ecommerce.domain.inventory.MovementType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +22,16 @@ public class ProductVariantService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
     private final GtinGeneratorService gtinGenerator;
+    private final InventoryService inventoryService;
 
     public ProductVariantService(ProductRepository productRepository,
             ProductVariantRepository variantRepository,
-            GtinGeneratorService gtinGenerator) {
+            GtinGeneratorService gtinGenerator,
+            InventoryService inventoryService) {
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.gtinGenerator = gtinGenerator;
+        this.inventoryService = inventoryService;
     }
 
     @Transactional
@@ -74,7 +79,13 @@ public class ProductVariantService {
                 request.attributesJson(),
                 true);
 
-        return variantRepository.save(variant);
+        ProductVariantEntity saved = variantRepository.save(variant);
+
+        if (stock > 0) {
+            inventoryService.addMovement(saved.getId(), MovementType.IN, stock, "Estoque inicial da variante", "ProductVariantService");
+        }
+
+        return saved;
     }
 
     public List<ProductVariantEntity> listByProduct(UUID productId) {

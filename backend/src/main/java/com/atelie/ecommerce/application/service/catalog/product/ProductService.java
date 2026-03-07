@@ -14,12 +14,12 @@ import com.atelie.ecommerce.application.service.ai.GeminiIntegrationService;
 import com.atelie.ecommerce.infrastructure.persistence.integration.entity.MarketplaceIntegrationEntity;
 import com.atelie.ecommerce.infrastructure.persistence.integration.repository.MarketplaceIntegrationRepository;
 import com.atelie.ecommerce.infrastructure.service.media.CloudinaryService;
-import com.atelie.ecommerce.infrastructure.persistence.product.entity.StockMovementEntity;
-import com.atelie.ecommerce.infrastructure.persistence.product.StockMovementRepository;
+import com.atelie.ecommerce.infrastructure.persistence.cart.CartItemRepository;
+import com.atelie.ecommerce.application.service.inventory.InventoryService;
+import com.atelie.ecommerce.domain.inventory.MovementType;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
 import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemRepository;
-import com.atelie.ecommerce.infrastructure.persistence.cart.CartItemRepository;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -51,7 +51,7 @@ public class ProductService {
     private final MarketplaceIntegrationRepository marketplaceRepository;
     private final GeminiIntegrationService geminiIntegrationService;
     private final CloudinaryService cloudinaryService;
-    private final StockMovementRepository stockMovementRepository;
+    private final InventoryService inventoryService;
     private final OrderItemRepository orderItemRepository;
     private final CartItemRepository cartItemRepository;
 
@@ -66,7 +66,7 @@ public class ProductService {
             MarketplaceIntegrationRepository marketplaceRepository,
             GeminiIntegrationService geminiIntegrationService,
             CloudinaryService cloudinaryService,
-            StockMovementRepository stockMovementRepository,
+            InventoryService inventoryService,
             OrderItemRepository orderItemRepository,
             CartItemRepository cartItemRepository) {
         this.productRepository = productRepository;
@@ -80,7 +80,7 @@ public class ProductService {
         this.marketplaceRepository = marketplaceRepository;
         this.geminiIntegrationService = geminiIntegrationService;
         this.cloudinaryService = cloudinaryService;
-        this.stockMovementRepository = stockMovementRepository;
+        this.inventoryService = inventoryService;
         this.orderItemRepository = orderItemRepository;
         this.cartItemRepository = cartItemRepository;
     }
@@ -126,8 +126,9 @@ public class ProductService {
         syncMarketplaces(saved);
 
         if (isNew) {
-            recordStockMovement(saved.getId(), null, saved.getStockQuantity(), saved.getStockQuantity(), "INITIAL_LOAD",
-                    "Produto criado");
+            // No sistema novo, as variantes são criadas em saveOrUpdateVariants.
+            // Se o produto pai tem um estoque definido (legado ou simplificado), 
+            // a variante default já registrará o movimento.
         }
 
         return saved;
@@ -192,10 +193,17 @@ public class ProductService {
         ProductEntity saved = productRepository.save(existing);
 
         // Auditoria
-        int newStock = saved.getStockQuantity() != null ? saved.getStockQuantity() : 0;
-        if (oldStock != newStock) {
-            recordStockMovement(saved.getId(), null, newStock - oldStock, newStock, "ADJUSTMENT",
-                    "Atualização manual via dashboard");
+        // Auditoria unificada via InventoryService se não houver variantes
+        if (variants == null || variants.isEmpty()) {
+            int newStock = saved.getStockQuantity() != null ? saved.getStockQuantity() : 0;
+            if (oldStock != newStock) {
+                // Tenta achar a variante padrão do produto
+                variantRepository.findByProductId(saved.getId()).stream()
+                    .findFirst()
+                    .ifPresent(v -> inventoryService.addMovement(v.getId(), 
+                        newStock > oldStock ? MovementType.IN : MovementType.OUT,
+                        Math.abs(newStock - oldStock), "Atualização manual via dashboard", "ProductService"));
+            }
         }
 
         eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), false));
@@ -388,8 +396,8 @@ public class ProductService {
                     "Não é possível excluir um produto que possui pedidos vinculados. Por favor, desative o produto em vez de excluí-lo.");
         }
 
-        // Limpeza de dependências deletáveis
-        stockMovementRepository.deleteByProductId(id);
+        // Limpeza de dependências deletáveis (Movimentações agora estão no InventoryRepository)
+        // O InventoryService deve lidar com a deleção se necessário, ou deixamos para integridade referencial.
         cartItemRepository.deleteByProductId(id);
         // Outras tabelas de histórico/favoritos se houver repositories seriam limpas
         // aqui
@@ -464,8 +472,9 @@ public class ProductService {
                 toKeep.add(existingVariant);
 
                 if (oldVStock != newVStock) {
-                    recordStockMovement(existing.getId(), v.getId(), newVStock - oldVStock, newVStock, "ADJUSTMENT",
-                            "Ajuste de variante manual");
+                    inventoryService.addMovement(v.getId(), 
+                        newVStock > oldVStock ? MovementType.IN : MovementType.OUT,
+                        Math.abs(newVStock - oldVStock), "Ajuste de variante manual", "ProductService");
                 }
             } else {
                 v.setProduct(existing);
@@ -487,8 +496,7 @@ public class ProductService {
                     v.setPrice(existing.getPrice());
                 toAdd.add(v);
 
-                recordStockMovement(existing.getId(), v.getId(), v.getStockQuantity(), v.getStockQuantity(),
-                        "ADJUSTMENT", "Nova variante adicionada");
+                inventoryService.addMovement(v.getId(), MovementType.IN, v.getStockQuantity(), "Nova variante adicionada", "ProductService");
             }
         }
 
@@ -547,19 +555,6 @@ public class ProductService {
         }
     }
 
-    private void recordStockMovement(UUID productId, UUID variantId, Integer change, Integer result, String type,
-            String reason) {
-        StockMovementEntity movement = StockMovementEntity.builder()
-                .productId(productId)
-                .variantId(variantId)
-                .quantityChange(change)
-                .resultingStock(result)
-                .movementType(type)
-                .reason(reason)
-                .createdBy("SYSTEM_ADMIN")
-                .build();
-        stockMovementRepository.save(movement);
-    }
 
     private void updateParentStockFromVariants(ProductEntity product) {
         if (product.getVariants() != null && !product.getVariants().isEmpty()) {
