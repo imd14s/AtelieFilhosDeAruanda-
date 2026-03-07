@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Shield, Zap, CreditCard, Settings, ChevronDown, ChevronUp, AlertCircle, Check, Copy, RefreshCw } from 'lucide-react';
 import type { MercadoPagoConfig } from '../../../types/store-settings';
 
@@ -66,13 +66,7 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
     const [availableInstallments, setAvailableInstallments] = useState<number[]>([]);
     const [loadingInstallments, setLoadingInstallments] = useState(false);
 
-    useEffect(() => {
-        if (config.credentials.publicKey && config.credentials.publicKey.startsWith('APP_USR-')) {
-            fetchInstallments();
-        }
-    }, [config.credentials.publicKey]);
-
-    const fetchInstallments = async () => {
+    const fetchInstallments = useCallback(async () => {
         if (!config.credentials.publicKey) return;
         setLoadingInstallments(true);
         try {
@@ -80,19 +74,25 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
             const response = await fetch(`https://api.mercadopago.com/v1/payment_methods/installments?public_key=${config.credentials.publicKey}&amount=100`);
             const data = await response.json();
             if (Array.isArray(data) && data.length > 0) {
-                const maxInMP = data[0].payer_costs.length;
-                const options = Array.from({ length: maxInMP }, (_, i) => i + 1);
+                const costs = data[0].payer_costs;
+                const options = costs.map((pc: { installments: number }) => pc.installments);
                 setAvailableInstallments(options);
             } else {
-                setAvailableInstallments([1, 2, 3, 4, 5, 6, 10, 12]);
+                setAvailableInstallments([1, 2, 3, 4, 5, 6, 12]);
             }
         } catch (e) {
             console.error("Erro ao buscar parcelas", e);
-            setAvailableInstallments([1, 2, 3, 4, 5, 6, 10, 12]);
+            setAvailableInstallments([1, 2, 3, 4, 5, 6, 12]);
         } finally {
             setLoadingInstallments(false);
         }
-    };
+    }, [config.credentials.publicKey]);
+
+    useEffect(() => {
+        if (config.credentials.publicKey && config.credentials.publicKey.startsWith('APP_USR-')) {
+            fetchInstallments();
+        }
+    }, [config.credentials.publicKey, fetchInstallments]);
 
     const handleCopy = () => {
         if (!config.webhooks.url) return;
@@ -103,7 +103,7 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
 
     const toggleSection = (id: string) => setActiveSection(activeSection === id ? null : id);
 
-    const SectionHeader = ({ id, icon: Icon, title, desc }: { id: string, icon: any, title: string, desc: string }) => (
+    const SectionHeader = ({ id, icon: Icon, title, desc }: { id: string, icon: React.ElementType, title: string, desc: string }) => (
         <button
             onClick={() => toggleSection(id)}
             className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 border-b transition-all first:rounded-t-xl"
@@ -176,17 +176,20 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                                 </div>
                             </div>
                             <div className="space-y-3 mt-4 pt-4 border-t border-green-100 border-dashed">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-700 block">Desconto no PIX (%)</label>
+                                <div className="space-y-1 max-w-[120px]">
+                                    <label className="text-xs font-bold text-gray-700 block">Desconto (%)</label>
                                     <div className="relative">
                                         <input
                                             type="number"
-                                            className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder="Ex: 5"
-                                            value={config.methods.enabled.pix.discountPercent}
-                                            onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, discountPercent: Number(e.target.value) } } } })}
+                                            className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-center font-bold"
+                                            placeholder="0"
+                                            value={config.methods.enabled.pix.discountPercent || ''}
+                                            onChange={e => {
+                                                const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                                setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, discountPercent: val } } } });
+                                            }}
                                         />
-                                        <span className="absolute right-4 top-3.5 text-gray-400 font-bold">%</span>
+                                        <span className="absolute right-3 top-3.5 text-gray-400 font-bold">%</span>
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-gray-400 italic">Liberação instantânea com incentivo para o cliente.</p>
@@ -194,10 +197,9 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                         </div>
 
                         {/* Cartão */}
-                        <div className={`p-5 rounded-2xl border-2 transition-all cursor-pointer ${config.methods.enabled.card.active ? 'border-blue-500 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}
-                            onClick={() => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, active: !config.methods.enabled.card.active } } } })}
+                        <div className={`p-5 rounded-2xl border-2 transition-all group ${config.methods.enabled.card.active ? 'border-blue-500 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}
                         >
-                            <div className="flex justify-between items-center mb-3">
+                            <div className="flex justify-between items-center mb-3" onClick={() => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, active: !config.methods.enabled.card.active } } } })}>
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-500">
                                         <CreditCard size={20} />
@@ -208,7 +210,6 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                                     {config.methods.enabled.card.active && <Check size={14} className="text-white" />}
                                 </div>
                             </div>
-                            <p className="text-[11px] text-gray-500">Parcelamento em até {config.methods.enabled.card.maxInstallments}x.</p>
                         </div>
                     </div>
 

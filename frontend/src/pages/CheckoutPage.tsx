@@ -118,7 +118,7 @@ const CheckoutPage: React.FC = () => {
 
     const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-    const [isAddingNewAddress, setIsAddingNewAddress] = useState<boolean>(!cep);
+    const [isAddingNewAddress, setIsAddingNewAddress] = useState<boolean>(true); // Sempre true por padrão para visitantes
     const [savedCards, setSavedCards] = useState<Card[]>([]);
     const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
     const [isAddingNewCard, setIsAddingNewCard] = useState<boolean>(true);
@@ -141,8 +141,8 @@ const CheckoutPage: React.FC = () => {
         : 0;
 
     // Aplicar desconto de PIX conforme configuração do backend
-    const effectivePixDiscountPercent = config?.pixDiscountPercent ?? 5; // Fallback para 5% se não carregar
-    const pixDiscount = formData.metodoPagamento === 'pix' ? (subtotal * (effectivePixDiscountPercent / 100)) : 0;
+    const effectivePixDiscountPercent = config?.pixDiscountPercent ?? 0; // Usar 0 se não houver configuração ou carregar do Mercado Pago
+    const pixDiscount = (user.id && formData.metodoPagamento === 'pix') ? (subtotal * (effectivePixDiscountPercent / 100)) : 0;
 
     const total = subtotal + (currentShipping?.price || 0) - discount - pixDiscount;
 
@@ -162,11 +162,15 @@ const CheckoutPage: React.FC = () => {
                 try {
                     const addresses = await authService.address.get(user.id);
                     setSavedAddresses(addresses);
-                    if (addresses.length > 0 && !cep) {
+                    if (addresses.length > 0) {
                         setIsAddingNewAddress(false);
-                        // Seleciona o padrão se existir
+                        // Seleciona o padrão se existir, senão o primeiro
                         const def = addresses.find(a => a.isDefault);
-                        if (def) handleSelectAddress(def);
+                        if (def) {
+                            handleSelectAddress(def);
+                        } else {
+                            handleSelectAddress(addresses[0]);
+                        }
                     }
 
                     const cards = await authService.cards.get();
@@ -573,8 +577,8 @@ const CheckoutPage: React.FC = () => {
                                 <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">1</span>
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Informações de Contato</h2>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                <div className="space-y-1.5 group">
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                                <div className="md:col-span-12 lg:col-span-6 space-y-1.5 group">
                                     <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">
                                         E-mail para acompanhamento
                                     </label>
@@ -583,10 +587,9 @@ const CheckoutPage: React.FC = () => {
                                         value={formData.email} onChange={handleInputChange}
                                         className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
                                     />
-                                    <div className="min-h-[16px]" />
                                 </div>
-                                <div className="flex gap-4 items-start pt-[2px]">
-                                    <div className="w-1/3 space-y-1.5">
+                                <div className="md:col-span-12 lg:col-span-6 grid grid-cols-12 gap-4">
+                                    <div className="col-span-4 space-y-1.5">
                                         <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">
                                             Tipo
                                         </label>
@@ -600,7 +603,7 @@ const CheckoutPage: React.FC = () => {
                                             <option value="CNPJ">CNPJ</option>
                                         </select>
                                     </div>
-                                    <div className="flex-1 space-y-1.5 group relative">
+                                    <div className="col-span-8 space-y-1.5 group relative">
                                         <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">
                                             {formData.tipoDocumento}
                                         </label>
@@ -609,9 +612,11 @@ const CheckoutPage: React.FC = () => {
                                             value={getDisplayValue('documento')} onChange={handleInputChange}
                                             className={`w-full border ${formErrors.documento ? 'border-red-500' : 'border-[var(--azul-profundo)]/10'} bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200`}
                                         />
-                                        <div className="min-h-[16px] mt-1 pr-1">
-                                            {formErrors.documento && <p className="text-[10px] text-red-500 font-bold animate-in fade-in slide-in-from-top-1 text-right">{formErrors.documento}</p>}
-                                        </div>
+                                        {formErrors.documento && (
+                                            <p className="absolute -bottom-5 right-1 text-[10px] text-red-500 font-bold animate-in fade-in slide-in-from-top-1">
+                                                {formErrors.documento}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -662,8 +667,8 @@ const CheckoutPage: React.FC = () => {
                             )}
 
                             {isAddingNewAddress && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4">
-                                    <div className="space-y-1.5 group">
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 animate-in fade-in slide-in-from-top-4">
+                                    <div className="md:col-span-6 space-y-1.5 group">
                                         <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Nome</label>
                                         <input
                                             type="text" name="nome" required placeholder="Seu nome"
@@ -671,7 +676,7 @@ const CheckoutPage: React.FC = () => {
                                             className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
                                         />
                                     </div>
-                                    <div className="space-y-1.5 group">
+                                    <div className="md:col-span-6 space-y-1.5 group">
                                         <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Sobrenome</label>
                                         <input
                                             type="text" name="sobrenome" required placeholder="Seu sobrenome"
@@ -679,7 +684,7 @@ const CheckoutPage: React.FC = () => {
                                             className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
                                         />
                                     </div>
-                                    <div className="md:col-span-1 space-y-1.5 group">
+                                    <div className="md:col-span-4 space-y-1.5 group">
                                         <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">CEP</label>
                                         <input
                                             type="text" name="cep" required placeholder="00000-000"
@@ -690,10 +695,7 @@ const CheckoutPage: React.FC = () => {
                                             {formErrors.cep && <p className="text-[10px] text-red-500 font-bold animate-in fade-in slide-in-from-top-1 text-right">{formErrors.cep}</p>}
                                         </div>
                                     </div>
-                                    <div className="md:col-span-2 space-y-1.5 group hidden md:block">
-                                        {/* Espaçador para manter o grid alinhado quando CEP é 1/3 e Bairro 2/3 */}
-                                    </div>
-                                    <div className="md:col-span-2 space-y-1.5 group">
+                                    <div className="md:col-span-8 space-y-1.5 group">
                                         <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Rua / Logradouro</label>
                                         <input
                                             type="text" name="rua" required placeholder="Nome da rua"
@@ -701,49 +703,45 @@ const CheckoutPage: React.FC = () => {
                                             className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
                                         />
                                     </div>
-                                    <div className="md:col-span-1 flex grid grid-cols-4 gap-4 md:col-span-2">
-                                        <div className="col-span-1 space-y-1.5 group">
-                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Nº</label>
-                                            <input
-                                                type="text" name="numero" required placeholder="123"
-                                                value={formData.numero} onChange={handleInputChange}
-                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
-                                            />
-                                        </div>
-                                        <div className="col-span-3 space-y-1.5 group">
-                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Bairro</label>
-                                            <input
-                                                type="text" name="bairro" required placeholder="Bairro"
-                                                value={formData.bairro} onChange={handleInputChange}
-                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
-                                            />
-                                        </div>
+                                    <div className="md:col-span-3 space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Nº</label>
+                                        <input
+                                            type="text" name="numero" required placeholder="123"
+                                            value={formData.numero} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                        />
                                     </div>
-                                    <div className="md:col-span-2 grid grid-cols-12 gap-4">
-                                        <div className="col-span-12 md:col-span-4 space-y-1.5 group">
-                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Complemento</label>
-                                            <input
-                                                type="text" name="complemento" placeholder="Apto, Bloco..."
-                                                value={formData.complemento} onChange={handleInputChange}
-                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
-                                            />
-                                        </div>
-                                        <div className="col-span-8 md:col-span-6 space-y-1.5 group">
-                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Cidade</label>
-                                            <input
-                                                type="text" name="cidade" required placeholder="Cidade"
-                                                value={formData.cidade} onChange={handleInputChange}
-                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
-                                            />
-                                        </div>
-                                        <div className="col-span-4 md:col-span-2 space-y-1.5 group">
-                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">UF</label>
-                                            <input
-                                                type="text" name="estado" required placeholder="UF"
-                                                value={formData.estado} onChange={handleInputChange}
-                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200 uppercase"
-                                            />
-                                        </div>
+                                    <div className="md:col-span-5 space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Bairro</label>
+                                        <input
+                                            type="text" name="bairro" required placeholder="Bairro"
+                                            value={formData.bairro} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-4 space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Complemento</label>
+                                        <input
+                                            type="text" name="complemento" placeholder="Apto, Bloco..."
+                                            value={formData.complemento} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-9 space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Cidade</label>
+                                        <input
+                                            type="text" name="cidade" required placeholder="Cidade"
+                                            value={formData.cidade} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-3 space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">UF</label>
+                                        <input
+                                            type="text" name="estado" required placeholder="UF"
+                                            value={formData.estado} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200 uppercase"
+                                        />
                                     </div>
                                     {user.id && (
                                         <label className="md:col-span-2 flex items-center gap-2 cursor-pointer">
@@ -983,7 +981,7 @@ const CheckoutPage: React.FC = () => {
                                                     <img
                                                         src={getImageUrl(item.image || '')}
                                                         alt={item.name}
-                                                        onError={(e: any) => { e.target.src = '/images/default.png'; }}
+                                                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = '/images/default.png'; }}
                                                         className="w-full h-full object-cover"
                                                     />
                                                 </div>
@@ -1019,10 +1017,10 @@ const CheckoutPage: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {pixDiscount > 0 && (
+                                    {user.id && effectivePixDiscountPercent > 0 && (
                                         <div className="flex justify-between text-green-600 font-lato text-xs font-bold">
-                                            <span>Desconto Pix (5%)</span>
-                                            <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pixDiscount)}</span>
+                                            <span>Desconto Pix ({effectivePixDiscountPercent}%)</span>
+                                            <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotal * (effectivePixDiscountPercent / 100))}</span>
                                         </div>
                                     )}
 
