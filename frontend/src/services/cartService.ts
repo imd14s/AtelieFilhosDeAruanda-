@@ -37,6 +37,25 @@ export const cartService = {
                 console.error('[cartService] Erro ao buscar carrinho remoto:', error);
             }
         }
+
+        // Migração de schema antigo: converter 'image' (string) para 'images' (string[])
+        let needsSave = false;
+        cart = cart.map((item: CartItem & { image?: string }) => {
+            if (item.image && (!item.images || item.images.length === 0)) {
+                needsSave = true;
+                const { image, ...rest } = item;
+                return { ...rest, images: [image] };
+            }
+            if (!item.images) {
+                needsSave = true;
+                return { ...item, images: [] };
+            }
+            return item;
+        });
+        if (needsSave) {
+            localStorage.setItem(cartKey, JSON.stringify(cart));
+        }
+
         return cart;
     },
 
@@ -67,11 +86,17 @@ export const cartService = {
         if (existingItem) {
             existingItem.quantity += quantity;
         } else {
+            // Normalizar imagem: extrair apenas a primeira URL caso seja comma-separated
+            let normalizedImage = product.images?.[0] || "";
+            if (normalizedImage && normalizedImage.includes(',')) {
+                normalizedImage = normalizedImage.split(',')[0].trim();
+            }
+
             cart.push({
                 id: product.id,
                 name: product.name || product.title || '',
                 price: product.price,
-                image: product.image,
+                images: normalizedImage ? [normalizedImage] : [],
                 quantity: quantity,
                 variantId: vId
             });

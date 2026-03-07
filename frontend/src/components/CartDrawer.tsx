@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { X, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { cartService } from '../services/cartService';
 import { orderService } from '../services/orderService';
@@ -81,27 +81,31 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, cartItems, onU
                         ) : (
                             <div className="space-y-6">
                                 {cartItems.map((item) => (
-                                    <div key={item.id} className="flex gap-4 group">
-                                        <div className="w-20 h-24 bg-white flex-shrink-0 overflow-hidden">
+                                    <div
+                                        key={`${item.id}-${item.variantId}`}
+                                        onClick={() => { onClose(); navigate(`/produto/${item.id}`); }}
+                                        className="flex gap-4 group cursor-pointer hover:bg-white p-2 -mx-2 rounded transition-colors"
+                                    >
+                                        <div className="w-20 h-24 bg-[#F7F7F4] flex-shrink-0 overflow-hidden block">
                                             <img
-                                                src={getImageUrl(item.image || '')}
+                                                src={getImageUrl(item.images?.[0] || '')}
                                                 alt={item.name}
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = '/images/default.png'; }}
                                             />
                                         </div>
                                         <div className="flex-1 flex flex-col">
-                                            <h3 className="font-playfair text-[#0f2A44] text-sm mb-1">{item.name}</h3>
+                                            <h3 className="font-playfair text-[#0f2A44] text-sm mb-1 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">{item.name}</h3>
                                             <p className="font-lato text-xs text-[#C9A24D] mb-3">
                                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
                                             </p>
                                             <div className="flex items-center justify-between mt-auto">
-                                                <div className="flex items-center border border-[#0f2A44]/10 bg-white">
+                                                <div className="flex items-center border border-[#0f2A44]/10 bg-white" onClick={(e) => e.stopPropagation()}>
                                                     <button onClick={() => updateQuantity(item.id, item.quantity - 1, item.variantId)} className="px-2 py-1 text-[#0f2A44]">-</button>
                                                     <span className="px-2 text-xs font-lato">{item.quantity}</span>
                                                     <button onClick={() => updateQuantity(item.id, item.quantity + 1, item.variantId)} className="px-2 py-1 text-[#0f2A44]">+</button>
                                                 </div>
-                                                <button onClick={() => removeItem(item.id, item.variantId)} className="text-[#0f2A44]/30 hover:text-red-800 transition-colors">
+                                                <button onClick={(e) => { e.stopPropagation(); removeItem(item.id, item.variantId); }} className="text-[#0f2A44]/30 hover:text-red-800 transition-colors z-10 relative">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>

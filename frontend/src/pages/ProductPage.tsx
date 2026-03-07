@@ -56,8 +56,6 @@ const ProductPage: React.FC = () => {
                 setProduct(data);
                 if (data?.images && data.images.length > 0) {
                     setMainMedia(data.images[0]);
-                } else if (data?.image) {
-                    setMainMedia(data.image);
                 }
 
                 // Registrar no histórico de navegação via API se o usuário estiver logado
@@ -73,14 +71,12 @@ const ProductPage: React.FC = () => {
                             setSelectedOptions(attrs);
                             setCurrentVariant(firstActiveVariant);
 
-                            const variantImg = (firstActiveVariant.images && firstActiveVariant.images.length > 0) ? firstActiveVariant.images[0] : firstActiveVariant.imageUrl;
-                            const isDefault = variantImg?.includes('default.png');
-                            
-                            if (variantImg && !isDefault) {
-                                const parsedImageUrl = variantImg.includes(',') ? variantImg.split(',')[0].trim() : variantImg;
-                                setMainMedia(parsedImageUrl);
-                            } else if (data?.images?.[0] || data?.image) {
-                                setMainMedia(data.images?.[0] || data.image || null);
+                            const variantImg = (firstActiveVariant.images && firstActiveVariant.images.length > 0) ? firstActiveVariant.images[0] : null;
+
+                            if (variantImg) {
+                                setMainMedia(variantImg);
+                            } else if (data?.images?.[0]) {
+                                setMainMedia(data.images[0]);
                             }
                         } catch (e) {
                             console.error("Error parsing variant attributes", e);
@@ -136,11 +132,11 @@ const ProductPage: React.FC = () => {
         if (currentVariant) {
             const seen = new Set<string>();
             const imgs: string[] = [];
-            
+
             const addUnique = (url: string | undefined) => {
                 if (!url) return;
                 const urlsToProcess = url.includes(',') ? url.split(',').map(u => u.trim()) : [url];
-                
+
                 urlsToProcess.forEach(u => {
                     if (u && !seen.has(u) && !isDefaultImage(u)) {
                         seen.add(u);
@@ -148,8 +144,7 @@ const ProductPage: React.FC = () => {
                     }
                 });
             };
-            
-            addUnique(currentVariant.imageUrl);
+
             (currentVariant.images || []).forEach(addUnique);
             return imgs.length > 0 ? imgs : (product?.images?.filter(img => !isDefaultImage(img)).slice(0, 1) ?? []);
         }
@@ -172,14 +167,12 @@ const ProductPage: React.FC = () => {
 
             if (matched) {
                 setCurrentVariant(matched);
-                const variantImg = (matched.images && matched.images.length > 0) ? matched.images[0] : matched.imageUrl;
-                const isDefault = variantImg?.includes('default.png');
-                
-                if (variantImg && !isDefault) {
-                    const parsedImageUrl = variantImg.includes(',') ? variantImg.split(',')[0].trim() : variantImg;
-                    setMainMedia(parsedImageUrl);
-                } else if (product?.images?.[0] || product?.image) {
-                    setMainMedia(product.images?.[0] || product.image || null);
+                const variantImg = (matched.images && matched.images.length > 0) ? matched.images[0] : null;
+
+                if (variantImg) {
+                    setMainMedia(variantImg);
+                } else if (product?.images?.[0]) {
+                    setMainMedia(product.images[0]);
                 }
             } else {
                 setCurrentVariant(null);
@@ -246,7 +239,10 @@ const ProductPage: React.FC = () => {
             return;
         }
 
-        const variantImage = currentVariant?.images?.[0] ?? product.images?.[0];
+        // Resolução unificada: usa exclusivamente o array de imagens
+        const variantImage = (currentVariant?.images && currentVariant.images.length > 0)
+            ? currentVariant.images[0]
+            : (product.images?.[0] || "");
 
         const cartProduct = {
             id: product.id,
@@ -254,7 +250,7 @@ const ProductPage: React.FC = () => {
                 ? `${product.name} (${Object.values(selectedOptions).join(', ')})`
                 : product.name,
             price: displayPrice,
-            image: variantImage,
+            images: variantImage ? [variantImage] : [],
         };
 
         cartService.add(cartProduct, finalQuantity, currentVariant?.id ?? null);
@@ -327,7 +323,7 @@ const ProductPage: React.FC = () => {
             <SEO
                 title={product.name}
                 description={product.description?.substring(0, 160)}
-                image={product.images?.[0] || product.image}
+                image={product.images?.[0] || ""}
                 type="product"
             />
 
@@ -569,11 +565,8 @@ const ProductPage: React.FC = () => {
                                         <div className="flex flex-row gap-2 overflow-x-auto pb-1">
                                             {activeVariants.map((variant) => {
                                                 const isSelected = currentVariant?.id === variant.id;
-                                                const variantImg = (variant.images && variant.images.length > 0) ? variant.images[0] : variant.imageUrl;
-                                                const isDefaultThumb = variantImg?.includes('default.png');
-                                                const thumbSrc = !isDefaultThumb && variantImg
-                                                    ? variantImg
-                                                    : (product.images?.[0] || product.image || '/images/default.png');
+                                                const variantImg = (variant.images && variant.images.length > 0) ? variant.images[0] : null;
+                                                const thumbSrc = variantImg || (product.images?.[0] || '/images/default.png');
 
                                                 let variantAttrs: Record<string, string> = {};
                                                 try { variantAttrs = JSON.parse(variant.attributesJson || '{}'); } catch { /* noop */ }
@@ -589,13 +582,12 @@ const ProductPage: React.FC = () => {
                                                             setCurrentVariant(variant);
                                                             setSelectedOptions(variantAttrs);
 
-                                                            const variantImg = (variant.images && variant.images.length > 0) ? variant.images[0] : variant.imageUrl;
-                                                            const isDefaultSelection = variantImg?.includes('default.png');
-                                                            
-                                                            if (variantImg && !isDefaultSelection) {
+                                                            const variantImg = (variant.images && variant.images.length > 0) ? variant.images[0] : null;
+
+                                                            if (variantImg) {
                                                                 setMainMedia(variantImg);
-                                                            } else if (product?.images?.[0] || product?.image) {
-                                                                setMainMedia(product.images?.[0] || product.image || null);
+                                                            } else if (product?.images?.[0]) {
+                                                                setMainMedia(product.images[0]);
                                                             }
                                                         }}
                                                         className={`shrink-0 w-[64px] h-[64px] rounded-md overflow-hidden border-2 transition-all duration-200 focus:outline-none

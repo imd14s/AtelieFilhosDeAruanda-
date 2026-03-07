@@ -47,7 +47,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             id: product.id,
             name: product.name,
             price: firstVariant?.price ?? product.price,
-            image: firstVariant?.images?.[0] ?? product.images?.[0],
+            images: (product.variants?.[0]?.images && product.variants[0].images.length > 0) 
+                ? [product.variants[0].images[0]] 
+                : (product.images && product.images.length > 0 ? [product.images[0]] : []),
         };
 
         setTimeout(() => {
@@ -60,11 +62,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     };
 
     const isOutOfStock = (product.stockQuantity || 0) <= 0;
-    
-    // Prioritize variant 0 index 0 image, then product image 0
-    const variantImage = product.variants?.[0]?.images?.[0] || product.variants?.[0]?.imageUrl;
-    const productImage = product.images?.[0] || product.image;
-    const imageUrl = getImageUrl(variantImage || productImage || '');
+
+    // Resolução unificada: usa exclusivamente o array de imagens
+    const imageUrl = getImageUrl(product.variants?.[0]?.images?.[0] || product.images?.[0] || '');
 
     // Calculate discount
     const originalPrice = product.originalPrice || product.price;
@@ -85,7 +85,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }).format(originalPrice || 0);
 
     return (
-        <div 
+        <div
             onClick={handleContainerClick}
             className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 rounded-sm border border-gray-100 max-w-[280px] mx-auto w-full cursor-pointer"
         >

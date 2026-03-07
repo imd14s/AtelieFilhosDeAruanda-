@@ -955,7 +955,7 @@ const CheckoutPage: React.FC = () => {
                                         Logue para concluir seu pedido no Ateliê.
                                     </p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => window.dispatchEvent(new CustomEvent('open-auth-modal'))}
                                     className="text-[var(--dourado-suave)] font-lato text-[9px] font-bold uppercase tracking-widest border-b border-[var(--dourado-suave)] pb-1 hover:text-[var(--azul-profundo)] hover:border-[var(--azul-profundo)] transition-all"
                                 >
@@ -973,22 +973,26 @@ const CheckoutPage: React.FC = () => {
 
                                 <div className="space-y-6">
                                     {cart.map((item, idx) => (
-                                        <div key={idx} className="flex justify-between items-start gap-4">
+                                        <div
+                                            key={idx}
+                                            onClick={() => navigate(`/produto/${item.id}`)}
+                                            className="flex justify-between items-start gap-4 group cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded transition-colors"
+                                        >
                                             <div className="flex gap-4">
-                                                <div className="w-12 h-16 bg-[#F7F7F4] overflow-hidden flex-shrink-0">
+                                                <div className="w-12 h-16 bg-[#F7F7F4] overflow-hidden flex-shrink-0 block">
                                                     <img
-                                                        src={getImageUrl(item.image || '')}
+                                                        src={getImageUrl(item.images?.[0] || '')}
                                                         alt={item.name}
                                                         onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = '/images/default.png'; }}
-                                                        className="w-full h-full object-cover"
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <p className="font-lato text-[11px] font-bold text-[#0f2A44] uppercase line-clamp-2">{item.name}</p>
+                                                    <p className="font-lato text-[11px] font-bold text-[#0f2A44] uppercase line-clamp-2 group-hover:underline decoration-1 underline-offset-2">{item.name}</p>
                                                     <p className="font-lato text-[10px] text-[#0f2A44]/40">Qtd: {item.quantity}</p>
                                                 </div>
                                             </div>
-                                            <span className="font-lato text-xs text-[#0f2A44] whitespace-nowrap">
+                                            <span className="font-lato text-xs text-[#0f2A44] whitespace-nowrap pt-1">
                                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price * item.quantity)}
                                             </span>
                                         </div>

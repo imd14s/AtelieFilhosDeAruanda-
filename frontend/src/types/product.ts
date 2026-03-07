@@ -24,8 +24,7 @@ export interface Variant {
     size?: string;
     attributesJson?: string;
     active?: boolean;
-    imageUrl?: string;
-    images?: string[];
+    images: string[];
 }
 
 export interface Review {
@@ -63,8 +62,7 @@ export interface Product {
     price: number;
     originalPrice?: number;
     discountPercentage?: number;
-    image?: string;
-    images?: string[];
+    images: string[];
     media?: { url: string }[];
     stockQuantity: number;
     stock?: number;

@@ -42,13 +42,23 @@ public class CartController {
     private Map<String, Object> mapCartToResponse(CartEntity cart) {
         return Map.of(
                 "id", cart.getId(),
-                "items", cart.getItems().stream().map(item -> Map.of(
+                "items", cart.getItems().stream().map(item -> {
+                    // Prioriza imagem da variante; fallback para imagem do produto
+                    String variantImage = (item.getVariant() != null && item.getVariant().getImages() != null && !item.getVariant().getImages().isEmpty())
+                            ? item.getVariant().getImages().get(0)
+                            : (item.getVariant() != null && item.getVariant().getImageUrl() != null)
+                                ? item.getVariant().getImageUrl()
+                                : null;
+                    String finalImage = variantImage != null ? variantImage
+                            : (item.getProduct().getImageUrl() != null ? item.getProduct().getImageUrl() : "");
+
+                    return Map.of(
                         "id", item.getProduct().getId(),
                         "name", item.getProduct().getName(),
                         "price", item.getProduct().getPrice(),
-                        "image", item.getProduct().getImageUrl() != null ? item.getProduct().getImageUrl() : "",
+                        "images", finalImage.isEmpty() ? List.of() : List.of(finalImage),
                         "quantity", item.getQuantity(),
-                        "variantId", item.getVariant() != null ? item.getVariant().getId().toString() : ""))
-                        .collect(Collectors.toList()));
+                        "variantId", item.getVariant() != null ? item.getVariant().getId().toString() : "");
+                }).collect(Collectors.toList()));
     }
 }

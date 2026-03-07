@@ -20,10 +20,19 @@ export const normalizeProduct = (p: any): Product => {
         categoryId: p.categoryId || (typeof p.category === 'string' ? p.category : p.category?.id) || null,
         averageRating: p.averageRating ?? null,
         totalReviews: p.totalReviews ?? 0,
-        variants: (p.variants || []).map((v: any): Variant => ({
-            ...v,
-            stockQuantity: v.stockQuantity ?? v.stock ?? 0,
-        }))
+        images: (p.images && p.images.length > 0)
+            ? p.images
+            : (p.image ? [p.image.includes(',') ? p.image.split(',')[0].trim() : p.image] : []),
+        variants: (p.variants || []).map((v: any): Variant => {
+            const variantImages = (v.images && v.images.length > 0)
+                ? v.images
+                : (v.imageUrl ? [v.imageUrl.includes(',') ? v.imageUrl.split(',')[0].trim() : v.imageUrl] : []);
+            return {
+                ...v,
+                stockQuantity: v.stockQuantity ?? v.stock ?? 0,
+                images: variantImages
+            };
+        })
     };
 };
 
