@@ -3,7 +3,7 @@
 > Gerado automaticamente pelo `start-dev.sh`.
 > Verifique os logs completos em `.dev-logs/`.
 
-**Gerado em:** 2026-03-06 17:50:35
+**Gerado em:** 2026-03-06 22:46:03
 
 ## ✅ Nenhum erro detectado
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductService } from '../../services/ProductService';
 import type { Product } from '../../types/product';
-import { Package, Plus, Search, Edit, Trash2, Bell } from 'lucide-react';
+import { Package, Plus, Search, Edit, Trash2, Bell, Power } from 'lucide-react';
 import { StockAlertService, type StockAlertSettings } from '../../services/StockAlertService';
 import { calculatePriority, STOCK_COLORS, type ColorPreset } from '../../hooks/useStockAlerts';
 import clsx from 'clsx';
@@ -63,6 +63,18 @@ export function ProductsPage() {
       } else {
         alert('Erro ao atualizar alerta. Tente novamente.');
       }
+    }
+  };
+
+  const handleToggleActive = async (id: string, currentStatus: boolean | undefined) => {
+    try {
+      await ProductService.toggleActive(id);
+      setProducts(prev => prev.map(p =>
+        p.id === id ? { ...p, active: !currentStatus } : p
+      ));
+    } catch (error) {
+      console.error('Erro ao alternar status do produto', error);
+      alert('Erro ao alterar o status do produto. Tente novamente.');
     }
   };
 
@@ -260,6 +272,13 @@ export function ProductsPage() {
                     <span className={`inline-block w-2 h-2 rounded-full ${product.active ? 'bg-green-500' : 'bg-gray-300'}`} />
                   </td>
                   <td className="p-4 text-right flex justify-end gap-2">
+                    <button
+                      onClick={() => handleToggleActive(product.id, product.active)}
+                      className={`transition ${product.active ? 'text-green-500 hover:text-green-600' : 'text-gray-300 hover:text-gray-500'}`}
+                      title={product.active ? "Desativar Produto" : "Ativar Produto"}
+                    >
+                      <Power size={18} />
+                    </button>
                     <button
                       onClick={() => handleToggleAlert(product.id)}
                       className={`transition ${product.alertEnabled ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-300 hover:text-gray-500'}`}

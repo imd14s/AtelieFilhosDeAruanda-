@@ -5,4 +5,6 @@ import java.util.UUID;
 
 public interface CartItemRepository extends JpaRepository<CartItemEntity, UUID> {
     void deleteByCartId(UUID cartId);
+
+    void deleteByProductId(UUID productId);
 }

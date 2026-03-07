@@ -5,12 +5,14 @@ import { AdminProviderService } from '../../services/AdminProviderService';
 import type { AdminServiceProvider } from '../../types/store-settings';
 import { MelhorEnvioConfig } from '../../components/shipping/MelhorEnvioConfig';
 import { MandaBemConfig } from '../../components/shipping/MandaBemConfig';
+import { J3FlexConfig } from '../../components/shipping/J3FlexConfig';
 import BaseModal from '../../components/ui/BaseModal';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
 
 const RECOMMENDED_PROVIDERS = [
     { name: 'Melhor Envio', code: 'MELHOR_ENVIO', driverKey: 'shipping.melhorenvio', icon: '📦' },
+    { name: 'J3 Flex', code: 'J3_FLEX', driverKey: 'shipping.j3flex', icon: '🚚' },
     { name: 'Manda Bem', code: 'MANDA_BEM', driverKey: 'shipping.mandabem', icon: '🚚' },
 ];
 
@@ -216,6 +218,11 @@ export function ShippingPage() {
                                         />
                                     ) : provider.code === 'MANDA_BEM' ? (
                                         <MandaBemConfig
+                                            config={configData}
+                                            onChange={setConfigData}
+                                        />
+                                    ) : provider.code === 'J3_FLEX' ? (
+                                        <J3FlexConfig
                                             config={configData}
                                             onChange={setConfigData}
                                         />

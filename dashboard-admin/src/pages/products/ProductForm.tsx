@@ -316,12 +316,24 @@ export function ProductForm() {
         }
       }
 
-      // Aggregate all media
-      const sortedMedia = [...allMedia].sort((a, b) => {
-        if (a.isMain) return -1;
-        if (b.isMain) return 1;
-        return 0;
-      });
+      // Preparar mídias para envio
+      let sortedMedia = [...allMedia];
+
+      // Se não houver capa definida explicitamente no produto pai, 
+      // tenta pegar da primeira variante que tenha imagem
+      const hasExplicitMain = sortedMedia.some(m => m.isMain);
+      if (!hasExplicitMain && variants.length > 0) {
+        const firstVariantWithMedia = variants.find(v => v.media && v.media.length > 0);
+        if (firstVariantWithMedia && firstVariantWithMedia.media && firstVariantWithMedia.media[0]) {
+          // Encontra essa mídia no allMedia (pela URL ou ID se possível) ou adiciona se não estiver
+          const variantMainMediaUrl = firstVariantWithMedia.media[0].url;
+          const mediaIndex = sortedMedia.findIndex(m => m.url === variantMainMediaUrl);
+
+          if (mediaIndex !== -1) {
+            sortedMedia = sortedMedia.map((m, i) => ({ ...m, isMain: i === mediaIndex }));
+          }
+        }
+      }
 
       // As per backend logic, product base fields takes the first variant if price/stock are 0 
       const basePrice = variants.length > 0 ? variants[0].price : 0;

@@ -1,6 +1,9 @@
 package com.atelie.ecommerce.api.shipping.dto;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class ShippingQuoteResponse {
 
@@ -9,10 +12,13 @@ public class ShippingQuoteResponse {
     private boolean freeShippingApplied;
     private BigDecimal shippingCost;
     private BigDecimal freeShippingThreshold;
+    private List<Map<String, Object>> options = new ArrayList<>();
 
-    public ShippingQuoteResponse() {}
+    public ShippingQuoteResponse() {
+    }
 
-    public ShippingQuoteResponse(String provider, boolean eligible, boolean freeShippingApplied, BigDecimal shippingCost, BigDecimal freeShippingThreshold) {
+    public ShippingQuoteResponse(String provider, boolean eligible, boolean freeShippingApplied,
+            BigDecimal shippingCost, BigDecimal freeShippingThreshold) {
         this.provider = provider;
         this.eligible = eligible;
         this.freeShippingApplied = freeShippingApplied;
@@ -20,18 +26,51 @@ public class ShippingQuoteResponse {
         this.freeShippingThreshold = freeShippingThreshold;
     }
 
-    public String getProvider() { return provider; }
-    public void setProvider(String provider) { this.provider = provider; }
+    public String getProvider() {
+        return provider;
+    }
 
-    public boolean isEligible() { return eligible; }
-    public void setEligible(boolean eligible) { this.eligible = eligible; }
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
 
-    public boolean isFreeShippingApplied() { return freeShippingApplied; }
-    public void setFreeShippingApplied(boolean freeShippingApplied) { this.freeShippingApplied = freeShippingApplied; }
+    public boolean isEligible() {
+        return eligible;
+    }
 
-    public BigDecimal getShippingCost() { return shippingCost; }
-    public void setShippingCost(BigDecimal shippingCost) { this.shippingCost = shippingCost; }
+    public void setEligible(boolean eligible) {
+        this.eligible = eligible;
+    }
 
-    public BigDecimal getFreeShippingThreshold() { return freeShippingThreshold; }
-    public void setFreeShippingThreshold(BigDecimal freeShippingThreshold) { this.freeShippingThreshold = freeShippingThreshold; }
+    public boolean isFreeShippingApplied() {
+        return freeShippingApplied;
+    }
+
+    public void setFreeShippingApplied(boolean freeShippingApplied) {
+        this.freeShippingApplied = freeShippingApplied;
+    }
+
+    public BigDecimal getShippingCost() {
+        return shippingCost;
+    }
+
+    public void setShippingCost(BigDecimal shippingCost) {
+        this.shippingCost = shippingCost;
+    }
+
+    public BigDecimal getFreeShippingThreshold() {
+        return freeShippingThreshold;
+    }
+
+    public void setFreeShippingThreshold(BigDecimal freeShippingThreshold) {
+        this.freeShippingThreshold = freeShippingThreshold;
+    }
+
+    public List<Map<String, Object>> getOptions() {
+        return options;
+    }
+
+    public void setOptions(List<Map<String, Object>> options) {
+        this.options = options;
+    }
 }

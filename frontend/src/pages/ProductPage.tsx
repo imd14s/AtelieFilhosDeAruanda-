@@ -8,6 +8,7 @@ import SEO from '../components/SEO';
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, ShieldCheck, Truck, RefreshCcw, ChevronLeft, Play, X, Maximize2, Heart } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
+import { usePayment } from '../context/PaymentContext';
 import ReviewSection from '../components/ReviewSection';
 import ProductCard from '../components/ProductCard';
 import Button from '../components/ui/Button';
@@ -22,11 +23,13 @@ const ProductPage: React.FC = () => {
     const { isFavorite: checkFavorite, toggleFavorite, loading: favLoading } = useFavorites();
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    const [quantity, setQuantity] = useState<number>(1);
+    const [quantity, setQuantity] = useState<number | string>(1);
     const [added, setAdded] = useState<boolean>(false);
     const [recommendations, setRecommendations] = useState<Product[]>([]);
     const [loadingRecs, setLoadingRecs] = useState<boolean>(false);
     const { addToast } = useToast();
+    const { settings, loading: paymentLoading } = usePayment();
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     const [mainMedia, setMainMedia] = useState<string | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
@@ -69,7 +72,16 @@ const ProductPage: React.FC = () => {
                             const attrs = JSON.parse(firstActiveVariant.attributesJson);
                             setSelectedOptions(attrs);
                             setCurrentVariant(firstActiveVariant);
-                            if (firstActiveVariant.imageUrl) setMainMedia(firstActiveVariant.imageUrl);
+
+                            const variantImg = (firstActiveVariant.images && firstActiveVariant.images.length > 0) ? firstActiveVariant.images[0] : firstActiveVariant.imageUrl;
+                            const isDefault = variantImg?.includes('default.png');
+                            
+                            if (variantImg && !isDefault) {
+                                const parsedImageUrl = variantImg.includes(',') ? variantImg.split(',')[0].trim() : variantImg;
+                                setMainMedia(parsedImageUrl);
+                            } else if (data?.images?.[0] || data?.image) {
+                                setMainMedia(data.images?.[0] || data.image || null);
+                            }
                         } catch (e) {
                             console.error("Error parsing variant attributes", e);
                         }
@@ -119,20 +131,29 @@ const ProductPage: React.FC = () => {
 
     // Mídias da variante selecionada
     const variantMedias = useMemo(() => {
+        const isDefaultImage = (url: string) => !url || url.includes('default.png');
+
         if (currentVariant) {
             const seen = new Set<string>();
             const imgs: string[] = [];
+            
             const addUnique = (url: string | undefined) => {
-                if (url && !seen.has(url)) {
-                    seen.add(url);
-                    imgs.push(url);
-                }
+                if (!url) return;
+                const urlsToProcess = url.includes(',') ? url.split(',').map(u => u.trim()) : [url];
+                
+                urlsToProcess.forEach(u => {
+                    if (u && !seen.has(u) && !isDefaultImage(u)) {
+                        seen.add(u);
+                        imgs.push(u);
+                    }
+                });
             };
+            
             addUnique(currentVariant.imageUrl);
             (currentVariant.images || []).forEach(addUnique);
-            return imgs.length > 0 ? imgs : (product?.images?.slice(0, 1) ?? []);
+            return imgs.length > 0 ? imgs : (product?.images?.filter(img => !isDefaultImage(img)).slice(0, 1) ?? []);
         }
-        return product?.images ?? [];
+        return (product?.images || []).filter(img => !isDefaultImage(img));
     }, [currentVariant, product]);
 
     const handleOptionSelect = (key: string, value: string) => {
@@ -151,7 +172,15 @@ const ProductPage: React.FC = () => {
 
             if (matched) {
                 setCurrentVariant(matched);
-                if (matched.imageUrl) setMainMedia(matched.imageUrl);
+                const variantImg = (matched.images && matched.images.length > 0) ? matched.images[0] : matched.imageUrl;
+                const isDefault = variantImg?.includes('default.png');
+                
+                if (variantImg && !isDefault) {
+                    const parsedImageUrl = variantImg.includes(',') ? variantImg.split(',')[0].trim() : variantImg;
+                    setMainMedia(parsedImageUrl);
+                } else if (product?.images?.[0] || product?.image) {
+                    setMainMedia(product.images?.[0] || product.image || null);
+                }
             } else {
                 setCurrentVariant(null);
             }
@@ -202,16 +231,36 @@ const ProductPage: React.FC = () => {
     const handleAddToCart = () => {
         if (!product || isOutOfStock) return;
 
+        let finalQuantity = typeof quantity === 'string' ? parseInt(quantity) : quantity;
+
+        // Regra: Nunca permitir 0, sempre mudar para 1
+        if (isNaN(finalQuantity) || finalQuantity <= 0) {
+            finalQuantity = 1;
+            setQuantity(1);
+            addToast("A quantidade mínima é 1 unidade. Ajustamos para você.", "info");
+        }
+
+        // Regra: Validar contra estoque no momento da compra
+        if (finalQuantity > displayStock) {
+            addToast(`Desculpe, temos apenas ${displayStock} unidades em estoque.`, "error");
+            return;
+        }
+
+        let validVariantImg = currentVariant?.imageUrl && !currentVariant.imageUrl.includes('default.png') ? currentVariant.imageUrl : null;
+        if (validVariantImg && validVariantImg.includes(',')) {
+            validVariantImg = validVariantImg.split(',')[0].trim();
+        }
+
         const cartProduct = {
             ...product,
             id: currentVariant ? currentVariant.id : product.id,
             name: currentVariant ? `${product.name} (${Object.values(selectedOptions).join(', ')})` : product.name,
             price: displayPrice,
-            images: currentVariant?.imageUrl ? [currentVariant.imageUrl] : product.images,
-            image: currentVariant?.imageUrl || product.images?.[0] || product.image
+            images: validVariantImg ? [validVariantImg] : product.images,
+            image: validVariantImg || product.images?.[0] || product.image
         };
 
-        cartService.add(cartProduct as any, quantity);
+        cartService.add(cartProduct as any, finalQuantity);
         addToast(`${product.name} adicionado ao carrinho!`, "success");
         setAdded(true);
         setTimeout(() => setAdded(false), 3000);
@@ -368,7 +417,7 @@ const ProductPage: React.FC = () => {
                             </div>
 
                             <div className="flex md:hidden flex-row gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
-                                {product.images?.map((img, i) => (
+                                {variantMedias.map((img, i) => (
                                     <div
                                         key={i}
                                         onClick={() => setMainMedia(img)}
@@ -384,9 +433,27 @@ const ProductPage: React.FC = () => {
                     <div className="flex-1 flex flex-col pt-4 lg:pt-0">
                         <div className="space-y-6">
                             <div className="space-y-4">
-                                <h1 className="font-playfair text-3xl md:text-[40px] text-[var(--azul-profundo)] leading-tight font-medium">
-                                    {product.name || 'Produto sem título'}
-                                </h1>
+                                <div className="flex justify-between items-start gap-4">
+                                    <h1 className="font-playfair text-3xl md:text-[40px] text-[var(--azul-profundo)] leading-tight font-medium">
+                                        {product.name || 'Produto sem título'}
+                                    </h1>
+                                    <button
+                                        onClick={handleToggleFavorite}
+                                        disabled={favLoading}
+                                        className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border
+                                            ${isFavorite
+                                                ? 'bg-red-50 border-red-100 text-red-500'
+                                                : 'bg-white border-gray-100 text-[var(--azul-profundo)]/30 hover:text-red-500 hover:border-red-100'
+                                            }`}
+                                        title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                                    >
+                                        {favLoading ? (
+                                            <Spinner size={16} className="text-gray-300" />
+                                        ) : (
+                                            <Heart size={24} className={isFavorite ? "fill-current" : ""} />
+                                        )}
+                                    </button>
+                                </div>
 
                                 {(() => {
                                     const avg = product.averageRating ?? 0;
@@ -440,8 +507,38 @@ const ProductPage: React.FC = () => {
                                             </span>
                                         )}
                                     </div>
-                                    <span className="text-sm font-lato text-[var(--azul-profundo)]">12x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayPrice / 12)}</span>
-                                    <button className="text-[var(--azul-claro)] text-sm font-lato hover:underline text-left mt-1">Ver os meios de pagamento</button>
+
+                                    {paymentLoading ? (
+                                        <div className="h-5 w-32 bg-gray-100 animate-pulse rounded mt-1" />
+                                    ) : (
+                                        <>
+                                            <span className="text-sm font-lato text-[var(--azul-profundo)]">
+                                                {settings?.mercadoPago?.enabled ? (
+                                                    (() => {
+                                                        const card = settings.mercadoPago.methods.card;
+                                                        const max = card.maxInstallments || 12;
+                                                        const interestFree = card.interestFree || 1;
+                                                        const installmentValue = displayPrice / max;
+
+                                                        return (
+                                                            <>
+                                                                {max}x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(installmentValue)}
+                                                                {interestFree >= max && <span className="ml-1 text-[#00a650] font-bold">sem juros</span>}
+                                                            </>
+                                                        );
+                                                    })()
+                                                ) : (
+                                                    `1x ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayPrice)}`
+                                                )}
+                                            </span>
+                                            <button
+                                                onClick={() => setIsPaymentModalOpen(true)}
+                                                className="text-[var(--azul-claro)] text-sm font-lato hover:underline text-left mt-1"
+                                            >
+                                                Ver os meios de pagamento
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
 
                                 {displayStock <= 5 && displayStock > 0 && (
@@ -475,10 +572,11 @@ const ProductPage: React.FC = () => {
                                         <div className="flex flex-row gap-2 overflow-x-auto pb-1">
                                             {activeVariants.map((variant) => {
                                                 const isSelected = currentVariant?.id === variant.id;
-                                                const thumbSrc = variant.imageUrl
-                                                    || product.images?.[0]
-                                                    || product.image
-                                                    || '/images/default.png';
+                                                const variantImg = (variant.images && variant.images.length > 0) ? variant.images[0] : variant.imageUrl;
+                                                const isDefaultThumb = variantImg?.includes('default.png');
+                                                const thumbSrc = !isDefaultThumb && variantImg
+                                                    ? variantImg
+                                                    : (product.images?.[0] || product.image || '/images/default.png');
 
                                                 let variantAttrs: Record<string, string> = {};
                                                 try { variantAttrs = JSON.parse(variant.attributesJson || '{}'); } catch { /* noop */ }
@@ -493,7 +591,15 @@ const ProductPage: React.FC = () => {
                                                         onClick={() => {
                                                             setCurrentVariant(variant);
                                                             setSelectedOptions(variantAttrs);
-                                                            if (variant.imageUrl) setMainMedia(variant.imageUrl);
+
+                                                            const variantImg = (variant.images && variant.images.length > 0) ? variant.images[0] : variant.imageUrl;
+                                                            const isDefaultSelection = variantImg?.includes('default.png');
+                                                            
+                                                            if (variantImg && !isDefaultSelection) {
+                                                                setMainMedia(variantImg);
+                                                            } else if (product?.images?.[0] || product?.image) {
+                                                                setMainMedia(product.images?.[0] || product.image || null);
+                                                            }
                                                         }}
                                                         className={`shrink-0 w-[64px] h-[64px] rounded-md overflow-hidden border-2 transition-all duration-200 focus:outline-none
                                                             ${isSelected
@@ -517,31 +623,58 @@ const ProductPage: React.FC = () => {
                             })()}
 
                             <div className="flex flex-col gap-4 pt-4">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-lato text-sm text-[var(--azul-profundo)]">Quantidade: <b>{quantity} {quantity > 1 ? 'unidades' : 'unidade'}</b></span>
-                                    <div className="flex flex-col border-l border-gray-200 pl-2">
-                                        <button
-                                            onClick={() => setQuantity(Math.min(displayStock || 1, quantity + 1))}
-                                            disabled={quantity >= (displayStock || 1)}
-                                            className="text-[var(--azul-claro)] hover:text-[var(--azul-profundo)] disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <ChevronLeft size={14} className="rotate-90" />
-                                        </button>
-                                        <button
-                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                            disabled={quantity <= 1}
-                                            className="text-[var(--azul-claro)] hover:text-[var(--azul-profundo)] disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <ChevronLeft size={14} className="-rotate-90" />
-                                        </button>
+                                <div className="flex flex-col gap-2">
+                                    <span className="font-lato text-sm text-[var(--azul-profundo)]/70 uppercase tracking-widest font-bold">Quantidade</span>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center border border-gray-200 rounded-[4px] bg-white overflow-hidden shadow-sm">
+                                            <button
+                                                onClick={() => {
+                                                    const current = typeof quantity === 'string' ? (parseInt(quantity) || 0) : quantity;
+                                                    setQuantity(Math.max(1, current - 1));
+                                                }}
+                                                disabled={(typeof quantity === 'number' && quantity <= 1)}
+                                                className="w-12 h-12 flex items-center justify-center text-[var(--azul-profundo)] hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-r border-gray-200"
+                                                aria-label="Diminuir quantidade"
+                                            >
+                                                <span className="text-xl font-medium">−</span>
+                                            </button>
+                                            <input
+                                                type="number"
+                                                value={quantity}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === '') {
+                                                        setQuantity(''); // Permite apagar tudo para digitar
+                                                    } else {
+                                                        const parsed = parseInt(val);
+                                                        if (!isNaN(parsed)) {
+                                                            setQuantity(parsed); // Permite digitar qualquer valor (validação no checkout/compra)
+                                                        }
+                                                    }
+                                                }}
+                                                className="w-16 h-12 text-center font-lato text-lg text-[var(--azul-profundo)] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const current = typeof quantity === 'string' ? (parseInt(quantity) || 0) : quantity;
+                                                    setQuantity(current + 1);
+                                                }}
+                                                className="w-12 h-12 flex items-center justify-center text-[var(--azul-profundo)] hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-l border-gray-200"
+                                                aria-label="Aumentar quantidade"
+                                            >
+                                                <span className="text-xl font-medium">+</span>
+                                            </button>
+                                        </div>
+                                        {displayStock > 0 ? (
+                                            <div className="flex flex-col">
+                                                <span className="text-gray-400 text-xs font-lato">
+                                                    ({displayStock} disponíveis)
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-red-400 text-xs font-lato font-bold">Sem estoque</span>
+                                        )}
                                     </div>
-                                    {displayStock > 0 ? (
-                                        <span className="text-gray-400 text-xs ml-2">
-                                            ({Math.max(0, displayStock - quantity)} disponíve{displayStock - quantity === 1 ? 'l' : 'is'})
-                                        </span>
-                                    ) : (
-                                        <span className="text-red-400 text-xs ml-2">Sem estoque</span>
-                                    )}
                                 </div>
 
                                 <div className="flex flex-col gap-3">
@@ -567,20 +700,6 @@ const ProductPage: React.FC = () => {
                                         Adicionar ao carrinho
                                     </Button>
 
-                                    <Button
-                                        onClick={handleToggleFavorite}
-                                        isLoading={favLoading}
-                                        variant="outline"
-                                        className={`w-full h-[58px] text-[16px] rounded-[4px] border
-                                            ${isFavorite
-                                                ? 'bg-white border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600'
-                                                : 'bg-white border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-500'
-                                            }
-                                        `}
-                                    >
-                                        {!favLoading && <Heart size={24} className={isFavorite ? "fill-current" : ""} />}
-                                        {isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                                    </Button>
                                 </div>
                             </div>
 
@@ -642,6 +761,100 @@ const ProductPage: React.FC = () => {
                     </section>
                 </div>
             </div>
+            {/* Modal de Meios de Pagamento */}
+            {isPaymentModalOpen && (
+                <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
+                        <header className="p-6 border-b flex justify-between items-center bg-gray-50">
+                            <h3 className="font-playfair text-xl text-[var(--azul-profundo)] font-bold">Meios de Pagamento</h3>
+                            <button
+                                onClick={() => setIsPaymentModalOpen(false)}
+                                className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-[var(--azul-profundo)]"
+                            >
+                                <X size={24} />
+                            </button>
+                        </header>
+
+                        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+                            {settings?.mercadoPago?.methods.card.active && (
+                                <section className="space-y-4">
+                                    <h4 className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-gray-400">
+                                        <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                                            <Heart size={16} className="fill-current" />
+                                        </div>
+                                        Cartão de Crédito
+                                    </h4>
+                                    <div className="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-200">
+                                        <p className="text-lg font-lato text-[var(--azul-profundo)] mb-1">
+                                            Em até <strong>{settings.mercadoPago.methods.card.maxInstallments}x</strong> no cartão
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                            {settings.mercadoPago.methods.card.interestFree && settings.mercadoPago.methods.card.interestFree > 1
+                                                ? `Parcelamento sem juros em até ${settings.mercadoPago.methods.card.interestFree}x.`
+                                                : 'Consulte as taxas para parcelamento com juros.'}
+                                        </p>
+                                        <div className="flex gap-3 mt-4">
+                                            <div className="h-8 w-12 bg-white border rounded flex items-center justify-center text-[10px] font-black italic text-blue-800 shadow-sm">VISA</div>
+                                            <div className="h-8 w-12 bg-white border rounded flex items-center justify-center text-[10px] font-black italic text-orange-600 shadow-sm">MASTER</div>
+                                            <div className="h-8 w-12 bg-white border rounded flex items-center justify-center text-[10px] font-black italic text-blue-500 shadow-sm">ELO</div>
+                                            <div className="h-8 w-12 bg-white border rounded flex items-center justify-center text-[10px] font-black italic text-red-600 shadow-sm">AMEX</div>
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
+
+                            {settings?.mercadoPago?.methods.pix.active && (
+                                <section className="space-y-4">
+                                    <h4 className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-gray-400">
+                                        <div className="p-2 bg-green-50 rounded-lg text-green-600">
+                                            <Play size={16} className="fill-current rotate-90" />
+                                        </div>
+                                        PIX
+                                    </h4>
+                                    <div className="bg-green-50/50 p-6 rounded-xl border border-green-100">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-lg font-lato text-green-800 font-bold mb-1">Pagamento Instantâneo</p>
+                                                <p className="text-sm text-green-700/80 leading-relaxed">
+                                                    Aprovação na hora. {settings.mercadoPago.methods.pix.discountPercent && settings.mercadoPago.methods.pix.discountPercent > 0
+                                                        ? `Aproveite ${settings.mercadoPago.methods.pix.discountPercent}% de desconto!`
+                                                        : 'Ganhe agilidade na entrega do seu pedido.'}
+                                                </p>
+                                            </div>
+                                            <div className="bg-white p-2 rounded-lg shadow-sm font-black italic text-green-500 transform -rotate-12 border border-green-100">PIX</div>
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
+
+                            {settings?.mercadoPago?.methods.boleto.active && (
+                                <section className="space-y-4">
+                                    <h4 className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-gray-400">
+                                        <div className="p-2 bg-orange-50 rounded-lg text-orange-600">
+                                            <RefreshCcw size={16} />
+                                        </div>
+                                        Boleto Bancário
+                                    </h4>
+                                    <div className="bg-orange-50/50 p-6 rounded-xl border border-orange-100">
+                                        <p className="text-lg font-lato text-orange-800 font-bold mb-1">Praticidade no Pagamento</p>
+                                        <p className="text-sm text-orange-700/80">Vencimento em 3 dias úteis. Compensação em até 48h.</p>
+                                    </div>
+                                </section>
+                            )}
+                        </div>
+
+                        <footer className="p-6 bg-gray-50 border-t">
+                            <Button
+                                onClick={() => setIsPaymentModalOpen(false)}
+                                variant="primary"
+                                className="w-full"
+                            >
+                                Entendi
+                            </Button>
+                        </footer>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

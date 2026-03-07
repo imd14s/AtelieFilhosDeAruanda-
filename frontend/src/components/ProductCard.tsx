@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { cartService } from '../services/cartService';
 import { useFavorites } from '../context/FavoritesContext';
 import { ShoppingBag, Check, Heart } from 'lucide-react';
@@ -16,6 +16,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const favoritesContext = useFavorites();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState<boolean>(false);
     const [added, setAdded] = useState<boolean>(false);
     const { addToast } = useToast();
@@ -24,6 +25,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
     const { isFavorite: checkFavorite, toggleFavorite, loading: favLoading } = favoritesContext;
     const isFavorite = checkFavorite(product.id);
+
+    const handleContainerClick = () => {
+        navigate(`/produto/${product.id}`);
+    };
 
     const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -46,7 +51,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     };
 
     const isOutOfStock = (product.stockQuantity || 0) <= 0;
-    const imageUrl = getImageUrl(product.images?.[0] || '');
+    
+    // Prioritize variant 0 index 0 image, then product image 0
+    const variantImage = product.variants?.[0]?.images?.[0] || product.variants?.[0]?.imageUrl;
+    const productImage = product.images?.[0] || product.image;
+    const imageUrl = getImageUrl(variantImage || productImage || '');
 
     // Calculate discount
     const originalPrice = product.originalPrice || product.price;
@@ -67,9 +76,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }).format(originalPrice || 0);
 
     return (
-        <div className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 rounded-sm border border-gray-100 max-w-[280px] mx-auto w-full">
-
-
+        <div 
+            onClick={handleContainerClick}
+            className="group relative flex flex-col bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 rounded-sm border border-gray-100 max-w-[280px] mx-auto w-full cursor-pointer"
+        >
             {/* Ícone de Favorito */}
             <button
                 onClick={handleToggleFavorite}
@@ -84,7 +94,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 )}
             </button>
 
-            <Link to={`/produto/${product.id}`} className="relative aspect-square overflow-hidden bg-[var(--branco-off-white)] group-hover:opacity-95 transition-opacity">
+            <div className="relative aspect-square overflow-hidden bg-[var(--branco-off-white)] group-hover:opacity-95 transition-opacity">
                 <img
                     src={imageUrl}
                     alt={product.title || product.name || 'Produto'}
@@ -96,7 +106,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                         <span className="bg-[var(--marron-terra)] text-white text-[9px] font-lato font-bold px-4 py-1.5 uppercase tracking-[0.2em] shadow-lg">Esgotado</span>
                     </div>
                 )}
-            </Link>
+            </div>
 
             <div className="p-4 flex flex-col flex-1">
                 {/* Marca em Dourado */}
@@ -104,14 +114,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     Ateliê Aruanda
                 </span>
 
-                <Link to={`/produto/${product.id}`} className="mb-1 block">
+                <div className="mb-1 block">
                     <h3
                         className="font-playfair text-base text-[var(--azul-profundo)] line-clamp-1 h-6 leading-6 text-center group-hover:text-[var(--dourado-suave)] transition-colors duration-300"
                         title={product.title || product.name || ''}
                     >
                         {product.title || product.name || 'Produto'}
                     </h3>
-                </Link>
+                </div>
 
                 <div className="mt-auto">
                     <div className="flex flex-col mb-4">

@@ -38,6 +38,7 @@ interface EmailTemplate {
     subject: string;
     content: string;
     signatureId: string | null;
+    automationType?: string;
     active: boolean;
 }
 
@@ -101,11 +102,11 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string, content: string }> = 
         `
     },
     ORDER_CONFIRM: {
-        subject: 'Pedido Recebido! #{{{order_id}}}',
+        subject: 'Pedido Recebido! - {{{product_name}}}',
         content: `
             <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
                 <h2 style="color: #0f2A44;">Obrigado pelo seu pedido, {{{customer_name}}}!</h2>
-                <p>Recebemos seu pedido <strong>#{{{order_id}}}</strong> e ele já está sendo processado.</p>
+                <p>Recebemos seu pedido do produto <strong>{{{product_name}}}</strong> e ele já está sendo processado.</p>
                 <p>Assim que o pagamento for confirmado, iniciaremos a preparação com todo carinho.</p>
                 <div style="margin-top: 30px; border-top: 1px solid #eee; pt: 20px;">
                     <p style="font-size: 12px; color: #777;">Acompanhe o status na sua área do cliente.</p>
@@ -156,6 +157,22 @@ const DEFAULT_TEMPLATES: Record<string, { subject: string, content: string }> = 
                 <p>Fique de olho na sua caixa de entrada!</p>
             </div>
         `
+    },
+    CAMPAIGN: {
+        subject: 'Novidade especial do Ateliê Filhos de Aruanda!',
+        content: `
+            <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+                <h2 style="color: #0f2A44;">Temos algo novo para você!</h2>
+                <p>Olá! Passamos para compartilhar as últimas novidades e ofertas especiais do nosso Ateliê.</p>
+                <div style="background: #fdfaf3; padding: 20px; border-radius: 12px; border: 1px dashed #C9A24D; margin: 20px 0;">
+                    <p style="text-align: center; font-style: italic;">Escreva sua mensagem de campanha aqui...</p>
+                </div>
+                <p>Clique no botão abaixo para conferir tudo:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://AtelieFilhosDeAruanda-.com.br" style="background: #0f2A44; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">VER NO SITE</a>
+                </div>
+            </div>
+        `
     }
 };
 
@@ -190,7 +207,7 @@ export default function EmailMarketingHub() {
         slug: '',
         subject: '',
         content: '',
-        signatureId: '',
+        signatureId: null as string | null,
         active: true
     });
 
@@ -316,11 +333,34 @@ export default function EmailMarketingHub() {
                 api.get('/marketing/email-templates'),
                 api.get('/marketing/signatures')
             ]);
-            // Filtrar templates da newsletter legados
-            setTemplates(templatesRes.data.filter((t: any) => t.slug !== 'NEWSLETTER_CONFIRM' && t.automationType !== 'NEWSLETTER_CONFIRM'));
-            setSignatures(signaturesRes.data);
-            if (signaturesRes.data.length > 0 && !selectedSignatureId) {
-                handleSelectSignature(signaturesRes.data[0]);
+
+            // Normalizar templates para evitar warnings de valor null em inputs controlados
+            const normalizedTemplates = templatesRes.data.map((t: any) => ({
+                ...t,
+                name: t.name || '',
+                subject: t.subject || '',
+                content: t.content || '',
+                automationType: t.automationType || ''
+            }));
+
+            // Normalizar assinaturas
+            const normalizedSignatures = signaturesRes.data.map((s: any) => ({
+                ...s,
+                ownerName: s.ownerName || '',
+                role: s.role || '',
+                storeName: s.storeName || '',
+                whatsapp: s.whatsapp || '',
+                email: s.email || '',
+                storeUrl: s.storeUrl || '',
+                logoUrl: s.logoUrl || '',
+                motto: s.motto || ''
+            }));
+
+            setTemplates(normalizedTemplates);
+            setSignatures(normalizedSignatures);
+
+            if (normalizedSignatures.length > 0 && !selectedSignatureId) {
+                handleSelectSignature(normalizedSignatures[0]);
             }
         } catch (error) {
             console.error('Error loading design data:', error);
@@ -332,12 +372,13 @@ export default function EmailMarketingHub() {
         setIsSavingTemplate(true);
         const payload = {
             ...editingTemplate,
-            automationType: editingTemplate.slug, // O slug aqui representa o enum fixo
+            automationType: editingTemplate.slug,
         };
         try {
             await api.put(`/marketing/email-templates/${editingTemplate.id}`, payload);
-            setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { ...editingTemplate, ...payload } : t));
-            alert('Template salvo!');
+            setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? { ...editingTemplate, ...payload } as EmailTemplate : t));
+            setEditingTemplate(null);
+            alert('Template salvo com sucesso!');
         } catch (error: any) {
             console.error('Error saving template:', error.response?.data || error);
             alert(`Erro ao salvar template: ${error.response?.data?.message || 'Erro desconhecido'}`);
@@ -348,6 +389,12 @@ export default function EmailMarketingHub() {
 
     const handleCreateTemplate = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!newTemplate.slug) {
+            alert('Por favor, selecione um Tipo de Automação');
+            return;
+        }
+
         setIsSavingTemplate(true);
         const payload = {
             ...newTemplate,
@@ -358,10 +405,11 @@ export default function EmailMarketingHub() {
             const res = await api.post('/marketing/email-templates', payload);
             setTemplates(prev => [...prev, res.data]);
             setIsCreatingTemplate(false);
-            setNewTemplate({ name: '', slug: '', subject: '', content: '', signatureId: '', active: true });
+            setNewTemplate({ name: '', slug: '', subject: '', content: '', signatureId: null, active: true });
+            alert('Template criado com sucesso!');
         } catch (error: any) {
             console.error('Error creating template:', error.response?.data || error);
-            alert(`Erro ao criar template: ${error.response?.data?.message || 'Erro desconhecido'}`);
+            alert(`Erro ao criar template: ${error.response?.data?.message || 'Erro do servidor'}`);
         } finally {
             setIsSavingTemplate(false);
         }
@@ -382,7 +430,15 @@ export default function EmailMarketingHub() {
     const loadCampaigns = async () => {
         try {
             const res = await api.get('/marketing/campaigns');
-            setCampaigns(res.data);
+            // Normalizar campanhas para garantir que estados controlados não recebam null
+            const normalizedCampaigns = res.data.map((c: any) => ({
+                ...c,
+                name: c.name || '',
+                subject: c.subject || '',
+                content: c.content || '',
+                audience: c.audience || ''
+            }));
+            setCampaigns(normalizedCampaigns);
         } catch (error) {
             console.error('Error loading campaigns:', error);
         }
@@ -517,8 +573,44 @@ export default function EmailMarketingHub() {
     };
 
 
+    const renderSignaturePreviewById = (signatureId: string | null) => {
+        const sig = signatures.find(s => s.id === signatureId);
+        if (!sig) return (
+            <div className="p-4 bg-gray-50 border-2 border-dashed rounded-xl text-center text-gray-400 text-xs italic">
+                Nenhuma assinatura selecionada para este template.
+            </div>
+        );
+
+        const storeUrlLabel = sig.storeUrl?.replace(/https?:\/\//, '').replace('www.', '') || '';
+
+        return (
+            <div className="bg-white border p-4 rounded-xl shadow-inner scale-90 origin-top">
+                <table cellPadding="0" cellSpacing="0" border={0} style={{ fontFamily: 'Arial, sans-serif', color: '#1B2B42', width: '100%', maxWidth: '500px' }}>
+                    <tbody>
+                        <tr>
+                            <td width="100" style={{ paddingRight: '15px', borderRight: '2px solid #D4AF37' }}>
+                                <img src={getImageUrl(sig.logoUrl)} alt="Logo" width="80" style={{ display: 'block', borderRadius: '50%', border: '1px solid #EBEBEB' }} />
+                            </td>
+                            <td style={{ paddingLeft: '15px' }}>
+                                <h2 style={{ margin: '0 0 2px 0', color: '#1B2B42', fontSize: '16px', fontWeight: 'bold' }}>{sig.ownerName}</h2>
+                                <p style={{ margin: '0 0 8px 0', color: '#555555', fontSize: '12px' }}>
+                                    {sig.role} | <strong style={{ color: '#1B2B42' }}>{sig.storeName}</strong>
+                                </p>
+                                <p style={{ margin: '0', fontSize: '11px', lineHeight: '1.4', color: '#333333' }}>
+                                    <strong>WhatsApp:</strong> {sig.whatsapp}<br />
+                                    <strong>E-mail:</strong> {sig.email}<br />
+                                    <strong>Loja:</strong> <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>{storeUrlLabel}</span>
+                                </p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
+
     const renderSignaturePreview = () => {
-        const storeUrlLabel = signatureForm.storeUrl.replace(/https?:\/\//, '').replace('www.', '');
+        const storeUrlLabel = signatureForm.storeUrl?.replace(/https?:\/\//, '').replace('www.', '') || '';
         return (
             <div className="bg-white border p-8 rounded-xl shadow-inner min-h-[200px] flex items-center justify-center">
                 <table cellPadding="0" cellSpacing="0" border={0} style={{ fontFamily: 'Arial, sans-serif', color: '#1B2B42', width: '100%', maxWidth: '500px' }}>
@@ -556,7 +648,18 @@ export default function EmailMarketingHub() {
     const loadSMTPConfigs = async () => {
         try {
             const res = await api.get('/marketing/email-settings');
-            if (res.data) setSmtpConfig(res.data);
+            if (res.data) {
+                // Normalizar SMTP configs para evitar warnings de "controlled to uncontrolled" no React
+                const normalized = {
+                    ...res.data,
+                    mailHost: res.data.mailHost || '',
+                    mailUsername: res.data.mailUsername || '',
+                    mailPassword: res.data.mailPassword || '',
+                    mailSenderAddress: res.data.mailSenderAddress || '',
+                    mailSenderName: res.data.mailSenderName || ''
+                };
+                setSmtpConfig(normalized);
+            }
         } catch (error) {
             console.error('Error loading SMTP configs:', error);
         }
@@ -774,25 +877,29 @@ export default function EmailMarketingHub() {
                                         <div>
                                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Tipo de Automação</label>
                                             <select
+                                                id="automation-type-select"
                                                 className="w-full p-4 border-2 rounded-xl bg-gray-50 outline-none focus:border-indigo-600 font-bold text-sm text-gray-700 transition-all"
-                                                value={newTemplate.slug}
+                                                value={newTemplate.slug || ""}
                                                 onChange={e => {
                                                     const typeId = e.target.value;
                                                     const selected = AUTOMATION_TYPES.find(t => t.id === typeId);
                                                     const defaults = DEFAULT_TEMPLATES[typeId] || { subject: '', content: '' };
 
-                                                    // Se já tiver conteúdo, avisa o usuário
-                                                    if (newTemplate.content && newTemplate.content.length > 50) {
+                                                    // Se já tiver conteúdo, avisa o usuário (Exceto se for a primeira seleção)
+                                                    if (newTemplate.slug && newTemplate.content && newTemplate.content.length > 50) {
                                                         if (!confirm('Trocar o tipo de automação irá carregar o modelo padrão e substituir seu texto atual. Continuar?')) return;
                                                     }
 
-                                                    setNewTemplate({
-                                                        ...newTemplate,
+                                                    setNewTemplate(prev => ({
+                                                        ...prev,
                                                         slug: typeId,
                                                         name: selected?.label || '',
                                                         subject: defaults.subject,
                                                         content: defaults.content
-                                                    });
+                                                    }));
+
+                                                    // Limpa erro de validação HTML5 ao selecionar algo válido
+                                                    e.target.setCustomValidity("");
                                                 }}
                                                 required
                                             >
@@ -807,29 +914,35 @@ export default function EmailMarketingHub() {
                                             <input
                                                 className="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                                                 placeholder="Ex: Boas-vindas ao Ateliê!"
-                                                value={newTemplate.subject}
-                                                onChange={e => setNewTemplate({ ...newTemplate, subject: e.target.value })}
+                                                value={newTemplate.subject || ''}
+                                                onChange={e => setNewTemplate(prev => ({ ...prev, subject: e.target.value }))}
                                                 required
                                             />
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Assinatura Digital</label>
-                                        <select
-                                            className="w-full p-3 border rounded-xl outline-none"
-                                            value={newTemplate.signatureId}
-                                            onChange={e => setNewTemplate({ ...newTemplate, signatureId: e.target.value })}
-                                        >
-                                            <option value="">Nenhuma</option>
-                                            {signatures.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Assinatura Digital</label>
+                                            <select
+                                                className="w-full p-3 border rounded-xl outline-none"
+                                                value={newTemplate.signatureId || ''}
+                                                onChange={e => setNewTemplate(prev => ({ ...prev, signatureId: e.target.value || null }))}
+                                            >
+                                                <option value="">Nenhuma</option>
+                                                {signatures.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="flex flex-col justify-end">
+                                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pré-visualização do Rodapé</label>
+                                            {renderSignaturePreviewById(newTemplate.signatureId)}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Corpo do E-mail</label>
-                                        <div className="min-h-[400px] border rounded-2xl overflow-hidden bg-gray-50">
-                                            <RichTextEditor value={newTemplate.content} onChange={v => setNewTemplate({ ...newTemplate, content: v })} />
+                                        <div className="min-h-[400px] border rounded-2xl overflow-hidden bg-white">
+                                            <RichTextEditor value={newTemplate.content} onChange={v => setNewTemplate(prev => ({ ...prev, content: v }))} />
                                         </div>
                                     </div>
 
@@ -873,7 +986,7 @@ export default function EmailMarketingHub() {
                                             <input
                                                 className="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-semibold"
                                                 value={editingTemplate.name}
-                                                onChange={e => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
+                                                onChange={e => setEditingTemplate(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
                                             />
                                         </div>
                                         <div>
@@ -889,20 +1002,29 @@ export default function EmailMarketingHub() {
                                         <label className="text-[10px] font-bold text-gray-400 uppercase">Assunto do E-mail</label>
                                         <input
                                             className="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
-                                            value={editingTemplate.subject}
-                                            onChange={e => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
+                                            value={editingTemplate.subject || ''}
+                                            onChange={e => setEditingTemplate(prev => prev ? ({ ...prev, subject: e.target.value }) : null)}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Assinatura</label>
-                                        <select
-                                            className="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                                            value={editingTemplate.signatureId || ''}
-                                            onChange={e => setEditingTemplate({ ...editingTemplate, signatureId: e.target.value || null })}
-                                        >
-                                            <option value="">Sem Assinatura</option>
-                                            {signatures.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Assinatura no E-mail</label>
+                                            <select
+                                                className="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                                value={editingTemplate.signatureId || ''}
+                                                onChange={e => setEditingTemplate(prev => prev ? ({ ...prev, signatureId: e.target.value || null }) : null)}
+                                            >
+                                                <option value="">Sem Assinatura</option>
+                                                {signatures.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                            <p className="mt-2 text-[10px] text-gray-400 italic">
+                                                * A assinatura será anexada automaticamente no final do e-mail.
+                                            </p>
+                                        </div>
+                                        <div className="border-l pl-4">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Prévia da Assinatura</label>
+                                            {renderSignaturePreviewById(editingTemplate.signatureId)}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">
@@ -1145,15 +1267,15 @@ export default function EmailMarketingHub() {
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome Interno</label>
-                                            <input type="text" required value={signatureForm.name} onChange={e => setSignatureForm({ ...signatureForm, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
+                                            <input type="text" required value={signatureForm.name || ''} onChange={e => setSignatureForm({ ...signatureForm, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Seu Nome (Exibido)</label>
-                                            <input type="text" required value={signatureForm.ownerName} onChange={e => setSignatureForm({ ...signatureForm, ownerName: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
+                                            <input type="text" required value={signatureForm.ownerName || ''} onChange={e => setSignatureForm({ ...signatureForm, ownerName: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cargo / Função</label>
-                                            <input type="text" required value={signatureForm.role} onChange={e => setSignatureForm({ ...signatureForm, role: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
+                                            <input type="text" required value={signatureForm.role || ''} onChange={e => setSignatureForm({ ...signatureForm, role: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
                                         </div>
                                     </div>
                                 </div>
@@ -1177,7 +1299,7 @@ export default function EmailMarketingHub() {
                                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">WhatsApp</label>
                                             <input
                                                 type="text" required
-                                                value={signatureForm.whatsapp}
+                                                value={signatureForm.whatsapp || ''}
                                                 onChange={e => setSignatureForm({ ...signatureForm, whatsapp: formatPhone(e.target.value) })}
                                                 className="w-full px-4 py-2 border rounded-lg text-sm"
                                                 placeholder="(00) 00000-0000"
@@ -1185,7 +1307,7 @@ export default function EmailMarketingHub() {
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">E-mail de Contato</label>
-                                            <input type="email" required value={signatureForm.email} onChange={e => setSignatureForm({ ...signatureForm, email: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
+                                            <input type="email" required value={signatureForm.email || ''} onChange={e => setSignatureForm({ ...signatureForm, email: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
                                         </div>
                                     </div>
                                 </div>
@@ -1195,14 +1317,14 @@ export default function EmailMarketingHub() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome da Loja</label>
-                                        <input type="text" required value={signatureForm.storeName} onChange={e => setSignatureForm({ ...signatureForm, storeName: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
+                                        <input type="text" required value={signatureForm.storeName || ''} onChange={e => setSignatureForm({ ...signatureForm, storeName: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">URL da Loja</label>
-                                        <input type="url" required value={signatureForm.storeUrl} onChange={e => setSignatureForm({ ...signatureForm, storeUrl: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
+                                        <input type="url" required value={signatureForm.storeUrl || ''} onChange={e => setSignatureForm({ ...signatureForm, storeUrl: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
                                     </div>
                                 </div>
-                                <input type="text" required placeholder="Lema / Frase de efeito" value={signatureForm.motto} onChange={e => setSignatureForm({ ...signatureForm, motto: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
+                                <input type="text" required placeholder="Lema / Frase de efeito" value={signatureForm.motto || ''} onChange={e => setSignatureForm({ ...signatureForm, motto: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-sm" />
                             </div>
                             <div className="flex justify-end pt-4 border-t">
                                 <button type="submit" disabled={isSavingSignature} className="px-8 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition flex items-center gap-2">

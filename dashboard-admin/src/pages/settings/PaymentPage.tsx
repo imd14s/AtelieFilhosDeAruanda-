@@ -19,6 +19,8 @@ export function PaymentPage() {
     const [editingProvider, setEditingProvider] = useState<AdminServiceProvider | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newProvider, setNewProvider] = useState({ name: '', code: '', driverKey: '' });
+    const [configData, setConfigData] = useState<any>({});
+    const [configLoading, setConfigLoading] = useState(false);
     const { addToast } = useToast();
 
     useEffect(() => {
@@ -81,7 +83,30 @@ export function PaymentPage() {
         }
     };
 
-    const handleSaveConfig = async (config: MercadoPagoConfig) => {
+    const handleOpenConfig = async (provider: AdminServiceProvider) => {
+        if (editingProvider?.id === provider.id) {
+            setEditingProvider(null);
+            return;
+        }
+
+        setConfigLoading(true);
+        setEditingProvider(provider);
+        try {
+            const config = await AdminProviderService.getProviderConfig(provider.id);
+            if (config && config.configJson) {
+                setConfigData(JSON.parse(config.configJson));
+            } else {
+                setConfigData({});
+            }
+        } catch (err) {
+            console.error('Erro ao carregar configuração:', err);
+            setConfigData({});
+        } finally {
+            setConfigLoading(false);
+        }
+    };
+
+    const handleSaveConfig = async (config: any) => {
         if (!editingProvider) return;
         try {
             await AdminProviderService.saveProviderConfig({
@@ -178,7 +203,7 @@ export function PaymentPage() {
                                         </span>
                                     </div>
                                     <button
-                                        onClick={() => setEditingProvider(editingProvider?.id === provider.id ? null : provider)}
+                                        onClick={() => handleOpenConfig(provider)}
                                         className={`px-6 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${editingProvider?.id === provider.id ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
                                     >
                                         {editingProvider?.id === provider.id ? 'Fechar Editor' : 'Configurar'}
@@ -195,13 +220,14 @@ export function PaymentPage() {
 
                             {editingProvider?.id === provider.id && (
                                 <div className="p-8 pt-0 animate-slide-down">
-                                    {provider.code === 'MERCADO_PAGO' ? (
+                                    {configLoading ? (
+                                        <div className="flex justify-center p-12">
+                                            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
+                                    ) : provider.code === 'MERCADO_PAGO' ? (
                                         <MercadoPagoForm
-                                            initialConfig={JSON.parse(localStorage.getItem(`mp-config-${provider.id}`) || '{}')}
-                                            onSave={(config) => {
-                                                localStorage.setItem(`mp-config-${provider.id}`, JSON.stringify(config));
-                                                handleSaveConfig(config);
-                                            }}
+                                            initialConfig={configData}
+                                            onSave={handleSaveConfig}
                                             onCancel={() => setEditingProvider(null)}
                                         />
                                     ) : (

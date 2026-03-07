@@ -62,8 +62,7 @@ const EthicsPage: React.FC = () => {
                             </div>
                             <h3 className="font-playfair text-2xl text-[#0f2A44]">Sustentabilidade</h3>
                             <p className="font-lato text-sm text-[#0f2A44]/60 leading-relaxed">
-                                Utilizamos materiais naturais e biodegradáveis sempre que possível. Nossas embalagens são
-                                recicláveis e priorizamos fornecedores locais para reduzir nossa pegada de carbono.
+                                Utilizamos materiais biodegradáveis sempre que possível e priorizamos fornecedores locais para reduzir nossa pegada de carbono.
                             </p>
                         </div>
 
@@ -141,7 +140,7 @@ const EthicsPage: React.FC = () => {
                     <div className="flex gap-4 items-start bg-white p-6 rounded-sm shadow-sm">
                         <CheckCircle size={24} className="text-[#3EDF4B] flex-shrink-0 mt-1" />
                         <div>
-                            <h4 className="font-lato font-bold text-[#0f2A44] mb-2">Ingredientes Naturais</h4>
+                            <h4 className="font-lato font-bold text-[#0f2A44] mb-2">Nossos Ingredientes</h4>
                             <p className="font-lato text-sm text-[#0f2A44]/70 leading-relaxed">
                                 Todas as nossas velas são feitas com cera de abelha ou soja, sem parafina derivada de petróleo.
                                 Nossas ervas são orgânicas e colhidas de forma sustentável.
@@ -154,8 +153,8 @@ const EthicsPage: React.FC = () => {
                         <div>
                             <h4 className="font-lato font-bold text-[#0f2A44] mb-2">Embalagens Conscientes</h4>
                             <p className="font-lato text-sm text-[#0f2A44]/70 leading-relaxed">
-                                Utilizamos papel kraft reciclado, tecidos reutilizáveis e evitamos plásticos descartáveis.
-                                Incentivamos nossos clientes a reutilizar ou reciclar as embalagens.
+                                Utilizamos papel kraft, tecidos reutilizáveis e evitamos plásticos descartáveis.
+                                Incentivamos nossos clientes a dar novos usos para as embalagens.
                             </p>
                         </div>
                     </div>
@@ -176,7 +175,7 @@ const EthicsPage: React.FC = () => {
                         <div>
                             <h4 className="font-lato font-bold text-[#0f2A44] mb-2">Educação e Conscientização</h4>
                             <p className="font-lato text-sm text-[#0f2A44]/70 leading-relaxed">
-                                Promovemos workshops e conteúdos educativos sobre o uso correto dos produtos,
+                                Criamos conteúdos nas redes sociais e conteúdos educativos sobre o uso correto dos produtos,
                                 combate à intolerância religiosa e valorização da cultura afro-brasileira.
                             </p>
                         </div>

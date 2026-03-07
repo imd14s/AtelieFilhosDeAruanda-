@@ -1,5 +1,6 @@
 package com.atelie.ecommerce.api.marketing;
 
+import com.atelie.ecommerce.domain.marketing.model.AutomationType;
 import com.atelie.ecommerce.domain.marketing.model.EmailTemplate;
 import com.atelie.ecommerce.infrastructure.persistence.marketing.EmailTemplateRepository;
 import org.springframework.http.ResponseEntity;
@@ -33,9 +34,25 @@ public class EmailTemplateController {
     @PostMapping
     public ResponseEntity<EmailTemplate> create(@RequestBody EmailTemplate template) {
         if (template.getSlug() == null || template.getSlug().trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
+            // Se vier sem slug mas com automationType, usa o nome do enum como slug
+            if (template.getAutomationType() != null) {
+                template.setSlug(template.getAutomationType().name());
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
         }
-        template.setId(null); // Garantir que o Hibernate gere um novo UUID
+
+        // Se vier com slug mas sem automationType, tenta mapear
+        if (template.getAutomationType() == null) {
+            try {
+                template.setAutomationType(AutomationType.valueOf(template.getSlug().toUpperCase()));
+            } catch (Exception e) {
+                // Se não for um tipo de automação válido, permite salvar apenas como slug (ex:
+                // newsletters manuais)
+            }
+        }
+
+        template.setId(null);
         return ResponseEntity.ok(repository.save(template));
     }
 
@@ -46,7 +63,20 @@ public class EmailTemplateController {
             existing.setSubject(template.getSubject());
             existing.setContent(template.getContent());
             existing.setSignatureId(template.getSignatureId());
+            existing.setAutomationType(template.getAutomationType());
             existing.setActive(template.isActive());
+
+            // Sincronizar slug com automationType se um deles for alterado
+            if (template.getAutomationType() != null) {
+                existing.setSlug(template.getAutomationType().name());
+            } else if (template.getSlug() != null) {
+                existing.setSlug(template.getSlug().toUpperCase());
+                try {
+                    existing.setAutomationType(AutomationType.valueOf(template.getSlug().toUpperCase()));
+                } catch (Exception e) {
+                    // Slug manual
+                }
+            }
             return ResponseEntity.ok(repository.save(existing));
         }).orElse(ResponseEntity.notFound().build());
     }

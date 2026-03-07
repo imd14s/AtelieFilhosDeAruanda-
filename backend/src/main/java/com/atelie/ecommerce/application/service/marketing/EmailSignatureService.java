@@ -40,6 +40,17 @@ public class EmailSignatureService {
         if (sig == null)
             return "";
 
+        String logoUrl = sig.getLogoUrl() != null ? sig.getLogoUrl() : "";
+        String storeName = sig.getStoreName() != null ? sig.getStoreName() : "Ateliê Filhos de Aruanda";
+        String ownerName = sig.getOwnerName() != null ? sig.getOwnerName() : "";
+        String role = sig.getRole() != null ? sig.getRole() : "";
+        String whatsapp = sig.getWhatsapp() != null ? sig.getWhatsapp() : "";
+        String email = sig.getEmail() != null ? sig.getEmail() : "";
+        String storeUrl = sig.getStoreUrl() != null ? sig.getStoreUrl() : "";
+        String motto = sig.getMotto() != null ? sig.getMotto() : "";
+
+        String displayUrl = storeUrl.replace("https://", "").replace("http://", "").replace("www.", "");
+
         return String.format(
                 "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"font-family: Arial, Helvetica, sans-serif; color: #1B2B42;\">\n"
                         +
@@ -73,10 +84,9 @@ public class EmailSignatureService {
                         "    </td>\n" +
                         "  </tr>\n" +
                         "</table>",
-                sig.getLogoUrl(), sig.getStoreName(), sig.getOwnerName(),
-                sig.getRole(), sig.getStoreName(), sig.getWhatsapp(),
-                sig.getEmail(), sig.getEmail(), sig.getStoreUrl(),
-                sig.getStoreUrl().replace("https://", "").replace("http://", "").replace("www.", ""),
-                sig.getMotto());
+                logoUrl, storeName, ownerName,
+                role, storeName, whatsapp,
+                email, email, storeUrl,
+                displayUrl, motto);
     }
 }

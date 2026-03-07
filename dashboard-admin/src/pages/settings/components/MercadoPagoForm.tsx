@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Shield, Zap, CreditCard, Settings, ChevronDown, ChevronUp, AlertCircle, Check, Copy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, Zap, CreditCard, Settings, ChevronDown, ChevronUp, AlertCircle, Check, Copy, RefreshCw } from 'lucide-react';
 import type { MercadoPagoConfig } from '../../../types/store-settings';
 
 interface Props {
@@ -40,6 +40,7 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                 pix: {
                     active: initialConfig.methods?.enabled?.pix?.active ?? false,
                     expirationMinutes: initialConfig.methods?.enabled?.pix?.expirationMinutes || 30,
+                    discountPercent: initialConfig.methods?.enabled?.pix?.discountPercent || 0,
                     instructions: initialConfig.methods?.enabled?.pix?.instructions || '',
                 },
                 boleto: {
@@ -62,6 +63,37 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
 
     const [activeSection, setActiveSection] = useState<string | null>('creds');
     const [copied, setCopied] = useState(false);
+    const [availableInstallments, setAvailableInstallments] = useState<number[]>([]);
+    const [loadingInstallments, setLoadingInstallments] = useState(false);
+
+    useEffect(() => {
+        if (config.credentials.publicKey && config.credentials.publicKey.startsWith('APP_USR-')) {
+            fetchInstallments();
+        }
+    }, [config.credentials.publicKey]);
+
+    const fetchInstallments = async () => {
+        if (!config.credentials.publicKey) return;
+        setLoadingInstallments(true);
+        try {
+            // Buscamos as parcelas disponíveis para o Mercado Pago (Visa como referência)
+            const response = await fetch(`https://api.mercadopago.com/v1/payment_methods/installments?public_key=${config.credentials.publicKey}&amount=100`);
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+                const maxInMP = data[0].payer_costs.length;
+                const options = Array.from({ length: maxInMP }, (_, i) => i + 1);
+                setAvailableInstallments(options);
+            } else {
+                setAvailableInstallments([1, 2, 3, 4, 5, 6, 10, 12]);
+            }
+        } catch (e) {
+            console.error("Erro ao buscar parcelas", e);
+            setAvailableInstallments([1, 2, 3, 4, 5, 6, 10, 12]);
+        } finally {
+            setLoadingInstallments(false);
+        }
+    };
+
     const handleCopy = () => {
         if (!config.webhooks.url) return;
         navigator.clipboard.writeText(config.webhooks.url);
@@ -102,16 +134,7 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                             Configurações {' > '} Credenciais de Produção.
                         </p>
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-sm font-bold text-gray-700">Access Token (Chave Secreta)</label>
-                        <input
-                            type="password"
-                            className="w-full border p-3 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="APP_USR-..."
-                            value={config.credentials.accessToken}
-                            onChange={e => setConfig({ ...config, credentials: { ...config.credentials, accessToken: e.target.value } })}
-                        />
-                    </div>
+                    {/* Invertido: Public Key primeiro conforme solicitado */}
                     <div className="space-y-1">
                         <label className="text-sm font-bold text-gray-700">Public Key (Chave Pública)</label>
                         <input
@@ -120,6 +143,16 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                             placeholder="APP_USR-..."
                             value={config.credentials.publicKey}
                             onChange={e => setConfig({ ...config, credentials: { ...config.credentials, publicKey: e.target.value } })}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-sm font-bold text-gray-700">Access Token (Chave Secreta)</label>
+                        <input
+                            type="password"
+                            className="w-full border p-3 rounded-xl font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="APP_USR-..."
+                            value={config.credentials.accessToken}
+                            onChange={e => setConfig({ ...config, credentials: { ...config.credentials, accessToken: e.target.value } })}
                         />
                     </div>
                 </div>
@@ -131,19 +164,33 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                 <div className="p-6 bg-white space-y-6 border-b">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Pix */}
-                        <div className={`p-5 rounded-2xl border-2 transition-all cursor-pointer ${config.methods.enabled.pix.active ? 'border-green-500 bg-green-50' : 'border-gray-100 bg-gray-50'}`}
-                            onClick={() => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, active: !config.methods.enabled.pix.active } } } })}
+                        <div className={`p-5 rounded-2xl border-2 transition-all group ${config.methods.enabled.pix.active ? 'border-green-500 bg-green-50' : 'border-gray-100 bg-gray-50'}`}
                         >
-                            <div className="flex justify-between items-center mb-3">
+                            <div className="flex justify-between items-center mb-3" onClick={() => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, active: !config.methods.enabled.pix.active } } } })}>
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-green-500 italic font-black">PIX</div>
                                     <span className="font-bold text-gray-800">Aceitar PIX</span>
                                 </div>
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${config.methods.enabled.pix.active ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${config.methods.enabled.pix.active ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
                                     {config.methods.enabled.pix.active && <Check size={14} className="text-white" />}
                                 </div>
                             </div>
-                            <p className="text-[11px] text-gray-500">Liberação instantânea do pedido após o pagamento.</p>
+                            <div className="space-y-3 mt-4 pt-4 border-t border-green-100 border-dashed">
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-700 block">Desconto no PIX (%)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Ex: 5"
+                                            value={config.methods.enabled.pix.discountPercent}
+                                            onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, pix: { ...config.methods.enabled.pix, discountPercent: Number(e.target.value) } } } })}
+                                        />
+                                        <span className="absolute right-4 top-3.5 text-gray-400 font-bold">%</span>
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-gray-400 italic">Liberação instantânea com incentivo para o cliente.</p>
+                            </div>
                         </div>
 
                         {/* Cartão */}
@@ -166,20 +213,35 @@ export function MercadoPagoForm({ initialConfig, onSave, onCancel }: Props) {
                     </div>
 
                     {config.methods.enabled.card.active && (
-                        <div className="bg-gray-50 p-4 rounded-xl space-y-3 border">
-                            <h5 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Configurações de Parcelamento</h5>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-medium text-gray-600 block mb-1">Máx. Parcelas</label>
-                                    <select className="w-full border p-2 rounded-lg" value={config.methods.enabled.card.maxInstallments} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, maxInstallments: Number(e.target.value) } } } })}>
-                                        {[1, 2, 3, 4, 5, 6, 10, 12].map(n => <option key={n} value={n}>{n}x</option>)}
+                        <div className="bg-gray-50 p-6 rounded-2xl space-y-4 border border-blue-100 animate-in fade-in slide-in-from-top-4">
+                            <div className="flex items-center justify-between border-b pb-3 mb-2 border-blue-100">
+                                <h5 className="text-[11px] font-bold text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                                    <CreditCard size={14} /> Regras de Parcelamento (Mercado Pago)
+                                </h5>
+                                {loadingInstallments && <RefreshCw size={14} className="animate-spin text-blue-400" />}
+                            </div>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-700 block">Máximo de Parcelas Oferecidas</label>
+                                    <select
+                                        className="w-full border border-gray-200 p-2.5 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={config.methods.enabled.card.maxInstallments}
+                                        onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, maxInstallments: Number(e.target.value) } } } })}
+                                    >
+                                        {availableInstallments.map(n => <option key={n} value={n}>{n}x</option>)}
                                     </select>
+                                    <p className="text-[10px] text-gray-400">Limite de parcelas que aparecerão para o cliente.</p>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-medium text-gray-600 block mb-1">Sem juros até</label>
-                                    <select className="w-full border p-2 rounded-lg" value={config.methods.enabled.card.interestFree} onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, interestFree: Number(e.target.value) } } } })}>
-                                        {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}x</option>)}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-700 block">Parcelas Sem Juros</label>
+                                    <select
+                                        className="w-full border border-gray-200 p-2.5 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={config.methods.enabled.card.interestFree}
+                                        onChange={e => setConfig({ ...config, methods: { ...config.methods, enabled: { ...config.methods.enabled, card: { ...config.methods.enabled.card, interestFree: Number(e.target.value) } } } })}
+                                    >
+                                        {availableInstallments.map(n => <option key={n} value={n}>{n}x</option>)}
                                     </select>
+                                    <p className="text-[10px] text-gray-400">Obrigatório ter configurado no painel do Mercado Pago.</p>
                                 </div>
                             </div>
                         </div>

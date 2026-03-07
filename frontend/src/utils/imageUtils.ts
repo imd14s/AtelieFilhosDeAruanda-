@@ -3,14 +3,20 @@ export function getImageUrl(url?: string | null): string {
         return '/images/default.png';
     }
 
-    if (url.startsWith('http') || url.startsWith('/images/') || url.startsWith('/assets/')) {
-        return url;
+    // Retirar possíveis múltiplas imagens providas por um parser com erro no backend
+    let parsedUrl = url;
+    if (parsedUrl.includes(',')) {
+        parsedUrl = parsedUrl.split(',')[0].trim();
+    }
+
+    if (parsedUrl.startsWith('http') || parsedUrl.startsWith('/images/') || parsedUrl.startsWith('/assets/')) {
+        return parsedUrl;
     }
 
     // Strip /api suffix to get the host base
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
     const hostBase = apiBase.split('/api')[0];
-    return `${hostBase}${url}`;
+    return `${hostBase}${parsedUrl}`;
 }
 
 export interface PixelCrop {

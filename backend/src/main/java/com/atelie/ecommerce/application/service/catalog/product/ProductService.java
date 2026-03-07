@@ -18,6 +18,8 @@ import com.atelie.ecommerce.infrastructure.persistence.product.entity.StockMovem
 import com.atelie.ecommerce.infrastructure.persistence.product.StockMovementRepository;
 import com.atelie.ecommerce.infrastructure.persistence.service.model.ServiceProviderEntity;
 import com.atelie.ecommerce.infrastructure.persistence.service.jpa.ServiceProviderJpaRepository;
+import com.atelie.ecommerce.infrastructure.persistence.order.OrderItemRepository;
+import com.atelie.ecommerce.infrastructure.persistence.cart.CartItemRepository;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -50,6 +52,8 @@ public class ProductService {
     private final GeminiIntegrationService geminiIntegrationService;
     private final CloudinaryService cloudinaryService;
     private final StockMovementRepository stockMovementRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final CartItemRepository cartItemRepository;
 
     public ProductService(ProductRepository productRepository,
             CategoryRepository categoryRepository,
@@ -62,7 +66,9 @@ public class ProductService {
             MarketplaceIntegrationRepository marketplaceRepository,
             GeminiIntegrationService geminiIntegrationService,
             CloudinaryService cloudinaryService,
-            StockMovementRepository stockMovementRepository) {
+            StockMovementRepository stockMovementRepository,
+            OrderItemRepository orderItemRepository,
+            CartItemRepository cartItemRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.variantRepository = variantRepository;
@@ -75,6 +81,8 @@ public class ProductService {
         this.geminiIntegrationService = geminiIntegrationService;
         this.cloudinaryService = cloudinaryService;
         this.stockMovementRepository = stockMovementRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.cartItemRepository = cartItemRepository;
     }
 
     @Cacheable(value = "products", key = "#id")
@@ -241,6 +249,13 @@ public class ProductService {
 
     private void sanitizeAndMapEntityImages(ProductEntity product, List<ProductVariantEntity> variants,
             Map<String, String> cidMap) {
+        if (product.getImageUrl() != null) {
+            product.setImageUrl(replaceCid(product.getImageUrl(), cidMap));
+            if (product.getImageUrl().startsWith("blob:") || product.getImageUrl().startsWith("data:")) {
+                product.setImageUrl(null);
+            }
+        }
+
         if (product.getImages() != null) {
             product.setImages(sanitizeUrlList(product.getImages(), cidMap));
         }
@@ -249,6 +264,9 @@ public class ProductService {
             for (ProductVariantEntity v : variants) {
                 if (v.getImageUrl() != null) {
                     v.setImageUrl(replaceCid(v.getImageUrl(), cidMap));
+                    if (v.getImageUrl().startsWith("blob:") || v.getImageUrl().startsWith("data:")) {
+                        v.setImageUrl(null);
+                    }
                 }
                 if (v.getImages() != null) {
                     v.setImages(sanitizeUrlList(v.getImages(), cidMap));
@@ -364,6 +382,18 @@ public class ProductService {
         ProductEntity product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Produto não encontrado com ID: " + id));
 
+        // Validação de Integridade: Não deletar produtos com pedidos
+        if (orderItemRepository.existsByProductId(id)) {
+            throw new com.atelie.ecommerce.api.common.exception.BusinessException(
+                    "Não é possível excluir um produto que possui pedidos vinculados. Por favor, desative o produto em vez de excluí-lo.");
+        }
+
+        // Limpeza de dependências deletáveis
+        stockMovementRepository.deleteByProductId(id);
+        cartItemRepository.deleteByProductId(id);
+        // Outras tabelas de histórico/favoritos se houver repositories seriam limpas
+        // aqui
+
         if (product.getVariants() != null) {
             for (var variant : product.getVariants()) {
                 if (variant.getImageUrl() != null)
@@ -378,6 +408,15 @@ public class ProductService {
         }
 
         productRepository.delete(product);
+    }
+
+    @CacheEvict(value = "products", allEntries = true)
+    @Transactional
+    public void toggleProductActive(UUID id) {
+        ProductEntity product = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Produto não encontrado: " + id));
+        product.setActive(product.getActive() == null || !product.getActive());
+        productRepository.save(product);
     }
 
     private void deleteImageFromCloudinary(String url) {
@@ -529,6 +568,19 @@ public class ProductService {
                     .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
                     .sum();
             product.setStockQuantity(totalStock);
+
+            // Sincronização de Capas: Produto pai usa imagem da primeira variante se não
+            // tiver imagens próprias
+            if ((product.getImages() == null || product.getImages().isEmpty())
+                    && (product.getImageUrl() == null || product.getImageUrl().isEmpty())) {
+                product.getVariants().stream()
+                        .filter(v -> v.getActive() != null && v.getActive() && v.getImageUrl() != null)
+                        .findFirst()
+                        .ifPresent(v -> {
+                            product.setImageUrl(v.getImageUrl());
+                            product.setImages(new ArrayList<>(List.of(v.getImageUrl())));
+                        });
+            }
         }
     }
 }

@@ -13,6 +13,13 @@ interface UseMercadoPago {
     loading: boolean;
     isConfigured: boolean;
     error: string | null;
+    config: {
+        pixActive: boolean;
+        cardActive: boolean;
+        maxInstallments: number;
+        interestFree: number;
+        pixDiscountPercent: number;
+    } | null;
 }
 
 export const useMercadoPago = (): UseMercadoPago => {
@@ -20,6 +27,7 @@ export const useMercadoPago = (): UseMercadoPago => {
     const [loading, setLoading] = useState<boolean>(true);
     const [isConfigured, setIsConfigured] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [config, setConfig] = useState<UseMercadoPago['config']>(null);
 
     useEffect(() => {
         let mounted = true;
@@ -33,8 +41,19 @@ export const useMercadoPago = (): UseMercadoPago => {
                     if (mounted) {
                         setIsConfigured(false);
                         setLoading(false);
+                        setConfig(null);
                     }
                     return;
+                }
+
+                if (mounted) {
+                    setConfig({
+                        pixActive: configData.pixActive ?? false,
+                        cardActive: configData.cardActive ?? false,
+                        maxInstallments: configData.maxInstallments ?? 12,
+                        interestFree: configData.interestFree ?? 1,
+                        pixDiscountPercent: configData.pixDiscountPercent ?? 0
+                    });
                 }
 
                 if (!window.MercadoPago) {
@@ -68,5 +87,5 @@ export const useMercadoPago = (): UseMercadoPago => {
         };
     }, []);
 
-    return { mp, loading, isConfigured, error };
+    return { mp, loading, isConfigured, error, config };
 };

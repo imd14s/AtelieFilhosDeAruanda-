@@ -23,11 +23,12 @@ public class PaymentService {
 
     public PaymentResponse createPixPayment(UUID orderId, String customerName, String customerEmail,
             BigDecimal amount) {
-        return processPayment(orderId, customerName, customerEmail, amount, "pix", null, null);
+        return processPayment(orderId, customerName, customerEmail, amount, "pix", null, null, null, null);
     }
 
     public PaymentResponse processPayment(UUID orderId, String customerName, String customerEmail,
-            BigDecimal amount, String paymentMethod, String paymentToken, String cardId) {
+            BigDecimal amount, String paymentMethod, String paymentToken, String cardId,
+            Integer installments, String issuerId) {
 
         Map<String, Object> request = new HashMap<>();
         request.put("orderId", orderId.toString());
@@ -40,6 +41,10 @@ public class PaymentService {
             request.put("token", paymentToken);
         if (cardId != null)
             request.put("cardId", cardId);
+        if (installments != null)
+            request.put("installments", installments);
+        if (issuerId != null)
+            request.put("issuer_id", issuerId);
 
         ServiceResult result = orchestrator.execute(ServiceType.PAYMENT, request, "PRODUCTION");
 

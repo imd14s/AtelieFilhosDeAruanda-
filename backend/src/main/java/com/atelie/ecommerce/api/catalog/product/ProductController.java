@@ -242,6 +242,12 @@ public class ProductController {
         }
     }
 
+    @PatchMapping("/{id}/toggle")
+    public ResponseEntity<Void> toggleActive(@PathVariable UUID id) {
+        productService.toggleProductActive(id);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         productService.deleteProduct(id);

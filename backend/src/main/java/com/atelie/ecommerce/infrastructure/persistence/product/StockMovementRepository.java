@@ -11,4 +11,8 @@ public interface StockMovementRepository extends JpaRepository<StockMovementEnti
     List<StockMovementEntity> findByProductId(UUID productId);
 
     List<StockMovementEntity> findByVariantId(UUID variantId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM StockMovementEntity s WHERE s.productId = :productId")
+    void deleteByProductId(@org.springframework.data.repository.query.Param("productId") UUID productId);
 }

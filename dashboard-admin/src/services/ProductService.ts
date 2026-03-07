@@ -80,10 +80,21 @@ export const ProductService = {
     const productToSave = {
       ...product,
       media: processMedia(product.media || []),
-      variants: (product.variants || []).map(v => ({
-        ...v,
-        media: processMedia(v.media || [])
-      }))
+      variants: (product.variants || []).map(v => {
+        const processedMedia = processMedia(v.media || []);
+        // Se a imageUrl for um blob (nova imagem) e estiver no processMedia
+        let finalImageUrl = v.imageUrl;
+        if (v.imageUrl && v.imageUrl.startsWith('blob:')) {
+          const matchingMedia = processedMedia.find(m => m.url.startsWith('cid:'));
+          if (matchingMedia) finalImageUrl = matchingMedia.url;
+        }
+
+        return {
+          ...v,
+          imageUrl: finalImageUrl,
+          media: processedMedia
+        };
+      })
     };
 
     formData.append('product', new Blob([JSON.stringify(productToSave)], { type: 'application/json' }));
@@ -113,10 +124,21 @@ export const ProductService = {
     const productToUpdate = {
       ...product,
       media: processMedia(product.media || []),
-      variants: (product.variants || []).map(v => ({
-        ...v,
-        media: processMedia(v.media || [])
-      }))
+      variants: (product.variants || []).map(v => {
+        const processedMedia = processMedia(v.media || []);
+        // Se a imageUrl for um blob (nova imagem) e estiver no processMedia
+        let finalImageUrl = v.imageUrl;
+        if (v.imageUrl && v.imageUrl.startsWith('blob:')) {
+          const matchingMedia = processedMedia.find(m => m.url.startsWith('cid:')); // busca a cid correspondente
+          if (matchingMedia) finalImageUrl = matchingMedia.url;
+        }
+
+        return {
+          ...v,
+          imageUrl: finalImageUrl,
+          media: processedMedia
+        };
+      })
     };
 
     formData.append('product', new Blob([JSON.stringify(productToUpdate)], { type: 'application/json' }));

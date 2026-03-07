@@ -74,6 +74,9 @@ public class CheckoutController {
 
                 OrderEntity order = orderService.createOrder(orderRequest);
 
+                Integer installments = (Integer) payload.getOrDefault("installments", 1);
+                String issuerId = (String) payload.get("issuerId");
+
                 // 5. Gerar o pagamento
                 PaymentResponse payment = paymentService.processPayment(
                                 order.getId(),
@@ -82,7 +85,9 @@ public class CheckoutController {
                                 order.getTotalAmount(),
                                 paymentMethodId,
                                 paymentToken,
-                                cardId);
+                                cardId,
+                                installments,
+                                issuerId);
 
                 // 6. Retornar dados combinados
                 return ResponseEntity.ok(Map.of(

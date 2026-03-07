@@ -11,16 +11,16 @@ export interface FiscalIntegration {
 
 export const FiscalIntegrationService = {
     async getAll(): Promise<FiscalIntegration[]> {
-        const response = await api.get('/api/fiscal-integrations');
+        const response = await api.get('/fiscal-integrations');
         return response.data;
     },
 
     async save(data: FiscalIntegration): Promise<FiscalIntegration> {
-        const response = await api.post('/api/fiscal-integrations', data);
+        const response = await api.post('/fiscal-integrations', data);
         return response.data;
     },
 
     async delete(id: string): Promise<void> {
-        await api.delete(`/api/fiscal-integrations/${id}`);
+        await api.delete(`/fiscal-integrations/${id}`);
     }
 };

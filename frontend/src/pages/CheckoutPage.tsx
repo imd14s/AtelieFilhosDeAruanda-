@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, CreditCard, ShoppingBag, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, CreditCard, ShoppingBag, Truck, ShieldCheck, Check, CheckCircle, AlertCircle, Loader2, AlertTriangle, Mail, User as UserIcon, MapPin, Hash, FileText } from 'lucide-react';
 import { cartService } from '../services/cartService';
 import { authService } from '../services/authService';
 import { orderService } from '../services/orderService';
@@ -14,14 +14,66 @@ interface CheckoutFormData {
     email: string;
     nome: string;
     sobrenome: string;
-    endereco: string;
+    tipoDocumento: 'CPF' | 'CNPJ';
+    documento: string;
+    cep: string;
+    rua: string;
+    numero: string;
+    complemento: string;
+    bairro: string;
     cidade: string;
     estado: string;
-    cep: string;
     metodoPagamento: 'pix' | 'card';
     saveAddress: boolean;
     saveCard: boolean;
 }
+
+// Helpers de validação
+const validateCPF = (cpf: string) => {
+    cpf = cpf.replace(/\D/g, '');
+    if (cpf.length !== 11) return false;
+    if (/^(\d)\1+$/.test(cpf)) return false;
+    let sum = 0;
+    let remainder;
+    for (let i = 1; i <= 9; i++) sum = sum + parseInt(cpf.substring(i - 1, i)) * (11 - i);
+    remainder = (sum * 10) % 11;
+    if ((remainder === 10) || (remainder === 11)) remainder = 0;
+    if (remainder !== parseInt(cpf.substring(9, 10))) return false;
+    sum = 0;
+    for (let i = 1; i <= 10; i++) sum = sum + parseInt(cpf.substring(i - 1, i)) * (12 - i);
+    remainder = (sum * 10) % 11;
+    if ((remainder === 10) || (remainder === 11)) remainder = 0;
+    if (remainder !== parseInt(cpf.substring(10, 11))) return false;
+    return true;
+};
+
+const validateCNPJ = (cnpj: string) => {
+    cnpj = cnpj.replace(/\D/g, '');
+    if (cnpj.length !== 14) return false;
+    if (/^(\d)\1+$/.test(cnpj)) return false;
+    let length = cnpj.length - 2;
+    let numbers = cnpj.substring(0, length);
+    let digits = cnpj.substring(length);
+    let sum = 0;
+    let pos = length - 7;
+    for (let i = length; i >= 1; i--) {
+        sum += parseInt(numbers.charAt(length - i)) * pos--;
+        if (pos < 2) pos = 9;
+    }
+    let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    if (result !== parseInt(digits.charAt(0))) return false;
+    length = length + 1;
+    numbers = cnpj.substring(0, length);
+    sum = 0;
+    pos = length - 7;
+    for (let i = length; i >= 1; i--) {
+        sum += parseInt(numbers.charAt(length - i)) * pos--;
+        if (pos < 2) pos = 9;
+    }
+    result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    if (result !== parseInt(digits.charAt(1))) return false;
+    return true;
+};
 
 const CheckoutPage: React.FC = () => {
     const location = useLocation();
@@ -43,14 +95,21 @@ const CheckoutPage: React.FC = () => {
         email: user.email || '',
         nome: user.name?.split(' ')[0] || '',
         sobrenome: user.name?.split(' ').slice(1).join(' ') || '',
-        endereco: '',
+        tipoDocumento: 'CPF',
+        documento: '',
+        cep: cep || '',
+        rua: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
         cidade: '',
         estado: '',
-        cep: cep || '',
         metodoPagamento: 'pix',
         saveAddress: false,
         saveCard: false
     });
+
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -63,7 +122,7 @@ const CheckoutPage: React.FC = () => {
     const [currentShipping, setCurrentShipping] = useState<ShippingOption | null>(shippingSelected || null);
     const [configMissing, setConfigMissing] = useState<{ mp: boolean; shipping: boolean }>({ mp: false, shipping: false });
 
-    const { mp, loading: mpLoading, isConfigured, error: mpError } = useMercadoPago();
+    const { mp, loading: mpLoading, isConfigured, error: mpError, config } = useMercadoPago();
     const [cardForm, setCardForm] = useState<any>(null);
     const cardFormRef = useRef<any>(null);
     const pendingOrderRef = useRef<CreateOrderData | null>(null);
@@ -76,8 +135,9 @@ const CheckoutPage: React.FC = () => {
             : appliedCoupon.value)
         : 0;
 
-    // Aplicar desconto de 5% no PIX se não houver cupom (ou conforme regra de negócio)
-    const pixDiscount = formData.metodoPagamento === 'pix' ? (subtotal * 0.05) : 0;
+    // Aplicar desconto de PIX conforme configuração do backend
+    const effectivePixDiscountPercent = config?.pixDiscountPercent ?? 5; // Fallback para 5% se não carregar
+    const pixDiscount = formData.metodoPagamento === 'pix' ? (subtotal * (effectivePixDiscountPercent / 100)) : 0;
 
     const total = subtotal + (currentShipping?.price || 0) - discount - pixDiscount;
 
@@ -156,6 +216,10 @@ const CheckoutPage: React.FC = () => {
                                     issuer: { id: 'issuer' },
                                     installments: { id: 'installments' },
                                     cardholderEmail: { id: 'cardholderEmail' }
+                                },
+                                installments: {
+                                    minInstallments: 1,
+                                    maxInstallments: config?.maxInstallments || 12
                                 },
                                 callbacks: {
                                     onFormMounted: (error: any) => {
@@ -244,7 +308,10 @@ const CheckoutPage: React.FC = () => {
         setIsAddingNewAddress(false);
         setFormData(prev => ({
             ...prev,
-            endereco: addr.street + (addr.number ? `, ${addr.number}` : '') + (addr.complement ? ` - ${addr.complement}` : ''),
+            rua: addr.street,
+            numero: addr.number,
+            complemento: addr.complement || '',
+            bairro: addr.neighborhood,
             cidade: addr.city,
             estado: addr.state,
             cep: normalizedCep
@@ -269,6 +336,82 @@ const CheckoutPage: React.FC = () => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+
+        if (name === 'cep') {
+            const val = value.replace(/\D/g, '').substring(0, 8);
+            setFormData(prev => ({ ...prev, [name]: val }));
+
+            if (val.length === 8) {
+                // Validação e busca ViaCEP
+                fetch(`https://viacep.com.br/ws/${val}/json/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.erro) {
+                            setFormData(prev => ({
+                                ...prev,
+                                rua: data.logradouro,
+                                bairro: data.bairro,
+                                cidade: data.localidade,
+                                estado: data.uf
+                            }));
+                            setFormErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.cep;
+                                return newErrors;
+                            });
+                            handleCalculateShipping(val);
+                        } else {
+                            setFormErrors(prev => ({ ...prev, cep: 'CEP não encontrado' }));
+                        }
+                    })
+                    .catch(() => setFormErrors(prev => ({ ...prev, cep: 'Erro ao buscar CEP' })));
+            } else {
+                setFormErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.cep;
+                    return newErrors;
+                });
+            }
+            return;
+        }
+
+        if (name === 'documento') {
+            const val = value.replace(/\D/g, '');
+            const maxLength = formData.tipoDocumento === 'CPF' ? 11 : 14;
+            const finalVal = val.substring(0, maxLength);
+            setFormData(prev => ({ ...prev, [name]: finalVal }));
+
+            if (finalVal.length === maxLength) {
+                const isValid = formData.tipoDocumento === 'CPF' ? validateCPF(finalVal) : validateCNPJ(finalVal);
+                if (!isValid) {
+                    setFormErrors(prev => ({ ...prev, documento: `${formData.tipoDocumento} inválido` }));
+                } else {
+                    setFormErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.documento;
+                        return newErrors;
+                    });
+                }
+            } else {
+                setFormErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.documento;
+                    return newErrors;
+                });
+            }
+            return;
+        }
+
+        if (name === 'tipoDocumento') {
+            setFormData(prev => ({ ...prev, [name]: value as any, documento: '' }));
+            setFormErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.documento;
+                return newErrors;
+            });
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -279,33 +422,32 @@ const CheckoutPage: React.FC = () => {
             const userId = user.id || user.googleId;
             // 1. Salvar endereço se solicitado
             if (formData.saveAddress && isAddingNewAddress && userId) {
-                const parts = formData.endereco.split(',');
                 const addrData: Address = {
                     label: 'Principal',
-                    street: parts[0].trim(),
-                    number: parts[1]?.trim() || 'S/N',
-                    neighborhood: 'Centro',
+                    street: formData.rua,
+                    number: formData.numero,
+                    neighborhood: formData.bairro,
                     city: formData.cidade,
                     state: formData.estado,
                     zipCode: formData.cep,
-                    complement: ''
+                    complement: formData.complemento
                 };
                 await authService.address.create(userId, addrData);
             }
 
             // 2. Preparar dados do pedido
-            const parts = formData.endereco.split(',');
             const order: CreateOrderData = {
                 items: cart.map(i => ({ productId: i.id, quantity: i.quantity, variantId: i.variantId })),
                 email: formData.email,
                 customerName: `${formData.nome} ${formData.sobrenome}`,
                 shippingAddress: {
-                    street: parts[0].trim(),
-                    number: parts[1]?.trim() || 'S/N',
+                    street: formData.rua,
+                    number: formData.numero,
                     city: formData.cidade,
                     state: formData.estado,
                     zipCode: formData.cep,
-                    neighborhood: 'Centro' // Default or extracted
+                    neighborhood: formData.bairro,
+                    complement: formData.complemento
                 },
                 // @ts-ignore - Estendendo se o backend usar 'shipping' opcionalmente
                 shipping: {
@@ -315,7 +457,11 @@ const CheckoutPage: React.FC = () => {
                 paymentMethod: formData.metodoPagamento,
                 couponCode: appliedCoupon?.code,
                 saveAddress: formData.saveAddress,
-                saveCard: formData.saveCard
+                saveCard: formData.saveCard,
+                // @ts-ignore
+                documentType: formData.tipoDocumento,
+                // @ts-ignore
+                documentNumber: formData.documento
             };
 
             // 3. Lógica de Pagamento
@@ -413,12 +559,47 @@ const CheckoutPage: React.FC = () => {
                                 <span className="w-8 h-8 rounded-full bg-[var(--azul-profundo)] text-white flex items-center justify-center font-playfair text-sm">1</span>
                                 <h2 className="font-playfair text-2xl text-[var(--azul-profundo)]">Informações de Contato</h2>
                             </div>
-                            <div className="grid grid-cols-1 gap-6">
-                                <input
-                                    type="email" name="email" required placeholder="E-mail para acompanhamento"
-                                    value={formData.email} onChange={handleInputChange}
-                                    className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                                <div className="space-y-1.5 group">
+                                    <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">
+                                        E-mail para acompanhamento
+                                    </label>
+                                    <input
+                                        type="email" name="email" required placeholder="exemplo@email.com"
+                                        value={formData.email} onChange={handleInputChange}
+                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                    />
+                                    <div className="min-h-[16px]" />
+                                </div>
+                                <div className="flex gap-4 items-start">
+                                    <div className="w-1/3 space-y-1.5">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">
+                                            Tipo
+                                        </label>
+                                        <select
+                                            name="tipoDocumento"
+                                            value={formData.tipoDocumento}
+                                            onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-3 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] cursor-pointer hover:bg-gray-50 transition-colors"
+                                        >
+                                            <option value="CPF">CPF</option>
+                                            <option value="CNPJ">CNPJ</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex-1 space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">
+                                            {formData.tipoDocumento}
+                                        </label>
+                                        <input
+                                            type="text" name="documento" required placeholder={`000.000...`}
+                                            value={formData.documento} onChange={handleInputChange}
+                                            className={`w-full border ${formErrors.documento ? 'border-red-500' : 'border-[var(--azul-profundo)]/10'} bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200`}
+                                        />
+                                        <div className="min-h-[16px] mt-1 pr-1">
+                                            {formErrors.documento && <p className="text-[10px] text-red-500 font-bold animate-in fade-in slide-in-from-top-1 text-right">{formErrors.documento}</p>}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </section>
 
@@ -448,7 +629,16 @@ const CheckoutPage: React.FC = () => {
                                         onClick={() => {
                                             setIsAddingNewAddress(true);
                                             setSelectedAddressId(null);
-                                            setFormData(prev => ({ ...prev, endereco: '', cidade: '', estado: '', cep: '' }));
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                rua: '',
+                                                numero: '',
+                                                bairro: '',
+                                                complemento: '',
+                                                cidade: '',
+                                                estado: '',
+                                                cep: ''
+                                            }));
                                         }}
                                         className={`p-4 border border-dashed flex items-center justify-center gap-2 font-lato text-[10px] uppercase tracking-widest transition-all ${isAddingNewAddress ? 'border-[var(--dourado-suave)] text-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/20 text-[var(--azul-profundo)]/40 hover:border-[var(--azul-profundo)]/40 hover:text-[var(--azul-profundo)]/60'}`}
                                     >
@@ -459,41 +649,84 @@ const CheckoutPage: React.FC = () => {
 
                             {isAddingNewAddress && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4">
-                                    <input
-                                        type="text" name="nome" required placeholder="Nome"
-                                        value={formData.nome} onChange={handleInputChange}
-                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <input
-                                        type="text" name="sobrenome" required placeholder="Sobrenome"
-                                        value={formData.sobrenome} onChange={handleInputChange}
-                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <input
-                                        type="text" name="endereco" required placeholder="Endereço e Número"
-                                        value={formData.endereco} onChange={handleInputChange}
-                                        className="md:col-span-2 w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <input
-                                        type="text" name="cidade" required placeholder="Cidade"
-                                        value={formData.cidade} onChange={handleInputChange}
-                                        className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
-                                    />
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Nome</label>
                                         <input
-                                            type="text" name="estado" required placeholder="UF"
-                                            value={formData.estado} onChange={handleInputChange}
-                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
+                                            type="text" name="nome" required placeholder="Seu nome"
+                                            value={formData.nome} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
                                         />
+                                    </div>
+                                    <div className="space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Sobrenome</label>
                                         <input
-                                            type="text" name="cep" required placeholder="CEP"
-                                            value={formData.cep} onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, '').substring(0, 8);
-                                                handleInputChange({ target: { name: 'cep', value: val } } as any);
-                                                if (val.length === 8) handleCalculateShipping(val);
-                                            }}
-                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-6 py-4 font-lato text-sm outline-none focus:border-[var(--dourado-suave)]"
+                                            type="text" name="sobrenome" required placeholder="Seu sobrenome"
+                                            value={formData.sobrenome} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
                                         />
+                                    </div>
+                                    <div className="md:col-span-2 space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">CEP</label>
+                                        <input
+                                            type="text" name="cep" required placeholder="00000-000"
+                                            value={formData.cep} onChange={handleInputChange}
+                                            className={`w-full border ${formErrors.cep ? 'border-red-500' : 'border-[var(--azul-profundo)]/10'} bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200`}
+                                        />
+                                        <div className="min-h-[16px] mt-1 pr-1">
+                                            {formErrors.cep && <p className="text-[10px] text-red-500 font-bold animate-in fade-in slide-in-from-top-1 text-right">{formErrors.cep}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-1 space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Rua / Logradouro</label>
+                                        <input
+                                            type="text" name="rua" required placeholder="Nome da rua"
+                                            value={formData.rua} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-8">
+                                        <div className="space-y-1.5 group">
+                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Número</label>
+                                            <input
+                                                type="text" name="numero" required placeholder="123"
+                                                value={formData.numero} onChange={handleInputChange}
+                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5 group">
+                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Bairro</label>
+                                            <input
+                                                type="text" name="bairro" required placeholder="Bairro"
+                                                value={formData.bairro} onChange={handleInputChange}
+                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5 group">
+                                        <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Complemento (Opcional)</label>
+                                        <input
+                                            type="text" name="complemento" placeholder="Apto, Bloco, etc."
+                                            value={formData.complemento} onChange={handleInputChange}
+                                            className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-8">
+                                        <div className="space-y-1.5 group">
+                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">Cidade</label>
+                                            <input
+                                                type="text" name="cidade" required placeholder="Cidade"
+                                                value={formData.cidade} onChange={handleInputChange}
+                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5 group">
+                                            <label className="block font-lato text-[11px] uppercase tracking-wider text-[var(--azul-profundo)]/60 font-bold ml-1">UF</label>
+                                            <input
+                                                type="text" name="estado" required placeholder="UF"
+                                                value={formData.estado} onChange={handleInputChange}
+                                                className="w-full border border-[var(--azul-profundo)]/10 bg-white px-5 py-3.5 font-lato text-sm outline-none focus:border-[var(--dourado-suave)] focus:ring-1 focus:ring-[var(--dourado-suave)]/20 transition-all duration-200"
+                                            />
+                                        </div>
                                     </div>
                                     {user.id && (
                                         <label className="md:col-span-2 flex items-center gap-2 cursor-pointer">
@@ -571,23 +804,27 @@ const CheckoutPage: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'pix' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
-                                        <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange as any} className="accent-[var(--azul-profundo)]" />
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
-                                            <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Pix com 5% de desconto</span>
-                                        </div>
-                                    </label>
-
-                                    <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'card' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
-                                        <input type="radio" name="metodoPagamento" value="card" checked={formData.metodoPagamento === 'card'} onChange={handleInputChange as any} className="accent-[var(--azul-profundo)]" />
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
-                                                <CreditCard size={20} />
+                                    {(!config || config.pixActive) && (
+                                        <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'pix' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
+                                            <input type="radio" name="metodoPagamento" value="pix" checked={formData.metodoPagamento === 'pix'} onChange={handleInputChange as any} className="accent-[var(--azul-profundo)]" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm italic font-bold">PIX</div>
+                                                <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Pix com {effectivePixDiscountPercent || 5}% de desconto</span>
                                             </div>
-                                            <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito / Débito</span>
-                                        </div>
-                                    </label>
+                                        </label>
+                                    )}
+
+                                    {(!config || config.cardActive) && (
+                                        <label className={`flex items-center gap-4 p-6 border cursor-pointer transition-colors ${formData.metodoPagamento === 'card' ? 'border-[var(--dourado-suave)] bg-[var(--dourado-suave)]/5' : 'border-[var(--azul-profundo)]/10 bg-white hover:border-[var(--dourado-suave)]/50'}`}>
+                                            <input type="radio" name="metodoPagamento" value="card" checked={formData.metodoPagamento === 'card'} onChange={handleInputChange as any} className="accent-[var(--azul-profundo)]" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-[var(--azul-profundo)] shadow-sm">
+                                                    <CreditCard size={20} />
+                                                </div>
+                                                <span className="font-lato text-sm font-bold uppercase tracking-widest text-[var(--azul-profundo)]">Cartão de Crédito / Débito</span>
+                                            </div>
+                                        </label>
+                                    )}
 
                                     {formData.metodoPagamento === 'card' && (
                                         <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
@@ -776,13 +1013,30 @@ const CheckoutPage: React.FC = () => {
                                     {appliedCoupon && <p className="text-[10px] text-green-600 mt-2 font-bold">✓ Cupom aplicado!</p>}
                                 </div>
 
-                                <button
-                                    onClick={handleSubmit}
-                                    disabled={loading || !currentShipping || !formData.email || !formData.nome || (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)}
-                                    className="w-full bg-[var(--azul-profundo)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3 shadow-lg"
-                                >
-                                    {loading ? <Loader2 size={20} className="animate-spin" /> : 'Finalizar Pedido'}
-                                </button>
+                                {!user.id ? (
+                                    <button
+                                        onClick={() => navigate('/login', { state: { from: '/checkout' } })}
+                                        className="w-full bg-[var(--dourado-suave)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--azul-profundo)] transition-all flex items-center justify-center gap-3 shadow-lg"
+                                    >
+                                        Faça Login para Finalizar
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleSubmit}
+                                        disabled={
+                                            loading ||
+                                            !currentShipping ||
+                                            !formData.email ||
+                                            !formData.nome ||
+                                            !formData.documento ||
+                                            Object.keys(formErrors).length > 0 ||
+                                            (formData.metodoPagamento === 'card' && isAddingNewCard && !isConfigured)
+                                        }
+                                        className="w-full bg-[var(--azul-profundo)] text-white py-5 font-lato text-xs uppercase tracking-[0.3em] hover:bg-[var(--dourado-suave)] transition-all disabled:opacity-30 flex items-center justify-center gap-3 shadow-lg"
+                                    >
+                                        {loading ? <Loader2 size={20} className="animate-spin" /> : 'Finalizar Pedido'}
+                                    </button>
+                                )}
                             </div>
 
                             <div className="flex flex-col items-center gap-4 opacity-40">

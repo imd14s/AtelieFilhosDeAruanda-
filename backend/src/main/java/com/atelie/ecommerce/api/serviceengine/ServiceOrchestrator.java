@@ -50,7 +50,14 @@ public class ServiceOrchestrator {
             return new ServiceResult(false, null, Map.of("error", "NO_PROVIDER_AVAILABLE"), "NO_PROVIDER_AVAILABLE");
         }
 
-        var provider = resolved.provider();
+        return executeWithProvider(resolved.provider(), request, environment);
+    }
+
+    public ServiceResult executeWithProvider(
+            com.atelie.ecommerce.domain.service.model.ServiceProvider provider,
+            Map<String, Object> request,
+            String environment) {
+
         String configJson = configGateway
                 .findConfigJson(provider.code(), environment)
                 .orElse("{}");
