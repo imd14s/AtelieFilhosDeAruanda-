@@ -54,6 +54,20 @@ export const orderService = {
         }
     },
 
+    cancelOrder: async (orderId: string, reason: string): Promise<void> => {
+        try {
+            await api.put(`/orders/${orderId}/cancel`, reason, {
+                headers: {
+                    ...TENANT_HEADER,
+                    'Content-Type': 'text/plain'
+                }
+            });
+        } catch (error) {
+            console.error("[orderService] Erro ao cancelar pedido:", error);
+            throw error;
+        }
+    },
+
     calculateShipping: async (cep: string, items: CartItem[] = []): Promise<ShippingOption[]> => {
         try {
             const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);

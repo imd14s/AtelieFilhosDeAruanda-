@@ -371,6 +371,7 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELED.name());
+        order.setCancelReason(reason);
         orderRepository.save(order);
 
         auditService.log(

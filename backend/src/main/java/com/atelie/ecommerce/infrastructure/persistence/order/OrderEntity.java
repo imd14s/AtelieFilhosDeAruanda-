@@ -94,6 +94,9 @@ public class OrderEntity {
     @Column(name = "document_expiry_date")
     private Instant documentExpiryDate;
 
+    @Column(name = "cancel_reason", length = 500)
+    private String cancelReason;
+
     public OrderEntity() {
     }
 
@@ -308,6 +311,14 @@ public class OrderEntity {
 
     public void setDocumentExpiryDate(Instant documentExpiryDate) {
         this.documentExpiryDate = documentExpiryDate;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
     }
 
     @PrePersist

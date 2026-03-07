@@ -35,18 +35,31 @@ const OrdersPage: React.FC = () => {
         }
     }, [user]);
 
-    const fetchOrders = (userId: string) => {
-        setLoading(true);
+    const fetchOrders = (userId: string, isSilent = false) => {
+        if (!isSilent) setLoading(true);
         api.get(`/orders/user/${userId}`)
             .then(res => {
                 setOrders(res.data);
-                setLoading(false);
+                if (!isSilent) setLoading(false);
             })
             .catch(err => {
                 console.error("Error fetching orders:", err);
-                setLoading(false);
+                if (!isSilent) setLoading(false);
             });
     };
+
+    // Atualização dinâmica ao focar a janela
+    useEffect(() => {
+        const handleFocus = () => {
+            const userId = user?.id || user?.googleId;
+            if (userId) {
+                fetchOrders(userId, true); // Refresh silencioso
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [user]);
 
     const handleReviewSubmitted = (itemId: string) => {
         setReviewedItems(prev => new Set([...prev, itemId]));
@@ -187,10 +200,16 @@ const OrdersPage: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-sm font-bold text-green-600">
+                                                                <span className={`text-sm font-bold ${
+                                                                    order.status === 'DELIVERED' ? 'text-green-600' :
+                                                                    order.status === 'CANCELED' ? 'text-red-500' :
+                                                                    order.status === 'SHIPPED' ? 'text-indigo-500' :
+                                                                    order.status === 'PAID' ? 'text-blue-500' : 'text-yellow-600'
+                                                                }`}>
                                                                     {order.status === 'DELIVERED' ? 'Entregue' :
                                                                         order.status === 'SHIPPED' ? 'Enviado' :
-                                                                            order.status === 'PAID' ? 'Pago' : 'Pendente'}
+                                                                            order.status === 'PAID' ? 'Pago' : 
+                                                                                order.status === 'CANCELED' ? 'Cancelado' : 'Pendente'}
                                                                 </span>
                                                             </div>
                                                             <p className="text-sm text-gray-800 line-clamp-2 leading-tight max-w-md">

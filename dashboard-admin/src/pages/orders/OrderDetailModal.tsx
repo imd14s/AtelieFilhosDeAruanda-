@@ -83,6 +83,17 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
                         </div>
                     </div>
                 </div>
+                
+                {/* Motivo do Cancelamento (Admin View) */}
+                {order.status === 'CANCELED' && order.cancelReason && (
+                    <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex gap-3">
+                        <Tag className="text-rose-500 shrink-0" size={20} />
+                        <div>
+                            <h4 className="text-sm font-bold text-rose-800 mb-1">Motivo do Cancelamento</h4>
+                            <p className="text-sm text-rose-600 italic">"{order.cancelReason}"</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Documentos de Envio e Fiscal */}
                 <div className="border border-indigo-100 rounded-xl overflow-hidden shadow-sm">
@@ -165,8 +176,8 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
                                                         src={getImageUrl(item.productImage)} 
                                                         alt={item.productName} 
                                                         className="w-10 h-10 object-cover rounded-lg border bg-gray-100" 
-                                                        onError={(e: any) => {
-                                                            e.target.src = '/logo.png';
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).src = '/logo.png';
                                                         }} 
                                                     />
                                                 )}

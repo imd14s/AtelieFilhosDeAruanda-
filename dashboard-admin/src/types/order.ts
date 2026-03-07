@@ -14,6 +14,7 @@ export interface Order {
   paymentMethod?: string;
   discount?: number;
   items?: OrderItem[];
+  cancelReason?: string;
 }
 
 export interface OrderItem {

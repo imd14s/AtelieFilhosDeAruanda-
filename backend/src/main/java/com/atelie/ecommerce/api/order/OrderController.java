@@ -14,7 +14,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.atelie.ecommerce.infrastructure.security.UserPrincipal;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -61,8 +64,23 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<Void> cancelOrder(@PathVariable UUID id, @RequestBody(required = false) String reason) {
-        orderService.cancelOrder(id, reason != null ? reason : "Cancelado pelo administrador");
+    public ResponseEntity<Void> cancelOrder(@PathVariable UUID id, @RequestBody(required = false) String reason, Authentication authentication) {
+        OrderEntity order = orderService.getOrderById(id);
+        
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        
+        if (!isAdmin) {
+            if (authentication == null) {
+                throw new AccessDeniedException("Autenticação necessária.");
+            }
+            UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+            if (order.getUser() == null || !order.getUser().getId().toString().equals(principal.getId())) {
+                throw new AccessDeniedException("Você não tem permissão para cancelar este pedido.");
+            }
+        }
+
+        orderService.cancelOrder(id, reason != null ? reason : "Cancelado pelo usuário");
         return ResponseEntity.noContent().build();
     }
 
@@ -141,7 +159,7 @@ public class OrderController {
 
         return new OrderResponse(
                 entity.getId(),
-                OrderStatus.valueOf(entity.getStatus()),
+                parseStatus(entity.getStatus()),
                 entity.getSource(),
                 entity.getExternalId(),
                 entity.getCustomerName(),
@@ -160,6 +178,19 @@ public class OrderController {
                 entity.getLabelUrlMe(),
                 entity.getLabelUrlCustom(),
                 entity.getTrackingCode(),
-                entity.getShippingIdExternal());
+                entity.getShippingIdExternal(),
+                entity.getCancelReason());
+    }
+
+    private OrderStatus parseStatus(String status) {
+        if (status == null) return OrderStatus.PENDING;
+        try {
+            // Suporte legado para "CANCELLED" com 2 L's
+            if ("CANCELLED".equalsIgnoreCase(status)) return OrderStatus.CANCELED;
+            
+            return OrderStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return OrderStatus.PENDING;
+        }
     }
 }

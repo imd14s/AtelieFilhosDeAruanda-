@@ -21,7 +21,7 @@ const statusMap: Record<string, StatusConfig> = {
     PAID: { label: 'Pago', color: 'bg-blue-100 text-blue-700', icon: CreditCard },
     SHIPPED: { label: 'Enviado', color: 'bg-indigo-100 text-indigo-700', icon: Truck },
     DELIVERED: { label: 'Entregue', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-    CANCELLED: { label: 'Cancelado', color: 'bg-red-100 text-red-700', icon: AlertCircle },
+    CANCELED: { label: 'Cancelado', color: 'bg-red-100 text-red-700', icon: AlertCircle },
 };
 
 const OrderDetailPage: React.FC = () => {
@@ -31,16 +31,51 @@ const OrderDetailPage: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
 
-    useEffect(() => {
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+
+    const fetchOrder = () => {
         if (id) {
             orderService.getOrderById(id)
                 .then(data => setOrder(data))
                 .catch(() => setError('Pedido não encontrado.'))
                 .finally(() => setLoading(false));
-        } else {
-            setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        fetchOrder();
     }, [id]);
+
+    // Refresh ao focar aba
+    useEffect(() => {
+        const handleFocus = () => {
+            if (id && !loading) {
+                orderService.getOrderById(id)
+                    .then(data => setOrder(data))
+                    .catch(e => console.error("Foco refresh falhou", e));
+            }
+        };
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [id, loading]);
+
+    const handleCancelOrder = async () => {
+        if (!id) return;
+        setIsCancelling(true);
+        try {
+            await orderService.cancelOrder(id, cancelReason || 'Cancelado pelo cliente (Direito de Arrependimento)');
+            setShowCancelModal(false);
+            fetchOrder();
+            window.dispatchEvent(new CustomEvent('show-alert', { detail: 'Pedido cancelado com sucesso.' }));
+        } catch (e) {
+            console.error("Erro ao cancelar", e);
+            window.dispatchEvent(new CustomEvent('show-alert', { detail: 'Não foi possível cancelar o pedido.' }));
+        } finally {
+            setIsCancelling(false);
+        }
+    };
 
     if (!user) return null;
 
@@ -166,6 +201,16 @@ const OrderDetailPage: React.FC = () => {
                                     <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}</span>
                                 </div>
                             </div>
+
+                            {/* Botão de Cancelamento (Art. 49 CDC) */}
+                            {(order.status === 'PENDING' || order.status === 'PAID') && (
+                                <button
+                                    onClick={() => setShowCancelModal(true)}
+                                    className="w-full mt-6 py-2.5 border border-red-200 text-red-600 text-xs font-bold uppercase tracking-widest rounded hover:bg-red-50 transition-colors"
+                                >
+                                    Cancelar Pedido
+                                </button>
+                            )}
                         </div>
 
                         {/* Endereço */}
@@ -197,6 +242,17 @@ const OrderDetailPage: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Motivo do Cancelamento */}
+                        {order.status === 'CANCELED' && order.cancelReason && (
+                            <div className="p-4 bg-red-50 border border-red-100 rounded flex gap-3">
+                                <AlertCircle className="text-red-500 shrink-0" size={20} />
+                                <div>
+                                    <h4 className="text-sm font-bold text-red-800 mb-1">Motivo do Cancelamento</h4>
+                                    <p className="text-sm text-red-600 italic">"{order.cancelReason}"</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Rastreio */}
                         {order.trackingCode && (
                             <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6">
@@ -209,6 +265,46 @@ const OrderDetailPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Cancelamento */}
+            {showCancelModal && (
+                <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded shadow-2xl overflow-hidden">
+                        <div className="p-6">
+                            <h3 className="text-lg font-playfair font-bold text-[var(--azul-profundo)] mb-2">
+                                Confirmar Cancelamento?
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Conforme o Art. 49 do CDC, você tem o direito de desistência. O pedido será cancelado e o estorno processado.
+                            </p>
+                            
+                            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Motivo (Opcional)</label>
+                            <textarea
+                                value={cancelReason}
+                                onChange={(e) => setCancelReason(e.target.value)}
+                                className="w-full border border-gray-200 rounded p-3 text-sm focus:outline-none focus:border-blue-400 h-24 resize-none"
+                                placeholder="Ex: Desisti da compra, encontrei outro preço..."
+                            />
+                        </div>
+                        <div className="flex border-t border-gray-100">
+                            <button
+                                onClick={() => setShowCancelModal(false)}
+                                className="flex-1 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                                disabled={isCancelling}
+                            >
+                                Voltar
+                            </button>
+                            <button
+                                onClick={handleCancelOrder}
+                                className="flex-1 py-4 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors border-l border-gray-100 flex items-center justify-center gap-2"
+                                disabled={isCancelling}
+                            >
+                                {isCancelling ? <Loader2 className="animate-spin" size={16} /> : 'Confirmar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -53,7 +53,7 @@ export function OrdersPage() {
         try {
             setIsCanceling(true);
             await OrderService.cancel(selectedOrderId, cancelReason);
-            setOrders(orders.map(o => o.id === selectedOrderId ? { ...o, status: 'CANCELED' } : o));
+            setOrders(orders.map(o => o.id === selectedOrderId ? { ...o, status: 'CANCELED', cancelReason } : o));
             addToast('Pedido cancelado com sucesso.', 'success');
             setCancelModalOpen(false);
         } catch (error) {
@@ -242,7 +242,7 @@ export function OrdersPage() {
                                                         try {
                                                             await OrderService.delivered(order.id);
                                                             setOrders(orders.map(o => o.id === order.id ? { ...o, status: 'DELIVERED' } : o));
-                                                        } catch (err) {
+                                                        } catch {
                                                             alert('Não foi possível finalizar o pedido. Tente novamente.');
                                                         }
                                                     }}
