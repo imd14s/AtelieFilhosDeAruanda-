@@ -65,7 +65,6 @@ class InventoryControllerIntegrationTest {
                                 "Desc",
                                 BigDecimal.TEN,
                                 null,
-                                null,
                                 true);
                 product.setActive(true);
                 productRepository.save(product);

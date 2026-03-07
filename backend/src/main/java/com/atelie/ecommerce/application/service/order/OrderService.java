@@ -120,8 +120,13 @@ public class OrderService {
                 }
             }
 
-            if (targetVariantId != null) {
-                // Deduct stock
+            if (targetVariantId != null && variant != null) {
+                // Deduct stock directly from variant (Source of Truth)
+                int currentVStock = variant.getStockQuantity() != null ? variant.getStockQuantity() : 0;
+                variant.setStockQuantity(currentVStock - itemReq.quantity());
+                variantRepository.save(variant);
+
+                // Audit log
                 inventoryService.addMovement(
                         targetVariantId,
                         MovementType.OUT,
@@ -204,7 +209,12 @@ public class OrderService {
                 }
             }
 
-            // Baixa estoque na VARIANTE correta
+            // Baixa estoque na VARIANTE correta (Verdade Única)
+            int currentVStock = variant.getStockQuantity() != null ? variant.getStockQuantity() : 0;
+            variant.setStockQuantity(currentVStock - itemReq.quantity());
+            variantRepository.save(variant);
+
+            // Audit log
             inventoryService.addMovement(
                     targetVariantId,
                     MovementType.OUT,
@@ -345,9 +355,15 @@ public class OrderService {
 
         // Estorno de estoque
         for (OrderItemEntity item : order.getItems()) {
-            UUID variantId = item.getVariant() != null ? item.getVariant().getId() : null;
-            if (variantId != null) {
-                inventoryService.addMovement(variantId, MovementType.IN, item.getQuantity(),
+            ProductVariantEntity variant = item.getVariant();
+            if (variant != null) {
+                // Restore stock directly to variant
+                int currentVStock = variant.getStockQuantity() != null ? variant.getStockQuantity() : 0;
+                variant.setStockQuantity(currentVStock + item.getQuantity());
+                variantRepository.save(variant);
+
+                // Audit log
+                inventoryService.addMovement(variant.getId(), MovementType.IN, item.getQuantity(),
                         "Order Cancelled: " + reason, orderId.toString());
             }
         }

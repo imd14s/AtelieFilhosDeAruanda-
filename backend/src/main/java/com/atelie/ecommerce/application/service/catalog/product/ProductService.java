@@ -110,16 +110,13 @@ public class ProductService {
         sanitizeAndMapEntityImages(product, variants, cidMap);
         handleMarketplaces(product);
 
-        // Se for novo e não tiver variantes, garante estoque >= 0
-        if (isNew && product.getStockQuantity() != null && product.getStockQuantity() < 0) {
-            throw new IllegalArgumentException("Estoque não pode ser negativo");
-        }
+        // REMOVIDO: validação de estoque pai (agora é calculado das variantes)
 
         ProductEntity saved = productRepository.save(product);
         saveOrUpdateVariants(saved, variants, isNew);
 
-        // Sincroniza estoque pai e grava log inicial se necessário
-        updateParentStockFromVariants(saved);
+        // Sincroniza imagens e grava log inicial se necessário
+        syncImagesFromVariants(saved);
         productRepository.save(saved);
 
         eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), isNew));
@@ -142,7 +139,7 @@ public class ProductService {
         ProductEntity existing = productRepository.findByIdWithLock(id)
                 .orElseThrow(() -> new NotFoundException("Produto não encontrado: " + id));
 
-        int oldStock = existing.getStockQuantity() != null ? existing.getStockQuantity() : 0;
+        // REMOVIDO: oldStock legado
         Set<String> oldUrls = collectAllImageUrls(existing);
         Set<ServiceProviderEntity> oldMarketplaces = new HashSet<>(existing.getMarketplaces());
 
@@ -172,17 +169,9 @@ public class ProductService {
 
         if (variants != null) {
             updateVariants(existing, variants);
-        } else {
-            // Se não houver variantes na request, atualiza o estoque direto (se fornecido)
-            if (details.getStockQuantity() != null) {
-                if (details.getStockQuantity() < 0)
-                    throw new IllegalArgumentException("Estoque negativo proibido");
-                existing.setStockQuantity(details.getStockQuantity());
-            }
         }
-
-        // Sincroniza estoque pai a partir das variantes (se houver)
-        updateParentStockFromVariants(existing);
+        // REMOVIDO: sincronização de estoque manual
+        syncImagesFromVariants(existing);
 
         Set<String> newUrls = collectAllImageUrls(existing);
         oldUrls.stream()
@@ -192,19 +181,7 @@ public class ProductService {
         existing.setUpdatedAt(LocalDateTime.now());
         ProductEntity saved = productRepository.save(existing);
 
-        // Auditoria
-        // Auditoria unificada via InventoryService se não houver variantes
-        if (variants == null || variants.isEmpty()) {
-            int newStock = saved.getStockQuantity() != null ? saved.getStockQuantity() : 0;
-            if (oldStock != newStock) {
-                // Tenta achar a variante padrão do produto
-                variantRepository.findByProductId(saved.getId()).stream()
-                    .findFirst()
-                    .ifPresent(v -> inventoryService.addMovement(v.getId(), 
-                        newStock > oldStock ? MovementType.IN : MovementType.OUT,
-                        Math.abs(newStock - oldStock), "Atualização manual via dashboard", "ProductService"));
-            }
-        }
+        // Auditoria unificada via InventoryService se não houver variantes (LEGADO - agora toda ação é por variante)
 
         eventPublisher.publishEvent(new ProductSavedEvent(saved.getId(), false));
         handleRemovedMarketplaces(oldMarketplaces, saved);
@@ -358,7 +335,7 @@ public class ProductService {
                 "SKU-" + product.getId().toString().substring(0, 8).toUpperCase(),
                 gtinGenerator.generateInternalEan13(),
                 null,
-                product.getStockQuantity() != null ? product.getStockQuantity() : 0,
+                0, // Estoque inicial sempre 0 em variante default nova
                 "{\"default\": true}",
                 true);
         variantRepository.save(defaultVariant);
@@ -555,15 +532,8 @@ public class ProductService {
         }
     }
 
-
-    private void updateParentStockFromVariants(ProductEntity product) {
+    private void syncImagesFromVariants(ProductEntity product) {
         if (product.getVariants() != null && !product.getVariants().isEmpty()) {
-            int totalStock = product.getVariants().stream()
-                    .filter(v -> v.getActive() != null && v.getActive())
-                    .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
-                    .sum();
-            product.setStockQuantity(totalStock);
-
             // Sincronização de Capas: Produto pai usa imagem da primeira variante se não
             // tiver imagens próprias
             if ((product.getImages() == null || product.getImages().isEmpty())

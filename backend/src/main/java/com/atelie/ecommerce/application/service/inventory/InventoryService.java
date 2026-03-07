@@ -59,27 +59,8 @@ public class InventoryService {
         trySet(m, "setSource", source);
 
         inventoryRepository.save(m);
-
-        // --- SINCRONIZAÇÃO REATIVA DO ESTOQUE ---
-        
-        // 1. Aplica o delta no estoque ATUAL da variante (não recalcula do zero)
-        // Isso preserva o estoque inicial que foi definido diretamente na entidade,
-        // mesmo que não exista um registro IN correspondente na tabela inventory_movements.
-        int currentStock = variant.getStockQuantity() != null ? variant.getStockQuantity() : 0;
-        int delta = (type == MovementType.IN) ? quantity : -quantity;
-        int newVariantStock = currentStock + delta;
-        variant.setStockQuantity(newVariantStock);
-        variantRepository.save(variant);
-
-        // 2. Recalcula e atualiza estoque no PRODUTO PAI (soma de todas as variantes)
-        ProductEntity product = variant.getProduct();
-        int totalProductStock = variantRepository.findByProductId(product.getId()).stream()
-                .filter(v -> v.getActive() != null && v.getActive())
-                .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
-                .sum();
-        
-        product.setStockQuantity(totalProductStock);
-        productRepository.save(product);
+        // REMOVIDO: Sincronização reativa. O estoque agora é atualizado diretamente na variante
+        // pelos serviços que originam a mudança (ex: OrderService no checkout ou ProductService no dashboard).
     }
 
     /**

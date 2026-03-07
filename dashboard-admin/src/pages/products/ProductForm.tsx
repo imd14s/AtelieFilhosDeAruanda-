@@ -338,14 +338,11 @@ export function ProductForm() {
       // As per backend logic, product base fields takes the first variant if price/stock are 0 
       const basePrice = variants.length > 0 ? variants[0].price : 0;
       const baseOriginalPrice = variants.length > 0 ? variants[0].originalPrice : undefined;
-      const baseStock = variants.reduce((acc, curr) => acc + curr.stock, 0);
-
       const payload: any = {
         ...data,
         category: finalCategoryId,
         price: basePrice,
         originalPrice: baseOriginalPrice,
-        stock: baseStock,
         active: true,
         variants,
         media: sortedMedia,

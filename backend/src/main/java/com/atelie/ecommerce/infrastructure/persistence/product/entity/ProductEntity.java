@@ -21,14 +21,13 @@ public class ProductEntity {
         this.marketplaces = new java.util.HashSet<>();
     }
 
-    public ProductEntity(UUID id, String name, String description, BigDecimal price, Integer stockQuantity,
+    public ProductEntity(UUID id, String name, String description, BigDecimal price,
             CategoryEntity category, Boolean active) {
         this();
         this.id = id;
         this.name = name;
         this.description = description;
         this.price = price;
-        this.stockQuantity = stockQuantity;
         this.category = category;
         this.active = active;
     }
@@ -50,8 +49,8 @@ public class ProductEntity {
     @Column(name = "last_notified_price")
     private BigDecimal lastNotifiedPrice;
 
+    @Transient
     @JsonProperty("stock")
-    @Column(name = "stock_quantity")
     private Integer stockQuantity;
 
     private BigDecimal weight;
@@ -184,8 +183,7 @@ public class ProductEntity {
             alertEnabled = false;
         if (images == null)
             images = new ArrayList<>();
-        if (stockQuantity == null)
-            stockQuantity = 0;
+        // stockQuantity é transiente e calculado
         if (weight == null)
             weight = BigDecimal.ZERO;
         if (height == null)
@@ -274,7 +272,11 @@ public class ProductEntity {
 
     @JsonProperty("stock")
     public Integer getStockQuantity() {
-        return stockQuantity;
+        if (variants == null || variants.isEmpty()) return 0;
+        return variants.stream()
+                .filter(v -> v.getActive() != null && v.getActive())
+                .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
+                .sum();
     }
 
     @JsonProperty("stock")

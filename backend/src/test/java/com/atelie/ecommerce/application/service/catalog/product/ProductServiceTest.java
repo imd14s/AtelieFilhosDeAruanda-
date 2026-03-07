@@ -7,7 +7,6 @@ import com.atelie.ecommerce.infrastructure.persistence.category.CategoryReposito
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantEntity;
 import com.atelie.ecommerce.infrastructure.persistence.product.ProductVariantRepository;
-import com.atelie.ecommerce.infrastructure.persistence.product.StockMovementRepository;
 import com.atelie.ecommerce.infrastructure.persistence.product.entity.ProductEntity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,9 +46,6 @@ class ProductServiceTest {
 
     @Mock
     private ServiceProviderJpaRepository providerRepository;
-
-    @Mock
-    private StockMovementRepository stockMovementRepository;
 
     @InjectMocks
     private ProductService productService;
@@ -102,8 +98,6 @@ class ProductServiceTest {
         updates.setName("New Name");
         updates.setDescription("New Desc");
         updates.setPrice(BigDecimal.valueOf(99.90));
-        updates.setStockQuantity(10);
-
         when(productRepository.findByIdWithLock(productId)).thenReturn(Optional.of(existing));
         when(productRepository.save(existing)).thenReturn(existing);
 
@@ -114,7 +108,6 @@ class ProductServiceTest {
         assertEquals("New Name", result.getName());
         assertEquals("New Desc", result.getDescription());
         assertEquals(BigDecimal.valueOf(99.90), result.getPrice());
-        assertEquals(10, result.getStockQuantity());
         assertNotNull(result.getUpdatedAt()); // Should be updated
 
         verify(productRepository).save(existing);

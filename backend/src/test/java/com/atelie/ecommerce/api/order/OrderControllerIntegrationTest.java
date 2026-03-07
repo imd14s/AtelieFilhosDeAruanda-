@@ -77,7 +77,6 @@ class OrderControllerIntegrationTest {
                                 "Desc",
                                 new BigDecimal("100.00"),
                                 null,
-                                null,
                                 true);
                 product.setActive(true);
                 productRepository.save(product);

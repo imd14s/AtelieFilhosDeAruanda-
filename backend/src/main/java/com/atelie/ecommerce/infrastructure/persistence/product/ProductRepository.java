@@ -24,7 +24,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "marketplaces", "images" })
         Page<ProductEntity> findByActiveTrue(Pageable pageable);
 
-        @Query("SELECT p FROM ProductEntity p WHERE p.stockQuantity <= 5 AND p.alertEnabled = true")
+        @Query("SELECT p FROM ProductEntity p WHERE p.active = true AND EXISTS (SELECT 1 FROM ProductVariantEntity v WHERE v.product = p AND v.stockQuantity <= 5 AND v.active = true)")
         List<ProductEntity> findCriticalStock();
 
         java.util.Optional<ProductEntity> findBySlug(String slug);
